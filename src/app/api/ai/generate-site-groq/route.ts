@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
     const prompt = `
 You are generating content for a small business website builder.
@@ -147,7 +147,8 @@ ${brief}
           model,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.65,
-          max_tokens: 8192,
+          // gpt-oss reasoning tokens count against this budget.
+          max_tokens: 16384,
           response_format: { type: "json_object" },
         }),
       });

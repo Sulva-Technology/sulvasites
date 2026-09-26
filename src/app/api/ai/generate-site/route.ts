@@ -77,8 +77,8 @@ export async function POST(req: Request) {
 
     // NOTE: gemini-2.5-pro frequently has 0 free-tier quota on new projects.
     // Default to a Flash model to avoid immediate 429s unless explicitly overridden.
-    const primaryModel = (process.env.GEMINI_MODEL || "gemini-2.0-flash").trim();
-    const fallbackModels = (process.env.GEMINI_MODEL_FALLBACKS || "gemini-2.0-flash,gemini-1.5-flash,gemini-1.5-pro")
+    const primaryModel = (process.env.GEMINI_MODEL || "gemini-3-flash-preview").trim();
+    const fallbackModels = (process.env.GEMINI_MODEL_FALLBACKS || "gemini-flash-latest,gemini-2.5-flash")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
@@ -180,7 +180,8 @@ ${brief}
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.65,
-                maxOutputTokens: 8192,
+                // Gemini 3 thinking tokens count against this budget.
+                maxOutputTokens: 16384,
               },
             }),
           });
@@ -242,7 +243,7 @@ Solutions:
 
 Note: Free tier quotas are limited. Enabling billing (even with $0 spend limit) often increases quota limits.`;
       } else if (isNotFound) {
-        errorMessage = "Gemini model not found. Please check GEMINI_MODEL environment variable or use gemini-1.5-flash.";
+        errorMessage = "Gemini model not found. Please check GEMINI_MODEL environment variable or use gemini-3-flash-preview.";
       }
       
       return NextResponse.json(
