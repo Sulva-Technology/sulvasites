@@ -1,145 +1,68 @@
 "use client";
 
 import { useState } from "react";
-import type { FAQSection as FAQSectionType } from "@/lib/pageSchema";
-import { getLoremShortText } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import type { FAQSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
+import { IconChevron } from "../icons";
 
-function loremQuestion() {
-  const qs = [
-    "How quickly can we get this live?",
-    "Can I edit content myself?",
-    "Do you support subdomains and custom domains?",
-    "Is it mobile-friendly?",
-    "Can we add extra pages later?",
-  ];
-  return qs[Math.floor(Math.random() * qs.length)];
-}
+const FALLBACK = [
+  { question: "How do I book a viewing?", answer: "Use the form on our contact page or call us — we'll confirm a time within one business day." },
+  { question: "Do you verify property documents?", answer: "Yes. Title and approvals are checked before listing, and copies are shared with serious buyers." },
+];
 
-function loremAnswer() {
-  const as = [
-    getLoremShortText(),
-    getLoremShortText(),
-    getLoremShortText(),
-  ];
-  return as[Math.floor(Math.random() * as.length)];
-}
-
-export default function T6FAQ({
-  section,
-  sectionIndex,
-}: {
-  section: FAQSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const title = section.title || "FAQs";
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ question: "", answer: "" }, { question: "", answer: "" }, { question: "", answer: "" }, { question: "", answer: "" }];
-
-  const filled = items.map((it) => ({
-    question: it.question || loremQuestion(),
-    answer: it.answer || loremAnswer(),
+/** Two-column accordion cards. All open while editing. */
+export default function T6FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const [open, setOpen] = useState<number | null>(0);
+  const title = section.title || "Frequently asked questions";
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    question: it.question || FALLBACK[i % FALLBACK.length].question,
+    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
   }));
 
   return (
     <section className="t6-section">
       <div className="t6-container">
-        <span className="t6-eyebrow">FAQ</span>
-        <EditableText
-          as="h2"
-          className="t6-title"
-          value={title}
-          placeholder="FAQ title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
+        <div className="t6-head t6-reveal" style={{ justifyContent: "center", textAlign: "center" }}>
+          <div>
+            <span className="t6-kicker">FAQ</span>
+            <EditableText as="h2" className="t6-h2" value={title} placeholder="FAQ title" onCommit={(next) => set({ title: next })} />
+          </div>
+        </div>
 
-        <div className="t6-bento" style={{ marginTop: 18 }}>
-          {filled.map((it, idx) => {
-            const isOpen = openIndex === idx;
+        <div className="t6-faq t6-reveal">
+          {items.map((it, idx) => {
+            const isOpen = enabled || open === idx;
             return (
-              <div key={idx} className="t6-card" style={{ gridColumn: "span 6", padding: 18 }}>
+              <div key={idx} className="t6-faq-item" data-open={isOpen}>
                 <button
                   type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 12,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    textAlign: "left",
-                  }}
+                  className="t6-faq-q"
+                  aria-expanded={isOpen}
+                  onClick={() => !enabled && setOpen(isOpen ? null : idx)}
                 >
                   <EditableText
                     as="h3"
                     value={it.question}
                     placeholder="Question"
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], question: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                    style={{
-                      fontFamily: "var(--t6-serif)",
-                      fontWeight: 900,
-                      letterSpacing: "-0.02em",
-                      margin: 0,
-                      flex: 1,
-                    }}
+                    onCommit={(next) => setItem("items", items, idx, { question: next })}
                   />
-                  <span
-                    aria-hidden="true"
-                    className="t6-chip"
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 999,
-                      flexShrink: 0,
-                      background: "rgb(var(--t6-accent-rgb) / 0.10)",
-                      borderColor: "rgb(var(--t6-accent-rgb) / 0.22)",
-                      color: "var(--t6-accent)",
-                    }}
-                  >
-                    <span style={{ fontWeight: 950, fontSize: 18, lineHeight: 1 }}>
-                      {isOpen ? "–" : "+"}
-                    </span>
+                  <span className="t6-chev" aria-hidden="true">
+                    <IconChevron />
                   </span>
                 </button>
-
-                <div
-                  style={{
-                    maxHeight: isOpen ? "1000px" : "0",
-                    overflow: "hidden",
-                    transition: "max-height 0.3s ease, margin-top 0.3s ease",
-                    marginTop: isOpen ? 10 : 0,
-                  }}
-                >
-                  <EditableText
-                    as="p"
-                    value={it.answer}
-                    placeholder="Answer"
-                    multiline
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], answer: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                    style={{ color: "var(--t6-muted)", lineHeight: 1.75 }}
-                  />
+                <div className="t6-faq-a">
+                  <div>
+                    <EditableText
+                      as="p"
+                      value={it.answer}
+                      placeholder="Answer"
+                      multiline
+                      onCommit={(next) => setItem("items", items, idx, { answer: next })}
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -149,4 +72,3 @@ export default function T6FAQ({
     </section>
   );
 }
-

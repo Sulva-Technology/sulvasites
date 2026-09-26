@@ -4,16 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
-import { addDomain, normalizeHostname, setDomainStatus, type DomainStatus } from "@/lib/domains";
-import { getPublicAssetUrl, uploadLogo } from "@/lib/assets";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { publishSite, unpublishSite } from "@/lib/publishing";
-import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
+import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import AiSiteContentGenerator from "@/components/admin/AiSiteContentGenerator";
-import ManualContentGenerator from "@/components/admin/ManualContentGenerator";
-import { createExtraPage, listExtraPages, type ExtraPageRow } from "@/lib/extraPages";
-import { defaultPageData } from "@/lib/pageSchema";
-import { slugify } from "@/lib/slugify";
+import DomainsSection, { type DomainRow } from "@/components/admin/site/DomainsSection";
+import ExtraPagesSection from "@/components/admin/site/ExtraPagesSection";
+import LogoSection, { type AssetRow } from "@/components/admin/site/LogoSection";
+import type { ExtraPageRow } from "@/lib/extraPages";
 
 type SiteRow = {
   id: string;
@@ -39,21 +37,6 @@ type PageRow = {
   id: string;
   key: "home" | "about" | "contact";
   status: string;
-};
-
-type DomainRow = {
-  id: string;
-  hostname: string;
-  status: DomainStatus;
-  created_at: string;
-};
-
-type AssetRow = {
-  id: string;
-  path: string;
-  mime_type: string | null;
-  size_bytes: number | null;
-  created_at: string;
 };
 
 type SocialInputs = {
@@ -91,7 +74,7 @@ export default function SiteOverviewPage({
   const [domains, setDomains] = useState<DomainRow[]>([]);
   const [extraPages, setExtraPages] = useState<ExtraPageRow[]>([]);
   const [logoAsset, setLogoAsset] = useState<AssetRow | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoadError, setLogoLoadError] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -103,23 +86,6 @@ export default function SiteOverviewPage({
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
-
-  const [domainHostname, setDomainHostname] = useState("");
-  const [isDomainSaving, setIsDomainSaving] = useState(false);
-  const [domainError, setDomainError] = useState<string | null>(null);
-
-  const [domainActionLoadingId, setDomainActionLoadingId] = useState<string | null>(
-    null,
-  );
-
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [isLogoUploading, setIsLogoUploading] = useState(false);
-  const [logoError, setLogoError] = useState<string | null>(null);
-  const [logoSuccess, setLogoSuccess] = useState<string | null>(null);
-
-  const [newExtraKey, setNewExtraKey] = useState("");
-  const [extraError, setExtraError] = useState<string | null>(null);
-  const [isCreatingExtra, setIsCreatingExtra] = useState(false);
 
   const [form, setForm] = useState({
     business_name: "",
@@ -146,14 +112,11 @@ export default function SiteOverviewPage({
     }
 
     let isMounted = true;
-    const supabase = supabaseBrowser();
 
     async function load() {
       setIsLoading(true);
       setLoadError(null);
-      setDomainError(null);
-      setLogoError(null);
-      setLogoSuccess(null);
+      setLogoLoadError(null);
 
       let authenticatedSupabase;
       try {
@@ -268,16 +231,13 @@ export default function SiteOverviewPage({
         if (!isMounted) return;
 
         if (assetError) {
-          setLogoError(formatSupabaseError(assetError));
+          setLogoLoadError(formatSupabaseError(assetError));
           setLogoAsset(null);
-          setLogoUrl(null);
         } else {
           setLogoAsset(asset as AssetRow);
-          setLogoUrl(getPublicAssetUrl((asset as AssetRow).path));
         }
       } else {
         setLogoAsset(null);
-        setLogoUrl(null);
       }
     }
 
@@ -345,105 +305,6 @@ export default function SiteOverviewPage({
       setSaveError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
     } finally {
       setIsSaving(false);
-    }
-  }
-
-  async function onAddDomain(e: React.FormEvent) {
-    e.preventDefault();
-    if (!siteId) return;
-    setDomainError(null);
-
-    const normalized = normalizeHostname(domainHostname);
-    if (!normalized) {
-      setDomainError("Please enter a hostname.");
-      return;
-    }
-
-    setIsDomainSaving(true);
-    try {
-      // addDomain already ensures authentication
-      const created = await addDomain(siteId, normalized);
-      setDomains((prev) => [created, ...prev]);
-      setDomainHostname("");
-    } catch (err: unknown) {
-      const anyErr = err as { code?: string; message?: string };
-      if (anyErr?.code === "23505") {
-        setDomainError("Domain already exists.");
-      } else {
-        setDomainError(formatSupabaseError(err));
-      }
-    } finally {
-      setIsDomainSaving(false);
-    }
-  }
-
-  async function onSetDomainStatus(domainId: string, status: DomainStatus) {
-    setDomainError(null);
-    setDomainActionLoadingId(domainId);
-    try {
-      // setDomainStatus already ensures authentication
-      const updated = await setDomainStatus(domainId, status);
-      setDomains((prev) =>
-        prev.map((d) => (d.id === domainId ? { ...d, status: updated.status } : d)),
-      );
-    } catch (err) {
-      setDomainError(formatSupabaseError(err));
-    } finally {
-      setDomainActionLoadingId(null);
-    }
-  }
-
-  async function onUploadLogo() {
-    if (!siteId) return;
-    setLogoError(null);
-    setLogoSuccess(null);
-
-    if (!logoFile) {
-      setLogoError("Please choose a file first.");
-      return;
-    }
-
-    setIsLogoUploading(true);
-    try {
-      // uploadLogo already ensures authentication
-      const asset = await uploadLogo(siteId, logoFile);
-      setLogoAsset(asset);
-      setLogoUrl(getPublicAssetUrl(asset.path));
-      setLogoSuccess("Logo uploaded.");
-      setLogoFile(null);
-      setProfile((prev) => (prev ? { ...prev, logo_asset_id: asset.id } : prev));
-    } catch (err) {
-      setLogoError(formatSupabaseError(err));
-    } finally {
-      setIsLogoUploading(false);
-    }
-  }
-
-  async function onRemoveLogo() {
-    if (!siteId) return;
-    if (!window.confirm("Remove logo from this site?")) return;
-    setLogoError(null);
-    setLogoSuccess(null);
-    setIsLogoUploading(true);
-
-    try {
-      // Ensure client is fully authenticated before making database call
-      const supabase = await getAuthenticatedClient();
-      const { error } = await supabase
-        .from("business_profiles")
-        .update({ logo_asset_id: null })
-        .eq("site_id", siteId);
-      if (error) throw error;
-
-      setProfile((prev) => (prev ? { ...prev, logo_asset_id: null } : prev));
-      setLogoAsset(null);
-      setLogoUrl(null);
-      // MVP: do NOT delete the storage file to avoid breaking references.
-      setLogoSuccess("Logo removed.");
-    } catch (err) {
-      setLogoError(formatSupabaseError(err));
-    } finally {
-      setIsLogoUploading(false);
     }
   }
 
@@ -614,201 +475,24 @@ export default function SiteOverviewPage({
       </section>
 
       {/* A2) Domains */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Domains</h2>
-        <p className="mt-1 text-sm text-gray-600">Use either subdomains (recommended) or a custom domain.</p>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm font-semibold text-gray-900">Subdomains (recommended)</div>
-            <div className="mt-1 text-sm text-gray-700">
-              Your site is automatically available at:
-            </div>
-            <div className="mt-2 rounded bg-white px-3 py-2 font-mono text-sm ring-1 ring-gray-200">
-              https://{site.slug}.{platformDomain}
-            </div>
-            <div className="mt-3 text-sm text-gray-700">
-              DNS setup (one-time, for your whole platform):
-            </div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-              <li>
-                Add <span className="font-mono">{platformDomain}</span> to your hosting provider (Vercel/Netlify) as a domain.
-              </li>
-              <li>
-                Add wildcard <span className="font-mono">*.{platformDomain}</span> to the same project.
-              </li>
-              <li>
-                In your DNS provider, point both the base and wildcard records to your host (Vercel/Netlify) so all subdomains resolve.
-              </li>
-            </ul>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm font-semibold text-gray-900">Custom domain (per site)</div>
-            <div className="mt-1 text-sm text-gray-700">
-              If a client has their own domain (e.g. <span className="font-mono">client.com</span>), add it below.
-              After your DNS points to this app, mark it <b>Active</b>.
-            </div>
-            <div className="mt-2 text-xs text-gray-500">
-              This uses custom-domain routing (requests to <span className="font-mono">client.com</span> are routed to this site).
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={onAddDomain} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
-            value={domainHostname}
-            onChange={(e) => setDomainHostname(e.target.value)}
-            placeholder="kingsbakery.com"
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-          />
-          <button
-            type="submit"
-            disabled={isDomainSaving}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {isDomainSaving ? "Adding…" : "Add domain"}
-          </button>
-        </form>
-
-        {domainError ? (
-          <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {domainError}
-          </div>
-        ) : null}
-
-        <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-gray-200">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-4 py-3">Hostname</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {domains.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-gray-600" colSpan={4}>
-                    No domains yet.
-                  </td>
-                </tr>
-              ) : (
-                domains.map((d) => (
-                  <tr key={d.id}>
-                    <td className="px-4 py-3 font-mono">{d.hostname}</td>
-                    <td className="px-4 py-3">{d.status}</td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {new Date(d.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        {d.status !== "active" ? (
-                          <button
-                            type="button"
-                            onClick={() => onSetDomainStatus(d.id, "active")}
-                            disabled={domainActionLoadingId === d.id}
-                            className="rounded bg-white px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
-                          >
-                            {domainActionLoadingId === d.id ? "Working…" : "Mark Active"}
-                          </button>
-                        ) : null}
-                        {d.status !== "blocked" ? (
-                          <button
-                            type="button"
-                            onClick={() => onSetDomainStatus(d.id, "blocked")}
-                            disabled={domainActionLoadingId === d.id}
-                            className="rounded bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
-                          >
-                            {domainActionLoadingId === d.id ? "Working…" : "Block"}
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DomainsSection
+        siteId={siteId}
+        siteSlug={site.slug}
+        platformDomain={platformDomain}
+        domains={domains}
+        setDomains={setDomains}
+      />
 
       {/* A3) Logo */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Logo</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Upload a logo (stored in Supabase Storage: bucket <span className="font-mono">site-assets</span>).
-        </p>
-
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-              className="block text-sm"
-            />
-            <button
-              type="button"
-              onClick={onUploadLogo}
-              disabled={isLogoUploading}
-              className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {isLogoUploading ? "Uploading…" : "Upload logo"}
-            </button>
-          </div>
-
-          {logoUrl ? (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={onRemoveLogo}
-                disabled={isLogoUploading}
-                className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
-              >
-                Remove logo
-              </button>
-            </div>
-          ) : null}
-        </div>
-
-        {logoError ? (
-          <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {logoError}
-          </div>
-        ) : null}
-        {logoSuccess ? (
-          <div className="mt-3 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {logoSuccess}
-          </div>
-        ) : null}
-
-        <div className="mt-4">
-          {logoUrl ? (
-            <div className="flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoUrl}
-                alt="Site logo"
-                className="h-16 w-16 rounded bg-white object-contain ring-1 ring-gray-200"
-              />
-              <div className="text-xs text-gray-600">
-                <div>
-                  <span className="font-medium">Asset ID:</span>{" "}
-                  <span className="font-mono">{logoAsset?.id ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="font-medium">Path:</span>{" "}
-                  <span className="font-mono">{logoAsset?.path ?? "—"}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-600">No logo uploaded.</div>
-          )}
-        </div>
-      </section>
+      <LogoSection
+        siteId={siteId}
+        logoAsset={logoAsset}
+        loadError={logoLoadError}
+        onLogoChange={(asset) => {
+          setLogoAsset(asset);
+          setProfile((prev) => (prev ? { ...prev, logo_asset_id: asset?.id ?? null } : prev));
+        }}
+      />
 
       {/* B) Business Profile Editor */}
       <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
@@ -987,108 +671,14 @@ export default function SiteOverviewPage({
       <AiSiteContentGenerator siteId={siteId} />
 
       {/* B4) Extra pages (per site) */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Extra pages</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Create additional pages for this specific site (not template-wide). URLs will be:
-          <span className="ml-2 font-mono text-xs">
-            https://{site?.slug ?? "your-slug"}.soothecontrols.site/p/&lt;key&gt;
-          </span>
-        </p>
-
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!siteId) return;
-            setExtraError(null);
-
-            const raw = newExtraKey.trim();
-            const key = slugify(raw);
-            if (!key) {
-              setExtraError("Please enter a valid page key (e.g. pricing).");
-              return;
-            }
-            if (["home", "about", "contact", "p"].includes(key)) {
-              setExtraError(`"${key}" is reserved. Choose another key.`);
-              return;
-            }
-
-            setIsCreatingExtra(true);
-            try {
-              const seed = defaultPageData("home");
-              // Keep the SEO blank by default; editors can fill it later.
-              const created = await createExtraPage(siteId, key, seed);
-              setExtraPages((prev) => [created, ...prev]);
-              setNewExtraKey("");
-            } catch (err) {
-              setExtraError(formatSupabaseError(err));
-            } finally {
-              setIsCreatingExtra(false);
-            }
-          }}
-          className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
-        >
-          <input
-            value={newExtraKey}
-            onChange={(e) => setNewExtraKey(e.target.value)}
-            placeholder="pricing"
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-          />
-          <button
-            type="submit"
-            disabled={isCreatingExtra || !newExtraKey.trim()}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {isCreatingExtra ? "Creating…" : "Create page"}
-          </button>
-        </form>
-
-        {extraError ? (
-          <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {extraError}
-          </div>
-        ) : null}
-
-        <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-gray-200">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-4 py-3">Key</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Updated</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {extraPages.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-gray-600" colSpan={4}>
-                    No extra pages yet.
-                  </td>
-                </tr>
-              ) : (
-                extraPages.map((p) => (
-                  <tr key={p.id}>
-                    <td className="px-4 py-3 font-mono">{p.key}</td>
-                    <td className="px-4 py-3">{p.status}</td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {new Date(p.updated_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/admin/sites/${siteId}/extra-pages/${p.key}`}
-                        className="text-sm font-medium text-black underline underline-offset-2"
-                      >
-                        Edit
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <ExtraPagesSection
+        siteId={siteId}
+        siteSlug={site.slug}
+        templateKey={site.template_key}
+        platformDomain={platformDomain}
+        extraPages={extraPages}
+        setExtraPages={setExtraPages}
+      />
 
       {/* C) Pages quick links */}
       <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">

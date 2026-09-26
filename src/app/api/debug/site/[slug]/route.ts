@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/requireAdmin.server";
 
+// Admin-only: exposes draft state and raw DB errors.
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   const { slug } = await params;
   const supabase = supabaseServer();
 

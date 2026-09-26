@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <main className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-semibold">soothecontrols</h1>
+      <h1 className="text-2xl font-semibold">Sulva Sites</h1>
       <p className="mt-2 text-sm text-gray-700">
         Please sign in to access admin features.
       </p>

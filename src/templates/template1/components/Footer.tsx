@@ -231,8 +231,8 @@ export default function Footer({
           style={{ display: "inline" }}
         />
         . All rights reserved. Developed by{" "}
-        <a href="https://soothetechnologies.com" target="_blank" rel="noreferrer" className="t1-footer-link">
-          soothetechnologies
+        <a href="https://sulvatech.com" target="_blank" rel="noreferrer" className="t1-footer-link">
+          Sulvatech
         </a>
         .
       </div>

@@ -1,124 +1,103 @@
 "use client";
 
-import type { UseCasesSection as UseCasesSectionType } from "@/lib/pageSchema";
-import { getLoremHeadline, getLoremParagraph, getLoremShortText } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { UseCasesSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
+import { useT6 } from "../ctx";
+import { IconArrow, IconHome } from "../icons";
 
-export default function T6UseCases({
-  section,
-  sectionIndex,
-}: {
-  section: UseCasesSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || "Use cases";
-  const description = section.description || getLoremParagraph();
+const FALLBACK: UseCasesSection["items"] = [
+  { title: "Four-bedroom family home", description: "Describe the property: location, size, standout features and what makes it special." },
+  { title: "Modern city apartment", description: "Add the key details buyers or renters look for first." },
+  { title: "Serviced plot in a new estate", description: "Summarise the opportunity, documentation status and access." },
+];
 
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-        ];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremHeadline(),
-    description: it.description || getLoremShortText(),
-    linkText: it.linkText || "Learn more",
-    linkHref: it.linkHref || "#",
+/** Use cases presented as property listings. Covers reuse the site's gallery photos. */
+export default function T6UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const { baseUrl, photos } = useT6();
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Featured properties";
+  const description = section.description || "";
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    ...it,
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    description: it.description || FALLBACK[i % FALLBACK.length].description,
   }));
 
   return (
-    <section className="t6-section">
+    <section id="properties" className="t6-section">
       <div className="t6-container">
-        <span className="t6-eyebrow">Use cases</span>
-        <EditableText
-          as="h2"
-          className="t6-title"
-          value={title}
-          placeholder="Use cases title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-        <EditableText
-          as="p"
-          className="t6-sub"
-          value={description}
-          placeholder="Use cases description"
-          multiline
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, description: next });
-          }}
-        />
-
-        <div className="t6-bento" style={{ marginTop: 18 }}>
-          {filled.map((it, idx) => (
-            <div key={idx} className="t6-card t6-item" style={{ gridColumn: "span 6", padding: 18 }}>
-              <div className="t6-chip" style={{ width: 40, height: 40 }}>
-                <span style={{ fontWeight: 950 }}>{idx + 1}</span>
-              </div>
-              <EditableText
-                as="h3"
-                value={it.title}
-                placeholder="Item title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-                style={{ fontWeight: 900, fontFamily: "var(--t6-serif)", letterSpacing: "-0.02em" }}
-              />
+        <div className="t6-head t6-reveal">
+          <div>
+            <span className="t6-kicker">Listings</span>
+            <EditableText as="h2" className="t6-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
+            {description || enabled ? (
               <EditableText
                 as="p"
-                value={it.description}
-                placeholder="Item description"
+                className="t6-lead"
+                value={description}
+                placeholder="Short intro (optional)"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], description: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-                style={{ marginTop: 10, color: "var(--t6-muted)", lineHeight: 1.75 }}
+                onCommit={(next) => set({ description: next })}
               />
-              <a
-                href={it.linkHref}
-                style={{
-                  marginTop: 12,
-                  display: "inline-flex",
-                  gap: 8,
-                  alignItems: "center",
-                  color: "rgba(255,255,255,0.92)",
-                  textDecoration: "none",
-                  fontWeight: 900,
-                }}
-              >
-                <EditableText
-                  as="span"
-                  value={it.linkText}
-                  placeholder="Link text"
-                  onCommit={(next) => {
-                    if (!editor || sectionIndex == null) return;
-                    const nextItems = filled.map((x) => ({ ...x }));
-                    nextItems[idx] = { ...nextItems[idx], linkText: next };
-                    editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                  }}
-                />
-                <span aria-hidden="true">→</span>
-              </a>
-            </div>
-          ))}
+            ) : null}
+          </div>
+          <a className="t6-btn t6-btn-outline" href={`${baseUrl}/contact`}>
+            Request the full list
+          </a>
+        </div>
+
+        <div className="t6-listings">
+          {items.map((it, idx) => {
+            const photo = photos.length ? photos[idx % photos.length] : null;
+            const featured = idx === 0 && items.length > 1;
+            return (
+              <article key={idx} className="t6-listing t6-reveal" data-featured={featured}>
+                <div className="t6-listing-media">
+                  <div className="t6-badges">
+                    {featured ? <span className="t6-badge t6-badge-accent">Featured</span> : null}
+                    <span className="t6-badge">Available</span>
+                  </div>
+                  {photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photo.url} alt={photo.alt || it.title} loading="lazy" />
+                  ) : (
+                    <IconHome size={56} />
+                  )}
+                </div>
+                <div className="t6-listing-body">
+                  <EditableText
+                    as="h3"
+                    className="t6-h3"
+                    value={it.title}
+                    placeholder="Property title"
+                    onCommit={(next) => setItem("items", items, idx, { title: next })}
+                  />
+                  <EditableText
+                    as="p"
+                    className="t6-muted"
+                    value={it.description}
+                    placeholder="Property description"
+                    multiline
+                    onCommit={(next) => setItem("items", items, idx, { description: next })}
+                  />
+                  <div className="t6-listing-foot">
+                    <a className="t6-textlink" href={it.linkHref || `${baseUrl}/contact`}>
+                      <EditableText
+                        as="span"
+                        value={it.linkText || "Enquire about this property"}
+                        placeholder="Link text"
+                        onCommit={(next) => setItem("items", items, idx, { linkText: next })}
+                      />
+                      <IconArrow size={16} />
+                    </a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
-

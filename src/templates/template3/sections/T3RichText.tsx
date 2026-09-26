@@ -1,56 +1,48 @@
 "use client";
 
-import type { RichTextSection as RichTextSectionType } from "@/lib/pageSchema";
-import { getLoremParagraph } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import EditableText from "@/components/inline-editor/EditableText";
 import EditableHtml from "@/components/inline-editor/EditableHtml";
+import EditableText from "@/components/inline-editor/EditableText";
+import type { RichTextSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "../edit";
+import { T3Index } from "../ui";
 
+/** Long-form text: sticky title on the left, prose on the right (first paragraph as a serif lede). */
 export default function T3RichText({
   section,
   sectionIndex,
-  label = "About",
+  n,
 }: {
-  section: RichTextSectionType;
+  section: RichTextSection;
   sectionIndex?: number;
-  label?: string;
+  n?: number;
 }) {
-  const editor = useInlineEditor();
+  const { enabled, set } = useSectionEditor(section, sectionIndex);
   const title = section.title || "";
-  const body = section.body || `<p>${getLoremParagraph()}</p>`;
+  const body =
+    section.body ||
+    "<p>Write a clear, benefit-focused description of what you do, who you help, and what outcomes people can expect.</p>";
 
   return (
     <section className="t3-section">
-      <div className="t3-container">
-        <span className="t3-eyebrow">{label}</span>
-        {title || editor?.enabled ? (
-          <EditableText
-            as="h2"
-            className="t3-section-title"
-            value={title}
-            placeholder="Section title"
-            onCommit={(next) => {
-              if (!editor || sectionIndex == null) return;
-              editor.updateSection(sectionIndex, { ...section, title: next });
-            }}
-          />
-        ) : null}
+      <div className="t3-container t3-split">
+        <div className="t3-sticky t3-reveal">
+          <T3Index n={n} label="Story" />
+          {title || enabled ? (
+            <EditableText
+              as="h2"
+              className="t3-title"
+              value={title}
+              placeholder="Section title"
+              style={{ marginTop: 20 }}
+              onCommit={(next) => set({ title: next })}
+            />
+          ) : null}
+        </div>
 
-        <div
-          className="t3-card"
-          style={{ marginTop: 16, padding: 22, background: "rgba(255,255,255,0.75)" }}
-        >
-          <EditableHtml
-            html={body}
-            onCommit={(nextHtml) => {
-              if (!editor || sectionIndex == null) return;
-              editor.updateSection(sectionIndex, { ...section, body: nextHtml });
-            }}
-            className="t3-muted"
-          />
+        <div className="t3-prose t3-reveal">
+          <EditableHtml html={body} onCommit={(nextHtml) => set({ body: nextHtml })} />
         </div>
       </div>
     </section>
   );
 }
-

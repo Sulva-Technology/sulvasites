@@ -1,15 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-import Template1 from "@/templates/template1/Template1";
-import Template2 from "@/templates/template2/Template2";
-import Template3 from "@/templates/template3/Template3";
-import Template4 from "@/templates/template4/Template4";
-import Template5 from "@/templates/template5/Template5";
-import Template6 from "@/templates/template6/Template6";
+import { getTemplate, TEMPLATE_KEYS } from "@/templates/registry";
 import ColorPaletteSidebar from "@/components/admin/ColorPaletteSidebar";
 import { InlineEditorProvider } from "@/components/inline-editor/InlineEditorContext";
 import { resolveSiteById } from "@/lib/siteResolver";
@@ -109,27 +104,9 @@ function applyBrandColors(
   }
 
   if (templateKey === "t3") {
+    // Redesigned template: text/background/lines are derived in CSS from these via color-mix().
     root.style.setProperty("--t3-accent", dominant);
     root.style.setProperty("--t3-accent2", accent);
-    root.style.setProperty("--t3-accent-rgb", `${hexToRgb(dominant).r} ${hexToRgb(dominant).g} ${hexToRgb(dominant).b}`);
-    root.style.setProperty("--t3-accent2-rgb", `${hexToRgb(accent).r} ${hexToRgb(accent).g} ${hexToRgb(accent).b}`);
-    root.style.setProperty("--t3-ring", hexToRgba(dominant, 0.18));
-    
-    // Derive text colors
-    const dominantRgb = hexToRgb(dominant);
-    const dominantLuma = 0.2126 * dominantRgb.r + 0.7152 * dominantRgb.g + 0.0722 * dominantRgb.b;
-    if (dominantLuma > 128) {
-      root.style.setProperty("--t3-ink", "#121212");
-      root.style.setProperty("--t3-muted", "#5a615b");
-    } else {
-      root.style.setProperty("--t3-ink", "#F8FAFC");
-      root.style.setProperty("--t3-muted", "#CBD5E1");
-    }
-    
-    // Keep backgrounds neutral
-    root.style.setProperty("--t3-bg", "#fbfaf7");
-    root.style.setProperty("--t3-surface", "#ffffff");
-    root.style.setProperty("--t3-border", hexToRgba(dominant, 0.12));
   }
 
   if (templateKey === "t4") {
@@ -175,19 +152,9 @@ function applyBrandColors(
   }
 
   if (templateKey === "t6") {
+    // Redesigned template: text/background/lines are derived in CSS from these via color-mix().
     root.style.setProperty("--t6-accent", dominant);
     root.style.setProperty("--t6-accent2", accent);
-    root.style.setProperty("--t6-accent-rgb", `${hexToRgb(dominant).r} ${hexToRgb(dominant).g} ${hexToRgb(dominant).b}`);
-    root.style.setProperty("--t6-accent2-rgb", `${hexToRgb(accent).r} ${hexToRgb(accent).g} ${hexToRgb(accent).b}`);
-    root.style.setProperty("--t6-ring", hexToRgba(dominant, 0.22));
-
-    // Template6 is dark theme - keep light text
-    root.style.setProperty("--t6-ink", "rgba(255, 255, 255, 0.92)");
-    root.style.setProperty("--t6-muted", "rgba(255, 255, 255, 0.66)");
-
-    root.style.setProperty("--t6-bg", "#070a12");
-    root.style.setProperty("--t6-surface", hexToRgba(dominant, 0.06));
-    root.style.setProperty("--t6-border", hexToRgba(dominant, 0.12));
   }
 }
 
@@ -468,6 +435,36 @@ export default function SitePreviewPage() {
         </div>
       </div>
     );
+  }
+
+  const Template = getTemplate(siteData.site.template_key);
+
+  async function saveThemeColors(templateKey: string, colors: ThemeSemanticColors) {
+    const supabase = await getAuthenticatedClient();
+    const { data } = await supabase
+      .from("business_profiles")
+      .select("theme_colors")
+      .eq("site_id", siteId)
+      .single();
+
+    const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
+    const nextTheme: Record<string, unknown> =
+      existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
+
+    nextTheme[templateKey] = colors;
+
+    const { error: upErr } = await supabase
+      .from("business_profiles")
+      .update({ theme_colors: nextTheme })
+      .eq("site_id", siteId);
+
+    if (upErr) {
+      const msg = formatSupabaseError(upErr) ?? "";
+      if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
+        throw new Error('Missing DB column "business_profiles.theme_colors". Run supabase/migrations/003_add_theme_colors_column.sql in Supabase.');
+      }
+      throw new Error(msg || "Failed to save colors.");
+    }
   }
 
   return (
@@ -887,253 +884,35 @@ export default function SitePreviewPage() {
             },
           }}
         >
-          {siteData.site.template_key === "t1" && (
-            <>
-              <Template1
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              <ColorPaletteSidebar
-                isOpen={colorPaletteOpen}
-                onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
-                templateKey="t1"
-                initialColors={initialPaletteColors}
-                getTargetRoot={getPreviewRoot}
-                onSaveColors={async (colors) => {
-                  const supabase = await getAuthenticatedClient();
-                  const { data } = await supabase
-                    .from("business_profiles")
-                    .select("theme_colors")
-                    .eq("site_id", siteId)
-                    .single();
-
-                  const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
-                  const nextTheme: Record<string, unknown> =
-                    existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
-
-                  nextTheme["t1"] = colors;
-
-                  const { error: upErr } = await supabase
-                    .from("business_profiles")
-                    .update({ theme_colors: nextTheme })
-                    .eq("site_id", siteId);
-
-                  if (upErr) {
-                    const msg = formatSupabaseError(upErr) ?? "";
-                    if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
-                      throw new Error('Missing DB column "business_profiles.theme_colors". Run ADD_THEME_COLORS_COLUMN.sql in Supabase.');
-                    }
-                    throw new Error(msg || "Failed to save colors.");
-                  }
-                }}
-              />
-            </>
-          )}
-          {siteData.site.template_key === "t2" && (
-            <>
-              <Template2
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              {/* Template2 uses Tailwind CSS, color palette not applicable */}
-            </>
-          )}
-          {siteData.site.template_key === "t3" && (
-            <>
-              <Template3
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              <ColorPaletteSidebar
-                isOpen={colorPaletteOpen}
-                onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
-                templateKey="t3"
-                initialColors={initialPaletteColors}
-                getTargetRoot={getPreviewRoot}
-                onSaveColors={async (colors) => {
-                  const supabase = await getAuthenticatedClient();
-                  const { data } = await supabase
-                    .from("business_profiles")
-                    .select("theme_colors")
-                    .eq("site_id", siteId)
-                    .single();
-
-                  const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
-                  const nextTheme: Record<string, unknown> =
-                    existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
-
-                  nextTheme["t3"] = colors;
-
-                  const { error: upErr } = await supabase
-                    .from("business_profiles")
-                    .update({ theme_colors: nextTheme })
-                    .eq("site_id", siteId);
-
-                  if (upErr) {
-                    const msg = formatSupabaseError(upErr) ?? "";
-                    if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
-                      throw new Error('Missing DB column "business_profiles.theme_colors". Run ADD_THEME_COLORS_COLUMN.sql in Supabase.');
-                    }
-                    throw new Error(msg || "Failed to save colors.");
-                  }
-                }}
-              />
-            </>
-          )}
-          {siteData.site.template_key === "t4" && (
-            <>
-              <Template4
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              <ColorPaletteSidebar
-                isOpen={colorPaletteOpen}
-                onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
-                templateKey="t4"
-                initialColors={initialPaletteColors}
-                getTargetRoot={getPreviewRoot}
-                onSaveColors={async (colors) => {
-                  const supabase = await getAuthenticatedClient();
-                  const { data } = await supabase
-                    .from("business_profiles")
-                    .select("theme_colors")
-                    .eq("site_id", siteId)
-                    .single();
-
-                  const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
-                  const nextTheme: Record<string, unknown> =
-                    existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
-
-                  nextTheme["t4"] = colors;
-
-                  const { error: upErr } = await supabase
-                    .from("business_profiles")
-                    .update({ theme_colors: nextTheme })
-                    .eq("site_id", siteId);
-
-                  if (upErr) {
-                    const msg = formatSupabaseError(upErr) ?? "";
-                    if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
-                      throw new Error('Missing DB column "business_profiles.theme_colors". Run ADD_THEME_COLORS_COLUMN.sql in Supabase.');
-                    }
-                    throw new Error(msg || "Failed to save colors.");
-                  }
-                }}
-              />
-            </>
-          )}
-          {siteData.site.template_key === "t5" && (
-            <>
-              <Template5
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              <ColorPaletteSidebar
-                isOpen={colorPaletteOpen}
-                onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
-                templateKey="t5"
-                initialColors={initialPaletteColors}
-                getTargetRoot={getPreviewRoot}
-                onSaveColors={async (colors) => {
-                  const supabase = await getAuthenticatedClient();
-                  const { data } = await supabase
-                    .from("business_profiles")
-                    .select("theme_colors")
-                    .eq("site_id", siteId)
-                    .single();
-
-                  const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
-                  const nextTheme: Record<string, unknown> =
-                    existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
-
-                  nextTheme["t5"] = colors;
-
-                  const { error: upErr } = await supabase
-                    .from("business_profiles")
-                    .update({ theme_colors: nextTheme })
-                    .eq("site_id", siteId);
-
-                  if (upErr) {
-                    const msg = formatSupabaseError(upErr) ?? "";
-                    if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
-                      throw new Error('Missing DB column "business_profiles.theme_colors". Run ADD_THEME_COLORS_COLUMN.sql in Supabase.');
-                    }
-                    throw new Error(msg || "Failed to save colors.");
-                  }
-                }}
-              />
-            </>
-          )}
-          {siteData.site.template_key === "t6" && (
-            <>
-              <Template6
-                site={siteData.site}
-                profile={siteData.profile}
-                pages={siteData.pages}
-                currentPage={currentPage}
-                baseUrl=""
-              />
-              <ColorPaletteSidebar
-                isOpen={colorPaletteOpen}
-                onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
-                templateKey="t6"
-                initialColors={initialPaletteColors}
-                getTargetRoot={getPreviewRoot}
-                onSaveColors={async (colors) => {
-                  const supabase = await getAuthenticatedClient();
-                  const { data } = await supabase
-                    .from("business_profiles")
-                    .select("theme_colors")
-                    .eq("site_id", siteId)
-                    .single();
-
-                  const existing = (data as { theme_colors?: unknown } | null)?.theme_colors;
-                  const nextTheme: Record<string, unknown> =
-                    existing && typeof existing === "object" ? { ...(existing as Record<string, unknown>) } : {};
-
-                  nextTheme["t6"] = colors;
-
-                  const { error: upErr } = await supabase
-                    .from("business_profiles")
-                    .update({ theme_colors: nextTheme })
-                    .eq("site_id", siteId);
-
-                  if (upErr) {
-                    const msg = formatSupabaseError(upErr) ?? "";
-                    if (msg.toLowerCase().includes("theme_colors") && msg.toLowerCase().includes("does not exist")) {
-                      throw new Error('Missing DB column "business_profiles.theme_colors". Run ADD_THEME_COLORS_COLUMN.sql in Supabase.');
-                    }
-                    throw new Error(msg || "Failed to save colors.");
-                  }
-                }}
-              />
-            </>
+          {Template &&
+            createElement(Template, {
+              site: siteData.site,
+              profile: siteData.profile,
+              pages: siteData.pages,
+              currentPage,
+              baseUrl: "",
+            })}
+          {/* Template2 uses Tailwind CSS, color palette not applicable */}
+          {Template && siteData.site.template_key !== "t2" && (
+            <ColorPaletteSidebar
+              isOpen={colorPaletteOpen}
+              onClose={() => setColorPaletteOpen(!colorPaletteOpen)}
+              templateKey={siteData.site.template_key}
+              initialColors={initialPaletteColors}
+              getTargetRoot={getPreviewRoot}
+              onSaveColors={(colors) => saveThemeColors(siteData.site.template_key, colors)}
+            />
           )}
         </InlineEditorProvider>
       </div>
-      {!["t1", "t2", "t3", "t4", "t5", "t6"].includes(siteData.site.template_key) && (
+      {!Template && (
         <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>
             <p style={{ fontSize: "18px", fontWeight: "600", color: "#1F2937" }}>
               Template {siteData.site.template_key.toUpperCase()} not yet implemented
             </p>
             <p style={{ marginTop: "8px", fontSize: "14px", color: "#6B7280" }}>
-              Only Template1 (t1), Template2 (t2), Template3 (t3), Template4 (t4), Template5 (t5), and Template6 (t6) are currently available.
+              Available templates: {TEMPLATE_KEYS.join(", ")}.
             </p>
           </div>
         </div>

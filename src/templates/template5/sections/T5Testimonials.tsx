@@ -1,137 +1,66 @@
 "use client";
 
-import type { TestimonialsSection as TestimonialsSectionType } from "@/lib/pageSchema";
-import { getLoremHeadline, getLoremParagraph } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useEffect, useState } from "react";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import type { TestimonialsSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "A";
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
-  return `${first}${last}`.toUpperCase();
-}
+const FALLBACK_QUOTE = "I have never felt so beautiful. My makeup lasted from the ceremony to the very last dance.";
 
-export default function T5Testimonials({
-  section,
-  sectionIndex,
-}: {
-  section: TestimonialsSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || getLoremHeadline();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { name: "Alex Morgan", role: "Client", quote: getLoremParagraph(), company: "" },
-          { name: "Sam Lee", role: "Operations", quote: getLoremParagraph(), company: "" },
-          { name: "Jordan Patel", role: "Founder", quote: getLoremParagraph(), company: "" },
-        ];
-
-  const filled = items.map((t) => ({
-    name: t.name || "Customer Name",
-    role: t.role || "Role",
-    quote: t.quote || getLoremParagraph(),
+/** One large italic quote at a time on a dark band; auto-advances (not while editing). */
+export default function T5Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const [active, setActive] = useState(0);
+  const title = section.title || "Kind words";
+  const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
+    name: t.name || "Happy client",
+    role: t.role || "Bride",
+    quote: t.quote || FALLBACK_QUOTE,
     company: t.company || "",
   }));
 
+  useEffect(() => {
+    if (enabled || items.length < 2) return;
+    const t = window.setInterval(() => setActive((v) => (v + 1) % items.length), 7000);
+    return () => window.clearInterval(t);
+  }, [enabled, items.length]);
+
   return (
-    <section className="t5-section">
+    <section className="t5-section t5-dark">
       <div className="t5-container">
-        <span className="t5-eyebrow">Testimonials</span>
-        <EditableText
-          as="h2"
-          className="t5-title"
-          value={title}
-          placeholder="Testimonials title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-
-        <div className="t5-bento" style={{ marginTop: 18 }}>
-          {filled.map((t, idx) => (
-            <div key={`${t.name}-${idx}`} className="t5-card t5-item" style={{ gridColumn: "span 4", padding: 18 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div
-                  className="t5-chip"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 16,
-                    background: "rgb(var(--t5-accent-rgb) / 0.10)",
-                    borderColor: "rgb(var(--t5-accent-rgb) / 0.20)",
-                    color: "var(--t5-accent)",
-                  }}
-                >
-                  <span style={{ fontWeight: 900 }}>{initials(t.name)}</span>
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <EditableText
-                    as="div"
-                    value={t.name}
-                    placeholder="Name"
-                    style={{ fontWeight: 900 }}
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], name: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                  />
-                  <div style={{ color: "var(--t5-muted)", fontSize: 13, fontWeight: 800 }}>
-                    <EditableText
-                      as="span"
-                      value={t.role}
-                      placeholder="Role"
-                      onCommit={(next) => {
-                        if (!editor || sectionIndex == null) return;
-                        const nextItems = filled.map((x) => ({ ...x }));
-                        nextItems[idx] = { ...nextItems[idx], role: next };
-                        editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                      }}
-                    />
-                    {t.company ? (
-                      <>
-                        {" · "}
-                        <EditableText
-                          as="span"
-                          value={t.company}
-                          placeholder="Company"
-                          onCommit={(next) => {
-                            if (!editor || sectionIndex == null) return;
-                            const nextItems = filled.map((x) => ({ ...x }));
-                            nextItems[idx] = { ...nextItems[idx], company: next };
-                            editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                          }}
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <EditableText
-                as="p"
-                value={t.quote}
-                placeholder="Quote"
-                multiline
-                style={{ marginTop: 12 }}
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], quote: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
+        <div className="t5-quote-wrap t5-reveal">
+          <EditableText as="span" className="t5-eyebrow" value={title} placeholder="Kind words" onCommit={(next) => set({ title: next })} />
+          <span className="t5-quote-mark" aria-hidden="true" style={{ marginTop: 28 }}>
+            “
+          </span>
+          <div className="t5-quote-slide" aria-live="polite">
+            {items.map((t, idx) => (
+              <figure key={idx} data-active={idx === active} style={{ margin: 0 }}>
+                <EditableText
+                  as="blockquote"
+                  value={t.quote}
+                  placeholder="Quote"
+                  multiline
+                  onCommit={(next) => setItem("items", items, idx, { quote: next })}
+                />
+                <figcaption className="t5-quote-by">
+                  <EditableText as="span" value={t.name} placeholder="Name" onCommit={(next) => setItem("items", items, idx, { name: next })} />
+                  {" — "}
+                  <EditableText as="span" value={t.role} placeholder="Role" onCommit={(next) => setItem("items", items, idx, { role: next })} />
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          {items.length > 1 ? (
+            <div className="t5-dots">
+              {items.map((_, idx) => (
+                <button key={idx} type="button" aria-label={`Show review ${idx + 1}`} aria-current={idx === active} onClick={() => setActive(idx)} />
+              ))}
             </div>
-          ))}
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
-

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { validatePageData } from "@/lib/pageSchema";
+import { rateLimit, requireAdmin } from "@/lib/supabase/requireAdmin.server";
+
+const MAX_BRIEF_CHARS = 8000;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
@@ -32,11 +35,23 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
+  const limited = rateLimit(`ai:${auth.userId}`, { limit: 10, windowMs: 10 * 60 * 1000 });
+  if (limited) return limited;
+
   try {
     const body = (await req.json()) as { brief?: string };
     const brief = (body.brief ?? "").trim();
     if (!brief) {
       return NextResponse.json({ error: "Missing 'brief'." }, { status: 400 });
+    }
+    if (brief.length > MAX_BRIEF_CHARS) {
+      return NextResponse.json(
+        { error: `Brief too long (max ${MAX_BRIEF_CHARS} characters).` },
+        { status: 400 },
+      );
     }
 
     const apiKey = process.env.GROQ_API_KEY;

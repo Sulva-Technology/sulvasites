@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { createPresetPages } from "@/lib/extraPages";
 import { slugify } from "@/lib/slugify";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
@@ -56,6 +57,14 @@ export default function NewSitePage() {
         }
         setError(msg);
         return;
+      }
+
+      // Seed the template's recommended pages (drafts). Non-fatal: they can be
+      // added later from the site page if this fails (e.g. extra_pages missing).
+      try {
+        await createPresetPages(data.id, templateKey, []);
+      } catch (seedErr) {
+        console.warn("Could not create recommended pages:", seedErr);
       }
 
       router.replace(`/admin/sites/${data.id}`);

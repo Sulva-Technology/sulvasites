@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { buildEmailLink, buildTelLink } from "@/templates/template2/utils";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import type { NavPage } from "@/templates/registry";
+import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
+
+const SOCIALS: Array<[key: string, label: string]> = [
+  ["instagram", "Instagram"],
+  ["facebook", "Facebook"],
+  ["twitter", "X / Twitter"],
+  ["tiktok", "TikTok"],
+];
 
 export default function T3Footer({
   businessName,
@@ -13,6 +22,7 @@ export default function T3Footer({
   email,
   socials,
   baseUrl,
+  navPages = [],
 }: {
   businessName: string;
   tagline: string | null;
@@ -21,76 +31,68 @@ export default function T3Footer({
   email: string | null;
   socials: Record<string, string>;
   baseUrl: string;
+  navPages?: NavPage[];
 }) {
   const editor = useInlineEditor();
-  
-  // Get footer labels from socials (or use defaults)
-  const footerLabels = (() => {
-    const raw = (socials as Record<string, unknown>).footer_labels;
-    if (raw && typeof raw === "object") return raw as Record<string, string>;
-    return {} as Record<string, string>;
-  })();
-  const pagesLabel = footerLabels.pages || "Pages";
+  const navLabels = ((socials as Record<string, unknown>).nav_labels as Record<string, string>) || {};
+  const footerLabels = ((socials as Record<string, unknown>).footer_labels as Record<string, string>) || {};
   const contactLabel = footerLabels.contact || "Contact";
+  const activeSocials = SOCIALS.filter(([k]) => typeof socials[k] === "string" && socials[k]);
+
   return (
     <footer className="t3-footer">
       <div className="t3-container">
         <div className="t3-footer-grid">
           <div>
-            <h4>{businessName}</h4>
-            {tagline ? (
-              <p className="t3-muted" style={{ marginTop: 10, lineHeight: 1.7 }}>
-                <EditableText
-                  value={tagline}
-                  placeholder="Tagline (optional)"
-                  multiline
-                  onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
-                />
-              </p>
-            ) : editor?.enabled ? (
-              <p className="t3-muted" style={{ marginTop: 10, lineHeight: 1.7 }}>
-                <EditableText
-                  value=""
-                  placeholder="Tagline (optional)"
-                  multiline
-                  onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
-                />
-              </p>
-            ) : null}
+            {tagline || editor?.enabled ? (
+              <EditableText
+                as="p"
+                className="t3-footer-tagline"
+                value={tagline || ""}
+                placeholder="Tagline (optional)"
+                multiline
+                onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
+              />
+            ) : (
+              <p className="t3-footer-tagline">Let&apos;s make something worth remembering.</p>
+            )}
           </div>
+
           <div>
-            <h4>Pages</h4>
-            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-              <Link href={`${baseUrl}/`}>Home</Link>
-              <Link href={`${baseUrl}/about`}>About</Link>
-              <Link href={`${baseUrl}/contact`}>Contact</Link>
+            <h4 className="t3-index">Pages</h4>
+            <div className="t3-footer-links">
+              <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
+              <Link href={`${baseUrl}/about`}>{navLabels.about || "About"}</Link>
+              {navPages.map((p) => (
+                <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                  {p.label}
+                </Link>
+              ))}
+              <Link href={`${baseUrl}/contact`}>{navLabels.contact || "Contact"}</Link>
             </div>
           </div>
+
           <div>
-            <h4>
+            <h4 className="t3-index">
               <EditableText
                 value={contactLabel}
-                onCommit={(next) => {
-                  const updatedSocials = {
+                onCommit={(next) =>
+                  editor?.updateProfileField?.("socials", {
                     ...socials,
-                    footer_labels: {
-                      ...footerLabels,
-                      contact: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
+                    footer_labels: { ...footerLabels, contact: next },
+                  })
+                }
               />
             </h4>
-            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-              {address ? (
-                <span className="t3-muted">
+            <div className="t3-footer-links">
+              {email ? (
+                <a href={buildEmailLink(email)}>
                   <EditableText
-                    value={address}
-                    onCommit={(next) => editor?.updateProfileField?.("address", next)}
-                    multiline
+                    value={email}
+                    onCommit={(next) => editor?.updateProfileField?.("email", next)}
+                    style={{ display: "inline" }}
                   />
-                </span>
+                </a>
               ) : null}
               {phone ? (
                 <a href={buildTelLink(phone)}>
@@ -101,44 +103,50 @@ export default function T3Footer({
                   />
                 </a>
               ) : null}
-              {email ? (
-                <a href={buildEmailLink(email)}>
+              {address ? (
+                <span className="t3-muted">
                   <EditableText
-                    value={email}
-                    onCommit={(next) => editor?.updateProfileField?.("email", next)}
-                    style={{ display: "inline" }}
+                    value={address}
+                    multiline
+                    onCommit={(next) => editor?.updateProfileField?.("address", next)}
                   />
-                </a>
-              ) : null}
-              {(socials.instagram || socials.facebook || socials.twitter || socials.tiktok) ? (
-                <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
-                  {socials.instagram ? <a href={socials.instagram} target="_blank" rel="noreferrer">Instagram</a> : null}
-                  {socials.facebook ? <a href={socials.facebook} target="_blank" rel="noreferrer">Facebook</a> : null}
-                  {socials.twitter ? <a href={socials.twitter} target="_blank" rel="noreferrer">Twitter</a> : null}
-                  {socials.tiktok ? <a href={socials.tiktok} target="_blank" rel="noreferrer">TikTok</a> : null}
-                </div>
+                </span>
               ) : null}
             </div>
           </div>
+
+          {activeSocials.length ? (
+            <div>
+              <h4 className="t3-index">Follow</h4>
+              <div className="t3-footer-links">
+                {activeSocials.map(([k, label]) => (
+                  <a key={k} href={socials[k]} target="_blank" rel="noreferrer">
+                    {label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        <div style={{ marginTop: 28, borderTop: "1px solid rgba(18,18,18,0.12)", paddingTop: 16 }}>
-          <div className="t3-muted" style={{ fontSize: 12 }}>
-            © {new Date().getFullYear()}{" "}
-            <EditableText
-              value={businessName}
-              onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-              style={{ display: "inline" }}
-            />
-            . All rights reserved. Developed by{" "}
-            <a href="https://soothetechnologies.com" target="_blank" rel="noreferrer">
-              soothetechnologies
+        <div className="t3-wordmark" aria-hidden="true">
+          {businessName}
+        </div>
+      </div>
+
+      <div className="t3-footer-bar">
+        <div className="t3-container" style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <span className="t3-muted">
+            © {new Date().getFullYear()} {businessName}. Developed by{" "}
+            <a href="https://sulvatech.com" target="_blank" rel="noreferrer">
+              Sulvatech
             </a>
-            .
-          </div>
+          </span>
+          <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+            Back to top ↑
+          </a>
         </div>
       </div>
     </footer>
   );
 }
-

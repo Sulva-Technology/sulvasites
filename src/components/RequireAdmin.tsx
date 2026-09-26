@@ -94,7 +94,7 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
         </div>
         <div className="text-xs">
           Fix: add this UUID to <code className="font-mono">admin_users</code>{" "}
-          in Supabase SQL Editor (see <code className="font-mono">ADD_CURRENT_USER_AS_ADMIN.sql</code>).
+          in Supabase SQL Editor (see <code className="font-mono">supabase/admin/add_current_user_as_admin.sql</code>).
         </div>
       </div>
     );

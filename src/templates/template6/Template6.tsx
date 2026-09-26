@@ -1,47 +1,38 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import type { PageData, PageKey } from "@/lib/pageSchema";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
+
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { getPublicAssetUrl } from "@/lib/assets";
-import "./template6.css";
+import type { PageData, PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
-
-import T6Header from "./components/T6Header";
+import type { TemplateProps } from "@/templates/registry";
+import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import T6Footer from "./components/T6Footer";
-import T6HomePage from "./pages/T6HomePage";
-import T6AboutPage from "./pages/T6AboutPage";
-import T6ContactPage from "./pages/T6ContactPage";
+import T6Header from "./components/T6Header";
+import { T6Provider } from "./ctx";
+import T6Sections from "./sections/T6Sections";
+import "./template6.css";
 
-interface Template6Props {
-  site: {
-    id: string;
-    slug: string;
-    template_key: string;
-  };
-  profile: {
-    business_name: string;
-    tagline: string | null;
-    description: string | null;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    whatsapp: string | null;
-    socials: Record<string, unknown> | null;
-    brand_colors?: Record<string, unknown> | null;
-    theme_colors?: Record<string, unknown> | null;
-    logo_asset_id: string | null;
-    logo_path?: string | null;
-  };
-  pages: {
-    home: PageData;
-    about: PageData;
-    contact: PageData;
-  };
-  currentPage?: PageKey | null;
-  baseUrl?: string;
-  pageOverride?: PageData;
+function galleryPhotos(pages: PageData[]) {
+  const seen = new Set<string>();
+  const out: Array<{ url: string; alt: string }> = [];
+  for (const page of pages) {
+    for (const s of page.sections ?? []) {
+      if (s?.type !== "gallery") continue;
+      for (const img of s.images ?? []) {
+        const url = img.url?.trim();
+        if (url && !seen.has(url)) {
+          seen.add(url);
+          out.push({ url, alt: img.alt || "" });
+        }
+      }
+    }
+  }
+  return out;
 }
 
+/** Template 6 — "Estate": real estate. */
 export default function Template6({
   site,
   profile,
@@ -49,44 +40,60 @@ export default function Template6({
   currentPage = "home",
   baseUrl = "",
   pageOverride,
-}: Template6Props) {
-  const logoUrl = profile.logo_path ? getPublicAssetUrl(profile.logo_path) : null;
-  const socials = (profile.socials || {}) as Record<string, string>;
+  navPages = [],
+  currentExtraKey = null,
+}: TemplateProps) {
+  const editor = useInlineEditor();
+  const rootRef = useRef<HTMLDivElement>(null);
 
+  const logoUrl = profile.logo_path ? getPublicAssetUrl(profile.logo_path) : null;
   const effectivePage: PageKey = pageOverride ? "home" : (currentPage ?? "home");
   const navPage: PageKey | null = pageOverride ? null : (currentPage ?? "home");
-  const currentPageData = pageOverride ?? pages[effectivePage];
-  const themeStyle = buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined;
+  const pageData = pageOverride ?? pages[effectivePage];
+  // Drop legacy text/background overrides that would be unreadable on this design.
+  const themeStyle = sanitizeThemeStyle(
+    buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined,
+    "t6",
+  );
+  const motion = !editor?.enabled;
+
+  const photos = useMemo(
+    () => galleryPhotos([pageData, pages.home, pages.about, pages.contact]),
+    [pageData, pages],
+  );
+  const ctx = useMemo(() => ({ baseUrl, navPages, photos, profile }), [baseUrl, navPages, photos, profile]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !motion || typeof IntersectionObserver === "undefined") return;
+    root.dataset.motion = "on";
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).dataset.visible = "true";
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    root.querySelectorAll(".t6-reveal").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      delete root.dataset.motion;
+    };
+  }, [motion, pageData]);
 
   return (
-    <div className="template6" data-site-slug={site.slug} data-template-key={site.template_key} style={themeStyle}>
-      <T6Header
-        businessName={profile.business_name}
-        logoUrl={logoUrl}
-        currentPage={navPage}
-        baseUrl={baseUrl}
-      />
-
-      {effectivePage === "home" && (
-        <T6HomePage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "about" && (
-        <T6AboutPage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "contact" && (
-        <T6ContactPage pageData={currentPageData} profile={profile} />
-      )}
-
-      <T6Footer
-        businessName={profile.business_name}
-        tagline={profile.tagline}
-        address={profile.address}
-        phone={profile.phone}
-        email={profile.email}
-        socials={socials}
-        baseUrl={baseUrl}
-      />
-    </div>
+    <T6Provider value={ctx}>
+      <div ref={rootRef} className="template6" style={themeStyle}>
+        <T6Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
+        <main>
+          <T6Sections pageData={pageData} />
+        </main>
+        <T6Footer logoUrl={logoUrl} />
+      </div>
+    </T6Provider>
   );
 }
-

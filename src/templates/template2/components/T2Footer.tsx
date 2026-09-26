@@ -241,12 +241,12 @@ export default function T2Footer({
             />
             . All rights reserved. Developed by{" "}
             <a
-              href="https://soothetechnologies.com"
+              href="https://sulvatech.com"
               target="_blank"
               rel="noreferrer"
               className="text-gray-600 hover:text-gray-900 underline underline-offset-2"
             >
-              soothetechnologies
+              Sulvatech
             </a>
             .
           </p>

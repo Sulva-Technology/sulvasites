@@ -1,46 +1,19 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import type { PageData, PageKey } from "@/lib/pageSchema";
+import { useEffect, useRef, type CSSProperties } from "react";
+
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { getPublicAssetUrl } from "@/lib/assets";
-import "./template3.css";
-import T3Header from "./components/T3Header";
-import T3Footer from "./components/T3Footer";
-import T3HomePage from "./pages/T3HomePage";
-import T3AboutPage from "./pages/T3AboutPage";
-import T3ContactPage from "./pages/T3ContactPage";
+import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
+import type { TemplateProps } from "@/templates/registry";
+import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import T3Footer from "./components/T3Footer";
+import T3Header from "./components/T3Header";
+import T3Sections from "./sections/T3Sections";
+import "./template3.css";
 
-interface Template3Props {
-  site: {
-    id: string;
-    slug: string;
-    template_key: string;
-  };
-  profile: {
-    business_name: string;
-    tagline: string | null;
-    description: string | null;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    whatsapp: string | null;
-    socials: Record<string, unknown> | null;
-    brand_colors?: Record<string, unknown> | null;
-    theme_colors?: Record<string, unknown> | null;
-    logo_asset_id: string | null;
-    logo_path?: string | null;
-  };
-  pages: {
-    home: PageData;
-    about: PageData;
-    contact: PageData;
-  };
-  currentPage?: PageKey | null;
-  baseUrl?: string;
-  pageOverride?: PageData;
-}
-
+/** Template 3 — "Atelier": portfolio / personal brand. */
 export default function Template3({
   site,
   profile,
@@ -48,33 +21,62 @@ export default function Template3({
   currentPage = "home",
   baseUrl = "",
   pageOverride,
-}: Template3Props) {
+  navPages = [],
+  currentExtraKey = null,
+}: TemplateProps) {
+  const editor = useInlineEditor();
+  const rootRef = useRef<HTMLDivElement>(null);
+
   const logoUrl = profile.logo_path ? getPublicAssetUrl(profile.logo_path) : null;
   const socials = (profile.socials || {}) as Record<string, string>;
-  const effectivePage: PageKey = (pageOverride ? "home" : (currentPage ?? "home"));
+  const effectivePage: PageKey = pageOverride ? "home" : (currentPage ?? "home");
   const navPage: PageKey | null = pageOverride ? null : (currentPage ?? "home");
-  const currentPageData = pageOverride ?? pages[effectivePage];
-  const themeStyle = buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined;
+  const pageData = pageOverride ?? pages[effectivePage];
+  // Drop legacy text/background overrides that would be unreadable on this design.
+  const themeStyle = sanitizeThemeStyle(
+    buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined,
+    "t3",
+  );
+  const motion = !editor?.enabled;
+
+  // Scroll-reveal: mark elements visible as they enter the viewport.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !motion || typeof IntersectionObserver === "undefined") return;
+    root.dataset.motion = "on";
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).dataset.visible = "true";
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    root.querySelectorAll(".t3-reveal").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      delete root.dataset.motion;
+    };
+  }, [motion, pageData]);
 
   return (
-    <div className="template3" style={themeStyle}>
+    <div ref={rootRef} className="template3" style={themeStyle}>
       <T3Header
         businessName={profile.business_name}
         logoUrl={logoUrl}
         currentPage={navPage}
+        currentExtraKey={currentExtraKey}
         baseUrl={baseUrl}
         profile={profile}
+        navPages={navPages}
       />
 
-      {effectivePage === "home" && (
-        <T3HomePage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "about" && (
-        <T3AboutPage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "contact" && (
-        <T3ContactPage pageData={currentPageData} profile={profile} />
-      )}
+      <main>
+        <T3Sections pageData={pageData} profile={profile} />
+      </main>
 
       <T3Footer
         businessName={profile.business_name}
@@ -84,8 +86,8 @@ export default function Template3({
         email={profile.email}
         socials={socials}
         baseUrl={baseUrl}
+        navPages={navPages}
       />
     </div>
   );
 }
-

@@ -1,105 +1,59 @@
 "use client";
 
-import type { ServicesSection as ServicesSectionType } from "@/lib/pageSchema";
-import { getLoremServiceDesc, getLoremServiceTitle } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { ServicesSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
+import { bookHref, useT5 } from "../ctx";
 
-function Icon({ i }: { i: number }) {
-  // Template5: crisp “product” icons (distinct from t3/t4).
-  const idx = i % 4;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      {idx === 0 ? (
-        <>
-          <path d="M4 8h16" strokeLinecap="round" />
-          <path d="M6 8l2 12h8l2-12" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M9 8V6a3 3 0 0 1 6 0v2" strokeLinecap="round" />
-        </>
-      ) : null}
-      {idx === 1 ? (
-        <>
-          <path d="M12 3v6" strokeLinecap="round" />
-          <path d="M12 15v6" strokeLinecap="round" />
-          <path d="M3 12h6" strokeLinecap="round" />
-          <path d="M15 12h6" strokeLinecap="round" />
-          <path d="M12 12l3-3" strokeLinecap="round" />
-          <path d="M12 12l-3 3" strokeLinecap="round" />
-        </>
-      ) : null}
-      {idx === 2 ? (
-        <>
-          <path d="M7 4h10" strokeLinecap="round" />
-          <path d="M6 8h12" strokeLinecap="round" />
-          <path d="M8 8v12h8V8" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M10 12h4" strokeLinecap="round" />
-        </>
-      ) : null}
-      {idx === 3 ? (
-        <>
-          <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" strokeLinejoin="round" />
-        </>
-      ) : null}
-    </svg>
-  );
-}
+const FALLBACK = [
+  { title: "Soft glam", desc: "Radiant skin, soft definition and lashes — polished but still you." },
+  { title: "Bridal", desc: "Trial session plus wedding-day makeup designed to last through every moment." },
+  { title: "Special events", desc: "Photoshoots, parties and red-carpet looks with long-wear finish." },
+  { title: "Brows & lashes", desc: "Shaping, tint and lifts that frame your face beautifully." },
+];
 
-export default function T5Services({
-  section,
-  sectionIndex,
-}: {
-  section: ServicesSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ title: "", desc: "" }, { title: "", desc: "" }, { title: "", desc: "" }];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremServiceTitle(),
-    desc: it.desc || getLoremServiceDesc(),
+/** Services as an elegant price-list style menu with a Book link per item. */
+export default function T5Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const ctx = useT5();
+  const { setItem } = useSectionEditor(section, sectionIndex);
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
   }));
 
   return (
     <section id="services" className="t5-section">
       <div className="t5-container">
-        <span className="t5-eyebrow">Services</span>
-        <h2 className="t5-title">What we deliver</h2>
+        <div className="t5-head t5-center t5-reveal">
+          <span className="t5-eyebrow">The menu</span>
+          <h2 className="t5-title">
+            Services &amp; <em>treatments</em>
+          </h2>
+          <p className="t5-lead">Every appointment begins with a consultation so your look is made for you.</p>
+        </div>
 
-        <div className="t5-bento" style={{ marginTop: 18 }}>
-          {filled.map((s, idx) => (
-            <div
-              key={idx}
-              className="t5-card t5-item"
-              style={{ gridColumn: "span 4", padding: 18 }}
-            >
-              <div className="t5-chip">
-                <Icon i={idx} />
+        <div className="t5-menu t5-reveal">
+          {items.map((s, idx) => (
+            <div key={idx} className="t5-menu-item">
+              <div className="t5-menu-row">
+                <EditableText
+                  as="h3"
+                  className="t5-h3"
+                  value={s.title}
+                  placeholder="Service"
+                  onCommit={(next) => setItem("items", items, idx, { title: next })}
+                />
+                <span className="t5-menu-dots" aria-hidden="true" />
+                <a className="t5-menu-book" href={bookHref(ctx, s.title)}>
+                  Book
+                </a>
               </div>
-              <EditableText
-                as="h3"
-                value={s.title}
-                placeholder="Service title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
               <EditableText
                 as="p"
                 value={s.desc}
-                placeholder="Service description"
+                placeholder="Description"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], desc: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />
             </div>
           ))}
@@ -108,4 +62,3 @@ export default function T5Services({
     </section>
   );
 }
-

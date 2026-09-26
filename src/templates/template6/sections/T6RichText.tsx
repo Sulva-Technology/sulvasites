@@ -1,52 +1,40 @@
 "use client";
 
-import type { RichTextSection as RichTextSectionType } from "@/lib/pageSchema";
-import { getLoremParagraph } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import EditableText from "@/components/inline-editor/EditableText";
 import EditableHtml from "@/components/inline-editor/EditableHtml";
+import EditableText from "@/components/inline-editor/EditableText";
+import type { RichTextSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
 
-export default function T6RichText({
-  section,
-  sectionIndex,
-  label = "About",
-}: {
-  section: RichTextSectionType;
-  sectionIndex?: number;
-  label?: string;
-}) {
-  const editor = useInlineEditor();
+/** Long-form text in a white panel: title left, prose right (lists get check marks). */
+export default function T6RichText({ section, sectionIndex }: { section: RichTextSection; sectionIndex?: number }) {
+  const { enabled, set } = useSectionEditor(section, sectionIndex);
   const title = section.title || "";
-  const body = section.body || `<p>${getLoremParagraph()}</p>`;
+  const body =
+    section.body ||
+    "<p>Tell your story: how the business started, who you serve and what makes your approach different.</p>";
 
   return (
     <section className="t6-section">
       <div className="t6-container">
-        <span className="t6-eyebrow">{label}</span>
-        {(title || editor?.enabled) ? (
-          <EditableText
-            as="h2"
-            className="t6-title"
-            value={title}
-            placeholder="Section title"
-            onCommit={(next) => {
-              if (!editor || sectionIndex == null) return;
-              editor.updateSection(sectionIndex, { ...section, title: next });
-            }}
-          />
-        ) : null}
-        <div className="t6-card t6-prose" style={{ marginTop: 16, padding: 18 }}>
-          <EditableHtml
-            html={body}
-            className=""
-            onCommit={(nextHtml) => {
-              if (!editor || sectionIndex == null) return;
-              editor.updateSection(sectionIndex, { ...section, body: nextHtml });
-            }}
-          />
+        <div className="t6-panel t6-reveal">
+          <div>
+            <span className="t6-kicker">About us</span>
+            {title || enabled ? (
+              <EditableText
+                as="h2"
+                className="t6-h2"
+                value={title}
+                placeholder="Section title"
+                style={{ marginTop: 14 }}
+                onCommit={(next) => set({ title: next })}
+              />
+            ) : null}
+          </div>
+          <div className="t6-prose">
+            <EditableHtml html={body} onCommit={(nextHtml) => set({ body: nextHtml })} />
+          </div>
         </div>
       </div>
     </section>
   );
 }
-

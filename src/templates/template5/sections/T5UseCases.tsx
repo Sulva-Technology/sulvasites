@@ -1,122 +1,82 @@
 "use client";
 
-import type { UseCasesSection as UseCasesSectionType } from "@/lib/pageSchema";
-import { getLoremHeadline, getLoremParagraph, getLoremShortText } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { UseCasesSection } from "@/lib/pageSchema";
+import { toRoman, useSectionEditor } from "@/templates/shared/edit";
+import { bookHref, useT5 } from "../ctx";
 
-export default function T5UseCases({
-  section,
-  sectionIndex,
-}: {
-  section: UseCasesSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || "Use cases";
-  const description = section.description || getLoremParagraph();
+const FALLBACK: UseCasesSection["items"] = [
+  { title: "The Everyday", description: "A fresh, natural look for dinners, meetings and moments you want to feel your best." },
+  { title: "The Bride", description: "Consultation, trial and wedding-day glam — plus touch-up kit to take with you." },
+  { title: "The Party", description: "Glam for you and your group, at the studio or on location." },
+];
 
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-          { title: "", description: "", linkText: "Learn more", linkHref: "#" },
-        ];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremHeadline(),
-    description: it.description || getLoremShortText(),
-    linkText: it.linkText || "Learn more",
-    linkHref: it.linkHref || "#",
+/** Use cases as arched "package" cards; the middle one is highlighted. */
+export default function T5UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const ctx = useT5();
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Signature packages";
+  const description = section.description || "";
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    ...it,
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    description: it.description || FALLBACK[i % FALLBACK.length].description,
   }));
+  const highlight = items.length >= 3 ? 1 : -1;
 
   return (
-    <section className="t5-section">
+    <section className="t5-section t5-blush">
       <div className="t5-container">
-        <span className="t5-eyebrow">Use cases</span>
-        <EditableText
-          as="h2"
-          className="t5-title"
-          value={title}
-          placeholder="Use cases title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-        <EditableText
-          as="p"
-          className="t5-sub"
-          value={description}
-          placeholder="Use cases description"
-          multiline
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, description: next });
-          }}
-        />
+        <div className="t5-head t5-center t5-reveal">
+          <span className="t5-eyebrow">Packages</span>
+          <EditableText as="h2" className="t5-title" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
+          {description || enabled ? (
+            <EditableText
+              as="p"
+              className="t5-lead"
+              value={description}
+              placeholder="Short intro (optional)"
+              multiline
+              onCommit={(next) => set({ description: next })}
+            />
+          ) : null}
+        </div>
 
-        <div className="t5-bento" style={{ marginTop: 18 }}>
-          {filled.map((it, idx) => (
-            <div key={idx} className="t5-card t5-item" style={{ gridColumn: "span 6", padding: 18 }}>
-              <div className="t5-chip">
-                <span style={{ fontWeight: 900 }}>{idx + 1}</span>
-              </div>
+        <div className="t5-packages">
+          {items.map((it, idx) => (
+            <article key={idx} className="t5-package t5-reveal" data-highlight={idx === highlight}>
+              {idx === highlight ? <span className="t5-package-tag">Most loved</span> : null}
+              <span className="t5-package-num">{toRoman(idx + 1)}.</span>
               <EditableText
                 as="h3"
+                className="t5-h3"
                 value={it.title}
-                placeholder="Item title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                placeholder="Package name"
+                onCommit={(next) => setItem("items", items, idx, { title: next })}
               />
               <EditableText
                 as="p"
+                className="t5-muted"
                 value={it.description}
-                placeholder="Item description"
+                placeholder="What's included"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], description: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { description: next })}
               />
               <a
-                href={it.linkHref}
-                style={{
-                  marginTop: 12,
-                  display: "inline-flex",
-                  gap: 8,
-                  alignItems: "center",
-                  color: "var(--t5-ink)",
-                  textDecoration: "none",
-                  fontWeight: 900,
-                }}
+                className={idx === highlight ? "t5-btn t5-btn-rose" : "t5-btn t5-btn-ghost"}
+                href={it.linkHref || bookHref(ctx, it.title)}
               >
                 <EditableText
                   as="span"
-                  value={it.linkText}
-                  placeholder="Link text"
-                  onCommit={(next) => {
-                    if (!editor || sectionIndex == null) return;
-                    const nextItems = filled.map((x) => ({ ...x }));
-                    nextItems[idx] = { ...nextItems[idx], linkText: next };
-                    editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                  }}
+                  value={it.linkText || "Book this"}
+                  placeholder="Button"
+                  onCommit={(next) => setItem("items", items, idx, { linkText: next })}
                 />
-                <span aria-hidden="true">→</span>
               </a>
-            </div>
+            </article>
           ))}
         </div>
       </div>
     </section>
   );
 }
-

@@ -1,47 +1,20 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import type { PageData, PageKey } from "@/lib/pageSchema";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
+
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { getPublicAssetUrl } from "@/lib/assets";
-import "./template5.css";
+import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
-
-import T5Header from "./components/T5Header";
+import type { TemplateProps } from "@/templates/registry";
+import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import T5Footer from "./components/T5Footer";
-import T5HomePage from "./pages/T5HomePage";
-import T5AboutPage from "./pages/T5AboutPage";
-import T5ContactPage from "./pages/T5ContactPage";
+import T5Header from "./components/T5Header";
+import { collectSiteMedia, T5Provider } from "./ctx";
+import T5Sections from "./sections/T5Sections";
+import "./template5.css";
 
-interface Template5Props {
-  site: {
-    id: string;
-    slug: string;
-    template_key: string;
-  };
-  profile: {
-    business_name: string;
-    tagline: string | null;
-    description: string | null;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    whatsapp: string | null;
-    socials: Record<string, unknown> | null;
-    brand_colors?: Record<string, unknown> | null;
-    theme_colors?: Record<string, unknown> | null;
-    logo_asset_id: string | null;
-    logo_path?: string | null;
-  };
-  pages: {
-    home: PageData;
-    about: PageData;
-    contact: PageData;
-  };
-  currentPage?: PageKey | null;
-  baseUrl?: string;
-  pageOverride?: PageData;
-}
-
+/** Template 5 — "Maison": beauty / glam / booking. */
 export default function Template5({
   site,
   profile,
@@ -49,44 +22,59 @@ export default function Template5({
   currentPage = "home",
   baseUrl = "",
   pageOverride,
-}: Template5Props) {
+  navPages = [],
+  currentExtraKey = null,
+}: TemplateProps) {
+  const editor = useInlineEditor();
+  const rootRef = useRef<HTMLDivElement>(null);
+
   const logoUrl = profile.logo_path ? getPublicAssetUrl(profile.logo_path) : null;
-  const socials = (profile.socials || {}) as Record<string, string>;
-  const effectivePage: PageKey = (pageOverride ? "home" : (currentPage ?? "home"));
+  const effectivePage: PageKey = pageOverride ? "home" : (currentPage ?? "home");
   const navPage: PageKey | null = pageOverride ? null : (currentPage ?? "home");
-  const currentPageData = pageOverride ?? pages[effectivePage];
-  const themeStyle = buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined;
+  const pageData = pageOverride ?? pages[effectivePage];
+  const themeStyle = sanitizeThemeStyle(
+    buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined,
+    "t5",
+  );
+  const motion = !editor?.enabled;
+
+  const media = useMemo(
+    () => collectSiteMedia([pageData, pages.home, pages.about, pages.contact]),
+    [pageData, pages],
+  );
+  const ctx = useMemo(() => ({ baseUrl, navPages, profile, ...media }), [baseUrl, navPages, profile, media]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !motion || typeof IntersectionObserver === "undefined") return;
+    root.dataset.motion = "on";
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).dataset.visible = "true";
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    root.querySelectorAll(".t5-reveal").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      delete root.dataset.motion;
+    };
+  }, [motion, pageData]);
 
   return (
-    <div className="template5" data-site-slug={site.slug} data-template-key={site.template_key} style={themeStyle}>
-      <T5Header
-        businessName={profile.business_name}
-        logoUrl={logoUrl}
-        currentPage={navPage}
-        baseUrl={baseUrl}
-        profile={profile}
-      />
-
-      {effectivePage === "home" && (
-        <T5HomePage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "about" && (
-        <T5AboutPage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "contact" && (
-        <T5ContactPage pageData={currentPageData} profile={profile} />
-      )}
-
-      <T5Footer
-        businessName={profile.business_name}
-        tagline={profile.tagline}
-        address={profile.address}
-        phone={profile.phone}
-        email={profile.email}
-        socials={socials}
-        baseUrl={baseUrl}
-      />
-    </div>
+    <T5Provider value={ctx}>
+      <div ref={rootRef} className="template5" style={themeStyle}>
+        <T5Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
+        <main>
+          <T5Sections pageData={pageData} />
+        </main>
+        <T5Footer />
+      </div>
+    </T5Provider>
   );
 }
-

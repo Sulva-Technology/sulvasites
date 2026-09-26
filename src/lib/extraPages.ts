@@ -1,6 +1,7 @@
-import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
+import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import type { PageData } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
+import { buildPresetPageData, getPagePresets } from "@/templates/pagePresets";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
@@ -63,6 +64,29 @@ export async function createExtraPage(siteId: string, key: string, data: PageDat
   return created as unknown as ExtraPageRow;
 }
 
+/**
+ * Creates the template's recommended pages (as drafts) that the site doesn't have yet.
+ * Returns the newly created rows.
+ */
+export async function createPresetPages(
+  siteId: string,
+  templateKey: string,
+  existingKeys: string[],
+): Promise<ExtraPageRow[]> {
+  const missing = getPagePresets(templateKey).filter((p) => !existingKeys.includes(p.key));
+  if (missing.length === 0) return [];
+
+  const supabase = await getAuthenticatedClient();
+  const { data, error } = await supabase
+    .from("extra_pages")
+    .insert(
+      missing.map((p) => ({ site_id: siteId, key: p.key, data: buildPresetPageData(p), status: "draft" })),
+    )
+    .select("id, site_id, key, status, data, updated_at, published_at");
+  if (error) throw error;
+  return (data ?? []) as unknown as ExtraPageRow[];
+}
+
 export async function saveExtraPageDraft(pageId: string, data: PageData) {
   const valid = validatePageData(data);
   if (!valid.ok) throw new Error(valid.error ?? "Invalid page data.");
@@ -103,23 +127,4 @@ export async function unpublishExtraPage(pageId: string) {
   return updated as unknown as ExtraPageRow;
 }
 
-// Public resolver (no auth): published extra pages only.
-export async function getPublishedExtraPageBySiteSlug(
-  siteId: string,
-  key: string,
-): Promise<PageData | null> {
-  const supabase = supabaseBrowser();
-  const { data, error } = await supabase
-    .from("extra_pages")
-    .select("data")
-    .eq("site_id", siteId)
-    .eq("key", key)
-    .eq("status", "published")
-    .single();
-  if (error) return null;
-  const pageData = isRecord(data) ? data.data : null;
-  const v = validatePageData(pageData);
-  if (!v.ok) return null;
-  return pageData as PageData;
-}
 

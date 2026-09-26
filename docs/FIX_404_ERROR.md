@@ -102,8 +102,14 @@ If this also gives 404, the site isn't published or doesn't exist.
 
 ## Use the Debug Endpoint
 
-Check:
-- `https://soothecontrols.soothetechnologies.com/api/debug/site/<slug>`
+Admin-only (needs your Supabase access token). While logged in to `/admin`, run in the browser console:
+
+```js
+const s = JSON.parse(localStorage.getItem("soothecontrols-auth"));
+await (await fetch("/api/debug/site/<slug>", {
+  headers: { Authorization: `Bearer ${s.access_token}` },
+})).json();
+```
 
 Look for:
 - `diagnosis.canResolve === true`

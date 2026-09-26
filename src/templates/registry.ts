@@ -1,0 +1,42 @@
+import type { ComponentType } from "react";
+
+import type { PageData, PageKey } from "@/lib/pageSchema";
+import type { SiteData } from "@/lib/siteResolver.server";
+import Template1 from "@/templates/template1/Template1";
+import Template2 from "@/templates/template2/Template2";
+import Template3 from "@/templates/template3/Template3";
+import Template4 from "@/templates/template4/Template4";
+import Template5 from "@/templates/template5/Template5";
+import Template6 from "@/templates/template6/Template6";
+
+/** A published extra page shown in navigation, served at `${baseUrl}/p/${key}`. */
+export type NavPage = { key: string; label: string };
+
+export type TemplateProps = {
+  site: Pick<SiteData["site"], "id" | "slug" | "template_key">;
+  profile: SiteData["profile"];
+  pages: SiteData["pages"];
+  currentPage?: PageKey | null;
+  baseUrl?: string;
+  pageOverride?: PageData;
+  /** Published extra pages to include in header/footer navigation. */
+  navPages?: NavPage[];
+  /** Key of the extra page being rendered (to highlight it in the nav). */
+  currentExtraKey?: string | null;
+};
+
+/** Single source of truth for which template_key renders which component. */
+export const TEMPLATES: Record<string, ComponentType<TemplateProps>> = {
+  t1: Template1,
+  t2: Template2,
+  t3: Template3,
+  t4: Template4,
+  t5: Template5,
+  t6: Template6,
+};
+
+export const TEMPLATE_KEYS = Object.keys(TEMPLATES);
+
+export function getTemplate(key: string): ComponentType<TemplateProps> | null {
+  return TEMPLATES[key] ?? null;
+}

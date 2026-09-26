@@ -1,127 +1,96 @@
 "use client";
 
-import type { TestimonialsSection as TestimonialsSectionType } from "@/lib/pageSchema";
-import { getLoremHeadline, getLoremParagraph } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useRef } from "react";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import type { TestimonialsSection } from "@/lib/pageSchema";
+import { initials, useSectionEditor } from "@/templates/shared/edit";
+import { IconArrow, IconArrowLeft, IconStar } from "../icons";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "A";
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
-  return `${first}${last}`.toUpperCase();
-}
+const FALLBACK_QUOTE =
+  "From the first viewing to getting our keys, everything was clear and on time. We never felt rushed or left guessing.";
 
-export default function T6Testimonials({
-  section,
-  sectionIndex,
-}: {
-  section: TestimonialsSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || getLoremHeadline();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { name: "Alex Morgan", role: "Client", quote: getLoremParagraph(), company: "" },
-          { name: "Sam Lee", role: "Operations", quote: getLoremParagraph(), company: "" },
-          { name: "Jordan Patel", role: "Founder", quote: getLoremParagraph(), company: "" },
-        ];
-
-  const filled = items.map((t) => ({
-    name: t.name || "Customer",
-    role: t.role || "",
-    quote: t.quote || getLoremParagraph(),
+/** Scroll-snap row of review cards with prev/next controls. */
+export default function T6Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
+  const { set, setItem } = useSectionEditor(section, sectionIndex);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const title = section.title || "What our clients say";
+  const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
+    name: t.name || "Client name",
+    role: t.role || "Homeowner",
+    quote: t.quote || FALLBACK_QUOTE,
     company: t.company || "",
   }));
+
+  const scrollBy = (dir: 1 | -1) => {
+    const row = rowRef.current;
+    if (!row) return;
+    const card = row.querySelector<HTMLElement>(".t6-review");
+    row.scrollBy({ left: dir * ((card?.offsetWidth ?? 320) + 20), behavior: "smooth" });
+  };
 
   return (
     <section className="t6-section">
       <div className="t6-container">
-        <span className="t6-eyebrow">Testimonials</span>
-        <EditableText
-          as="h2"
-          className="t6-title"
-          value={title}
-          placeholder="Testimonials title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
+        <div className="t6-head t6-reveal">
+          <div>
+            <span className="t6-kicker">Reviews</span>
+            <EditableText as="h2" className="t6-h2" value={title} placeholder="Reviews title" onCommit={(next) => set({ title: next })} />
+          </div>
+          {items.length > 3 ? (
+            <div className="t6-reviews-nav">
+              <button type="button" className="t6-round" aria-label="Previous reviews" onClick={() => scrollBy(-1)}>
+                <IconArrowLeft />
+              </button>
+              <button type="button" className="t6-round" aria-label="Next reviews" onClick={() => scrollBy(1)}>
+                <IconArrow />
+              </button>
+            </div>
+          ) : null}
+        </div>
 
-        <div className="t6-bento" style={{ marginTop: 18 }}>
-          {filled.map((t, idx) => (
-            <div key={`${t.name}-${idx}`} className="t6-card t6-item" style={{ gridColumn: "span 4", padding: 18 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div className="t6-chip" style={{ width: 48, height: 48 }}>
-                  <span style={{ fontWeight: 950 }}>{initials(t.name)}</span>
-                </div>
-                <div style={{ minWidth: 0 }}>
+        <div className="t6-reviews t6-reveal" ref={rowRef}>
+          {items.map((t, idx) => (
+            <figure key={idx} className="t6-review" style={{ margin: 0 }}>
+              <div className="t6-stars" aria-label="5 out of 5">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <IconStar key={i} />
+                ))}
+              </div>
+              <EditableText
+                as="blockquote"
+                value={t.quote}
+                placeholder="Quote"
+                multiline
+                onCommit={(next) => setItem("items", items, idx, { quote: next })}
+              />
+              <figcaption className="t6-person">
+                <span className="t6-avatar" aria-hidden="true">
+                  {initials(t.name)}
+                </span>
+                <span>
                   <EditableText
                     as="div"
                     value={t.name}
                     placeholder="Name"
-                    style={{ fontWeight: 900 }}
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], name: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
+                    style={{ fontWeight: 600 }}
+                    onCommit={(next) => setItem("items", items, idx, { name: next })}
                   />
-                  <div style={{ color: "var(--t6-muted)", fontSize: 13, fontWeight: 800 }}>
+                  <div className="t6-muted" style={{ fontSize: 14 }}>
                     <EditableText
                       as="span"
                       value={t.role}
                       placeholder="Role"
-                      onCommit={(next) => {
-                        if (!editor || sectionIndex == null) return;
-                        const nextItems = filled.map((x) => ({ ...x }));
-                        nextItems[idx] = { ...nextItems[idx], role: next };
-                        editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                      }}
+                      onCommit={(next) => setItem("items", items, idx, { role: next })}
                     />
-                    {t.company ? (
-                      <>
-                        {" · "}
-                        <EditableText
-                          as="span"
-                          value={t.company}
-                          placeholder="Company"
-                          onCommit={(next) => {
-                            if (!editor || sectionIndex == null) return;
-                            const nextItems = filled.map((x) => ({ ...x }));
-                            nextItems[idx] = { ...nextItems[idx], company: next };
-                            editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                          }}
-                        />
-                      </>
-                    ) : null}
+                    {t.company ? `, ${t.company}` : null}
                   </div>
-                </div>
-              </div>
-
-              <EditableText
-                as="p"
-                value={t.quote}
-                placeholder="Quote"
-                multiline
-                style={{ marginTop: 12, color: "var(--t6-muted)", lineHeight: 1.75 }}
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], quote: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
-            </div>
+                </span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
     </section>
   );
 }
-

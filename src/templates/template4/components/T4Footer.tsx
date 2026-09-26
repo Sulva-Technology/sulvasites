@@ -139,8 +139,8 @@ export default function T4Footer({
               style={{ display: "inline" }}
             />
             . All rights reserved. Developed by{" "}
-            <a href="https://soothetechnologies.com" target="_blank" rel="noreferrer">
-              soothetechnologies
+            <a href="https://sulvatech.com" target="_blank" rel="noreferrer">
+              Sulvatech
             </a>
             .
           </div>

@@ -4,7 +4,7 @@
 
 -- Option 1: If you know your email address
 INSERT INTO public.admin_users (user_id)
-SELECT id FROM auth.users WHERE email = 'ogunjobiiyiola906@gmail.com'
+SELECT id FROM auth.users WHERE email = '<your-email>'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Option 2: If you know your user UUID (from Supabase Dashboard → Authentication → Users)

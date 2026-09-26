@@ -56,7 +56,11 @@ export default function EditableText({
   const Tag: EditableTag = as ?? "span";
 
   if (!enabled) {
-    return <Tag className={className}>{display}</Tag>;
+    return (
+      <Tag className={className} style={style}>
+        {display}
+      </Tag>
+    );
   }
 
   return (

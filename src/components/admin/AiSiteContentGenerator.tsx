@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { supabaseBrowser } from "@/lib/supabase/browser";
+import { ensureSession, supabaseBrowser } from "@/lib/supabase/browser";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { validatePageData, type PageData } from "@/lib/pageSchema";
 
@@ -62,9 +62,13 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
         ? "/api/ai/generate-site-groq"
         : "/api/ai/generate-site";
       
+      const session = await ensureSession();
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ brief }),
       });
       const json = (await res.json()) as unknown;

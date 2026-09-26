@@ -80,8 +80,6 @@ create table if not exists public.business_profiles (
   theme_colors jsonb null,
   brand_colors jsonb null,
   logo_asset_id uuid null,
-  brand_colors jsonb null,
-  theme_colors jsonb null,
   updated_at timestamptz not null default now()
 );
 

@@ -1,69 +1,59 @@
 "use client";
 
-import type { ValuesSection as ValuesSectionType } from "@/lib/pageSchema";
-import { getLoremValueDesc, getLoremValueTitle } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { ValuesSection } from "@/lib/pageSchema";
+import { toRoman, useSectionEditor } from "../edit";
+import { T3Index } from "../ui";
 
+const FALLBACK = [
+  { title: "Think long term", desc: "Every decision should still make sense years from now." },
+  { title: "Craft over speed", desc: "Details are where trust is earned — so we sweat them." },
+  { title: "Honest partnership", desc: "Clear expectations, straight answers, no surprises." },
+];
+
+/** Values on a dark band with roman numerals. */
 export default function T3Values({
   section,
   sectionIndex,
+  n,
 }: {
-  section: ValuesSectionType;
+  section: ValuesSection;
   sectionIndex?: number;
+  n?: number;
 }) {
-  const editor = useInlineEditor();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ title: "", desc: "" }, { title: "", desc: "" }, { title: "", desc: "" }];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremValueTitle(),
-    desc: it.desc || getLoremValueDesc(),
+  const { setItem } = useSectionEditor(section, sectionIndex);
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
   }));
 
   return (
-    <section className="t3-section">
+    <section className="t3-section t3-band">
       <div className="t3-container">
-        <span className="t3-eyebrow">Values</span>
-        <h2 className="t3-section-title">The way we work</h2>
+        <div className="t3-section-head t3-reveal">
+          <T3Index n={n} label="Principles" />
+          <h2 className="t3-title">
+            How I <em style={{ color: "inherit" }}>work</em>
+          </h2>
+        </div>
 
-        <div className="t3-grid-3" style={{ marginTop: 18 }}>
-          {filled.map((v, idx) => (
-            <div key={idx} className="t3-card t3-item">
-              <div className="t3-badge" style={{ background: "rgba(180,83,9,0.10)", color: "var(--t3-accent2)", borderColor: "rgba(180,83,9,0.18)" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  {/* sparkle star (t3) */}
-                  <path
-                    d="M12 2l2.2 6.6H21l-5.6 4.1 2.2 6.6L12 15.9 6.4 19.3l2.2-6.6L3 8.6h6.8L12 2z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+        <div className="t3-values">
+          {items.map((v, idx) => (
+            <div key={idx} className="t3-value t3-reveal">
+              <div className="t3-value-num">{toRoman(idx + 1)}.</div>
               <EditableText
                 as="h3"
                 value={v.title}
                 placeholder="Value title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { title: next })}
               />
               <EditableText
                 as="p"
+                className="t3-muted"
                 value={v.desc}
                 placeholder="Value description"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], desc: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />
             </div>
           ))}
@@ -72,4 +62,3 @@ export default function T3Values({
     </section>
   );
 }
-

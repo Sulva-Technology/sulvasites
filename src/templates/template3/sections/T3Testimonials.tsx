@@ -1,139 +1,116 @@
 "use client";
 
-import type { TestimonialsSection as TestimonialsSectionType } from "@/lib/pageSchema";
-import { getLoremHeadline, getLoremParagraph } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { TestimonialsSection } from "@/lib/pageSchema";
+import { initials, useSectionEditor } from "../edit";
+import { T3Index } from "../ui";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "A";
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
-  return `${first}${last}`.toUpperCase();
-}
+type Item = { name: string; role: string; quote: string; company: string };
 
+const FALLBACK_QUOTE =
+  "Working together felt effortless — clear thinking, careful execution, and a result we are genuinely proud of.";
+
+/** First testimonial as a large pull quote; the rest in a ruled grid. */
 export default function T3Testimonials({
   section,
   sectionIndex,
+  n,
 }: {
-  section: TestimonialsSectionType;
+  section: TestimonialsSection;
   sectionIndex?: number;
+  n?: number;
 }) {
-  const editor = useInlineEditor();
-  const title = section.title || getLoremHeadline();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { name: "Alex Morgan", role: "Client", quote: getLoremParagraph(), company: "" },
-          { name: "Sam Lee", role: "Operations", quote: getLoremParagraph(), company: "" },
-        ];
-
-  const filled = items.map((t) => ({
-    name: t.name || "Customer Name",
-    role: t.role || "Role",
-    quote: t.quote || getLoremParagraph(),
+  const { set, setItem } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Kind words";
+  const items: Item[] = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
+    name: t.name || "Client name",
+    role: t.role || "Client",
+    quote: t.quote || FALLBACK_QUOTE,
     company: t.company || "",
   }));
+  const [featured, ...rest] = items;
+
+  const cite = (t: Item, idx: number) => (
+    <div className="t3-cite">
+      <span className="t3-avatar" aria-hidden="true">
+        {initials(t.name)}
+      </span>
+      <span>
+        <EditableText
+          as="span"
+          value={t.name}
+          placeholder="Name"
+          style={{ fontWeight: 700, display: "block" }}
+          onCommit={(next) => setItem("items", items, idx, { name: next })}
+        />
+        <span className="t3-muted">
+          <EditableText
+            as="span"
+            value={t.role}
+            placeholder="Role"
+            onCommit={(next) => setItem("items", items, idx, { role: next })}
+          />
+          {t.company ? (
+            <>
+              {", "}
+              <EditableText
+                as="span"
+                value={t.company}
+                placeholder="Company"
+                onCommit={(next) => setItem("items", items, idx, { company: next })}
+              />
+            </>
+          ) : null}
+        </span>
+      </span>
+    </div>
+  );
 
   return (
     <section className="t3-section">
       <div className="t3-container">
-        <span className="t3-eyebrow">Testimonials</span>
-        <EditableText
-          as="h2"
-          className="t3-section-title"
-          value={title}
-          placeholder="Testimonials title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-
-        <div className="t3-two-col" style={{ marginTop: 18 }}>
-          {filled.map((t, idx) => (
-            <div key={`${t.name}-${idx}`} className="t3-card t3-item">
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 16,
-                    background: "rgb(var(--t3-accent-rgb) / 0.12)",
-                    border: "1px solid rgb(var(--t3-accent-rgb) / 0.18)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 900,
-                    color: "var(--t3-accent)",
-                  }}
-                >
-                  {initials(t.name)}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <EditableText
-                    as="div"
-                    value={t.name}
-                    placeholder="Name"
-                    style={{ fontWeight: 900 }}
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], name: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                  />
-                  <div className="t3-muted" style={{ fontSize: 13, fontWeight: 700 }}>
-                    <EditableText
-                      as="span"
-                      value={t.role}
-                      placeholder="Role"
-                      onCommit={(next) => {
-                        if (!editor || sectionIndex == null) return;
-                        const nextItems = filled.map((x) => ({ ...x }));
-                        nextItems[idx] = { ...nextItems[idx], role: next };
-                        editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                      }}
-                    />
-                    {t.company ? (
-                      <>
-                        {" · "}
-                        <EditableText
-                          as="span"
-                          value={t.company}
-                          placeholder="Company"
-                          onCommit={(next) => {
-                            if (!editor || sectionIndex == null) return;
-                            const nextItems = filled.map((x) => ({ ...x }));
-                            nextItems[idx] = { ...nextItems[idx], company: next };
-                            editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                          }}
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <EditableText
-                as="p"
-                value={t.quote}
-                placeholder="Quote"
-                multiline
-                style={{ marginTop: 12 }}
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], quote: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
-            </div>
-          ))}
+        <div className="t3-section-head t3-reveal">
+          <T3Index n={n} label="Testimonials" />
+          <EditableText
+            as="h2"
+            className="t3-title"
+            value={title}
+            placeholder="Testimonials title"
+            onCommit={(next) => set({ title: next })}
+          />
         </div>
+
+        <figure className="t3-quote-feature t3-reveal" style={{ margin: 0 }}>
+          <span className="t3-quote-mark" aria-hidden="true">
+            “
+          </span>
+          <EditableText
+            as="blockquote"
+            value={featured.quote}
+            placeholder="Quote"
+            multiline
+            onCommit={(next) => setItem("items", items, 0, { quote: next })}
+          />
+          {cite(featured, 0)}
+        </figure>
+
+        {rest.length ? (
+          <div className="t3-quotes">
+            {rest.map((t, i) => (
+              <figure key={i} className="t3-quote t3-reveal" style={{ margin: 0 }}>
+                <EditableText
+                  as="p"
+                  value={t.quote}
+                  placeholder="Quote"
+                  multiline
+                  onCommit={(next) => setItem("items", items, i + 1, { quote: next })}
+                />
+                {cite(t, i + 1)}
+              </figure>
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );
 }
-

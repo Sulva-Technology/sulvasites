@@ -9,8 +9,8 @@
 --   1. Go to Supabase Dashboard → Authentication → Users
 --   2. Click "Add user"
 --   3. Enter:
---      - Email: ogunjobiiyiola906@gmail.com
---      - Password: @Test1234
+--      - Email: <your-email>
+--      - Password: <choose a strong password>
 --      - Auto Confirm User: Yes
 --   4. Click "Create user"
 --   5. Copy the User UID (UUID)
@@ -23,7 +23,7 @@
 
 -- Step 2: Once the user exists, add them as admin by running this:
 INSERT INTO public.admin_users (user_id)
-SELECT id FROM auth.users WHERE email = 'ogunjobiiyiola906@gmail.com'
+SELECT id FROM auth.users WHERE email = '<your-email>'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Alternative: If you have the UUID directly, use this:
@@ -38,4 +38,4 @@ SELECT
   u.email
 FROM public.admin_users au
 LEFT JOIN auth.users u ON u.id = au.user_id
-WHERE u.email = 'ogunjobiiyiola906@gmail.com';
+WHERE u.email = '<your-email>';

@@ -1,83 +1,47 @@
 "use client";
 
-import type { GallerySection as GallerySectionType } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { GallerySection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
 
-export default function T6Gallery({
-  section,
-  sectionIndex,
-}: {
-  section: GallerySectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || "Gallery";
-  const images =
-    section.images && section.images.length > 0
+/** Bento photo grid. Hidden for visitors when empty; placeholders while editing. */
+export default function T6Gallery({ section, sectionIndex }: { section: GallerySection; sectionIndex?: number }) {
+  const { enabled, set } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Inside our properties";
+  const real = (section.images ?? []).filter((img) => img.url);
+  if (!enabled && real.length === 0) return null;
+  const images = enabled
+    ? section.images?.length
       ? section.images
-      : [
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-        ];
+      : Array.from({ length: 6 }, () => ({ url: "", alt: "" }))
+    : real;
 
   return (
-    <section className="t6-section">
+    <section className="t6-section t6-white">
       <div className="t6-container">
-        <span className="t6-eyebrow">Gallery</span>
-        <EditableText
-          as="h2"
-          className="t6-title"
-          value={title}
-          placeholder="Gallery title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
+        <div className="t6-head t6-reveal">
+          <div>
+            <span className="t6-kicker">Gallery</span>
+            <EditableText as="h2" className="t6-h2" value={title} placeholder="Gallery title" onCommit={(next) => set({ title: next })} />
+          </div>
+        </div>
 
-        <div className="t6-bento" style={{ marginTop: 18 }}>
-          {images.map((it, idx) => (
-            <div key={idx} className="t6-card" style={{ gridColumn: "span 6", overflow: "hidden" }}>
-              <div
-                style={{
-                  height: 260,
-                  background:
-                    it.url ||
-                    "linear-gradient(135deg, rgb(var(--t6-accent-rgb) / 0.18), rgb(var(--t6-accent2-rgb) / 0.14))",
-                  borderBottom: "1px solid rgba(255,255,255,0.10)",
-                }}
-              >
-                {it.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={it.url}
-                    alt={it.alt || "Gallery"}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : null}
-              </div>
-              <div style={{ padding: 14 }}>
-                <EditableText
-                  as="div"
-                  value={it.alt || ""}
-                  placeholder="Alt/caption"
-                  onCommit={(next) => {
-                    if (!editor || sectionIndex == null) return;
-                    const nextImages = images.map((x) => ({ ...x }));
-                    nextImages[idx] = { ...nextImages[idx], alt: next };
-                    editor.updateSection(sectionIndex, { ...section, images: nextImages });
-                  }}
-                  style={{ color: "var(--t6-muted)", fontWeight: 800 }}
-                />
-              </div>
-            </div>
-          ))}
+        <div className="t6-bento t6-reveal">
+          {images.map((img, idx) =>
+            img.url ? (
+              <figure key={idx}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.url} alt={img.alt || ""} loading="lazy" />
+                {img.alt ? <figcaption>{img.alt}</figcaption> : null}
+              </figure>
+            ) : (
+              <figure key={idx} className="t6-bento-empty">
+                Photo {idx + 1}
+              </figure>
+            ),
+          )}
         </div>
       </div>
     </section>
   );
 }
-

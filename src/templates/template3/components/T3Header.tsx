@@ -1,162 +1,153 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import type { PageKey } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useEffect, useState } from "react";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import type { PageKey } from "@/lib/pageSchema";
+import type { NavPage } from "@/templates/registry";
+import { initials, pad2 } from "../edit";
+import { T3ArrowIcon } from "../ui";
+
+type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
 export default function T3Header({
   businessName,
   logoUrl,
   currentPage,
+  currentExtraKey,
   baseUrl,
   profile,
+  navPages = [],
 }: {
   businessName: string;
   logoUrl: string | null;
   currentPage: PageKey | null;
+  currentExtraKey?: string | null;
   baseUrl: string;
-  profile?: {
-    socials?: Record<string, unknown> | null;
-  };
+  profile?: { socials?: Record<string, unknown> | null; email?: string | null };
+  navPages?: NavPage[];
 }) {
   const editor = useInlineEditor();
-  
-  // Get navigation labels from profile socials (or use defaults)
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
   const socials = (profile?.socials || {}) as Record<string, unknown>;
   const navLabels = (socials.nav_labels as Record<string, string>) || {};
-  const navHome = navLabels.home || "Home";
-  const navAbout = navLabels.about || "About";
-  const navContact = navLabels.contact || "Contact";
-  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  // Home, About, [extra pages...], Contact
+  const items: NavItem[] = [
+    { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
+    { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
+    ...navPages.map((p) => ({
+      id: `p-${p.key}`,
+      href: `${baseUrl}/p/${p.key}`,
+      label: p.label,
+      active: currentExtraKey === p.key,
+    })),
+    {
+      id: "contact",
+      coreKey: "contact",
+      href: `${baseUrl}/contact`,
+      label: navLabels.contact || "Contact",
+      active: currentPage === "contact",
+    },
+  ];
+
+  const saveNavLabel = (key: PageKey, next: string) =>
+    editor?.updateProfileField?.("socials", { ...socials, nav_labels: { ...navLabels, [key]: next } });
+
   return (
-    <header className="t3-header">
-      <div className="t3-container">
-        <div className="t3-header-inner">
-          <Link href={`${baseUrl}/`} className="t3-brand" aria-label={businessName}>
-            {logoUrl ? (
-              <img src={logoUrl} alt={businessName} style={{ height: 34, width: "auto" }} />
-            ) : (
-              <span className="t3-brand-mark" aria-hidden="true" />
-            )}
-            <span className="t3-brand-name">
-              <EditableText
-                value={businessName}
-                onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-                style={{ display: "inline" }}
-              />
+    <header className="t3-header" data-scrolled={scrolled}>
+      <div className="t3-container t3-header-inner">
+        <Link href={`${baseUrl}/`} className="t3-brand" aria-label={businessName}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={businessName} />
+          ) : (
+            <span className="t3-monogram" aria-hidden="true">
+              {initials(businessName)}
+            </span>
+          )}
+          <span className="t3-brand-name">
+            <EditableText
+              value={businessName}
+              onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
+              style={{ display: "inline" }}
+            />
+          </span>
+        </Link>
+
+        <nav className="t3-nav" aria-label="Main">
+          {items.map((it, i) => (
+            <Link key={it.id} href={it.href} data-active={it.active} aria-current={it.active ? "page" : undefined}>
+              <sup>{pad2(i + 1)}</sup>
+              {it.coreKey ? (
+                <EditableText
+                  value={it.label}
+                  onCommit={(next) => saveNavLabel(it.coreKey!, next)}
+                  style={{ display: "inline" }}
+                />
+              ) : (
+                it.label
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="t3-header-actions">
+          <Link href={`${baseUrl}/contact`} className="t3-btn">
+            Let&apos;s talk
+            <span className="t3-arrow">
+              <T3ArrowIcon size={14} />
             </span>
           </Link>
-
-          <nav className="t3-nav" aria-label="Main">
-            <Link href={`${baseUrl}/`} data-active={currentPage === "home"}>
-              <EditableText
-                value={navHome}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      home: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link href={`${baseUrl}/about`} data-active={currentPage === "about"}>
-              <EditableText
-                value={navAbout}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      about: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link href={`${baseUrl}/contact`} data-active={currentPage === "contact"}>
-              <EditableText
-                value={navContact}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      contact: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-          </nav>
-
-          <div className="t3-header-actions">
-            <Link href={`${baseUrl}/contact`} className="t3-cta">
-              Get a quote
-            </Link>
-            <button
-              type="button"
-              className="t3-menu-btn"
-              aria-label="Open menu"
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen(true)}
-            >
-              <span className="t3-menu-ico" aria-hidden="true" />
-            </button>
-          </div>
+          <button
+            type="button"
+            className="t3-menu-btn"
+            aria-label="Open menu"
+            aria-expanded={open}
+            onClick={() => setOpen(true)}
+          >
+            <span aria-hidden="true" />
+          </button>
         </div>
       </div>
 
-      {mobileOpen ? (
-        <div className="t3-mobile" role="dialog" aria-modal="true">
-          <button
-            type="button"
-            className="t3-mobile-backdrop"
-            aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="t3-mobile-panel">
-            <div className="t3-mobile-top">
-              <div className="t3-mobile-title">Menu</div>
-              <button
-                type="button"
-                className="t3-mobile-close"
-                aria-label="Close menu"
-                onClick={() => setMobileOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="t3-mobile-links" aria-label="Mobile">
-              <Link href={`${baseUrl}/`} onClick={() => setMobileOpen(false)}>
-                {navHome}
-              </Link>
-              <Link href={`${baseUrl}/about`} onClick={() => setMobileOpen(false)}>
-                {navAbout}
-              </Link>
-              <Link href={`${baseUrl}/contact`} onClick={() => setMobileOpen(false)}>
-                {navContact}
-              </Link>
-            </div>
-            <div className="t3-mobile-cta">
-              <Link href={`${baseUrl}/contact`} className="t3-cta" onClick={() => setMobileOpen(false)}>
-                Get a quote
-              </Link>
-            </div>
+      {open ? (
+        <div className="t3-overlay" role="dialog" aria-modal="true" aria-label="Menu">
+          <div className="t3-overlay-top">
+            <span className="t3-brand-name">{businessName}</span>
+            <button type="button" className="t3-overlay-close" aria-label="Close menu" onClick={() => setOpen(false)}>
+              ×
+            </button>
           </div>
+          <nav className="t3-overlay-links" aria-label="Mobile">
+            {items.map((it, i) => (
+              <Link key={it.id} href={it.href} onClick={() => setOpen(false)}>
+                <small>{pad2(i + 1)}</small>
+                {it.label}
+              </Link>
+            ))}
+          </nav>
+          {profile?.email ? <div className="t3-overlay-foot">{profile.email}</div> : null}
         </div>
       ) : null}
     </header>
   );
 }
-

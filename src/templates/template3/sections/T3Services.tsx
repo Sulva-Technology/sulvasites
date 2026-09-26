@@ -1,82 +1,62 @@
 "use client";
 
-import type { ServicesSection as ServicesSectionType } from "@/lib/pageSchema";
-import { getLoremServiceDesc, getLoremServiceTitle } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { ServicesSection } from "@/lib/pageSchema";
+import { pad2, useSectionEditor } from "../edit";
+import { T3ArrowIcon, T3Index } from "../ui";
 
-function Icon({ i }: { i: number }) {
-  // Template3: warm editorial line icons (distinct from t4/t5).
-  const paths = [
-    // leaf
-    "M5 19c7-1 12-6 14-14C11 7 6 12 5 19z",
-    // compass
-    "M12 2l3.2 7.8L23 12l-7.8 3.2L12 22l-3.2-6.8L1 12l7.8-2.2L12 2z",
-    // spark
-    "M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 16l-1.6-5.1L6 9.3l4.4-1.6L12 3z",
-    // hand/heart-ish
-    "M12 21s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z",
-  ];
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d={paths[i % paths.length]} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const FALLBACK = [
+  { title: "Brand strategy", desc: "Positioning, messaging and a clear story people remember." },
+  { title: "Creative direction", desc: "A visual language that feels considered, consistent and yours." },
+  { title: "Advisory", desc: "Hands-on guidance to turn plans into measurable progress." },
+];
 
+/** Services as a numbered index — one row per service. */
 export default function T3Services({
   section,
   sectionIndex,
+  n,
 }: {
-  section: ServicesSectionType;
+  section: ServicesSection;
   sectionIndex?: number;
+  n?: number;
 }) {
-  const editor = useInlineEditor();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ title: "", desc: "" }, { title: "", desc: "" }, { title: "", desc: "" }];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremServiceTitle(),
-    desc: it.desc || getLoremServiceDesc(),
+  const { setItem } = useSectionEditor(section, sectionIndex);
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
   }));
 
   return (
     <section id="services" className="t3-section">
       <div className="t3-container">
-        <span className="t3-eyebrow">Services</span>
-        <h2 className="t3-section-title">What we do — with taste</h2>
+        <div className="t3-section-head t3-reveal">
+          <T3Index n={n} label="Services" />
+          <h2 className="t3-title">
+            What I can <em>help</em> with
+          </h2>
+        </div>
 
-        <div className="t3-grid-3" style={{ marginTop: 18 }}>
-          {filled.map((s, idx) => (
-            <div key={idx} className="t3-card t3-item">
-              <div className="t3-badge">
-                <Icon i={idx} />
-              </div>
+        <div className="t3-index-list">
+          {items.map((s, idx) => (
+            <div key={idx} className="t3-index-row t3-reveal">
+              <span className="t3-index">{pad2(idx + 1)}</span>
               <EditableText
                 as="h3"
                 value={s.title}
                 placeholder="Service title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { title: next })}
               />
               <EditableText
                 as="p"
                 value={s.desc}
                 placeholder="Service description"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], desc: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />
+              <span className="t3-circle" aria-hidden="true">
+                <T3ArrowIcon />
+              </span>
             </div>
           ))}
         </div>
@@ -84,4 +64,3 @@ export default function T3Services({
     </section>
   );
 }
-

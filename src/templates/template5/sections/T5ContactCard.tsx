@@ -1,95 +1,141 @@
 "use client";
 
-import type { ContactCardSection as ContactCardSectionType } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useEffect, useRef } from "react";
 
-export default function T5ContactCard({
-  section,
-  sectionIndex,
-  profile,
-}: {
-  section: ContactCardSectionType;
-  sectionIndex?: number;
-  profile: {
-    business_name: string;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    whatsapp: string | null;
-  };
-}) {
-  const editor = useInlineEditor();
+import type { ContactCardSection } from "@/lib/pageSchema";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { useT5 } from "../ctx";
 
-  const mapEmbedUrl = (() => {
-    const link = section.mapLink?.trim();
-    if (link && link.includes("output=embed")) return link;
-    const query = encodeURIComponent(profile.address || profile.business_name || "Location");
-    return `https://maps.google.com/maps?q=${query}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
-  })();
+const TIMES = ["Morning", "Afternoon", "Evening"];
+
+/** "Book your appointment": dark info panel + booking request form (service list from the site). */
+export default function T5ContactCard({ section }: { section: ContactCardSection }) {
+  const { profile, serviceNames } = useT5();
+  const formRef = useRef<HTMLFormElement>(null);
+  const socials = (profile.socials || {}) as Record<string, unknown>;
+  const instagram = typeof socials.instagram === "string" ? socials.instagram : "";
+
+  // Preselect ?service= (set by "Book" links on service/package cards).
+  useEffect(() => {
+    const service = new URLSearchParams(window.location.search).get("service");
+    const select = formRef.current?.elements.namedItem("service") as HTMLSelectElement | null;
+    if (!service || !select) return;
+    if (![...select.options].some((o) => o.value === service)) select.add(new Option(service, service));
+    select.value = service;
+  }, []);
 
   return (
-    <section id="contact" className="t5-section">
+    <section id="book" className="t5-section">
       <div className="t5-container">
-        <span className="t5-eyebrow">Contact</span>
-        <div className="t5-bento" style={{ marginTop: 16 }}>
-          <div className="t5-card" style={{ gridColumn: "span 6", padding: 18 }}>
-            <h2 className="t5-title" style={{ marginTop: 12 }}>
-              Let’s talk
+        <div className="t5-booking t5-reveal" id="contact">
+          <div className="t5-booking-side">
+            <span className="t5-eyebrow">Reservations</span>
+            <h2 className="t5-title">
+              Book your <em style={{ color: "inherit" }}>appointment</em>
             </h2>
-
-            <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-              {profile.address ? (
-                <div style={{ color: "var(--t5-muted)", fontWeight: 800 }}>{profile.address}</div>
+            <p className="t5-lead">Send a request and we&apos;ll confirm your time within a few hours.</p>
+            <div className="t5-contact-list">
+              {profile.whatsapp ? (
+                <a className="t5-contact-item" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
+                  <small>WhatsApp</small>
+                  <span>Message us</span>
+                </a>
               ) : null}
               {profile.phone ? (
-                <div style={{ color: "var(--t5-muted)", fontWeight: 800 }}>{profile.phone}</div>
+                <a className="t5-contact-item" href={buildTelLink(profile.phone)}>
+                  <small>Call</small>
+                  <span>{profile.phone}</span>
+                </a>
               ) : null}
               {profile.email ? (
-                <div style={{ color: "var(--t5-muted)", fontWeight: 800 }}>{profile.email}</div>
+                <a className="t5-contact-item" href={buildEmailLink(profile.email)}>
+                  <small>Email</small>
+                  <span>{profile.email}</span>
+                </a>
               ) : null}
-              {profile.whatsapp ? (
-                <div style={{ color: "var(--t5-muted)", fontWeight: 800 }}>{profile.whatsapp}</div>
+              {instagram ? (
+                <a className="t5-contact-item" href={instagram} target="_blank" rel="noreferrer">
+                  <small>Instagram</small>
+                  <span>Follow our work</span>
+                </a>
               ) : null}
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <a className="t5-cta" href={profile.email ? `mailto:${profile.email}` : "#"}>
-                Request a quote
-              </a>
-            </div>
-          </div>
-
-          <div className="t5-card" style={{ gridColumn: "span 6", overflow: "hidden" }}>
-            <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 12" }}>
-              <iframe
-                title="Map"
-                src={mapEmbedUrl}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-            {editor?.enabled && sectionIndex != null ? (
-              <div style={{ padding: 12, borderTop: "1px solid rgba(11,18,32,0.10)" }}>
-                <div style={{ color: "var(--t5-muted)", fontWeight: 900, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                  Map embed (optional)
+              {profile.address ? (
+                <div className="t5-contact-item">
+                  <small>Studio</small>
+                  <span>{profile.address}</span>
                 </div>
-                <input
-                  className="t5-input"
-                  value={section.mapLink || ""}
-                  onChange={(e) => {
-                    if (!editor || sectionIndex == null) return;
-                    editor.updateSection(sectionIndex, { ...section, mapLink: e.target.value });
-                  }}
-                  placeholder="Paste a Google Maps embed URL (output=embed)"
-                  style={{ marginTop: 10 }}
-                />
-              </div>
-            ) : null}
+              ) : null}
+              {section.mapLink ? (
+                <a className="t5-contact-item" href={section.mapLink} target="_blank" rel="noreferrer">
+                  <small>Directions</small>
+                  <span>Open in Maps ↗</span>
+                </a>
+              ) : null}
+            </div>
           </div>
+
+          {section.showForm ? (
+            <form
+              ref={formRef}
+              className="t5-booking-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert("Online booking is not configured yet. Please WhatsApp, call or email us to confirm your appointment.");
+              }}
+            >
+              <label className="t5-field">
+                <span>Service</span>
+                <select className="t5-input" name="service" defaultValue="">
+                  <option value="" disabled>
+                    Choose a service
+                  </option>
+                  {serviceNames.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                  <option value="Not sure yet">Not sure yet — advise me</option>
+                </select>
+              </label>
+              <div className="t5-form-row">
+                <label className="t5-field">
+                  <span>Preferred date</span>
+                  <input className="t5-input" name="date" type="date" required />
+                </label>
+                <div className="t5-field">
+                  <span>Time of day</span>
+                  <div className="t5-times" role="radiogroup">
+                    {TIMES.map((t, i) => (
+                      <label key={t} className="t5-time">
+                        <input type="radio" name="time" value={t} defaultChecked={i === 0} />
+                        <span>{t}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="t5-form-row">
+                <label className="t5-field">
+                  <span>Name</span>
+                  <input className="t5-input" name="name" placeholder="Your name" required />
+                </label>
+                <label className="t5-field">
+                  <span>Phone</span>
+                  <input className="t5-input" name="phone" type="tel" placeholder="Best number to reach you" required />
+                </label>
+              </div>
+              <label className="t5-field">
+                <span>Notes</span>
+                <textarea className="t5-input" name="notes" rows={3} placeholder="Occasion, location, inspiration…" />
+              </label>
+              <button type="submit" className="t5-btn t5-btn-rose">
+                Request booking
+              </button>
+              <p className="t5-fineprint">Your appointment is confirmed once we reply. A booking fee may apply.</p>
+            </form>
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
-

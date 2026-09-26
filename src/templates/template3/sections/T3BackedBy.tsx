@@ -1,100 +1,75 @@
 "use client";
 
-import type { BackedBySection as BackedBySectionType } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { BackedBySection } from "@/lib/pageSchema";
+import { useSectionEditor } from "../edit";
+import { T3Index } from "../ui";
 
+const FALLBACK = ["Partner One", "Partner Two", "Partner Three", "Partner Four", "Partner Five"];
+
+// `url` may be a logo image or just a website link — only render real images.
+function isImageUrl(url: string | null | undefined): url is string {
+  return !!url && /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(url);
+}
+
+/** "Trusted by" names in an endless marquee (static, wrapping list while editing). */
 export default function T3BackedBy({
   section,
   sectionIndex,
+  n,
 }: {
-  section: BackedBySectionType;
+  section: BackedBySection;
   sectionIndex?: number;
+  n?: number;
 }) {
-  const editor = useInlineEditor();
-  const title = section.title || "Trusted by teams who value craft";
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Trusted by";
+  const logos = section.logos?.length ? section.logos : FALLBACK.map((name) => ({ name, url: null }));
 
-  const logos =
-    section.logos && section.logos.length > 0
-      ? section.logos
-      : [
-          { name: "Partner One", url: null },
-          { name: "Partner Two", url: null },
-          { name: "Partner Three", url: null },
-          { name: "Partner Four", url: null },
-          { name: "Partner Five", url: null },
-          { name: "Partner Six", url: null },
-        ];
+  const renderItem = (l: { name: string; url: string | null }, idx: number) => (
+    <span key={idx} className="t3-marquee-item">
+      {isImageUrl(l.url) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={l.url} alt={l.name} />
+      ) : enabled ? (
+        <EditableText
+          as="span"
+          value={l.name}
+          placeholder="Name"
+          onCommit={(next) => setItem("logos", logos, idx, { name: next })}
+        />
+      ) : (
+        l.name
+      )}
+    </span>
+  );
 
   return (
-    <section className="t3-section">
-      <div className="t3-container">
-        <span className="t3-eyebrow">Proof</span>
+    <section className="t3-marquee-wrap" aria-label={title}>
+      <div className="t3-container t3-marquee-label">
+        <T3Index n={n} label="Clients" />
         <EditableText
-          as="h2"
-          className="t3-section-title"
+          as="span"
+          className="t3-index"
           value={title}
-          placeholder="Trust title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
+          placeholder="Trusted by"
+          onCommit={(next) => set({ title: next })}
         />
+      </div>
 
-        <div
-          className="t3-card"
-          style={{
-            marginTop: 16,
-            padding: 16,
-            background: "rgba(255,255,255,0.75)",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-              gap: 12,
-              alignItems: "center",
-            }}
-          >
-            {logos.map((l, idx) => (
-              <div
-                key={`${l.name}-${idx}`}
-                style={{
-                  borderRadius: 14,
-                  border: "1px solid rgba(18,18,18,0.10)",
-                  padding: 14,
-                  textAlign: "center",
-                  background: "rgba(255,255,255,0.75)",
-                  fontWeight: 800,
-                  color: "var(--t3-muted)",
-                }}
-              >
-                {l.url ? (
-                  <img
-                    src={l.url}
-                    alt={l.name}
-                    style={{ height: 24, width: "auto", opacity: 0.8, filter: "grayscale(1)" }}
-                  />
-                ) : (
-                  <EditableText
-                    as="span"
-                    value={l.name}
-                    placeholder="Logo name"
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextLogos = logos.map((x) => ({ ...x }));
-                      nextLogos[idx] = { ...nextLogos[idx], name: next };
-                      editor.updateSection(sectionIndex, { ...section, logos: nextLogos });
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+      {enabled ? (
+        <div className="t3-container" style={{ display: "flex", flexWrap: "wrap", gap: "12px 0" }}>
+          <div className="t3-marquee-group">{logos.map(renderItem)}</div>
+        </div>
+      ) : (
+        <div className="t3-marquee">
+          {/* Two identical groups; the track slides by -50% for a seamless loop. */}
+          <div className="t3-marquee-group">{logos.map(renderItem)}</div>
+          <div className="t3-marquee-group" aria-hidden="true">
+            {logos.map(renderItem)}
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
-

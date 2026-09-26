@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 href="/admin/sites"
                 className="text-sm font-semibold tracking-tight text-gray-900 hover:text-gray-600"
               >
-                soothecontrols
+                Sulva Sites
               </Link>
               <nav className="flex gap-4 text-sm">
                 <Link

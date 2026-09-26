@@ -1,161 +1,163 @@
 "use client";
 
 import Link from "next/link";
-import { buildEmailLink, buildTelLink } from "@/templates/template2/utils";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { propertiesHref, useT6 } from "../ctx";
+import { IconArrow, IconBuilding } from "../icons";
 
-export default function T6Footer({
-  businessName,
-  tagline,
-  address,
-  phone,
-  email,
-  socials,
-  baseUrl,
-}: {
-  businessName: string;
-  tagline: string | null;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  socials: Record<string, string>;
-  baseUrl: string;
-}) {
+const SOCIALS: Array<[key: string, short: string, label: string]> = [
+  ["instagram", "IG", "Instagram"],
+  ["facebook", "FB", "Facebook"],
+  ["twitter", "X", "X / Twitter"],
+  ["tiktok", "TT", "TikTok"],
+];
+
+/** Closing call-to-action band + footer. */
+export default function T6Footer({ logoUrl }: { logoUrl: string | null }) {
+  const ctx = useT6();
+  const { baseUrl, navPages, profile } = ctx;
   const editor = useInlineEditor();
-
-  // Get footer labels from socials (or use defaults)
-  const footerLabels = (() => {
-    const raw = (socials as Record<string, unknown>).footer_labels;
-    if (raw && typeof raw === "object") return raw as Record<string, string>;
-    return {} as Record<string, string>;
-  })();
-  const pagesLabel = footerLabels.pages || "Pages";
-  const contactLabel = footerLabels.contact || "Contact";
+  const socials = (profile.socials || {}) as Record<string, unknown>;
+  const navLabels = (socials.nav_labels as Record<string, string>) || {};
+  const footerLabels = (socials.footer_labels as Record<string, string>) || {};
+  const contactLabel = footerLabels.contact || "Get in touch";
+  const activeSocials = SOCIALS.filter(([k]) => typeof socials[k] === "string" && socials[k]);
 
   return (
-    <footer className="t6-footer">
-      <div className="t6-container">
-        <div className="t6-footer-grid">
-          <div>
-            <div style={{ fontFamily: "var(--t6-serif)", fontWeight: 900, letterSpacing: "-0.02em" }}>
-              {businessName}
-            </div>
-            {tagline ? (
-              <div style={{ marginTop: 10, color: "var(--t6-muted)", lineHeight: 1.7 }}>
+    <>
+      <section className="t6-cta">
+        <div className="t6-cta-inner">
+          <h2 className="t6-h2">Ready to find your next property?</h2>
+          <div className="t6-hero-actions">
+            <Link className="t6-btn t6-btn-light" href={propertiesHref(ctx)}>
+              Browse properties <IconArrow />
+            </Link>
+            <Link className="t6-btn t6-btn-glass" href={`${baseUrl}/contact`}>
+              Talk to an agent
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="t6-footer">
+        <div className="t6-container">
+          <div className="t6-footer-grid">
+            <div>
+              <Link href={`${baseUrl}/`} className="t6-brand">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt={profile.business_name} />
+                ) : (
+                  <span className="t6-brand-mark" aria-hidden="true">
+                    <IconBuilding size={20} />
+                  </span>
+                )}
+                <span className="t6-brand-name">{profile.business_name}</span>
+              </Link>
+              {profile.tagline || editor?.enabled ? (
                 <EditableText
-                  value={tagline}
+                  as="p"
+                  value={profile.tagline || ""}
                   placeholder="Tagline (optional)"
                   multiline
+                  style={{ marginTop: 18, maxWidth: 340 }}
                   onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
                 />
-              </div>
-            ) : editor?.enabled ? (
-              <div style={{ marginTop: 10, color: "var(--t6-muted)", lineHeight: 1.7 }}>
-                <EditableText
-                  value=""
-                  placeholder="Tagline (optional)"
-                  multiline
-                  onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
-                />
-              </div>
-            ) : null}
-          </div>
-          <div>
-            <div style={{ fontFamily: "var(--t6-serif)", fontWeight: 900 }}>
-              <EditableText
-                value={pagesLabel}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    footer_labels: {
-                      ...footerLabels,
-                      pages: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-              />
-            </div>
-            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-              <Link href={`${baseUrl}/`}>Home</Link>
-              <Link href={`${baseUrl}/about`}>About</Link>
-              <Link href={`${baseUrl}/contact`}>Contact</Link>
-            </div>
-          </div>
-          <div>
-            <div style={{ fontFamily: "var(--t6-serif)", fontWeight: 900 }}>
-              <EditableText
-                value={contactLabel}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    footer_labels: {
-                      ...footerLabels,
-                      contact: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-              />
-            </div>
-            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-              {address ? (
-                <span style={{ color: "var(--t6-muted)", fontWeight: 800 }}>
-                  <EditableText
-                    value={address}
-                    onCommit={(next) => editor?.updateProfileField?.("address", next)}
-                    multiline
-                  />
-                </span>
               ) : null}
-              {phone ? (
-                <a href={buildTelLink(phone)}>
-                  <EditableText
-                    value={phone}
-                    onCommit={(next) => editor?.updateProfileField?.("phone", next)}
-                    style={{ display: "inline" }}
-                  />
-                </a>
-              ) : null}
-              {email ? (
-                <a href={buildEmailLink(email)}>
-                  <EditableText
-                    value={email}
-                    onCommit={(next) => editor?.updateProfileField?.("email", next)}
-                    style={{ display: "inline" }}
-                  />
-                </a>
-              ) : null}
-              {(socials.instagram || socials.facebook || socials.twitter || socials.tiktok) ? (
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
-                  {socials.instagram ? <a href={socials.instagram} target="_blank" rel="noreferrer">Instagram</a> : null}
-                  {socials.facebook ? <a href={socials.facebook} target="_blank" rel="noreferrer">Facebook</a> : null}
-                  {socials.twitter ? <a href={socials.twitter} target="_blank" rel="noreferrer">Twitter</a> : null}
-                  {socials.tiktok ? <a href={socials.tiktok} target="_blank" rel="noreferrer">TikTok</a> : null}
+              {activeSocials.length ? (
+                <div className="t6-socials">
+                  {activeSocials.map(([k, short, label]) => (
+                    <a key={k} href={socials[k] as string} target="_blank" rel="noreferrer" aria-label={label}>
+                      {short}
+                    </a>
+                  ))}
                 </div>
               ) : null}
             </div>
-          </div>
-        </div>
 
-        <div style={{ marginTop: 28, borderTop: "1px solid rgba(255,255,255,0.10)", paddingTop: 16 }}>
-          <div style={{ color: "var(--t6-muted)", fontSize: 12 }}>
-            © {new Date().getFullYear()}{" "}
-            <EditableText
-              value={businessName}
-              onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-              style={{ display: "inline" }}
-            />
-            . All rights reserved. Developed by{" "}
-            <a href="https://soothetechnologies.com" target="_blank" rel="noreferrer">
-              soothetechnologies
-            </a>
-            .
+            <div>
+              <h4>Explore</h4>
+              <div className="t6-footer-links">
+                <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
+                {navPages.map((p) => (
+                  <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                    {p.label}
+                  </Link>
+                ))}
+                <Link href={`${baseUrl}/about`}>{navLabels.about || "About"}</Link>
+                <Link href={`${baseUrl}/contact`}>{navLabels.contact || "Contact"}</Link>
+              </div>
+            </div>
+
+            <div>
+              <h4>
+                <EditableText
+                  value={contactLabel}
+                  onCommit={(next) =>
+                    editor?.updateProfileField?.("socials", { ...socials, footer_labels: { ...footerLabels, contact: next } })
+                  }
+                />
+              </h4>
+              <div className="t6-footer-links">
+                {profile.phone ? (
+                  <a href={buildTelLink(profile.phone)}>
+                    <EditableText
+                      value={profile.phone}
+                      onCommit={(next) => editor?.updateProfileField?.("phone", next)}
+                      style={{ display: "inline" }}
+                    />
+                  </a>
+                ) : null}
+                {profile.email ? (
+                  <a href={buildEmailLink(profile.email)}>
+                    <EditableText
+                      value={profile.email}
+                      onCommit={(next) => editor?.updateProfileField?.("email", next)}
+                      style={{ display: "inline" }}
+                    />
+                  </a>
+                ) : null}
+                {profile.whatsapp ? (
+                  <a href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
+                    WhatsApp
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div>
+              <h4>Office</h4>
+              <div className="t6-footer-links">
+                {profile.address ? (
+                  <EditableText
+                    as="span"
+                    value={profile.address}
+                    multiline
+                    onCommit={(next) => editor?.updateProfileField?.("address", next)}
+                  />
+                ) : (
+                  <span>By appointment</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="t6-footer-bar">
+            <span>
+              © {new Date().getFullYear()} {profile.business_name}. All rights reserved.
+            </span>
+            <span>
+              Developed by{" "}
+              <a href="https://sulvatech.com" target="_blank" rel="noreferrer">
+                Sulvatech
+              </a>
+            </span>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+    </>
   );
 }
-

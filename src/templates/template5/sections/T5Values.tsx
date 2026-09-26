@@ -1,72 +1,44 @@
 "use client";
 
-import type { ValuesSection as ValuesSectionType } from "@/lib/pageSchema";
-import { getLoremValueDesc, getLoremValueTitle } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { ValuesSection } from "@/lib/pageSchema";
+import { toRoman, useSectionEditor } from "@/templates/shared/edit";
 
-export default function T5Values({
-  section,
-  sectionIndex,
-}: {
-  section: ValuesSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ title: "", desc: "" }, { title: "", desc: "" }, { title: "", desc: "" }];
+const FALLBACK = [
+  { title: "Consult", desc: "We talk through your style, skin and the occasion so nothing is left to guesswork." },
+  { title: "Create", desc: "Skin prep first, then a look built to photograph beautifully and last all day." },
+  { title: "Glow", desc: "Leave feeling confident, with tips and a touch-up plan for the hours ahead." },
+];
 
-  const filled = items.map((it) => ({
-    title: it.title || getLoremValueTitle(),
-    desc: it.desc || getLoremValueDesc(),
+/** Values as "the experience": three circled steps. */
+export default function T5Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const { setItem } = useSectionEditor(section, sectionIndex);
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
   }));
 
   return (
     <section className="t5-section">
       <div className="t5-container">
-        <span className="t5-eyebrow">Values</span>
-        <h2 className="t5-title">How we work</h2>
-
-        <div className="t5-bento" style={{ marginTop: 18 }}>
-          {filled.map((v, idx) => (
-            <div key={idx} className="t5-card t5-item" style={{ gridColumn: "span 4", padding: 18 }}>
-              <div
-                className="t5-chip"
-                style={{
-                  background: "rgb(var(--t5-accent2-rgb) / 0.08)",
-                  borderColor: "rgb(var(--t5-accent2-rgb) / 0.18)",
-                  color: "var(--t5-accent2)",
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  {/* bolt (t5) */}
-                  <path d="M13 2L3 14h7l-1 8 12-14h-7l-1-6z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <EditableText
-                as="h3"
-                value={v.title}
-                placeholder="Value title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
+        <div className="t5-head t5-center t5-reveal">
+          <span className="t5-eyebrow">The experience</span>
+          <h2 className="t5-title">
+            Designed around <em>you</em>
+          </h2>
+        </div>
+        <div className="t5-steps">
+          {items.map((v, idx) => (
+            <div key={idx} className="t5-step t5-reveal">
+              <span className="t5-step-num">{toRoman(idx + 1)}</span>
+              <EditableText as="h3" className="t5-h3" value={v.title} placeholder="Title" onCommit={(next) => setItem("items", items, idx, { title: next })} />
               <EditableText
                 as="p"
+                className="t5-muted"
                 value={v.desc}
-                placeholder="Value description"
+                placeholder="Description"
                 multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], desc: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
+                onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />
             </div>
           ))}
@@ -75,4 +47,3 @@ export default function T5Values({
     </section>
   );
 }
-

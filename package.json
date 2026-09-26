@@ -1,25 +1,27 @@
 {
-  "name": "soothecontrols",
+  "name": "sulva-sites",
   "version": "0.1.0",
   "private": true,
-  "description": "soothecontrols (Next.js + Supabase)",
+  "description": "Sulva Sites — Sulvatech internal website builder (Next.js + Supabase)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test \"tests/*.test.mjs\""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cursoraidev1-web/soothecontrol.git"
+    "url": "git+https://github.com/Sulva-Technology/sulvasites.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/cursoraidev1-web/soothecontrol/issues"
+    "url": "https://github.com/Sulva-Technology/sulvasites/issues"
   },
-  "homepage": "https://github.com/cursoraidev1-web/soothecontrol#readme",
+  "homepage": "https://github.com/Sulva-Technology/sulvasites#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
     "next": "^16.1.1",
