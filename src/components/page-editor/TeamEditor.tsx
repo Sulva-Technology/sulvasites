@@ -2,6 +2,8 @@
 
 import type { TeamSection } from "@/lib/pageSchema";
 
+import ImageField from "./ImageField";
+
 export default function TeamEditor({
   value,
   onChange,
@@ -115,21 +117,18 @@ export default function TeamEditor({
                       className="mt-1 w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
                     />
                   </label>
-                  <label className="block sm:col-span-2">
-                    <span className="text-sm font-medium text-gray-800">
-                      Photo URL (optional)
-                    </span>
-                    <input
+                  <div className="sm:col-span-2">
+                    <ImageField
+                      label="Photo (optional)"
                       value={m.photoUrl ?? ""}
-                      onChange={(e) => {
+                      onChange={(url) => {
                         const members = value.members.map((x, i) =>
-                          i === idx ? { ...x, photoUrl: e.target.value } : x
+                          i === idx ? { ...x, photoUrl: url } : x
                         );
                         onChange({ ...value, members });
                       }}
-                      className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
                     />
-                  </label>
+                  </div>
                   <label className="block sm:col-span-2">
                     <span className="text-sm font-medium text-gray-800">
                       LinkedIn URL (optional)

@@ -15,6 +15,7 @@ import GalleryEditor from "@/components/page-editor/GalleryEditor";
 import TestimonialsEditor from "@/components/page-editor/TestimonialsEditor";
 import FAQEditor from "@/components/page-editor/FAQEditor";
 import TeamEditor from "@/components/page-editor/TeamEditor";
+import { SiteImageProvider } from "@/components/page-editor/ImageField";
 import {
   defaultPageData,
   defaultSection,
@@ -381,6 +382,7 @@ export default function PageEditorPage() {
   if (!pageKey) notFound();
 
   return (
+    <SiteImageProvider siteId={siteId}>
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -711,6 +713,7 @@ export default function PageEditorPage() {
         </div>
       </div>
     </div>
+    </SiteImageProvider>
   );
 }
 

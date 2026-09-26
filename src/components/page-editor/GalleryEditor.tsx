@@ -2,6 +2,8 @@
 
 import type { GallerySection } from "@/lib/pageSchema";
 
+import ImageField from "./ImageField";
+
 export default function GalleryEditor({
   value,
   onChange,
@@ -72,18 +74,14 @@ export default function GalleryEditor({
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-800">
-                    Image URL
-                  </span>
-                  <input
+                <div className="sm:col-span-2">
+                  <ImageField
+                    label="Image"
                     value={it.url}
-                    onChange={(e) => updateImage(idx, { url: e.target.value })}
-                    className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                    placeholder="https://..."
-                    type="url"
+                    onChange={(url) => updateImage(idx, { url })}
+                    onPick={(url, alt) => updateImage(idx, { url, alt: it.alt || alt })}
                   />
-                </label>
+                </div>
                 <label className="block">
                   <span className="text-sm font-medium text-gray-800">
                     Alt Text

@@ -15,6 +15,7 @@ import GalleryEditor from "@/components/page-editor/GalleryEditor";
 import TestimonialsEditor from "@/components/page-editor/TestimonialsEditor";
 import FAQEditor from "@/components/page-editor/FAQEditor";
 import TeamEditor from "@/components/page-editor/TeamEditor";
+import { SiteImageProvider } from "@/components/page-editor/ImageField";
 import {
   defaultSection,
   validatePageData,
@@ -221,6 +222,7 @@ export default function ExtraPageEditor() {
   }
 
   return (
+    <SiteImageProvider siteId={siteId}>
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -455,6 +457,7 @@ export default function ExtraPageEditor() {
         </div>
       )}
     </div>
+    </SiteImageProvider>
   );
 }
 
