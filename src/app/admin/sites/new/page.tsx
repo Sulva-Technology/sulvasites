@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createPresetPages } from "@/lib/extraPages";
+import { TEMPLATE_META, templateLabel } from "@/templates/meta";
 import { slugify } from "@/lib/slugify";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
 
-const templateOptions = ["t1", "t2", "t3", "t4", "t5", "t6"] as const;
+const templateOptions = TEMPLATE_META.map((t) => t.key);
 
 export default function NewSitePage() {
   const router = useRouter();
@@ -16,9 +17,7 @@ export default function NewSitePage() {
   const [businessName, setBusinessName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [templateKey, setTemplateKey] = useState<(typeof templateOptions)[number]>(
-    "t1",
-  );
+  const [templateKey, setTemplateKey] = useState<string>("t1");
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,16 +124,19 @@ export default function NewSitePage() {
           <select
             value={templateKey}
             onChange={(e) =>
-              setTemplateKey(e.target.value as (typeof templateOptions)[number])
+              setTemplateKey(e.target.value)
             }
             className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
           >
             {templateOptions.map((t) => (
               <option key={t} value={t}>
-                {t.toUpperCase()}
+                {templateLabel(t)}
               </option>
             ))}
           </select>
+          <span className="mt-1 block text-xs text-gray-500">
+            {TEMPLATE_META.find((t) => t.key === templateKey)?.description} Recommended pages are added as drafts.
+          </span>
         </label>
 
         {error ? (

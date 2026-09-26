@@ -49,39 +49,11 @@ export default function ColorPaletteSidebar({
   const [isSaving, setIsSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
 
-  const setRgbVarFromHex = (root: HTMLElement, cssVar: string, hex: string) => {
-    const m = hex.trim().replace("#", "");
-    if (!/^[0-9a-fA-F]{6}$/.test(m)) return;
-    const r = parseInt(m.slice(0, 2), 16);
-    const g = parseInt(m.slice(2, 4), 16);
-    const b = parseInt(m.slice(4, 6), 16);
-    root.style.setProperty(cssVar, `${r} ${g} ${b}`);
-  };
-
   const applyColors = (newColors: ThemeSemanticColors) => {
-    // Apply to preview template root if available (fixes "not working" cases),
-    // else fall back to :root.
+    // Apply to the preview template root if available, else fall back to :root.
     const target = getTargetRoot?.() ?? null;
     const root = target ?? document.documentElement;
     applyThemeColors(root, templateKey, newColors);
-
-    // Also set derived RGB vars so template gradients/glows follow the palette/brand colors.
-    if (templateKey === "t3") {
-      if (typeof newColors.accent === "string") setRgbVarFromHex(root, "--t3-accent-rgb", newColors.accent);
-      if (typeof newColors.accent2 === "string") setRgbVarFromHex(root, "--t3-accent2-rgb", newColors.accent2);
-    }
-    if (templateKey === "t4") {
-      if (typeof newColors.accent === "string") setRgbVarFromHex(root, "--t4-accent-rgb", newColors.accent);
-      if (typeof newColors.accent2 === "string") setRgbVarFromHex(root, "--t4-accent2-rgb", newColors.accent2);
-    }
-    if (templateKey === "t5") {
-      if (typeof newColors.accent === "string") setRgbVarFromHex(root, "--t5-accent-rgb", newColors.accent);
-      if (typeof newColors.accent2 === "string") setRgbVarFromHex(root, "--t5-accent2-rgb", newColors.accent2);
-    }
-    if (templateKey === "t6") {
-      if (typeof newColors.accent === "string") setRgbVarFromHex(root, "--t6-accent-rgb", newColors.accent);
-      if (typeof newColors.accent2 === "string") setRgbVarFromHex(root, "--t6-accent2-rgb", newColors.accent2);
-    }
   };
 
   useEffect(() => {
@@ -143,25 +115,9 @@ export default function ColorPaletteSidebar({
     }
   };
 
-  // Get button gradient color based on template
-  const getButtonGradient = () => {
-    if (templateKey === "t1") {
-      return "linear-gradient(135deg, var(--color-primary, #6B46C1) 0%, var(--color-accent, #8B5CF6) 100%)";
-    }
-    if (templateKey === "t3") {
-      return "linear-gradient(135deg, var(--t3-accent, #0f766e) 0%, var(--t3-accent2, #b45309) 100%)";
-    }
-    if (templateKey === "t4") {
-      return "linear-gradient(135deg, var(--t4-accent, #7c3aed) 0%, var(--t4-accent2, #06b6d4) 100%)";
-    }
-    if (templateKey === "t5") {
-      return "linear-gradient(135deg, var(--t5-accent, #2563eb) 0%, var(--t5-accent2, #db2777) 100%)";
-    }
-    if (templateKey === "t6") {
-      return "linear-gradient(135deg, var(--t6-accent, #22c55e) 0%, var(--t6-accent2, #60a5fa) 100%)";
-    }
-    return "linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%)";
-  };
+  // Button gradient follows the palette being edited.
+  const getButtonGradient = () =>
+    `linear-gradient(135deg, ${colors.accent ?? config.defaults.accent} 0%, ${colors.accent2 ?? config.defaults.accent2} 100%)`;
 
   return (
     <>

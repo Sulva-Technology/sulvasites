@@ -13,8 +13,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 function normalizeCssColor(input: unknown): string | null {
   if (typeof input !== "string") return null;
   const s = input.trim();
-  if (!s) return null;
-  return s;
+  return s || null;
 }
 
 function normalizeHexColor(input: unknown): string | null {
@@ -24,12 +23,13 @@ function normalizeHexColor(input: unknown): string | null {
   return s.toUpperCase();
 }
 
-function hexToRgbTriplet(hex: string): string {
+function relativeLuminance(hex: string) {
   const m = hex.replace("#", "");
-  const r = parseInt(m.slice(0, 2), 16);
-  const g = parseInt(m.slice(2, 4), 16);
-  const b = parseInt(m.slice(4, 6), 16);
-  return `${r} ${g} ${b}`;
+  const lin = (i: number) => {
+    const v = parseInt(m.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
 }
 
 function getBrandColors(raw: unknown): BrandColors | null {
@@ -55,9 +55,21 @@ function getThemeOverride(rawThemeColors: unknown, templateKey: string): Record<
 }
 
 /**
+ * CSS variables derived from logo ("Apply logo colors") brand colours.
+ * Every template exposes `--tN-accent` and `--tN-accent2`; accent2 drives dark
+ * bands with light text, so a logo's second colour is only used there when dark.
+ */
+export function brandColorVars(templateKey: string, brand: BrandColors): Record<string, string> {
+  if (!/^t\d+$/.test(templateKey)) return {};
+  const vars: Record<string, string> = { [`--${templateKey}-accent`]: brand.dominant };
+  if (relativeLuminance(brand.accent) < 0.12) vars[`--${templateKey}-accent2`] = brand.accent;
+  return vars;
+}
+
+/**
  * Returns inline CSS variables for a template root element.
  * - Uses `brand_colors` (from "Apply logo colors") as base.
- * - Allows `theme_colors[templateKey]` to override specific variables (if present).
+ * - `theme_colors[templateKey]` (the palette editor) overrides specific variables.
  */
 export function buildTemplateThemeStyle(
   templateKey: string,
@@ -65,91 +77,11 @@ export function buildTemplateThemeStyle(
 ): CSSProperties | undefined {
   const brand = getBrandColors(profile.brand_colors);
   const overrides = getThemeOverride(profile.theme_colors, templateKey);
-
-  // Nothing to apply.
   if (!brand && !overrides) return undefined;
 
   const style: Record<string, string> = {};
+  if (brand) Object.assign(style, brandColorVars(templateKey, brand));
+  if (overrides) Object.assign(style, toCssVarMap(templateKey, overrides));
 
-  // Base from brand colors.
-  if (brand) {
-    if (templateKey === "t1") {
-      style["--color-primary"] = brand.dominant;
-      style["--color-accent"] = brand.accent;
-      style["--color-bg-gradient"] = `linear-gradient(135deg, ${brand.dominant} 0%, ${brand.accent} 100%)`;
-    }
-
-    if (templateKey === "t3") {
-      style["--t3-accent"] = brand.dominant;
-      style["--t3-accent2"] = brand.accent;
-      style["--t3-accent-rgb"] = hexToRgbTriplet(brand.dominant);
-      style["--t3-accent2-rgb"] = hexToRgbTriplet(brand.accent);
-    }
-
-    if (templateKey === "t4") {
-      style["--t4-accent"] = brand.dominant;
-      style["--t4-accent2"] = brand.accent;
-      style["--t4-accent-rgb"] = hexToRgbTriplet(brand.dominant);
-      style["--t4-accent2-rgb"] = hexToRgbTriplet(brand.accent);
-    }
-
-    if (templateKey === "t5") {
-      style["--t5-accent"] = brand.dominant;
-      style["--t5-accent2"] = brand.accent;
-      style["--t5-accent-rgb"] = hexToRgbTriplet(brand.dominant);
-      style["--t5-accent2-rgb"] = hexToRgbTriplet(brand.accent);
-    }
-
-    if (templateKey === "t6") {
-      style["--t6-accent"] = brand.dominant;
-      style["--t6-accent2"] = brand.accent;
-      style["--t6-accent-rgb"] = hexToRgbTriplet(brand.dominant);
-      style["--t6-accent2-rgb"] = hexToRgbTriplet(brand.accent);
-    }
-  }
-
-  // Apply overrides (if any).
-  // Apply via the template variable map so we can support full palettes.
-  if (overrides) {
-    const cssVars = toCssVarMap(templateKey, overrides);
-    for (const [k, v] of Object.entries(cssVars)) style[k] = v;
-
-    // Keep derived rgb vars in sync when accents are hex.
-    if (templateKey === "t3") {
-      const a = normalizeHexColor(overrides.accent);
-      const b = normalizeHexColor(overrides.accent2);
-      if (a) style["--t3-accent-rgb"] = hexToRgbTriplet(a);
-      if (b) style["--t3-accent2-rgb"] = hexToRgbTriplet(b);
-    }
-    if (templateKey === "t4") {
-      const a = normalizeHexColor(overrides.accent);
-      const b = normalizeHexColor(overrides.accent2);
-      if (a) style["--t4-accent-rgb"] = hexToRgbTriplet(a);
-      if (b) style["--t4-accent2-rgb"] = hexToRgbTriplet(b);
-    }
-    if (templateKey === "t5") {
-      const a = normalizeHexColor(overrides.accent);
-      const b = normalizeHexColor(overrides.accent2);
-      if (a) style["--t5-accent-rgb"] = hexToRgbTriplet(a);
-      if (b) style["--t5-accent2-rgb"] = hexToRgbTriplet(b);
-    }
-    if (templateKey === "t6") {
-      const a = normalizeHexColor(overrides.accent);
-      const b = normalizeHexColor(overrides.accent2);
-      if (a) style["--t6-accent-rgb"] = hexToRgbTriplet(a);
-      if (b) style["--t6-accent2-rgb"] = hexToRgbTriplet(b);
-    }
-
-    // Template1 gradient needs to stay in sync if palette overrides are applied.
-    if (templateKey === "t1") {
-      const primary = style["--color-primary"];
-      const accent = style["--color-accent"];
-      if (primary && accent) {
-        style["--color-bg-gradient"] = `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`;
-      }
-    }
-  }
-
-  return style as unknown as CSSProperties;
+  return Object.keys(style).length ? (style as CSSProperties) : undefined;
 }
-

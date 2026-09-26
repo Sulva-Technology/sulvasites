@@ -1,162 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import type { PageKey } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useEffect, useState } from "react";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import type { PageKey } from "@/lib/pageSchema";
+import { useT4 } from "../ctx";
+import { IconArrow, IconMenu } from "../icons";
+
+type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
 export default function T4Header({
-  businessName,
   logoUrl,
   currentPage,
-  baseUrl,
-  profile,
+  currentExtraKey,
 }: {
-  businessName: string;
   logoUrl: string | null;
   currentPage: PageKey | null;
-  baseUrl: string;
-  profile?: {
-    socials?: Record<string, unknown> | null;
-  };
+  currentExtraKey?: string | null;
 }) {
+  const { baseUrl, navPages, profile } = useT4();
   const editor = useInlineEditor();
-  
-  // Get navigation labels from profile socials (or use defaults)
-  const socials = (profile?.socials || {}) as Record<string, unknown>;
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const socials = (profile.socials || {}) as Record<string, unknown>;
   const navLabels = (socials.nav_labels as Record<string, string>) || {};
-  const navHome = navLabels.home || "Home";
-  const navAbout = navLabels.about || "About";
-  const navContact = navLabels.contact || "Contact";
-  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const items: NavItem[] = [
+    { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
+    ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
+    { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact" },
+  ];
+
+  const saveNavLabel = (key: PageKey, next: string) =>
+    editor?.updateProfileField?.("socials", { ...socials, nav_labels: { ...navLabels, [key]: next } });
+
   return (
-    <header className="t4-header">
-      <div className="t4-container">
-        <div className="t4-header-inner">
-          <Link href={`${baseUrl}/`} className="t4-brand" aria-label={businessName}>
-            {logoUrl ? (
-              <img src={logoUrl} alt={businessName} style={{ height: 34, width: "auto" }} />
-            ) : (
-              <span className="t4-mark" aria-hidden="true" />
-            )}
-            <span className="t4-name">
-              <EditableText
-                value={businessName}
-                onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-                style={{ display: "inline" }}
-              />
-            </span>
+    <header className="t4-header" data-scrolled={scrolled}>
+      <div className="t4-capsule">
+        <Link href={`${baseUrl}/`} className="t4-brand" aria-label={profile.business_name}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={profile.business_name} />
+          ) : (
+            <span className="t4-logo" aria-hidden="true" />
+          )}
+          <span className="t4-brand-name">
+            <EditableText
+              value={profile.business_name}
+              onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
+              style={{ display: "inline" }}
+            />
+          </span>
+        </Link>
+
+        <nav className="t4-nav" aria-label="Main">
+          {items.map((it) => (
+            <Link key={it.id} href={it.href} data-active={it.active} aria-current={it.active ? "page" : undefined}>
+              {it.coreKey ? (
+                <EditableText value={it.label} onCommit={(next) => saveNavLabel(it.coreKey!, next)} style={{ display: "inline" }} />
+              ) : (
+                it.label
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="t4-header-actions">
+          <Link className="t4-btn t4-btn-accent" href={`${baseUrl}/contact`}>
+            Get started <IconArrow size={16} />
           </Link>
-
-          <nav className="t4-nav" aria-label="Main">
-            <Link href={`${baseUrl}/`} data-active={currentPage === "home"}>
-              <EditableText
-                value={navHome}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      home: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link href={`${baseUrl}/about`} data-active={currentPage === "about"}>
-              <EditableText
-                value={navAbout}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      about: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link href={`${baseUrl}/contact`} data-active={currentPage === "contact"}>
-              <EditableText
-                value={navContact}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      contact: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-          </nav>
-
-          <div className="t4-header-actions">
-            <Link href={`${baseUrl}/contact`} className="t4-cta">
-              Get started
-            </Link>
-            <button
-              type="button"
-              className="t4-menu-btn"
-              aria-label="Open menu"
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen(true)}
-            >
-              <span className="t4-menu-ico" aria-hidden="true" />
-            </button>
-          </div>
+          <button
+            type="button"
+            className="t4-burger"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "×" : <IconMenu />}
+          </button>
         </div>
       </div>
 
-      {mobileOpen ? (
-        <div className="t4-mobile" role="dialog" aria-modal="true">
-          <button
-            type="button"
-            className="t4-mobile-backdrop"
-            aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="t4-mobile-panel">
-            <div className="t4-mobile-top">
-              <div className="t4-mobile-title">Menu</div>
-              <button
-                type="button"
-                className="t4-mobile-close"
-                aria-label="Close menu"
-                onClick={() => setMobileOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="t4-mobile-links" aria-label="Mobile">
-              <Link href={`${baseUrl}/`} onClick={() => setMobileOpen(false)}>
-                {navHome}
-              </Link>
-              <Link href={`${baseUrl}/about`} onClick={() => setMobileOpen(false)}>
-                {navAbout}
-              </Link>
-              <Link href={`${baseUrl}/contact`} onClick={() => setMobileOpen(false)}>
-                {navContact}
-              </Link>
-            </div>
-            <div className="t4-mobile-cta">
-              <Link href={`${baseUrl}/contact`} className="t4-cta" onClick={() => setMobileOpen(false)}>
-                Get started
-              </Link>
-            </div>
-          </div>
-        </div>
+      {open ? (
+        <nav className="t4-dropdown" aria-label="Mobile">
+          {items.map((it) => (
+            <Link key={it.id} href={it.href} data-active={it.active} onClick={() => setOpen(false)}>
+              {it.label}
+            </Link>
+          ))}
+          <Link className="t4-btn t4-btn-accent" href={`${baseUrl}/contact`} onClick={() => setOpen(false)}>
+            Get started <IconArrow size={16} />
+          </Link>
+        </nav>
       ) : null}
     </header>
   );
 }
-

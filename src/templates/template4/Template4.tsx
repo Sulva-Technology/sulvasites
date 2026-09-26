@@ -1,47 +1,20 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import type { PageData, PageKey } from "@/lib/pageSchema";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
+
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { getPublicAssetUrl } from "@/lib/assets";
-import "./template4.css";
+import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
-
-import T4Header from "./components/T4Header";
+import type { TemplateProps } from "@/templates/registry";
+import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import T4Footer from "./components/T4Footer";
-import T4HomePage from "./pages/T4HomePage";
-import T4AboutPage from "./pages/T4AboutPage";
-import T4ContactPage from "./pages/T4ContactPage";
+import T4Header from "./components/T4Header";
+import { collectProductMedia, T4Provider } from "./ctx";
+import T4Sections from "./sections/T4Sections";
+import "./template4.css";
 
-interface Template4Props {
-  site: {
-    id: string;
-    slug: string;
-    template_key: string;
-  };
-  profile: {
-    business_name: string;
-    tagline: string | null;
-    description: string | null;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    whatsapp: string | null;
-    socials: Record<string, unknown> | null;
-    brand_colors?: Record<string, unknown> | null;
-    theme_colors?: Record<string, unknown> | null;
-    logo_asset_id: string | null;
-    logo_path?: string | null;
-  };
-  pages: {
-    home: PageData;
-    about: PageData;
-    contact: PageData;
-  };
-  currentPage?: PageKey | null;
-  baseUrl?: string;
-  pageOverride?: PageData;
-}
-
+/** Template 4 — "Launch": product / app / startup. */
 export default function Template4({
   site,
   profile,
@@ -49,44 +22,59 @@ export default function Template4({
   currentPage = "home",
   baseUrl = "",
   pageOverride,
-}: Template4Props) {
+  navPages = [],
+  currentExtraKey = null,
+}: TemplateProps) {
+  const editor = useInlineEditor();
+  const rootRef = useRef<HTMLDivElement>(null);
+
   const logoUrl = profile.logo_path ? getPublicAssetUrl(profile.logo_path) : null;
-  const socials = (profile.socials || {}) as Record<string, string>;
-  const effectivePage: PageKey = (pageOverride ? "home" : (currentPage ?? "home"));
+  const effectivePage: PageKey = pageOverride ? "home" : (currentPage ?? "home");
   const navPage: PageKey | null = pageOverride ? null : (currentPage ?? "home");
-  const currentPageData = pageOverride ?? pages[effectivePage];
-  const themeStyle = buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined;
+  const pageData = pageOverride ?? pages[effectivePage];
+  const themeStyle = sanitizeThemeStyle(
+    buildTemplateThemeStyle(site.template_key, profile) as CSSProperties | undefined,
+    "t4",
+  );
+  const motion = !editor?.enabled;
+
+  const media = useMemo(
+    () => collectProductMedia([pageData, pages.home, pages.about, pages.contact]),
+    [pageData, pages],
+  );
+  const ctx = useMemo(() => ({ baseUrl, navPages, profile, ...media }), [baseUrl, navPages, profile, media]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !motion || typeof IntersectionObserver === "undefined") return;
+    root.dataset.motion = "on";
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).dataset.visible = "true";
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    root.querySelectorAll(".t4-reveal").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      delete root.dataset.motion;
+    };
+  }, [motion, pageData]);
 
   return (
-    <div className="template4" data-site-slug={site.slug} data-template-key={site.template_key} style={themeStyle}>
-      <T4Header
-        businessName={profile.business_name}
-        logoUrl={logoUrl}
-        currentPage={navPage}
-        baseUrl={baseUrl}
-        profile={profile}
-      />
-
-      {effectivePage === "home" && (
-        <T4HomePage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "about" && (
-        <T4AboutPage pageData={currentPageData} profile={profile} />
-      )}
-      {effectivePage === "contact" && (
-        <T4ContactPage pageData={currentPageData} profile={profile} />
-      )}
-
-      <T4Footer
-        businessName={profile.business_name}
-        tagline={profile.tagline}
-        address={profile.address}
-        phone={profile.phone}
-        email={profile.email}
-        socials={socials}
-        baseUrl={baseUrl}
-      />
-    </div>
+    <T4Provider value={ctx}>
+      <div ref={rootRef} className="template4" style={themeStyle}>
+        <T4Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
+        <main>
+          <T4Sections pageData={pageData} />
+        </main>
+        <T4Footer logoUrl={logoUrl} />
+      </div>
+    </T4Provider>
   );
 }
-

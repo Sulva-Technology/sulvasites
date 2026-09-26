@@ -1,91 +1,63 @@
 "use client";
 
-import type { ServicesSection as ServicesSectionType } from "@/lib/pageSchema";
-import { getLoremServiceDesc, getLoremServiceTitle } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { ServicesSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
+import { FEATURE_ICONS } from "../icons";
 
-function Icon({ i }: { i: number }) {
-  // Template4: sharp, futuristic “neon” line icons.
-  const paths = [
-    // hex
-    "M8 3l8 0 5 9-5 9H8L3 12 8 3z",
-    // circuit-ish
-    "M6 7h8a4 4 0 0 1 0 8H9m9-8v0m0 8v0M6 17h6",
-    // prism
-    "M12 3l9 6-9 12L3 9l9-6z",
-    // waveform
-    "M4 13c2 0 2-6 4-6s2 12 4 12 2-12 4-12 2 6 4 6",
-  ];
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d={paths[i % paths.length]} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const FALLBACK = [
+  { title: "Everything in one place", desc: "One simple home for the work that used to live in ten different tools." },
+  { title: "Set up in minutes", desc: "No training needed — invite your team and go." },
+  { title: "Always on time", desc: "Smart reminders keep everyone on schedule." },
+  { title: "Secure by default", desc: "Your data is encrypted and backed up automatically." },
+  { title: "Insights that help", desc: "Clear reports show what's working at a glance." },
+];
 
-export default function T4Services({
-  section,
-  sectionIndex,
-}: {
-  section: ServicesSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [{ title: "", desc: "" }, { title: "", desc: "" }, { title: "", desc: "" }];
-
-  const filled = items.map((it) => ({
-    title: it.title || getLoremServiceTitle(),
-    desc: it.desc || getLoremServiceDesc(),
+/** Services as a bento feature grid (first item is the large dark tile). */
+export default function T4Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const { setItem } = useSectionEditor(section, sectionIndex);
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    title: it.title || FALLBACK[i % FALLBACK.length].title,
+    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
   }));
 
   return (
-    <section id="services" className="t4-section">
+    <section id="features" className="t4-section">
       <div className="t4-container">
-        <span className="t4-eyebrow">Services</span>
-        <h2 className="t4-title">What we deliver</h2>
-
-        <div className="t4-bento" style={{ marginTop: 18 }}>
-          {filled.map((s, idx) => (
-            <div
-              key={idx}
-              className="t4-card t4-item"
-              style={{ gridColumn: "span 4", padding: 18 }}
-            >
-              <div className="t4-chip">
-                <Icon i={idx} />
-              </div>
-              <EditableText
-                as="h3"
-                value={s.title}
-                placeholder="Service title"
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], title: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
-              <EditableText
-                as="p"
-                value={s.desc}
-                placeholder="Service description"
-                multiline
-                onCommit={(next) => {
-                  if (!editor || sectionIndex == null) return;
-                  const nextItems = filled.map((x) => ({ ...x }));
-                  nextItems[idx] = { ...nextItems[idx], desc: next };
-                  editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                }}
-              />
-            </div>
-          ))}
+        <div className="t4-head t4-center t4-reveal">
+          <span className="t4-label">Features</span>
+          <h2 className="t4-h2">
+            Built for the way you <span className="t4-mark">work</span>
+          </h2>
+        </div>
+        <div className="t4-bento">
+          {items.map((f, idx) => {
+            const Icon = FEATURE_ICONS[idx % FEATURE_ICONS.length];
+            return (
+              <article key={idx} className="t4-feature t4-reveal">
+                <span className="t4-feature-icon">
+                  <Icon />
+                </span>
+                <EditableText
+                  as="h3"
+                  className="t4-h3"
+                  value={f.title}
+                  placeholder="Feature"
+                  onCommit={(next) => setItem("items", items, idx, { title: next })}
+                />
+                <EditableText
+                  as="p"
+                  className="t4-muted"
+                  value={f.desc}
+                  placeholder="Description"
+                  multiline
+                  onCommit={(next) => setItem("items", items, idx, { desc: next })}
+                />
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
-

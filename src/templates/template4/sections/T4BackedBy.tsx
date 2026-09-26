@@ -1,74 +1,38 @@
 "use client";
 
-import type { BackedBySection as BackedBySectionType } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { BackedBySection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
 
-export default function T4BackedBy({
-  section,
-  sectionIndex,
-}: {
-  section: BackedBySectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || "Trusted by teams who care about quality";
+const FALLBACK = ["Northwind", "Kora", "Lumen", "Tessera", "Harbor", "Sable"];
 
-  const logos =
-    section.logos && section.logos.length > 0
-      ? section.logos
-      : [
-          { name: "Partner One", url: null },
-          { name: "Partner Two", url: null },
-          { name: "Partner Three", url: null },
-          { name: "Partner Four", url: null },
-          { name: "Partner Five", url: null },
-          { name: "Partner Six", url: null },
-        ];
+function isImageUrl(url: string | null | undefined): url is string {
+  return !!url && /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(url);
+}
+
+/** Logo grid with hairline dividers. */
+export default function T4BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
+  const { set, setItem } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "Trusted by fast-moving teams";
+  const logos = section.logos?.length ? section.logos : FALLBACK.map((name) => ({ name, url: null }));
 
   return (
-    <section className="t4-section">
-      <div className="t4-container">
-        <span className="t4-eyebrow">Proof</span>
-        <EditableText
-          as="h2"
-          className="t4-title"
-          value={title}
-          placeholder="Trust title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-        <div className="t4-card" style={{ marginTop: 16, padding: 14 }}>
-          <div className="t4-bento">
-            {logos.map((l, idx) => (
-              <div
-                key={`${l.name}-${idx}`}
-                className="t4-tile"
-                style={{ gridColumn: "span 4", textAlign: "center", fontWeight: 900, color: "var(--t4-muted)" }}
-              >
-                {l.url ? (
-                  <img src={l.url} alt={l.name} style={{ height: 22, width: "auto", opacity: 0.8, filter: "grayscale(1)" }} />
-                ) : (
-                  <EditableText
-                    as="span"
-                    value={l.name}
-                    placeholder="Logo name"
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextLogos = logos.map((x) => ({ ...x }));
-                      nextLogos[idx] = { ...nextLogos[idx], name: next };
-                      editor.updateSection(sectionIndex, { ...section, logos: nextLogos });
-                    }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+    <section className="t4-logos">
+      <div className="t4-container t4-reveal">
+        <EditableText as="p" className="t4-logos-title" value={title} placeholder="Trusted by" onCommit={(next) => set({ title: next })} />
+        <div className="t4-logos-grid">
+          {logos.map((l, idx) => (
+            <div key={idx} className="t4-logo-cell">
+              {isImageUrl(l.url) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={l.url} alt={l.name} />
+              ) : (
+                <EditableText as="span" value={l.name} placeholder="Name" onCommit={(next) => setItem("logos", logos, idx, { name: next })} />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
-

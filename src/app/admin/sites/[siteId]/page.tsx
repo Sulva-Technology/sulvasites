@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { templateLabel } from "@/templates/meta";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -432,7 +433,7 @@ export default function SiteOverviewPage({
           </div>
           <div>
             <dt className="text-xs font-medium text-gray-600">Template</dt>
-            <dd className="mt-1 text-sm text-gray-900">{site.template_key}</dd>
+            <dd className="mt-1 text-sm text-gray-900">{templateLabel(site.template_key)}</dd>
           </div>
           <div>
             <dt className="text-xs font-medium text-gray-600">Status</dt>

@@ -54,7 +54,26 @@ Both route families (`src/app/[slug]/…` and `src/app/d/[hostname]/…`) are th
 ## Templates
 
 `src/templates/templateN/` — each template is intentionally self-contained so its design can be unique.
-All share the props in `src/templates/registry.ts`.
+All share the props in `src/templates/registry.ts`; names/categories for the admin UI are in `src/templates/meta.ts`.
+
+| Key | Name | Category | Look |
+| --- | --- | --- | --- |
+| t1 | Meridian | Corporate | IBM Plex, white + navy + emerald, ruled grids |
+| t2 | Journal | Editorial | DM Serif Display + Archivo, black/white/red, newspaper masthead |
+| t3 | Atelier | Portfolio | Instrument Serif + Manrope, warm paper, terracotta |
+| t4 | Launch | Product / app | Space Grotesk, orange + near-black, bento + device mockups |
+| t5 | Maison | Beauty & booking | Bodoni Moda + Jost, porcelain + aubergine + rose, arches |
+| t6 | Estate | Real estate | Sora + DM Sans, limestone + midnight + cobalt, property search |
+
+Each template follows the same structure: `TemplateN.tsx` (shell + scroll-reveal), `components/`
+(header, footer), `sections/` (one file per section type + `TNSections.tsx` renderer), `templateN.css`
+(all styles scoped under `.templateN`). Shared, design-agnostic helpers live in `src/templates/shared/`
+(`edit.ts` inline-editing helpers, `links.ts` tel/mail/WhatsApp links, `theme.ts` legacy-colour guard).
+
+**Colours:** every template exposes six CSS variables — `--tN-accent`, `--tN-accent2`, `--tN-ink`,
+`--tN-muted`, `--tN-bg`, `--tN-surface` — and derives lines/tints with `color-mix()`. The palette editor
+config is `src/lib/templateTheme.ts` (a test checks it matches each CSS file); logo colours map in
+`src/lib/themeVars.ts`.
 
 **Adding a template:** create `src/templates/templateN/TemplateN.tsx` accepting `TemplateProps`,
 then add one line to `TEMPLATES` in `registry.ts`. Public routes and admin preview pick it up automatically.

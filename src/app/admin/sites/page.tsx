@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { templateLabel } from "@/templates/meta";
 import { useEffect, useMemo, useState } from "react";
 
 import { formatSupabaseError } from "@/lib/supabase/formatError";
@@ -127,7 +128,7 @@ export default function AdminSitesPage() {
                 filtered.map((s) => (
                   <tr key={s.id} className="bg-white">
                     <td className="px-4 py-3 font-medium">{s.slug}</td>
-                    <td className="px-4 py-3 text-gray-700">{s.template_key}</td>
+                    <td className="px-4 py-3 text-gray-700">{templateLabel(s.template_key)}</td>
                     <td className="px-4 py-3 text-gray-700">{s.status}</td>
                     <td className="px-4 py-3 text-gray-700">
                       {new Date(s.created_at).toLocaleString()}

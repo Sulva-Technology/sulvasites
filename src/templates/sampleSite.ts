@@ -311,7 +311,103 @@ function beautySite(): TemplateProps {
   };
 }
 
+const productHome: PageData = {
+  seo: { title: "Plated — scheduled meal delivery", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Order once. Eat on time, every time",
+      subtext: "Pre-order meals from trusted kitchens and get breakfast, lunch or dinner delivered exactly when you need it.",
+      ctaText: "Get the app",
+      ctaHref: "",
+    },
+    {
+      type: "backed_by",
+      title: "Trusted by students, kitchens and riders across 12 campuses",
+      logos: [
+        { name: "UniLag", url: null },
+        { name: "Covenant", url: null },
+        { name: "OAU", url: null },
+        { name: "Babcock", url: null },
+        { name: "Pan-Atlantic", url: null },
+        { name: "UI", url: null },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Scheduled delivery", desc: "Pick a time window once — your meal arrives on schedule, every day." },
+        { title: "Trusted kitchens", desc: "Verified vendors with ratings you can see." },
+        { title: "Weekly plans", desc: "Subscribe for the week and forget about it." },
+        { title: "Group ordering", desc: "Batch deliveries mean lower fees for everyone." },
+        { title: "Live tracking", desc: "Know exactly where your food is." },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Made for everyone on campus",
+      description: "",
+      items: [
+        { title: "Students", description: "No more queues between lectures. Plan your meals for the week in two minutes and get them delivered to your hostel or faculty.", linkText: "Download the app", linkHref: "" },
+        { title: "Kitchens & vendors", description: "Predictable orders, less waste and payouts every week. Join the vendor programme and reach thousands of students.", linkText: "Become a vendor", linkHref: "" },
+        { title: "Riders", description: "Batched routes and fixed delivery windows mean more deliveries per hour and better earnings.", linkText: "Ride with us", linkHref: "" },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Choose your meal", desc: "Browse verified campus kitchens." },
+        { title: "Pick a time", desc: "Breakfast, lunch or dinner windows." },
+        { title: "Schedule & pay", desc: "Today, tomorrow or the whole week." },
+        { title: "Enjoy", desc: "Delivered on time, perfectly packed." },
+      ],
+    },
+    {
+      type: "testimonials",
+      title: "Students love it",
+      items: [
+        { name: "Ada N.", role: "300L Medicine", company: "", quote: "I used to skip lunch during clinicals. Now it's just there when I need it." },
+        { name: "Tobi F.", role: "Vendor", company: "Mama T's Kitchen", quote: "Orders are predictable now, so I waste almost nothing." },
+        { name: "Seun A.", role: "200L Engineering", company: "", quote: "Cheaper than ordering on my own and always on time." },
+        { name: "Grace O.", role: "Rider", company: "", quote: "Batched routes changed everything. More deliveries, less stress." },
+        { name: "Musa B.", role: "400L Law", company: "", quote: "Exam season saviour. Set it for the week and forgot about food." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Questions? Answers.",
+      items: [
+        { question: "Which campuses do you cover?", answer: "We're live on 12 campuses and adding more every term." },
+        { question: "Can I change my order?", answer: "Yes — edit or cancel up to 2 hours before your delivery window." },
+        { question: "How do payments work?", answer: "Pay securely in the app by card or transfer. Weekly plans are billed upfront." },
+        { question: "How do I become a vendor?", answer: "Apply in the app — we'll visit your kitchen and get you set up within a week." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function productSite(): TemplateProps {
+  const base = sampleSiteBase("t4");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Plated",
+      tagline: "Scheduled campus meal delivery",
+      email: "hello@plated.app",
+      socials: { twitter: "https://x.com", instagram: "https://instagram.com" },
+    },
+    pages: { ...base.pages, home: productHome },
+    navPages: [
+      { key: "features", label: "Features" },
+      { key: "how-it-works", label: "How It Works" },
+    ],
+  };
+}
+
 export function sampleSite(templateKey: string): TemplateProps {
+  if (templateKey === "t4") return productSite();
   if (templateKey === "t6") return estateSite();
   if (templateKey === "t5") return beautySite();
   return sampleSiteBase(templateKey);

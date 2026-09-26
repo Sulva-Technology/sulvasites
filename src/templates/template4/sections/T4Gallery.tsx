@@ -1,82 +1,44 @@
 "use client";
 
-import type { GallerySection as GallerySectionType } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import EditableText from "@/components/inline-editor/EditableText";
+import type { GallerySection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
 
-export default function T4Gallery({
-  section,
-  sectionIndex,
-}: {
-  section: GallerySectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const title = section.title || "Gallery";
-  const images =
-    section.images && section.images.length > 0
+/** Horizontal scroll of product screenshots. Hidden for visitors when empty. */
+export default function T4Gallery({ section, sectionIndex }: { section: GallerySection; sectionIndex?: number }) {
+  const { enabled, set } = useSectionEditor(section, sectionIndex);
+  const title = section.title || "A closer look";
+  const real = (section.images ?? []).filter((img) => img.url);
+  if (!enabled && real.length === 0) return null;
+  const images = enabled
+    ? section.images?.length
       ? section.images
-      : [
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-          { url: "", alt: "" },
-        ];
+      : Array.from({ length: 3 }, () => ({ url: "", alt: "" }))
+    : real;
 
   return (
     <section className="t4-section">
       <div className="t4-container">
-        <span className="t4-eyebrow">Gallery</span>
-        <EditableText
-          as="h2"
-          className="t4-title"
-          value={title}
-          placeholder="Gallery title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-
-        <div className="t4-bento" style={{ marginTop: 18 }}>
-          {images.map((it, idx) => (
-            <div key={idx} className="t4-card" style={{ gridColumn: "span 6", overflow: "hidden" }}>
-              <div
-                style={{
-                  height: 260,
-                  background:
-                    it.url ||
-                    "linear-gradient(135deg, rgba(124,58,237,0.20), rgba(6,182,212,0.14))",
-                  borderBottom: "1px solid rgba(255,255,255,0.10)",
-                }}
-              >
-                {it.url ? (
-                  <img
-                    src={it.url}
-                    alt={it.alt || "Gallery"}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : null}
-              </div>
-              <div style={{ padding: 14 }}>
-                <EditableText
-                  as="div"
-                  value={it.alt || ""}
-                  placeholder="Alt/caption"
-                  onCommit={(next) => {
-                    if (!editor || sectionIndex == null) return;
-                    const nextImages = images.map((x) => ({ ...x }));
-                    nextImages[idx] = { ...nextImages[idx], alt: next };
-                    editor.updateSection(sectionIndex, { ...section, images: nextImages });
-                  }}
-                  style={{ color: "var(--t4-muted)", fontWeight: 800 }}
-                />
-              </div>
-            </div>
-          ))}
+        <div className="t4-head t4-reveal">
+          <span className="t4-label">Screens</span>
+          <EditableText as="h2" className="t4-h2" value={title} placeholder="Gallery title" style={{ marginTop: 12 }} onCommit={(next) => set({ title: next })} />
+        </div>
+        <div className="t4-screens t4-reveal">
+          {images.map((img, idx) =>
+            img.url ? (
+              <figure key={idx} className="t4-shot">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.url} alt={img.alt || ""} loading="lazy" />
+                {img.alt ? <figcaption>{img.alt}</figcaption> : null}
+              </figure>
+            ) : (
+              <figure key={idx} className="t4-shot t4-shot-empty">
+                Screenshot {idx + 1}
+              </figure>
+            ),
+          )}
         </div>
       </div>
     </section>
   );
 }
-

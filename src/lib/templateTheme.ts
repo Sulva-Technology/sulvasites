@@ -1,4 +1,9 @@
-export type TemplateKeyWithTheme = "t1" | "t3" | "t4" | "t5" | "t6";
+/**
+ * Palette editor configuration. Every template exposes the same six semantic
+ * colours as CSS variables (`--tN-accent`, `--tN-accent2`, `--tN-ink`,
+ * `--tN-muted`, `--tN-bg`, `--tN-surface`); lines and tints are derived in CSS.
+ * Defaults here must match each template's CSS.
+ */
 
 export type ThemeSemanticColors = Record<string, string>;
 
@@ -8,165 +13,110 @@ export type TemplateThemeConfig = {
   labels: Record<string, string>;
 };
 
-export const TEMPLATE_THEME_CONFIGS: Record<TemplateKeyWithTheme, TemplateThemeConfig> = {
-  t1: {
-    defaults: {
-      primary: "#6B46C1",
-      accent: "#8B5CF6",
-      dark: "#4C1D95",
-      textPrimary: "#1F2937",
-      textSecondary: "#6B7280",
-      bgMain: "#FFFFFF",
-      bgLight: "#F9FAFB",
-    },
-    variables: {
-      primary: "--color-primary",
-      accent: "--color-accent",
-      dark: "--color-dark",
-      textPrimary: "--color-text-primary",
-      textSecondary: "--color-text-secondary",
-      bgMain: "--color-bg-main",
-      bgLight: "--color-bg-light",
-    },
-    labels: {
-      primary: "Primary Color",
-      accent: "Accent Color",
-      dark: "Dark Accent",
-      textPrimary: "Primary Text",
-      textSecondary: "Secondary Text",
-      bgMain: "Main Background",
-      bgLight: "Light Background",
-    },
-  },
-  t3: {
-    defaults: {
-      accent: "#b4532a",
-      accent2: "#1f3a34",
-      ink: "#1b1a17",
-      muted: "#6e685f",
-      bg: "#f4efe7",
-      surface: "#fffdf9",
-    },
-    variables: {
-      accent: "--t3-accent",
-      accent2: "--t3-accent2",
-      ink: "--t3-ink",
-      muted: "--t3-muted",
-      bg: "--t3-bg",
-      surface: "--t3-surface",
-    },
-    labels: {
-      accent: "Accent",
-      accent2: "Band / Cover Color",
-      ink: "Text Color",
-      muted: "Muted Text",
-      bg: "Paper Background",
-      surface: "Surface",
-    },
-  },
-  t4: {
-    defaults: {
-      accent: "#7c3aed",
-      accent2: "#06b6d4",
-      ink: "rgba(255, 255, 255, 0.92)",
-      muted: "rgba(255, 255, 255, 0.66)",
-      bg: "#0b0f19",
-      surface: "rgba(255, 255, 255, 0.06)",
-    },
-    variables: {
-      accent: "--t4-accent",
-      accent2: "--t4-accent2",
-      ink: "--t4-ink",
-      muted: "--t4-muted",
-      bg: "--t4-bg",
-      surface: "--t4-surface",
-    },
-    labels: {
-      accent: "Primary Accent",
-      accent2: "Secondary Accent",
-      ink: "Text Color",
-      muted: "Muted Text",
-      bg: "Background",
-      surface: "Surface",
-    },
-  },
-  t5: {
-    defaults: {
-      accent: "#2563eb",
-      accent2: "#db2777",
-      ink: "#0b1220",
-      muted: "rgba(11, 18, 32, 0.62)",
-      bg: "#f7f8fb",
-      surface: "#ffffff",
-    },
-    variables: {
-      accent: "--t5-accent",
-      accent2: "--t5-accent2",
-      ink: "--t5-ink",
-      muted: "--t5-muted",
-      bg: "--t5-bg",
-      surface: "--t5-surface",
-    },
-    labels: {
-      accent: "Primary Accent",
-      accent2: "Secondary Accent",
-      ink: "Text Color",
-      muted: "Muted Text",
-      bg: "Background",
-      surface: "Surface",
-    },
-  },
-  t6: {
-    defaults: {
-      accent: "#2f5bff",
-      accent2: "#0e1726",
-      ink: "#121620",
-      muted: "#5b6474",
-      bg: "#f3f1ec",
-      surface: "#ffffff",
-    },
-    variables: {
-      accent: "--t6-accent",
-      accent2: "--t6-accent2",
-      ink: "--t6-ink",
-      muted: "--t6-muted",
-      bg: "--t6-bg",
-      surface: "--t6-surface",
-    },
-    labels: {
-      accent: "Accent (buttons, links)",
-      accent2: "Dark Sections & Footer",
-      ink: "Text Color",
-      muted: "Muted Text",
-      bg: "Page Background",
-      surface: "Cards",
-    },
-  },
+const SEMANTIC_KEYS = ["accent", "accent2", "ink", "muted", "bg", "surface"] as const;
+type SemanticKey = (typeof SEMANTIC_KEYS)[number];
+
+function config(
+  key: string,
+  defaults: Record<SemanticKey, string>,
+  labels: Partial<Record<SemanticKey, string>> = {},
+): TemplateThemeConfig {
+  const baseLabels: Record<SemanticKey, string> = {
+    accent: "Accent (buttons, links)",
+    accent2: "Dark sections & footer",
+    ink: "Text",
+    muted: "Muted text",
+    bg: "Page background",
+    surface: "Cards / panels",
+  };
+  return {
+    defaults,
+    variables: Object.fromEntries(SEMANTIC_KEYS.map((k) => [k, `--${key}-${k}`])),
+    labels: { ...baseLabels, ...labels },
+  };
+}
+
+export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
+  // Corporate — "Meridian"
+  t1: config("t1", {
+    accent: "#0e8a74",
+    accent2: "#0f1e2e",
+    ink: "#0f1e2e",
+    muted: "#58677a",
+    bg: "#ffffff",
+    surface: "#f3f6f8",
+  }, { surface: "Grey sections" }),
+  // Editorial — "Journal"
+  t2: config("t2", {
+    accent: "#e4322b",
+    accent2: "#111111",
+    ink: "#111111",
+    muted: "#5c5c5c",
+    bg: "#ffffff",
+    surface: "#f4f1ea",
+  }, { accent2: "Black sections & footer", surface: "Paper sections" }),
+  // Portfolio — "Atelier"
+  t3: config("t3", {
+    accent: "#b4532a",
+    accent2: "#1f3a34",
+    ink: "#1b1a17",
+    muted: "#6e685f",
+    bg: "#f4efe7",
+    surface: "#fffdf9",
+  }, { accent2: "Band / cover colour", bg: "Paper background" }),
+  // Product — "Launch"
+  t4: config("t4", {
+    accent: "#ff5a1f",
+    accent2: "#121216",
+    ink: "#121216",
+    muted: "#62626c",
+    bg: "#fafaf7",
+    surface: "#ffffff",
+  }),
+  // Glam / booking — "Maison"
+  t5: config("t5", {
+    accent: "#c46f86",
+    accent2: "#2b1b2f",
+    ink: "#2b1b2f",
+    muted: "#75687a",
+    bg: "#fbf7f4",
+    surface: "#ffffff",
+  }),
+  // Real estate — "Estate"
+  t6: config("t6", {
+    accent: "#2f5bff",
+    accent2: "#0e1726",
+    ink: "#121620",
+    muted: "#5b6474",
+    bg: "#f3f1ec",
+    surface: "#ffffff",
+  }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {
-  const k = templateKey as TemplateKeyWithTheme;
-  return TEMPLATE_THEME_CONFIGS[k] ?? null;
+  return TEMPLATE_THEME_CONFIGS[templateKey] ?? null;
 }
 
 export function toCssVarMap(templateKey: string, colors: ThemeSemanticColors): Record<string, string> {
-  const config = getTemplateThemeConfig(templateKey);
-  if (!config) return {};
+  const cfg = getTemplateThemeConfig(templateKey);
+  if (!cfg) return {};
 
   const cssVars: Record<string, string> = {};
   for (const [semanticKey, value] of Object.entries(colors)) {
-    const cssVar = config.variables[semanticKey];
-    if (cssVar && typeof value === "string") {
-      cssVars[cssVar] = value;
-    }
+    const cssVar = cfg.variables[semanticKey];
+    if (cssVar && typeof value === "string") cssVars[cssVar] = value;
   }
   return cssVars;
 }
 
 export function applyThemeColors(root: HTMLElement, templateKey: string, colors: ThemeSemanticColors) {
-  const cssVars = toCssVarMap(templateKey, colors);
-  for (const [k, v] of Object.entries(cssVars)) {
+  for (const [k, v] of Object.entries(toCssVarMap(templateKey, colors))) {
     root.style.setProperty(k, v);
   }
 }
 
+export function clearThemeColors(root: HTMLElement, templateKey: string) {
+  const cfg = getTemplateThemeConfig(templateKey);
+  if (!cfg) return;
+  for (const cssVar of Object.values(cfg.variables)) root.style.removeProperty(cssVar);
+}

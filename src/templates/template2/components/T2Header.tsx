@@ -1,217 +1,121 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import type { PageKey } from "@/lib/pageSchema";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import { useEffect, useState } from "react";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+import type { PageKey } from "@/lib/pageSchema";
+import { buildEmailLink } from "@/templates/shared/links";
+import { useT2 } from "../ctx";
 
-interface T2HeaderProps {
-  businessName: string;
-  logoUrl: string | null;
-  currentPage: PageKey | null;
-  baseUrl: string;
-  profile?: {
-    socials?: Record<string, unknown> | null;
-  };
-}
+type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
+/** Newspaper masthead + sticky ruled nav bar (shows the name once the masthead scrolls away). */
 export default function T2Header({
-  businessName,
   logoUrl,
   currentPage,
-  baseUrl,
-  profile,
-}: T2HeaderProps) {
+  currentExtraKey,
+}: {
+  logoUrl: string | null;
+  currentPage: PageKey | null;
+  currentExtraKey?: string | null;
+}) {
+  const { baseUrl, navPages, profile } = useT2();
   const editor = useInlineEditor();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // Get navigation labels from profile socials (or use defaults)
-  const socials = (profile?.socials || {}) as Record<string, unknown>;
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const socials = (profile.socials || {}) as Record<string, unknown>;
   const navLabels = (socials.nav_labels as Record<string, string>) || {};
-  const navHome = navLabels.home || "Home";
-  const navAbout = navLabels.about || "About";
-  const navContact = navLabels.contact || "Contact";
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 160);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const items: NavItem[] = [
+    { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
+    ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
+    { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact" },
+  ];
+
+  const saveNavLabel = (key: PageKey, next: string) =>
+    editor?.updateProfileField?.("socials", { ...socials, nav_labels: { ...navLabels, [key]: next } });
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200/80 bg-white/80 backdrop-blur-md transition-all">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
-          {logoUrl ? (
-            <Link href={`${baseUrl}/`} className="flex items-center">
-              <img
-                src={logoUrl}
-                alt={businessName}
-                className="h-10 w-auto"
-              />
-            </Link>
-          ) : (
-            <Link
-              href={`${baseUrl}/`}
-              className="text-xl font-bold text-gray-900 transition-colors hover:text-gray-700"
-            >
-              <EditableText
-                value={businessName}
-                onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-                style={{ display: "inline" }}
-              />
-            </Link>
-          )}
-          <div className="hidden md:flex md:items-center md:gap-6">
-            <Link
-              href={`${baseUrl}/`}
-              className={`text-sm font-medium transition-colors ${
-                currentPage === "home"
-                  ? "text-gray-900"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              href={`${baseUrl}/about`}
-              className={`text-sm font-medium transition-colors ${
-                currentPage === "about"
-                  ? "text-gray-900"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              About
-            </Link>
-            <Link
-              href={`${baseUrl}/contact`}
-              className={`text-sm font-medium transition-colors ${
-                currentPage === "contact"
-                  ? "text-gray-900"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Contact
-            </Link>
-          </div>
+    <>
+      <div className="t2-topline">
+        <div className="t2-container t2-topline-inner">
+          <span>
+            Est. · Vol. {new Date().getFullYear()}
+          </span>
+          <span>{profile.tagline || profile.address || "Independent studio"}</span>
+          {profile.email ? <a href={buildEmailLink(profile.email)}>{profile.email}</a> : <span />}
         </div>
-        <div className="hidden md:block">
-          <Link
-            href={`${baseUrl}/contact`}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-gray-800 hover:shadow-lg"
-          >
-            Get Started
+      </div>
+
+      <div className="t2-masthead">
+        <div className="t2-container">
+          <Link href={`${baseUrl}/`} aria-label={profile.business_name}>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={profile.business_name} />
+            ) : (
+              <span className="t2-mast-name">
+                <EditableText
+                  value={profile.business_name}
+                  onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
+                  style={{ display: "inline" }}
+                />
+              </span>
+            )}
           </Link>
         </div>
-        <button
-          type="button"
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="h-6 w-6 text-gray-900"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
+      </div>
+
+      <div className="t2-navbar" data-scrolled={scrolled}>
+        <div className="t2-container t2-navbar-inner">
+          <Link href={`${baseUrl}/`} className="t2-nav-name" tabIndex={scrolled ? 0 : -1}>
+            {profile.business_name}
+          </Link>
+          <nav className="t2-nav" aria-label="Main">
+            {items.map((it) => (
+              <Link key={it.id} href={it.href} data-active={it.active} aria-current={it.active ? "page" : undefined}>
+                {it.coreKey ? (
+                  <EditableText value={it.label} onCommit={(next) => saveNavLabel(it.coreKey!, next)} style={{ display: "inline" }} />
+                ) : (
+                  it.label
+                )}
+              </Link>
+            ))}
+          </nav>
+          <Link className="t2-nav-cta" href={`${baseUrl}/contact`}>
+            Work with us
+          </Link>
+          <button
+            type="button"
+            className="t2-burger"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
           >
-            {mobileMenuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
-            )}
-          </svg>
-        </button>
-      </nav>
-      {mobileMenuOpen && (
-        <div className="border-t border-gray-200 bg-white md:hidden">
-          <div className="space-y-1 px-4 pb-4 pt-2">
-            <Link
-              href={`${baseUrl}/`}
-              className={`block rounded-md px-3 py-2 text-base font-medium ${
-                currentPage === "home"
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <EditableText
-                value={navHome}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      home: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link
-              href={`${baseUrl}/about`}
-              className={`block rounded-md px-3 py-2 text-base font-medium ${
-                currentPage === "about"
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <EditableText
-                value={navAbout}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      about: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link
-              href={`${baseUrl}/contact`}
-              className={`block rounded-md px-3 py-2 text-base font-medium ${
-                currentPage === "contact"
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <EditableText
-                value={navContact}
-                onCommit={(next) => {
-                  const updatedSocials = {
-                    ...socials,
-                    nav_labels: {
-                      ...(navLabels || {}),
-                      contact: next,
-                    },
-                  };
-                  editor?.updateProfileField?.("socials", updatedSocials);
-                }}
-                style={{ display: "inline" }}
-              />
-            </Link>
-            <Link
-              href={`${baseUrl}/contact`}
-              className="mt-2 block rounded-lg bg-gray-900 px-3 py-2 text-center text-base font-semibold text-white"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Get Started
-            </Link>
-          </div>
+            {open ? "×" : "≡"}
+          </button>
         </div>
-      )}
-    </header>
+        {open ? (
+          <nav className="t2-menu" aria-label="Mobile">
+            {items.map((it) => (
+              <Link key={it.id} href={it.href} data-active={it.active} onClick={() => setOpen(false)}>
+                {it.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+      </div>
+    </>
   );
 }

@@ -1,145 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import type { FAQSection as FAQSectionType } from "@/lib/pageSchema";
-import { getLoremShortText } from "@/lib/loremIpsum";
-import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
+
 import EditableText from "@/components/inline-editor/EditableText";
+import type { FAQSection } from "@/lib/pageSchema";
+import { useSectionEditor } from "@/templates/shared/edit";
+import { useT4 } from "../ctx";
+import { IconArrow } from "../icons";
 
-function loremQuestion() {
-  const qs = [
-    "How fast can we launch?",
-    "Can I edit the content myself?",
-    "Do you support custom domains?",
-    "What if I need changes later?",
-    "Is this mobile-friendly?",
-  ];
-  return qs[Math.floor(Math.random() * qs.length)];
-}
+const FALLBACK = [
+  { question: "How long does setup take?", answer: "Most people are up and running in under five minutes." },
+  { question: "Is my data secure?", answer: "Yes. Everything is encrypted in transit and at rest, and backed up daily." },
+];
 
-function loremAnswer() {
-  const as = [
-    getLoremShortText(),
-    getLoremShortText(),
-    getLoremShortText(),
-  ];
-  return as[Math.floor(Math.random() * as.length)];
-}
-
-export default function T4FAQ({
-  section,
-  sectionIndex,
-}: {
-  section: FAQSectionType;
-  sectionIndex?: number;
-}) {
-  const editor = useInlineEditor();
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const title = section.title || "FAQs";
-  const items =
-    section.items && section.items.length > 0
-      ? section.items
-      : [
-          { question: "", answer: "" },
-          { question: "", answer: "" },
-          { question: "", answer: "" },
-          { question: "", answer: "" },
-        ];
-
-  const filled = items.map((it) => ({
-    question: it.question || loremQuestion(),
-    answer: it.answer || loremAnswer(),
+/** FAQ with a sticky aside ("still have questions?") and accordion cards. */
+export default function T4FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const { baseUrl } = useT4();
+  const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
+  const [open, setOpen] = useState<number | null>(0);
+  const title = section.title || "Frequently asked questions";
+  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+    question: it.question || FALLBACK[i % FALLBACK.length].question,
+    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
   }));
 
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
   return (
-    <section className="t4-section">
-      <div className="t4-container">
-        <span className="t4-eyebrow">FAQ</span>
-        <EditableText
-          as="h2"
-          className="t4-title"
-          value={title}
-          placeholder="FAQ title"
-          onCommit={(next) => {
-            if (!editor || sectionIndex == null) return;
-            editor.updateSection(sectionIndex, { ...section, title: next });
-          }}
-        />
-
-        <div className="t4-bento" style={{ marginTop: 18 }}>
-          {filled.map((it, idx) => {
-            const isOpen = openIndex === idx;
+    <section className="t4-section t4-soft-bg">
+      <div className="t4-container t4-faq-wrap">
+        <div className="t4-faq-aside t4-reveal">
+          <span className="t4-label">FAQ</span>
+          <EditableText as="h2" className="t4-h2" value={title} placeholder="FAQ title" onCommit={(next) => set({ title: next })} />
+          <div className="t4-help">
+            <b>Still have questions?</b>
+            <span className="t4-muted">Our team is happy to help — usually within a few hours.</span>
+            <a className="t4-textlink" href={`${baseUrl}/contact`}>
+              Contact us <IconArrow size={16} />
+            </a>
+          </div>
+        </div>
+        <div className="t4-faq t4-reveal">
+          {items.map((it, idx) => {
+            const isOpen = enabled || open === idx;
             return (
-              <div key={idx} className="t4-card" style={{ gridColumn: "span 6", padding: 18 }}>
-                <button
-                  type="button"
-                  onClick={() => toggleFAQ(idx)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 12,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    textAlign: "left",
-                  }}
-                >
-                  <EditableText
-                    as="h3"
-                    value={it.question}
-                    placeholder="Question"
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], question: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                    style={{ fontFamily: "var(--t4-serif)", fontWeight: 800, letterSpacing: "-0.02em", margin: 0, flex: 1 }}
-                  />
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    style={{
-                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      transition: "transform 0.3s ease",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+              <div key={idx} className="t4-faq-item" data-open={isOpen}>
+                <button type="button" className="t4-faq-q" aria-expanded={isOpen} onClick={() => !enabled && setOpen(isOpen ? null : idx)}>
+                  <EditableText as="h3" value={it.question} placeholder="Question" onCommit={(next) => setItem("items", items, idx, { question: next })} />
+                  <span className="t4-plus" aria-hidden="true">
+                    +
+                  </span>
                 </button>
-                <div
-                  style={{
-                    maxHeight: isOpen ? "1000px" : "0",
-                    overflow: "hidden",
-                    transition: "max-height 0.3s ease, margin-top 0.3s ease",
-                    marginTop: isOpen ? 10 : 0,
-                  }}
-                >
-                  <EditableText
-                    as="p"
-                    value={it.answer}
-                    placeholder="Answer"
-                    multiline
-                    onCommit={(next) => {
-                      if (!editor || sectionIndex == null) return;
-                      const nextItems = filled.map((x) => ({ ...x }));
-                      nextItems[idx] = { ...nextItems[idx], answer: next };
-                      editor.updateSection(sectionIndex, { ...section, items: nextItems });
-                    }}
-                    style={{ color: "var(--t4-muted)", lineHeight: 1.7 }}
-                  />
+                <div className="t4-faq-a">
+                  <div>
+                    <EditableText as="p" value={it.answer} placeholder="Answer" multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
+                  </div>
                 </div>
               </div>
             );
@@ -149,4 +62,3 @@ export default function T4FAQ({
     </section>
   );
 }
-
