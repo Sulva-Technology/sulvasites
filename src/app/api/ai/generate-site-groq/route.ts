@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
+import type { PageData } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
 import { rateLimit, requireAdmin } from "@/lib/supabase/requireAdmin.server";
+import { fillSiteImages, normalizeCategory, PHOTO_CATEGORY_PROMPT } from "@/lib/stockPhotos";
 
 const MAX_BRIEF_CHARS = 8000;
 
@@ -79,6 +81,7 @@ Task:
 
 Schema:
 {
+  "photoCategory": string,
   "profile": {
     "business_name": string,
     "tagline": string | null,
@@ -115,7 +118,7 @@ Section union types (use these exact "type" values):
 - { "type":"backed_by", "title": string, "logos": [ { "name": string, "url": string|null }, ... ] }
 - { "type":"use_cases", "title": string, "description": string, "items": [ { "title": string, "description": string, "linkText": string, "linkHref": string }, ... ] }
 - { "type":"testimonials", "title": string, "items": [ { "name": string, "role": string, "quote": string, "company": string }, ... ] }
-- { "type":"gallery", "title": string, "images": [ { "url": string, "alt": string }, ... ] } (use empty "" url if unknown)
+- { "type":"gallery", "title": string, "images": [ { "url": string, "alt": string }, ... ] } (url "" — server fills photos; write specific, descriptive alt text)
 - { "type":"faq", "title": string, "items": [ { "question": string, "answer": string }, ... ] }
 - { "type":"team", "title": string, "subtitle": string, "members": [ { "name": string, "role": string, "bio": string, "photoUrl": string, "linkedinUrl": string }, ... ] } (photoUrl/linkedinUrl can be "")
 - { "type":"contact_card", "showForm": true, "mapLink": string } (mapLink may be "")
@@ -131,6 +134,7 @@ Requirements:
   hero, contact_card, faq, richtext
 - Include 4-6 services, 4-6 values, 3-5 use cases, 3 testimonials (can be "Client" if no names), 6 FAQs, 3 team members (generic if unknown).
 - Use CTA href values that work across templates: "#contact" and "#services".
+${PHOTO_CATEGORY_PROMPT}
 
 User brief:
 ${brief}
@@ -208,14 +212,21 @@ ${brief}
         }
       }
 
+      const profile = (parsed as Record<string, unknown>).profile;
+      const businessName =
+        isRecord(profile) && typeof profile.business_name === "string" ? profile.business_name : brief.slice(0, 80);
+      const photoCategory = normalizeCategory((parsed as Record<string, unknown>).photoCategory);
+      const filled = fillSiteImages(
+        { home, about, contact } as { home: PageData; about: PageData; contact: PageData },
+        photoCategory,
+        businessName,
+      );
+
       return NextResponse.json(
         {
-          profile: (parsed as Record<string, unknown>).profile ?? null,
-          pages: {
-            home,
-            about,
-            contact,
-          },
+          profile: profile ?? null,
+          pages: filled,
+          photoCategory,
         },
         { status: 200 },
       );
