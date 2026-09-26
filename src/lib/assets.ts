@@ -65,3 +65,32 @@ export async function uploadLogo(siteId: string, file: File) {
   };
 }
 
+export async function uploadSiteImage(siteId: string, file: File): Promise<string> {
+  if (!file) throw new Error("File is required.");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > 10 * 1024 * 1024) throw new Error("Image must be 10 MB or smaller.");
+
+  const supabase = await getAuthenticatedClient();
+  const path = `${siteId}/images/${Date.now()}-${safeFilename(file.name)}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("site-assets")
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) {
+    if (/bucket not found/i.test(uploadError.message)) {
+      throw new Error("Storage bucket 'site-assets' is missing. Run supabase/migrations/004_site_assets_bucket.sql in the Supabase SQL Editor.");
+    }
+    throw uploadError;
+  }
+
+  // Record the asset; failure here shouldn't block using the uploaded image.
+  await supabase.from("assets").insert({
+    site_id: siteId,
+    path,
+    mime_type: file.type || null,
+    size_bytes: file.size || null,
+    meta: { originalFilename: file.name, kind: "image" },
+  });
+
+  return getPublicAssetUrl(path);
+}
