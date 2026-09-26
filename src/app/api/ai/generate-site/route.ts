@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { PageData } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
 import { rateLimit, requireAdmin } from "@/lib/supabase/requireAdmin.server";
-import { fillSiteImages, normalizeCategory, PHOTO_CATEGORY_PROMPT } from "@/lib/stockPhotos";
+import { fillSiteImages, normalizeCategory, PHOTO_CATEGORY_PROMPT, stripAiImageUrls } from "@/lib/stockPhotos";
 
 const MAX_BRIEF_CHARS = 8000;
 
@@ -138,7 +138,7 @@ Section union types (use these exact "type" values):
 - { "type":"backed_by", "title": string, "logos": [ { "name": string, "url": string|null }, ... ] }
 - { "type":"use_cases", "title": string, "description": string, "items": [ { "title": string, "description": string, "linkText": string, "linkHref": string }, ... ] }
 - { "type":"testimonials", "title": string, "items": [ { "name": string, "role": string, "quote": string, "company": string }, ... ] }
-- { "type":"gallery", "title": string, "images": [ { "url": string, "alt": string }, ... ] } (url "" — server fills photos; write specific, descriptive alt text)
+- { "type":"gallery", "title": string, "images": [ { "url": string, "alt": string }, ... ] } (url "" — server fills photos)
 - { "type":"faq", "title": string, "items": [ { "question": string, "answer": string }, ... ] }
 - { "type":"team", "title": string, "subtitle": string, "members": [ { "name": string, "role": string, "bio": string, "photoUrl": string, "linkedinUrl": string }, ... ] } (photoUrl/linkedinUrl can be "")
 - { "type":"contact_card", "showForm": true, "mapLink": string } (mapLink may be "")
@@ -297,7 +297,7 @@ Note: Free tier quotas are limited. Enabling billing (even with $0 spend limit) 
       isRecord(profile) && typeof profile.business_name === "string" ? profile.business_name : brief.slice(0, 80);
     const photoCategory = normalizeCategory((parsed as Record<string, unknown>).photoCategory);
     const filled = fillSiteImages(
-      { home, about, contact } as { home: PageData; about: PageData; contact: PageData },
+      stripAiImageUrls({ home, about, contact } as { home: PageData; about: PageData; contact: PageData }),
       photoCategory,
       businessName,
     );

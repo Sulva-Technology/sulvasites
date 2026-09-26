@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   STOCK_PHOTOS, categoryForTemplate, fillSiteImages, normalizeCategory, photoUrl, pickPhotos,
+  stripAiImageUrls,
 } from "../src/lib/stockPhotos.ts";
 
 const page = (sections) => ({ seo: { title: "", description: "" }, sections });
@@ -83,6 +84,53 @@ test("no photo repeats across the whole site", () => {
   const out = fillSiteImages(pages, "beauty", "s");
   const urls = [...out.home.sections[0].images, ...out.about.sections[0].images].map((i) => i.url);
   assert.equal(new Set(urls).size, urls.length);
+});
+
+test("fillSiteImages tolerates non-string url/photoUrl instead of throwing", () => {
+  const pages = {
+    home: page([{ type: "gallery", title: "G", images: [{ url: 123, alt: "" }] }]),
+    about: page([{ type: "team", title: "", subtitle: "", members: [{ name: "A", role: "", bio: "", photoUrl: 456 }] }]),
+  };
+  const out = fillSiteImages(pages, "clinic", "Acme");
+  assert.ok(out.home.sections[0].images[0].url.startsWith("https://images.unsplash.com/"));
+  assert.ok(out.about.sections[0].members[0].photoUrl.startsWith("https://images.unsplash.com/"));
+});
+
+test("stripAiImageUrls clears gallery image urls and team photoUrls, keeps other fields", () => {
+  const pages = {
+    home: page([{ type: "gallery", title: "G", images: [{ url: "https://example.com/x.jpg", alt: "keep me" }] }]),
+    about: page([{ type: "team", title: "", subtitle: "", members: [{ name: "A", role: "R", bio: "B", photoUrl: "https://example.com/p.jpg" }] }]),
+  };
+  const before = JSON.stringify(pages);
+  const out = stripAiImageUrls(pages);
+  assert.equal(JSON.stringify(pages), before, "input not mutated");
+  assert.equal(out.home.sections[0].images[0].url, "");
+  assert.equal(out.home.sections[0].images[0].alt, "keep me");
+  assert.equal(out.about.sections[0].members[0].photoUrl, "");
+  assert.equal(out.about.sections[0].members[0].name, "A");
+});
+
+test("stripAiImageUrls tolerates undefined images and members arrays", () => {
+  const pages = {
+    home: page([{ type: "gallery", title: "G" }]),
+    about: page([{ type: "team", title: "", subtitle: "" }]),
+  };
+  const out = stripAiImageUrls(pages);
+  assert.deepEqual(out.home.sections[0], { type: "gallery", title: "G" });
+  assert.deepEqual(out.about.sections[0], { type: "team", title: "", subtitle: "" });
+});
+
+test("stripAiImageUrls then fillSiteImages yields only unsplash urls, even over invented AI urls", () => {
+  const pages = {
+    home: page([{ type: "gallery", title: "G", images: [{ url: "https://example.com/x.jpg", alt: "a" }] }]),
+    about: page([{ type: "team", title: "", subtitle: "", members: [{ name: "A", role: "", bio: "", photoUrl: "https://example.com/p.jpg" }] }]),
+  };
+  const out = fillSiteImages(stripAiImageUrls(pages), "clinic", "Acme");
+  const galleryUrls = out.home.sections[0].images.map((i) => i.url);
+  const teamUrls = out.about.sections[0].members.map((m) => m.photoUrl);
+  for (const u of [...galleryUrls, ...teamUrls]) {
+    assert.ok(u.startsWith("https://images.unsplash.com/"), u);
+  }
 });
 
 test("fillSiteImages handles undefined images and members arrays", () => {

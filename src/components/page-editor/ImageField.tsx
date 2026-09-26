@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-import { uploadSiteImage } from "@/lib/assets";
+import { SITE_IMAGE_TYPES, uploadSiteImage } from "@/lib/assets";
 import {
-  PHOTO_CATEGORIES, STOCK_PHOTOS, categoryForTemplate, photoUrl, type PhotoCategory,
+  PEOPLE_PHOTOS, PHOTO_CATEGORIES, STOCK_PHOTOS, categoryForTemplate, photoUrl, type PhotoCategory,
 } from "@/lib/stockPhotos";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -37,11 +37,13 @@ export default function ImageField({
   value,
   onChange,
   onPick,
+  pool = "category",
 }: {
   label: string;
   value: string;
   onChange: (url: string) => void;
   onPick?: (url: string, alt: string) => void;
+  pool?: "category" | "people";
 }) {
   const { siteId, category } = useContext(SiteImageCtx);
   const [open, setOpen] = useState(false);
@@ -98,7 +100,7 @@ export default function ImageField({
             {value ? (
               <button type="button" className={btn} onClick={() => onChange("")}>Clear</button>
             ) : null}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+            <input ref={fileRef} type="file" accept={SITE_IMAGE_TYPES.join(",")} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
           </div>
           {error ? <div className="text-xs text-red-700">{error}</div> : null}
         </div>
@@ -106,20 +108,22 @@ export default function ImageField({
 
       {open ? (
         <div className="mt-3 rounded border border-gray-200 bg-white p-3">
-          <label className="flex items-center gap-2 text-xs text-gray-700">
-            Category
-            <select
-              value={browse}
-              onChange={(e) => setBrowse(e.target.value as PhotoCategory)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs"
-            >
-              {PHOTO_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{label(c)}</option>
-              ))}
-            </select>
-          </label>
+          {pool === "people" ? null : (
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              Category
+              <select
+                value={browse}
+                onChange={(e) => setBrowse(e.target.value as PhotoCategory)}
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+              >
+                {PHOTO_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{label(c)}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {STOCK_PHOTOS[browse].map((p) => (
+            {(pool === "people" ? PEOPLE_PHOTOS : STOCK_PHOTOS[browse]).map((p) => (
               <button
                 key={p.id}
                 type="button"

@@ -9,6 +9,16 @@ import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser"
  *   supabase.storage.from('site-assets').getPublicUrl(path)
  */
 
+/** Matches the site-assets bucket's allowed_mime_types (supabase/migrations/004_site_assets_bucket.sql). */
+export const SITE_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "image/avif",
+];
+
 export function safeFilename(filename: string) {
   const base = filename.trim().toLowerCase();
   const cleaned = base.replace(/[^a-z0-9._-]+/g, "-").replace(/-+/g, "-");
@@ -67,7 +77,9 @@ export async function uploadLogo(siteId: string, file: File) {
 
 export async function uploadSiteImage(siteId: string, file: File): Promise<string> {
   if (!file) throw new Error("File is required.");
-  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (!SITE_IMAGE_TYPES.includes(file.type)) {
+    throw new Error("Please choose a PNG, JPG, WebP, GIF, SVG or AVIF image.");
+  }
   if (file.size > 10 * 1024 * 1024) throw new Error("Image must be 10 MB or smaller.");
 
   const supabase = await getAuthenticatedClient();

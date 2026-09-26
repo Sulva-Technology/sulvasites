@@ -9,6 +9,9 @@ on conflict (id) do update set public = excluded.public,
 
 drop policy if exists "Admins manage site-assets" on storage.objects;
 drop policy if exists "Allow public read access to site-assets" on storage.objects;
+drop policy if exists "Allow authenticated users full access to site-assets" on storage.objects;
+drop policy if exists "Public Access" on storage.objects;
+drop policy if exists "Authenticated Access" on storage.objects;
 
 create policy "Admins manage site-assets" on storage.objects
 for all to authenticated
@@ -18,3 +21,18 @@ with check (bucket_id = 'site-assets' and public.is_admin());
 create policy "Allow public read access to site-assets" on storage.objects
 for select to public
 using (bucket_id = 'site-assets');
+
+-- Verify the policies were created
+-- NOTE: no ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY here — that can fail
+-- on hosted Supabase (insufficient privilege). Confirm RLS is enabled on storage.objects
+-- separately in the Supabase Dashboard (Database > Tables > storage.objects) if unsure.
+select
+  policyname,
+  cmd as command,
+  roles,
+  qual as using_expression
+from pg_policies
+where schemaname = 'storage'
+  and tablename = 'objects'
+  and policyname ilike '%site-assets%'
+order by policyname;

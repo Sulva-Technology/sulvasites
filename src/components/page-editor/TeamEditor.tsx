@@ -121,6 +121,7 @@ export default function TeamEditor({
                     <ImageField
                       label="Photo (optional)"
                       value={m.photoUrl ?? ""}
+                      pool="people"
                       onChange={(url) => {
                         const members = value.members.map((x, i) =>
                           i === idx ? { ...x, photoUrl: url } : x

@@ -4,7 +4,7 @@ import {
   PEOPLE_PHOTOS, PHOTO_CATEGORIES, STOCK_PHOTOS, type PhotoCategory, type StockPhoto,
 } from "./stockPhotoData.ts";
 
-export { PHOTO_CATEGORIES, STOCK_PHOTOS, type PhotoCategory, type StockPhoto };
+export { PEOPLE_PHOTOS, PHOTO_CATEGORIES, STOCK_PHOTOS, type PhotoCategory, type StockPhoto };
 
 const GALLERY_SIZE = 6;
 
@@ -89,17 +89,21 @@ export function fillSiteImages<T extends Record<string, PageData>>(
   const fillSection = (s: Section): Section => {
     if (s.type === "gallery") {
       const images = Array.isArray(s.images) ? s.images : [];
-      if (images.every((im) => !im?.url?.trim()) && images.length < GALLERY_SIZE) {
+      const hasUrl = (im: { url?: unknown } | null | undefined) =>
+        typeof im?.url === "string" && im.url.trim();
+      if (images.every((im) => !hasUrl(im)) && images.length < GALLERY_SIZE) {
         return { ...s, images: Array.from({ length: GALLERY_SIZE }, () => toImage(next())) };
       }
-      return { ...s, images: images.map((im) => (im?.url?.trim() ? im : toImage(next()))) };
+      return { ...s, images: images.map((im) => (hasUrl(im) ? im : toImage(next()))) };
     }
     if (s.type === "team") {
       const members = Array.isArray(s.members) ? s.members : [];
       return {
         ...s,
         members: members.map((m) =>
-          m?.photoUrl?.trim() ? m : { ...m, photoUrl: photoUrl(nextPerson().id, 800) },
+          typeof m?.photoUrl === "string" && m.photoUrl.trim()
+            ? m
+            : { ...m, photoUrl: photoUrl(nextPerson().id, 800) },
         ),
       };
     }
@@ -119,6 +123,34 @@ export function fillSiteImages<T extends Record<string, PageData>>(
       sections = [...sections.slice(0, at), gallery, ...sections.slice(at)];
     }
     out[key] = { ...page, sections };
+  }
+  return out as T;
+}
+
+/**
+ * AI models often ignore "leave url empty" and invent URLs, which blocks fillSiteImages
+ * (which never overwrites a non-empty url/photoUrl, to protect user data). This clears
+ * AI-invented gallery image urls and team photoUrls before filling, so the fill step
+ * always runs.
+ */
+export function stripAiImageUrls<T extends Record<string, PageData>>(pages: T): T {
+  const stripSection = (s: Section): Section => {
+    if (s.type === "gallery") {
+      const images = Array.isArray(s.images) ? s.images : undefined;
+      if (!images) return s;
+      return { ...s, images: images.map((im) => ({ ...im, url: "" })) };
+    }
+    if (s.type === "team") {
+      const members = Array.isArray(s.members) ? s.members : undefined;
+      if (!members) return s;
+      return { ...s, members: members.map((m) => ({ ...m, photoUrl: "" })) };
+    }
+    return s;
+  };
+
+  const out = {} as Record<string, PageData>;
+  for (const [key, page] of Object.entries(pages)) {
+    out[key] = { ...page, sections: page.sections.map(stripSection) };
   }
   return out as T;
 }
