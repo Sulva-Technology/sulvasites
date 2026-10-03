@@ -5,6 +5,7 @@ import type { ValuesSection } from "@/lib/pageSchema";
 import { toRoman, useSectionEditor } from "@/templates/shared/edit";
 import { KITCHEN_ICONS, Ornament } from "../icons";
 
+// Placeholder hints shown on empty fields while editing (never saved).
 const FALLBACK = [
   { title: "Cooked from scratch", desc: "Describe how your kitchen works — sauces, breads, stocks." },
   { title: "Sourced with care", desc: "Where your ingredients come from and why it matters." },
@@ -17,8 +18,8 @@ export default function T7Values({ section, sectionIndex }: { section: ValuesSec
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Placeholders only while editing; visitors see real principles only.
   const items = enabled
-    ? (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-        title: it.title || FALLBACK[i % FALLBACK.length].title,
+    ? (section.items?.length ? section.items : [{ title: "", desc: "" }]).map((it) => ({
+        title: it.title || "",
         desc: it.desc || "",
       }))
     : section.items.filter((it) => it.title?.trim()).map((it) => ({ title: it.title.trim(), desc: it.desc || "" }));
@@ -50,13 +51,13 @@ export default function T7Values({ section, sectionIndex }: { section: ValuesSec
                   as="h3"
                   className="t7-h3"
                   value={v.title}
-                  placeholder="Principle"
+                  placeholder={FALLBACK[idx % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
                 />
                 <EditableText
                   as="p"
                   value={v.desc}
-                  placeholder="Short description"
+                  placeholder={FALLBACK[idx % FALLBACK.length].desc}
                   multiline
                   onCommit={(next) => setItem("items", items, idx, { desc: next })}
                 />

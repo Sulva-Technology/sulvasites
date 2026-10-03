@@ -18,7 +18,7 @@ export default function T7FAQ({ section, sectionIndex }: { section: FAQSection; 
   const title = section.title || "Good to know";
   const source = enabled ? section.items : section.items?.filter((it) => it.question?.trim());
   const items = (source?.length ? source : [{ question: "", answer: "" }]).map((it) => ({
-    question: it.question || "Question",
+    question: it.question || "",
     answer: it.answer || "",
   }));
 

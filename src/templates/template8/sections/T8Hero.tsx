@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
@@ -22,16 +22,20 @@ import {
   IconPin,
 } from "../icons";
 
+const OTHER = "__other__";
+
 /** "Book an appointment" card: pick a reason for the visit, continue to the contact form. */
 function AppointmentCard() {
   const ctx = useT8();
   const { serviceNames, profile, hours, baseUrl } = ctx;
   const editor = useInlineEditor();
+  const [choice, setChoice] = useState("");
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editor?.enabled) return; // stay in the editor preview
-    const service = (new FormData(e.currentTarget).get("service") as string | null)?.trim() ?? "";
+    if (!choice) return;
+    const service = choice === OTHER ? "" : choice;
     const q = service ? `?service=${encodeURIComponent(service)}` : "";
     window.location.assign(`${baseUrl}/contact${q}#book`);
   };
@@ -52,16 +56,25 @@ function AppointmentCard() {
         <form className="t8-appt-form" onSubmit={onSubmit}>
           <label className="t8-field">
             <span>Reason for visit</span>
-            <select className="t8-input" name="service" defaultValue={serviceNames[0]}>
+            <select
+              className="t8-input"
+              name="service"
+              value={choice}
+              required
+              onChange={(e) => setChoice(e.target.value)}
+            >
+              <option value="" disabled>
+                Choose a service
+              </option>
               {serviceNames.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
               ))}
-              <option value="">Something else / not sure</option>
+              <option value={OTHER}>Something else / not sure</option>
             </select>
           </label>
-          <button type="submit" className="t8-btn t8-btn-block">
+          <button type="submit" className="t8-btn t8-btn-block" disabled={!choice}>
             Continue <IconArrow size={16} />
           </button>
         </form>

@@ -6,9 +6,10 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { reserveHref, splitPrice, useT7 } from "../ctx";
 import { IconArrow, Ornament } from "../icons";
 
-const FALLBACK = [
-  { title: "Dish name", desc: "A line about the dish — what's in it and how it's cooked." },
-  { title: "Another favourite", desc: "Ingredients, sides and anything guests should know." },
+// Placeholder hints shown on empty fields while editing (never saved).
+const HINTS = [
+  "A line about the dish — what's in it and how it's cooked.",
+  "Ingredients, sides and anything guests should know.",
 ];
 
 /**
@@ -21,8 +22,8 @@ export default function T7Services({ section, sectionIndex }: { section: Service
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Placeholders only while editing; visitors see real dishes only.
   const items = enabled
-    ? (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-        title: it.title || FALLBACK[i % FALLBACK.length].title,
+    ? (section.items?.length ? section.items : [{ title: "", desc: "" }]).map((it) => ({
+        title: it.title || "",
         desc: it.desc || "",
       }))
     : section.items.filter((it) => it.title?.trim()).map((it) => ({ title: it.title.trim(), desc: it.desc || "" }));
@@ -68,7 +69,7 @@ export default function T7Services({ section, sectionIndex }: { section: Service
                       as="p"
                       className="t7-dish-desc"
                       value={it.desc}
-                      placeholder="Description"
+                      placeholder={HINTS[idx % HINTS.length]}
                       multiline
                       onCommit={(next) => setItem("items", items, idx, { desc: next })}
                     />

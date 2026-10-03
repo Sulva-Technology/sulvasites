@@ -24,7 +24,7 @@ export default function T8Gallery({ section, sectionIndex }: { section: GalleryS
           <EditableText as="h2" className="t8-h2" value={title} placeholder="Gallery title" onCommit={(next) => set({ title: next })} />
         </header>
 
-        <div className="t8-bento" data-count={Math.min(images.length, 6)}>
+        <div className="t8-bento" data-count={Math.min(images.length, 6)} data-odd={images.length % 2 === 1}>
           {images.map((img, idx) =>
             img.url ? (
               <figure key={idx} className="t8-shot t8-reveal">

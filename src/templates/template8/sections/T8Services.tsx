@@ -6,6 +6,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { bookHref, useT8 } from "../ctx";
 import { IconArrow, serviceIcon } from "../icons";
 
+// Placeholder hints shown on empty fields while editing (never saved).
 const FALLBACK = [
   { title: "Service name", desc: "A sentence about who it's for and what the visit involves." },
   { title: "Another service", desc: "What patients can expect, and how to prepare." },
@@ -19,8 +20,8 @@ export default function T8Services({ section, sectionIndex }: { section: Service
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Placeholders only while editing; visitors see real services only.
   const items = enabled
-    ? (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-        title: it.title || FALLBACK[i % FALLBACK.length].title,
+    ? (section.items?.length ? section.items : [{ title: "", desc: "" }]).map((it) => ({
+        title: it.title || "",
         desc: it.desc || "",
       }))
     : section.items.filter((it) => it.title?.trim()).map((it) => ({ title: it.title.trim(), desc: it.desc || "" }));
@@ -50,7 +51,7 @@ export default function T8Services({ section, sectionIndex }: { section: Service
                   as="h3"
                   className="t8-h3"
                   value={it.title}
-                  placeholder="Service name"
+                  placeholder={FALLBACK[idx % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
                 />
                 {it.desc || enabled ? (
@@ -58,7 +59,7 @@ export default function T8Services({ section, sectionIndex }: { section: Service
                     as="p"
                     className="t8-muted"
                     value={it.desc}
-                    placeholder="Short description"
+                    placeholder={FALLBACK[idx % FALLBACK.length].desc}
                     multiline
                     onCommit={(next) => setItem("items", items, idx, { desc: next })}
                   />

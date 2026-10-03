@@ -14,9 +14,9 @@ export default function T8Testimonials({ section, sectionIndex }: { section: Tes
   const title = section.title || "What our patients say";
   const source = enabled ? section.items : section.items?.filter((t) => t.quote?.trim());
   const items = (source?.length ? source : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || (enabled ? "Patient name" : ""),
+    name: t.name || "",
     role: t.role || "",
-    quote: t.quote || FALLBACK_QUOTE,
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
@@ -37,7 +37,7 @@ export default function T8Testimonials({ section, sectionIndex }: { section: Tes
               <EditableText
                 as="blockquote"
                 value={t.quote}
-                placeholder="Quote"
+                placeholder={FALLBACK_QUOTE}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { quote: next })}
               />

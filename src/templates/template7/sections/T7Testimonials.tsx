@@ -14,15 +14,15 @@ export default function T7Testimonials({ section, sectionIndex }: { section: Tes
   const title = section.title || "From our guests";
   const source = enabled ? section.items : section.items?.filter((t) => t.quote?.trim());
   const items = (source?.length ? source : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || (enabled ? "Guest name" : ""),
+    name: t.name || "",
     role: t.role || "",
-    quote: t.quote || FALLBACK_QUOTE,
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
   const cite = (t: (typeof items)[number], idx: number) => (
     <figcaption className="t7-cite">
-      {t.name ? (
+      {t.name || enabled ? (
         <EditableText
           as="span"
           className="t7-cite-name"
@@ -65,7 +65,7 @@ export default function T7Testimonials({ section, sectionIndex }: { section: Tes
           <EditableText
             as="blockquote"
             value={lead.quote}
-            placeholder="Quote"
+            placeholder={FALLBACK_QUOTE}
             multiline
             onCommit={(next) => setItem("items", items, 0, { quote: next })}
           />
@@ -80,7 +80,7 @@ export default function T7Testimonials({ section, sectionIndex }: { section: Tes
                 <EditableText
                   as="blockquote"
                   value={t.quote}
-                  placeholder="Quote"
+                  placeholder={FALLBACK_QUOTE}
                   multiline
                   onCommit={(next) => setItem("items", items, i + 1, { quote: next })}
                 />

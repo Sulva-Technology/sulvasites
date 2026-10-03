@@ -253,7 +253,14 @@
   transition: transform 0.25s var(--t8-ease), box-shadow 0.25s, background-color 0.2s, color 0.2s;
 }
 
-.t8-btn:hover {
+.t8-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.t8-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 16px 28px -14px color-mix(in srgb, var(--t8-accent) 90%, transparent);
 }
@@ -2403,22 +2410,21 @@ select.t8-input {
   .t8-team[data-count="1"] {
     --n: 1 !important;
   }
-  .t8-bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    grid-auto-rows: clamp(160px, 34vw, 280px) !important;
+  /* Balanced small-screen gallery: two equal square columns; with an odd photo count the
+     first tile goes full width (16:10) so every row is complete — no holes for any count. */
+  .template8 .t8-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: auto;
+    gap: 12px;
   }
-  .t8-bento .t8-shot:first-child {
-    grid-column: span 2;
+  .template8 .t8-bento[data-count] .t8-shot:nth-child(n) {
+    grid-column: auto;
     grid-row: auto;
+    aspect-ratio: 1 / 1;
   }
-  .t8-bento[data-count="1"] {
-    grid-template-columns: 1fr !important;
-  }
-  .t8-bento[data-count="1"] .t8-shot:first-child {
-    grid-column: auto;
-  }
-  .t8-bento .t8-shot:nth-child(n + 2) {
-    grid-column: auto;
+  .template8 .t8-bento[data-count][data-odd="true"] .t8-shot:first-child {
+    grid-column: 1 / -1;
+    aspect-ratio: 16 / 10;
   }
   .t8-band {
     grid-template-columns: minmax(0, 1fr);
@@ -2515,12 +2521,6 @@ select.t8-input {
   .t8-icon-btn {
     width: 40px;
     height: 40px;
-  }
-  .t8-bento {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-  .t8-bento .t8-shot:first-child {
-    grid-column: auto;
   }
   .t8-mosaic {
     grid-template-columns: minmax(0, 1fr);

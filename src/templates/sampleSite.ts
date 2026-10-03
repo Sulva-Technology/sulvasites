@@ -584,9 +584,9 @@ const clinicHome: PageData = {
       type: "backed_by",
       title: "Registered & accredited",
       logos: [
-        { name: "Medical and Dental Council of Nigeria", url: null },
-        { name: "HEFAMAA accredited", url: null },
-        { name: "NHIA provider", url: null },
+        { name: "Registered with the medical council", url: null },
+        { name: "State health facility licence", url: null },
+        { name: "Insurance-approved provider", url: null },
       ],
     },
     {
