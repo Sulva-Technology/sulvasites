@@ -35,7 +35,7 @@ function Collage({ photos, name }: { photos: Photo[]; name: string }) {
         shots.map((p, i) => (
           <figure key={p.url} className={`t10-collage-shot t10-collage-${i}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.url} alt={p.alt || ""} loading={i === 0 ? "eager" : "lazy"} />
+            <img src={p.url} alt={p.alt || ""} loading="eager" fetchPriority={i === 0 ? "high" : undefined} />
           </figure>
         ))
       ) : (
@@ -138,7 +138,7 @@ export default function T10Hero({
             <div className="t10-about-arch">
               {a ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.url} alt={a.alt || ""} loading="eager" />
+                <img src={a.url} alt={a.alt || ""} loading="eager" fetchPriority="high" />
               ) : (
                 <span className="t10-photo-fallback" aria-hidden="true">
                   <IconCap size={72} />
@@ -237,7 +237,7 @@ export default function T10Hero({
             <div className="t10-page-photo t10-reveal">
               <span className="t10-page-ring" aria-hidden="true" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt={photo.alt || ""} loading="eager" />
+              <img src={photo.url} alt={photo.alt || ""} loading="eager" fetchPriority="high" />
             </div>
           ) : null}
         </div>

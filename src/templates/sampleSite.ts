@@ -944,7 +944,7 @@ const educationAbout: PageData = {
       type: "hero",
       headline: "Small classes, big ambitions",
       subtext: "Brightway began as a small tutoring centre run by two teachers. Today we're a full school — but every learner is still known by name.",
-      ctaText: "Book a visit",
+      ctaText: "Apply now",
       ctaHref: "",
     },
     {

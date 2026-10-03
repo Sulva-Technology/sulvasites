@@ -39,8 +39,9 @@ export default function T10Gallery({ section, sectionIndex }: { section: Gallery
           {images.map((img, idx) =>
             img.url ? (
               <figure key={idx} className="t10-bento-item t10-reveal">
+                {/* The description is shown (and read) once, as the figcaption below. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.url} alt={img.alt || ""} loading="lazy" />
+                <img src={img.url} alt="" loading="lazy" />
                 {img.alt ? <figcaption>{img.alt}</figcaption> : null}
               </figure>
             ) : (
