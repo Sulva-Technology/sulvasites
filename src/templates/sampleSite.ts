@@ -1028,6 +1028,162 @@ function educationSite(): TemplateProps {
   };
 }
 
+const ev = (i: number) => {
+  const p = STOCK_PHOTOS.events[i % STOCK_PHOTOS.events.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const eventsHome: PageData = {
+  seo: { title: "Velvet Hour Events — weddings, parties and launches in Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Let's make it a night to remember.",
+      subtext: "Weddings, birthdays, launches and dinners in Lagos — planned, styled and run by one friendly crew, so you can be a guest at your own party.",
+      ctaText: "Plan your event",
+      ctaHref: "",
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Full wedding planning", desc: "From the venue search to the last dance: vendors, timeline, styling and a coordinator on the day." },
+        { title: "Day-of coordination", desc: "You've done the planning; we take over in the final weeks and run the day so you can enjoy it." },
+        { title: "Birthdays & milestones", desc: "Intimate dinners to big 50ths — themes, décor, cake and entertainment sorted." },
+        { title: "Corporate events & launches", desc: "Product launches, end-of-year parties and conferences, with staging and guest management." },
+        { title: "Styling & décor", desc: "Florals, lighting, tablescapes and backdrops designed around your colours and venue." },
+        { title: "Catering & bar", desc: "Menus from caterers we trust, plus a bar service with signature cocktails and mocktails." },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Tell us the idea", desc: "Share the occasion, the date, a rough guest count and the feeling you're after." },
+        { title: "Get your plan", desc: "We put together a proposal with venue ideas, vendors and a timeline for you to approve." },
+        { title: "We bring it to life", desc: "Our crew handles bookings, set-up, styling and the run of the day." },
+        { title: "You enjoy it", desc: "Be present with your guests while we look after everything, right through to pack-down." },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Occasions we love",
+      description: "Big or small, indoors or under the stars — tell us what you're celebrating.",
+      items: [
+        { title: "Weddings & engagements", description: "Traditional, white or both — one plan that flows from the first toast to the send-off.", linkText: "Plan a wedding", linkHref: "" },
+        { title: "Birthdays & anniversaries", description: "Surprise parties, milestone dinners and themed celebrations for every age.", linkText: "Plan a birthday", linkHref: "" },
+        { title: "Corporate & launches", description: "Launch nights, awards dinners and team celebrations that feel on-brand.", linkText: "Plan a corporate event", linkHref: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Past events",
+      images: [ev(1), ev(8), ev(2), ev(10), ev(0), ev(11), ev(3)],
+    },
+    {
+      type: "testimonials",
+      title: "Kind words from our guests",
+      items: [
+        { name: "Funmi & Tayo", role: "Wedding", company: "", quote: "We didn't worry about a single thing on the day. Every detail we'd dreamed of was there — and a few we hadn't thought of." },
+        { name: "Ngozi A.", role: "50th birthday", company: "", quote: "The décor was stunning and the night ran perfectly. My guests are still asking who planned it." },
+        { name: "Daniel K.", role: "Product launch", company: "", quote: "Calm, organised and creative. They handled staging, guests and timing so our team could focus on the launch." },
+        { name: "Amaka O.", role: "Engagement dinner", company: "", quote: "Small, intimate and so beautiful. They listened to exactly what we wanted and made it feel like us." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Good to know",
+      items: [
+        { question: "How far in advance should we book?", answer: "As early as you can for weddings and large events, especially in busy seasons. For smaller parties a few weeks is often enough — just ask." },
+        { question: "Do you only plan events in Lagos?", answer: "Most of our events are in and around Lagos, but we're happy to talk about events further afield." },
+        { question: "Can we use our own vendors?", answer: "Of course. We can work alongside vendors you already love, or recommend ones we trust." },
+        { question: "How does pricing work?", answer: "Every event is different, so we quote after a short chat about your date, guest count and plans." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+const eventsAbout: PageData = {
+  seo: { title: "About Velvet Hour", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A small crew with a big love for parties",
+      subtext: "Velvet Hour started with a few friends planning each other's weddings. Today we plan celebrations across Lagos — with the same care and the same eye for detail.",
+      ctaText: "Plan your event",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How we work",
+      body: "<p>Every event starts with a conversation. We listen to what you're celebrating and who's coming, then shape a plan that fits your style and your budget.</p><ul><li>One lead planner from first call to final toast</li><li>Vendors we know and trust — or yours, if you prefer</li><li>A clear timeline, so you always know what's next</li></ul>",
+    },
+    {
+      type: "backed_by",
+      title: "Partners & friends",
+      logos: [
+        { name: "Partner venues across Lagos", url: null },
+        { name: "Trusted caterers", url: null },
+        { name: "Local florists & bakers", url: null },
+      ],
+    },
+    {
+      type: "team",
+      title: "Meet the crew",
+      subtitle: "Planners, stylists and coordinators who love a good party.",
+      members: [
+        { name: "Tolu Bakare", role: "Founder & lead planner", bio: "Has never met a seating chart she couldn't solve.", photoUrl: person(5), linkedinUrl: "" },
+        { name: "Emeka Nwosu", role: "Production", bio: "Sound, lights and staging — and always the first on site.", photoUrl: person(12), linkedinUrl: "" },
+        { name: "Zainab Bello", role: "Styling & décor", bio: "Turns mood boards into rooms people remember.", photoUrl: person(15), linkedinUrl: "" },
+        { name: "Seyi Martins", role: "Day-of coordinator", bio: "Keeps the run of show on time with a smile.", photoUrl: person(13), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "More moments",
+      images: [ev(9), ev(4), ev(6), ev(5)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const eventsContact: PageData = {
+  seo: { title: "Plan your event", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Let's start planning",
+      subtext: "Tell us about your event with the form below, or call, WhatsApp or email us — we love hearing new ideas.",
+      ctaText: "Plan your event",
+      ctaHref: "#plan",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function eventsSite(): TemplateProps {
+  const base = sampleSiteBase("t11");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Velvet Hour Events",
+      tagline: "Weddings, parties and launches, planned and styled in Lagos.",
+      description: "Event planning, styling and coordination for weddings, birthdays and corporate events.",
+      address: "5 Bourdillon Road, Ikoyi, Lagos",
+      phone: "+234 803 555 0128",
+      email: "hello@velvethourevents.ng",
+      whatsapp: "+2348035550128",
+      socials: {
+        instagram: "https://instagram.com",
+        tiktok: "https://tiktok.com",
+        facebook: "https://facebook.com",
+        hours: "Mon–Fri · 09:00–18:00\nSaturday · 10:00–16:00\nSunday · By appointment",
+      },
+    },
+    pages: { home: eventsHome, about: eventsAbout, contact: eventsContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1045,7 +1201,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                 ? fitnessSite()
                 : templateKey === "t10"
                   ? educationSite()
-                  : sampleSiteBase(templateKey);
+                  : templateKey === "t11"
+                    ? eventsSite()
+                    : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

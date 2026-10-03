@@ -127,6 +127,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#fffdf7",
     surface: "#f4f1e6",
   }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
+  // Events — "Soirée"
+  t11: config("t11", {
+    accent: "#7b2ff7",
+    accent2: "#1b0f2e",
+    ink: "#1a1225",
+    muted: "#6c6177",
+    bg: "#fdf8ff",
+    surface: "#f3ebfb",
+  }, { accent2: "Plum bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {
