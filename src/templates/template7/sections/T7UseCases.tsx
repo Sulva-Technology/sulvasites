@@ -20,7 +20,7 @@ export default function T7UseCases({ section, sectionIndex }: { section: UseCase
   const source = enabled ? section.items : section.items?.filter((it) => it.title?.trim());
   const items = (source?.length ? source : [{ title: "", description: "" }]).map((it) => ({
     ...it,
-    title: it.title || "Occasion",
+    title: it.title || (enabled ? "Occasion" : ""),
     description: it.description || "",
   }));
   // Offset into the photo pool so cards don't repeat the hero image.

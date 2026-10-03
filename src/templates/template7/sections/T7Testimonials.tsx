@@ -14,7 +14,7 @@ export default function T7Testimonials({ section, sectionIndex }: { section: Tes
   const title = section.title || "From our guests";
   const source = enabled ? section.items : section.items?.filter((t) => t.quote?.trim());
   const items = (source?.length ? source : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || (enabled ? "Guest name" : "A guest"),
+    name: t.name || (enabled ? "Guest name" : ""),
     role: t.role || "",
     quote: t.quote || FALLBACK_QUOTE,
     company: t.company || "",
@@ -22,13 +22,15 @@ export default function T7Testimonials({ section, sectionIndex }: { section: Tes
 
   const cite = (t: (typeof items)[number], idx: number) => (
     <figcaption className="t7-cite">
-      <EditableText
-        as="span"
-        className="t7-cite-name"
-        value={t.name}
-        placeholder="Name"
-        onCommit={(next) => setItem("items", items, idx, { name: next })}
-      />
+      {t.name ? (
+        <EditableText
+          as="span"
+          className="t7-cite-name"
+          value={t.name}
+          placeholder="Name"
+          onCommit={(next) => setItem("items", items, idx, { name: next })}
+        />
+      ) : null}
       {t.role || t.company || enabled ? (
         <span className="t7-cite-role">
           <EditableText

@@ -1566,8 +1566,12 @@ a.t7-strip-item:hover span {
   cursor: pointer;
 }
 
-.t7-faq-q h3 {
+.t7-faq-h {
   margin: 0;
+  font: inherit;
+}
+
+.t7-faq-text {
   font-family: var(--t7-serif);
   font-weight: 400;
   font-size: 1.2rem;

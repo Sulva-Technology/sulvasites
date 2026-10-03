@@ -43,23 +43,26 @@ export default function T7FAQ({ section, sectionIndex }: { section: FAQSection; 
             const id = `t7-faq-${sectionIndex ?? 0}-${idx}`;
             return (
               <div key={idx} className="t7-faq-item" data-open={isOpen}>
-                <button
-                  type="button"
-                  className="t7-faq-q"
-                  aria-expanded={isOpen}
-                  aria-controls={id}
-                  onClick={() => !enabled && setOpen(isOpen ? null : idx)}
-                >
-                  <EditableText
-                    as="h3"
-                    value={it.question}
-                    placeholder="Question"
-                    onCommit={(next) => setItem("items", items, idx, { question: next })}
-                  />
-                  <span className="t7-faq-ico" aria-hidden="true">
-                    <IconPlus size={16} />
-                  </span>
-                </button>
+                <h3 className="t7-faq-h">
+                  <button
+                    type="button"
+                    className="t7-faq-q"
+                    aria-expanded={isOpen}
+                    aria-controls={id}
+                    onClick={() => !enabled && setOpen(isOpen ? null : idx)}
+                  >
+                    <EditableText
+                      as="span"
+                      className="t7-faq-text"
+                      value={it.question}
+                      placeholder="Question"
+                      onCommit={(next) => setItem("items", items, idx, { question: next })}
+                    />
+                    <span className="t7-faq-ico" aria-hidden="true">
+                      <IconPlus size={16} />
+                    </span>
+                  </button>
+                </h3>
                 <div className="t7-faq-a" id={id}>
                   <div>
                     <EditableText

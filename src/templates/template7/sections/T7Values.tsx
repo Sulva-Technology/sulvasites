@@ -15,10 +15,13 @@ const FALLBACK = [
 export default function T7Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || "",
-  }));
+  // Placeholders only while editing; visitors see real principles only.
+  const items = enabled
+    ? (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+        title: it.title || FALLBACK[i % FALLBACK.length].title,
+        desc: it.desc || "",
+      }))
+    : section.items.filter((it) => it.title?.trim()).map((it) => ({ title: it.title.trim(), desc: it.desc || "" }));
 
   return (
     <section className="t7-section t7-dark t7-kitchen">

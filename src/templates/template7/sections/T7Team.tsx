@@ -14,7 +14,7 @@ export default function T7Team({ section, sectionIndex }: { section: TeamSection
   const source = enabled ? section.members : section.members?.filter((m) => m.name?.trim());
   const members = (source?.length ? source : [{ name: "", role: "", bio: "" }]).map((m) => ({
     ...m,
-    name: m.name || "Name",
+    name: m.name || (enabled ? "Name" : ""),
     role: m.role || "",
     bio: m.bio || "",
   }));

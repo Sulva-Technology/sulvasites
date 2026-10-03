@@ -19,10 +19,13 @@ export default function T7Services({ section, sectionIndex }: { section: Service
   const ctx = useT7();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || "",
-  }));
+  // Placeholders only while editing; visitors see real dishes only.
+  const items = enabled
+    ? (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+        title: it.title || FALLBACK[i % FALLBACK.length].title,
+        desc: it.desc || "",
+      }))
+    : section.items.filter((it) => it.title?.trim()).map((it) => ({ title: it.title.trim(), desc: it.desc || "" }));
   const single = items.length < 4;
 
   return (

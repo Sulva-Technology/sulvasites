@@ -283,7 +283,9 @@ export default function SiteOverviewPage({
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
         whatsapp: form.whatsapp.trim() || null,
+        // Keep extra keys templates store in socials (hours, nav_labels, footer_labels…).
         socials: {
+          ...((profile?.socials ?? {}) as Record<string, unknown>),
           instagram: socials.instagram.trim() || null,
           facebook: socials.facebook.trim() || null,
           twitter: socials.twitter.trim() || null,
@@ -301,6 +303,7 @@ export default function SiteOverviewPage({
         return;
       }
 
+      setProfile((prev) => (prev ? { ...prev, socials: payload.socials } : prev));
       setSaveSuccess(true);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
