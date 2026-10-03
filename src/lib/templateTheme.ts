@@ -118,6 +118,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#ffffff",
     surface: "#f2f2f3",
   }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
+  // Education — "Campus"
+  t10: config("t10", {
+    accent: "#2747d6",
+    accent2: "#121a3a",
+    ink: "#141b33",
+    muted: "#5d6582",
+    bg: "#fffdf7",
+    surface: "#f4f1e6",
+  }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

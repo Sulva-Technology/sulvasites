@@ -64,6 +64,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "membership", label: "Membership", headline: "Membership", sections: ["hero", "values", "faq", "contact_card"] },
     { key: "coaches", label: "Coaches", headline: "Coaches", sections: ["hero", "team", "testimonials", "contact_card"] },
   ],
+  // Education
+  t10: [
+    { key: "programmes", label: "Programmes", headline: "Programmes", sections: ["hero", "services", "use_cases", "contact_card"] },
+    { key: "admissions", label: "Admissions", headline: "Admissions", sections: ["hero", "richtext", "faq", "contact_card"] },
+    { key: "campus-life", label: "Student life", headline: "Student life", sections: ["hero", "gallery", "testimonials", "contact_card"] },
+  ],
 };
 
 export function getPagePresets(templateKey: string): PagePreset[] {

@@ -21,6 +21,8 @@ function initials(name: string) {
 
 function gradient(templateKey: string) {
   switch (templateKey) {
+    case "t10":
+      return "linear-gradient(135deg, #2747d6, #121a3a)";
     case "t9":
       return "linear-gradient(135deg, #e5322d, #ff6a3d)";
     case "t8":

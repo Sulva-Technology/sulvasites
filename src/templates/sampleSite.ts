@@ -872,6 +872,162 @@ function fitnessSite(): TemplateProps {
   };
 }
 
+const edu = (i: number) => {
+  const p = STOCK_PHOTOS.education[i % STOCK_PHOTOS.education.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const educationHome: PageData = {
+  seo: { title: "Brightway Academy — nursery, primary and secondary school in Yaba, Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Where curious minds grow.",
+      subtext: "A warm, ambitious school for ages 3 to 18 — small classes, caring teachers and a clear plan for every learner, from first words to final exams.",
+      ctaText: "Apply now",
+      ctaHref: "",
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Early Years", desc: "Play-based learning for ages 3–5: phonics, numbers, stories and lots of outdoor time." },
+        { title: "Primary School", desc: "Strong foundations in reading, writing and maths, with science, art and music every week." },
+        { title: "Secondary School", desc: "A broad curriculum with specialist teachers, practical labs and guidance on subject choices." },
+        { title: "Exam Preparation", desc: "Focused revision classes, past-paper practice and one-to-one feedback before the big exams." },
+        { title: "Coding & Robotics Club", desc: "After-school sessions building games, apps and small robots in friendly teams." },
+        { title: "Weekend Tutoring", desc: "Small-group catch-up and stretch sessions on Saturday mornings, open to non-students too." },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "A clear path, from first day to graduation",
+      description: "Join at any stage — we'll help you find the right starting point.",
+      items: [
+        { title: "Start in Early Years", description: "Settle in with gentle routines, play and early reading.", linkText: "Ask about Early Years", linkHref: "" },
+        { title: "Build strong foundations", description: "Primary years that make reading, writing and maths feel easy.", linkText: "Ask about Primary", linkHref: "" },
+        { title: "Explore and specialise", description: "Secondary subjects, clubs and leadership roles that build confidence.", linkText: "Ask about Secondary", linkHref: "" },
+        { title: "Graduate ready", description: "Exam preparation and guidance for university, college or work.", linkText: "Ask about exam prep", linkHref: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Life on campus",
+      images: [edu(1), edu(2), edu(7), edu(4), edu(10), edu(5)],
+    },
+    {
+      type: "testimonials",
+      title: "Stories from our families",
+      items: [
+        { name: "Mrs. Folake A.", role: "Parent, Primary", company: "", quote: "Our daughter used to dread reading. Two terms in, she reads to us every night — the teachers really know her." },
+        { name: "Chinedu O.", role: "Student, Secondary", company: "", quote: "The coding club is the best part of my week. I built my first app here and now I want to study computer science." },
+        { name: "Mr. Ibrahim S.", role: "Parent, Early Years", company: "", quote: "Settling in was so gentle. We get updates and photos, and our son runs in every morning." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Admissions questions",
+      items: [
+        { question: "When can my child join?", answer: "We welcome new learners at the start of each term, and mid-term when places allow. Book a visit and we'll talk you through the options." },
+        { question: "Is there an entrance assessment?", answer: "For Primary and Secondary, there's a short, friendly assessment so we can place your child in the right class. Early Years has a play visit instead." },
+        { question: "Can we visit before applying?", answer: "Yes — we'd love to show you around. Visits run on weekday mornings; choose “Book a visit” in the form below." },
+        { question: "Do you offer transport and meals?", answer: "Ask the admissions team about current bus routes and the lunch menu when you visit." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+const educationAbout: PageData = {
+  seo: { title: "About Brightway", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Small classes, big ambitions",
+      subtext: "Brightway began as a small tutoring centre run by two teachers. Today we're a full school — but every learner is still known by name.",
+      ctaText: "Book a visit",
+      ctaHref: "",
+    },
+    {
+      type: "backed_by",
+      title: "Memberships & partners",
+      logos: [
+        { name: "Registered exam centre", url: null },
+        { name: "University outreach partner", url: null },
+        { name: "Parent–teacher association", url: null },
+      ],
+    },
+    {
+      type: "richtext",
+      title: "Our approach",
+      body: "<p>We believe children learn best when they feel safe, seen and a little bit challenged. Every class is planned around how each learner is doing — not just the syllabus.</p><ul><li>Small classes so teachers can give real attention</li><li>Regular progress reports and parent meetings</li><li>Clubs, sport and the arts alongside core subjects</li></ul>",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Small classes", desc: "Teachers have time for every learner, every lesson." },
+        { title: "Caring teachers", desc: "Qualified, patient and genuinely invested in progress." },
+        { title: "Clear progress reports", desc: "You always know how your child is doing and what's next." },
+        { title: "Safe, bright campus", desc: "Secure grounds, airy classrooms and space to play." },
+      ],
+    },
+    {
+      type: "team",
+      title: "Meet our teachers",
+      subtitle: "Experienced, kind and always learning themselves.",
+      members: [
+        { name: "Mrs. Ngozi Adeyemi", role: "Head teacher", bio: "A lifelong teacher who still leads a reading group every week.", photoUrl: person(8), linkedinUrl: "" },
+        { name: "Mr. Daniel Okon", role: "Maths & Science", bio: "Turns tricky equations into puzzles worth solving.", photoUrl: person(3), linkedinUrl: "" },
+        { name: "Ms. Amaka Eze", role: "Early Years lead", bio: "Songs, stories and endless patience for our youngest learners.", photoUrl: person(2), linkedinUrl: "" },
+        { name: "Mr. Kunle Ajayi", role: "Coding & Robotics", bio: "Runs the after-school club and the annual build day.", photoUrl: person(13), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Around the school",
+      images: [edu(3), edu(8), edu(6), edu(9)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const educationContact: PageData = {
+  seo: { title: "Admissions & contact", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Come and see us today",
+      subtext: "Send an enquiry below, book a visit, or call the admissions office — we're happy to answer any question.",
+      ctaText: "Apply now",
+      ctaHref: "#apply",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function educationSite(): TemplateProps {
+  const base = sampleSiteBase("t10");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Brightway Academy",
+      tagline: "Nursery, primary and secondary learning in Yaba, Lagos.",
+      description: "Independent school for ages 3 to 18, with after-school clubs and weekend tutoring.",
+      address: "8 Herbert Macaulay Way, Yaba, Lagos",
+      phone: "+234 802 555 0193",
+      email: "admissions@brightwayacademy.ng",
+      whatsapp: "+2348025550193",
+      socials: {
+        instagram: "https://instagram.com",
+        facebook: "https://facebook.com",
+        youtube: "https://youtube.com",
+        hours: "Mon–Fri · 07:30–16:00\nSaturday · 09:00–13:00\nSunday · Closed",
+      },
+    },
+    pages: { home: educationHome, about: educationAbout, contact: educationContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -887,7 +1043,9 @@ export function sampleSite(templateKey: string): TemplateProps {
               ? clinicSite()
               : templateKey === "t9"
                 ? fitnessSite()
-                : sampleSiteBase(templateKey);
+                : templateKey === "t10"
+                  ? educationSite()
+                  : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
