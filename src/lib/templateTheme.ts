@@ -75,11 +75,11 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   }),
   // Glam / booking — "Maison"
   t5: config("t5", {
-    accent: "#c46f86",
-    accent2: "#2b1b2f",
-    ink: "#2b1b2f",
-    muted: "#75687a",
-    bg: "#fbf7f4",
+    accent: "#d0567b",
+    accent2: "#221a1f",
+    ink: "#1f1a1d",
+    muted: "#6f6670",
+    bg: "#faf7f5",
     surface: "#ffffff",
   }),
   // Real estate — "Estate"

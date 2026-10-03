@@ -9,6 +9,7 @@ import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import TemplateFonts from "@/templates/shared/fonts";
+import { useColorMode } from "@/templates/shared/colorMode";
 import T5Footer from "./components/T5Footer";
 import T5Header from "./components/T5Header";
 import { collectSiteMedia, T5Provider } from "./ctx";
@@ -16,7 +17,7 @@ import T5Sections from "./sections/T5Sections";
 import "./template5.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500;600&display=swap";
+  "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Hanken+Grotesk:wght@400;500;600&display=swap";
 
 /** Template 5 — "Maison": beauty / glam / booking. */
 export default function Template5({
@@ -46,7 +47,17 @@ export default function Template5({
     () => collectSiteMedia([pageData, pages.home, pages.about, pages.contact]),
     [pageData, pages],
   );
-  const ctx = useMemo(() => ({ baseUrl, navPages, profile, ...media }), [baseUrl, navPages, profile, media]);
+  const [mode, toggleMode] = useColorMode();
+  const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
+    ? "extra"
+    : effectivePage === "about" || effectivePage === "contact"
+      ? effectivePage
+      : "home";
+  const pageLabel = navPages.find((p) => p.key === currentExtraKey)?.label || pageData?.seo?.title || "";
+  const ctx = useMemo(
+    () => ({ baseUrl, navPages, profile, pageKind, pageLabel, mode, toggleMode, ...media }),
+    [baseUrl, navPages, profile, pageKind, pageLabel, mode, toggleMode, media],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -72,7 +83,7 @@ export default function Template5({
 
   return (
     <T5Provider value={ctx}>
-      <div ref={rootRef} className="template5" style={themeStyle}>
+      <div ref={rootRef} className="template5" data-mode={mode} data-page={pageKind} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <T5Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>

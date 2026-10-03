@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
+import { ModeToggle } from "@/templates/shared/colorMode";
 import { bookHref, useT5 } from "../ctx";
 import { IconCalendar, IconInstagram, IconMenu } from "../icons";
 
@@ -21,7 +22,7 @@ export default function T5Header({
   currentExtraKey?: string | null;
 }) {
   const ctx = useT5();
-  const { baseUrl, navPages, profile } = ctx;
+  const { baseUrl, navPages, profile, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -100,6 +101,7 @@ export default function T5Header({
                 <IconInstagram />
               </a>
             ) : null}
+            <ModeToggle mode={mode} onToggle={toggleMode} className="t5-icon-btn t5-mode" />
             <Link className="t5-btn" href={bookHref(ctx)}>
               Book now
             </Link>

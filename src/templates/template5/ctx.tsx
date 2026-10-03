@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 
 import type { PageData } from "@/lib/pageSchema";
 import type { NavPage, TemplateProps } from "@/templates/registry";
+import type { ColorMode } from "@/templates/shared/colorMode";
 
 export type T5Ctx = {
   baseUrl: string;
@@ -12,7 +13,13 @@ export type T5Ctx = {
   photos: Array<{ url: string; alt: string }>;
   /** Service names from any services section — used as booking-form options. */
   serviceNames: string[];
+  /** Value titles — shown as the stat row on the home hero. */
+  valueTitles: string[];
   profile: TemplateProps["profile"];
+  pageKind: "home" | "about" | "contact" | "extra";
+  pageLabel: string;
+  mode: ColorMode;
+  toggleMode: () => void;
 };
 
 const Ctx = createContext<T5Ctx | null>(null);
@@ -27,6 +34,7 @@ export function useT5(): T5Ctx {
 export function collectSiteMedia(pages: PageData[]) {
   const photos: Array<{ url: string; alt: string }> = [];
   const serviceNames: string[] = [];
+  const valueTitles: string[] = [];
   const seen = new Set<string>();
   for (const page of pages) {
     for (const s of page?.sections ?? []) {
@@ -39,6 +47,12 @@ export function collectSiteMedia(pages: PageData[]) {
           }
         }
       }
+      if (s?.type === "values") {
+        for (const it of s.items ?? []) {
+          const t = it.title?.trim();
+          if (t && !valueTitles.includes(t)) valueTitles.push(t);
+        }
+      }
       if (s?.type === "services") {
         for (const it of s.items ?? []) {
           const t = it.title?.trim();
@@ -47,7 +61,7 @@ export function collectSiteMedia(pages: PageData[]) {
       }
     }
   }
-  return { photos, serviceNames };
+  return { photos, serviceNames, valueTitles };
 }
 
 /** Where "Book" actions go: the Book page if published, else the contact page. */
