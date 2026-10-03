@@ -1,5 +1,5 @@
 import { defaultSection, type PageData, type Section } from "@/lib/pageSchema";
-import { categoryForTemplate, fillSiteImages } from "@/lib/stockPhotos";
+import { categoryForTemplate, fillSiteImages, PEOPLE_PHOTOS, photoUrl, STOCK_PHOTOS } from "@/lib/stockPhotos";
 import { getPagePresets } from "@/templates/pagePresets";
 import type { TemplateProps } from "@/templates/registry";
 
@@ -408,10 +408,175 @@ function productSite(): TemplateProps {
   };
 }
 
+const food = (i: number) => {
+  const p = STOCK_PHOTOS.food[i % STOCK_PHOTOS.food.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+const person = (i: number) => photoUrl(PEOPLE_PHOTOS[i % PEOPLE_PHOTOS.length]!.id, 800);
+
+const restaurantHome: PageData = {
+  seo: { title: "Ember Table — wood-fired West African kitchen", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "West African cooking, slow-smoked over open fire",
+      subtext: "Market produce, long-held family recipes and a wood-fired grill at the heart of the room. Come hungry, stay late.",
+      ctaText: "Reserve a table",
+      ctaHref: "",
+    },
+    {
+      type: "backed_by",
+      title: "As featured in",
+      logos: [
+        { name: "The Lagos Table", url: null },
+        { name: "Eat Drink Lagos", url: null },
+        { name: "Afro Food Notes", url: null },
+        { name: "City Weekend", url: null },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Suya-spiced lamb chops · ₦14,500", desc: "Yaji butter, charred onion, fresh pepper salsa." },
+        { title: "Smoked party jollof · ₦8,500", desc: "Cooked over firewood, with fried plantain and coleslaw." },
+        { title: "Whole grilled croaker · ₦16,000", desc: "Ata dindin, roasted yam, lime." },
+        { title: "Asun skewers · ₦7,000", desc: "Spicy goat, scotch bonnet glaze, crisp onions." },
+        { title: "Ofada rice & ayamase · ₦9,500", desc: "Green pepper stew, locust beans, boiled egg." },
+        { title: "Catfish pepper soup · ₦6,500", desc: "Uziza, scent leaf, a hit of heat." },
+        { title: "Dodo & palm-oil butter · ₦4,000", desc: "Sweet plantain, warm agege bread." },
+        { title: "Zobo granita · ₦3,500", desc: "Hibiscus, ginger and pineapple, shaved to order." },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Cooked over fire", desc: "Everything that can meet the grill does — hardwood, never gas." },
+        { title: "Market to table", desc: "We buy from Mile 12 and Epe fishermen every morning." },
+        { title: "Made to share", desc: "Big platters, long tables and plenty of bread to mop up." },
+        { title: "Nothing wasted", desc: "Bones become stock, peels become pickles, trimmings feed the staff." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "From our table",
+      images: [food(1), food(6), food(2), food(5), food(4), food(0)],
+    },
+    {
+      type: "use_cases",
+      title: "Gatherings & occasions",
+      description: "From birthday dinners to office lunches, we'll plan the menu with you.",
+      items: [
+        { title: "Private dining", description: "Our back room seats up to 18 around one long table, with a sharing menu from the grill.", linkText: "Enquire", linkHref: "" },
+        { title: "Celebrations", description: "Birthdays, engagements and anniversaries — cake from our pastry kitchen on request.", linkText: "Enquire", linkHref: "" },
+        { title: "Outside catering", description: "Jollof, suya and small chops for 30 to 300 guests, delivered and served.", linkText: "Enquire", linkHref: "" },
+      ],
+    },
+    {
+      type: "testimonials",
+      title: "From our guests",
+      items: [
+        { name: "Funmi A.", role: "Regular", company: "", quote: "The smoked jollof alone is worth the drive across the bridge. It tastes like a Sunday party at my grandmother's." },
+        { name: "Daniel K.", role: "Birthday dinner", company: "", quote: "They set the long table for twelve of us and kept the platters coming. Warm service, no rush." },
+        { name: "Amaka O.", role: "Food writer", company: "Eat Drink Lagos", quote: "Confident, generous cooking — the lamb chops are the best thing on the island right now." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Good to know",
+      items: [
+        { question: "Do you take walk-ins?", answer: "Yes, when there's room — weekends fill up, so we recommend booking ahead." },
+        { question: "Can you cater for allergies?", answer: "Tell us when you book and our chefs will adapt dishes wherever they can." },
+        { question: "Is there parking?", answer: "Free parking in the compound for guests, with attendants from 6pm." },
+        { question: "Can we book the private room?", answer: "Yes — send a request with your date and group size and we'll share menus." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+const restaurantAbout: PageData = {
+  seo: { title: "Our story", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A kitchen built around the fire",
+      subtext: "Ember Table started as a weekend suya stand. Today it's a 60-seat dining room — but the grill still runs the show.",
+      ctaText: "Reserve a table",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How it started",
+      body: "<p>Chef Tobi Adeyemi grew up cooking for family parties in Ibadan, where the best food always came off the open fire. After years in hotel kitchens, he opened a suya stand on weekends to cook the food he actually loved.</p><p>The queues grew, the stand became a kitchen, and the kitchen became Ember Table: one room, one grill and a menu that changes with the market.</p><ul><li>Hardwood grill, lit every afternoon</li><li>Produce bought fresh each morning</li><li>Sharing plates for tables of two to twenty</li></ul>",
+    },
+    {
+      type: "team",
+      title: "The people behind the pass",
+      subtitle: "A small kitchen and floor team who cook, serve and eat together.",
+      members: [
+        { name: "Tobi Adeyemi", role: "Chef & founder", bio: "Runs the grill and writes the menu every week.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Zainab Musa", role: "Pastry chef", bio: "Breads, desserts and the famous zobo granita.", photoUrl: person(1), linkedinUrl: "" },
+        { name: "Kunle Bakare", role: "General manager", bio: "Looks after the room — and your reservation.", photoUrl: person(3), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "In the kitchen",
+      images: [food(3), food(11), food(10), food(7)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const restaurantContact: PageData = {
+  seo: { title: "Visit & reserve", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Come and eat with us",
+      subtext: "Book a table online, call the restaurant, or drop in — we keep a few tables for walk-ins every night.",
+      ctaText: "Request a table",
+      ctaHref: "#reserve",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function restaurantSite(): TemplateProps {
+  const base = sampleSiteBase("t7");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Ember Table",
+      tagline: "Wood-fired West African cooking in Victoria Island, Lagos.",
+      description: "Restaurant and private dining room.",
+      address: "14 Akin Adesola Street, Victoria Island, Lagos",
+      phone: "+234 802 555 0147",
+      email: "book@embertable.ng",
+      whatsapp: "+2348025550147",
+      socials: {
+        instagram: "https://instagram.com",
+        tiktok: "https://tiktok.com",
+        hours: "Tue–Thu · 12:00–22:00\nFri–Sat · 12:00–23:30\nSunday · 12:00–21:00\nMonday · Closed",
+      },
+    },
+    pages: { home: restaurantHome, about: restaurantAbout, contact: restaurantContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
-    templateKey === "t4" ? productSite() : templateKey === "t6" ? estateSite() : templateKey === "t5" ? beautySite() : sampleSiteBase(templateKey);
+    templateKey === "t4"
+      ? productSite()
+      : templateKey === "t6"
+        ? estateSite()
+        : templateKey === "t5"
+          ? beautySite()
+          : templateKey === "t7"
+            ? restaurantSite()
+            : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

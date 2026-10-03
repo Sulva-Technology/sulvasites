@@ -91,6 +91,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#ffffff",
     surface: "#f3f2ee",
   }),
+  // Restaurant — "Tavola"
+  t7: config("t7", {
+    accent: "#b5452b",
+    accent2: "#2a1712",
+    ink: "#231815",
+    muted: "#75655c",
+    bg: "#fbf6ee",
+    surface: "#f2e8d9",
+  }, { accent2: "Dark bands & footer", surface: "Menu cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

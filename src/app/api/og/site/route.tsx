@@ -23,6 +23,8 @@ function initials(name: string) {
 
 function templateGradient(templateKey: string) {
   switch (templateKey) {
+    case "t7":
+      return "linear-gradient(135deg, rgba(181,69,43,0.30), rgba(224,120,79,0.20))";
     case "t6":
       return "linear-gradient(135deg, rgba(34,197,94,0.28), rgba(96,165,250,0.22))";
     case "t5":

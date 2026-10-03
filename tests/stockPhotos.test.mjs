@@ -21,6 +21,7 @@ test("normalizeCategory falls back to general", () => {
 test("categoryForTemplate maps templates", () => {
   assert.equal(categoryForTemplate("t5"), "beauty");
   assert.equal(categoryForTemplate("t6"), "real_estate");
+  assert.equal(categoryForTemplate("t7"), "food");
   assert.equal(categoryForTemplate("zzz"), "general");
 });
 
