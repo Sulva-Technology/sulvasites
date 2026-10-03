@@ -62,7 +62,8 @@
   box-sizing: border-box;
 }
 
-.template9 a {
+/* Zero-specificity so button / link classes (.t9-btn-ink etc.) set their own colour. */
+:where(.template9) a {
   color: inherit;
 }
 
@@ -2578,11 +2579,15 @@ textarea.t9-input {
     opacity: 1 !important;
     transform: none !important;
   }
+  .template9 .t9-marquee-copy[data-dup="true"] {
+    display: none;
+  }
+}
+
+/* Featured plan keeps its lift under reduced motion, but only in the side-by-side desktop layout. */
+@media (prefers-reduced-motion: reduce) and (min-width: 961px) {
   .template9 .t9-plan[data-featured="true"] {
     transform: translateY(-18px) !important;
-  }
-  .template9 .t9-marquee-copy[aria-hidden="true"] {
-    display: none;
   }
 }
 

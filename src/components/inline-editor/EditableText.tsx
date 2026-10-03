@@ -76,7 +76,9 @@ export default function EditableText({
       }}
       onBlur={(e) => {
         setIsFocused(false);
-        const next = cleanText((e.currentTarget as HTMLElement).innerText, multiline);
+        const raw = cleanText((e.currentTarget as HTMLElement).innerText, multiline);
+        // Defensive: a hint that somehow ended up as text is never saved as content.
+        const next = placeholder && raw === placeholder.trim() ? "" : raw;
         setDraft("");
         if (onCommit) {
           onCommit(next);
@@ -104,8 +106,10 @@ export default function EditableText({
         padding: isFocused ? "2px 4px" : undefined,
       }}
       aria-label="Editable text"
+      // The hint is shown via CSS (globals.css) — never as text content, so it can't be saved.
+      data-placeholder={!(isFocused ? draft : display) && placeholder ? placeholder : undefined}
     >
-      {(isFocused ? draft : display) || placeholder || ""}
+      {(isFocused ? draft : display) || ""}
     </Tag>
   );
 }

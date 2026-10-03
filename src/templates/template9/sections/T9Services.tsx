@@ -37,7 +37,7 @@ export default function T9Services({ section, sectionIndex }: { section: Service
             </h2>
           </div>
           <p className="t9-head-note">
-            {items.length} {items.length === 1 ? "class" : "classes"} · pick one and book your spot
+            {items.length} {items.length === 1 ? "class" : "classes"} · pick one and send us a request
           </p>
         </header>
 

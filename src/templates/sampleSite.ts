@@ -809,9 +809,9 @@ const fitnessAbout: PageData = {
       title: "Meet the coaches",
       subtitle: "Experienced, qualified and genuinely invested in your progress.",
       members: [
-        { name: "Tunde Bakare", role: "Head coach · Strength", bio: "Founded Ironhouse. Lives for big lifts done with good technique.", photoUrl: person(6), linkedinUrl: "" },
-        { name: "Adaeze Obi", role: "HIIT & conditioning", bio: "Former sprinter. Her classes are hard, fast and always fun.", photoUrl: person(15), linkedinUrl: "" },
-        { name: "Musa Ibrahim", role: "Boxing coach", bio: "Teaches proper technique first, then makes you sweat.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Tunde Bakare", role: "Head coach · Strength", bio: "Founded Ironhouse. Lives for big lifts done with good technique.", photoUrl: person(4), linkedinUrl: "" },
+        { name: "Adaeze Obi", role: "HIIT & conditioning", bio: "Former sprinter. Her classes are hard, fast and always fun.", photoUrl: person(9), linkedinUrl: "" },
+        { name: "Musa Ibrahim", role: "Boxing coach", bio: "Teaches proper technique first, then makes you sweat.", photoUrl: person(14), linkedinUrl: "" },
         { name: "Funmi Coker", role: "Yoga & mobility", bio: "Strong flows, slow stretches and breathwork that sticks.", photoUrl: person(5), linkedinUrl: "" },
       ],
     },

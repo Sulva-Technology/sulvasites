@@ -13,10 +13,13 @@ import { IconArrow, IconChat, IconClock, IconDumbbell, IconMail, IconPhone, Icon
 /** Scrolling band of class names (static when motion is off or reduced). */
 export function T9Marquee({ items }: { items: string[] }) {
   if (!items.length) return null;
-  // Repeat short lists so one copy is always wider than the viewport.
-  const row = Array.from({ length: Math.max(1, Math.ceil(8 / items.length)) }, () => items).flat();
-  const copy = (hidden: boolean) => (
-    <ul className="t9-marquee-copy" aria-hidden={hidden || undefined}>
+  // Repeat the list so one copy is ~2× a 2560px viewport: at least 12 entries and roughly
+  // 280 characters of names (≈15px per character at the marquee's largest size).
+  const chars = items.reduce((n, t) => n + t.length + 4, 0);
+  const repeats = Math.max(Math.ceil(12 / items.length), Math.ceil(280 / Math.max(1, chars)), 1);
+  const row = Array.from({ length: repeats }, () => items).flat();
+  const copy = (dup: boolean) => (
+    <ul className="t9-marquee-copy" data-dup={dup || undefined}>
       {row.map((t, i) => (
         <li key={i}>
           <span>{t}</span>
@@ -25,8 +28,9 @@ export function T9Marquee({ items }: { items: string[] }) {
       ))}
     </ul>
   );
+  // Decorative: the services section carries the same content for assistive tech.
   return (
-    <div className="t9-marquee" role="region" aria-label="Classes">
+    <div className="t9-marquee" aria-hidden="true">
       <div className="t9-marquee-track">
         {copy(false)}
         {copy(true)}

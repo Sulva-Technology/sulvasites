@@ -17,3 +17,21 @@ body {
   display: block;
 }
 /* #endregion */
+
+/* Inline editor: empty-field hints are CSS-only (data-placeholder), never saved as content. */
+[data-inline-edit="true"][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.45;
+  pointer-events: none;
+  white-space: pre-line;
+}
+
+/* Keep empty editable fields clickable. */
+[data-inline-edit="true"]:empty {
+  min-height: 1em;
+}
+
+span[data-inline-edit="true"]:empty {
+  display: inline-block;
+  min-width: 2ch;
+}
