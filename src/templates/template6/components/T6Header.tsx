@@ -7,6 +7,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
+import { ModeToggle } from "@/templates/shared/colorMode";
 import { useT6 } from "../ctx";
 import { IconArrow, IconBuilding, IconMail, IconMenu, IconPhone, IconPin } from "../icons";
 
@@ -21,7 +22,7 @@ export default function T6Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
-  const { baseUrl, navPages, profile } = useT6();
+  const { baseUrl, navPages, profile, mode, toggleMode } = useT6();
   const editor = useInlineEditor();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -123,6 +124,7 @@ export default function T6Header({
           </nav>
 
           <div className="t6-header-actions">
+            <ModeToggle mode={mode} onToggle={toggleMode} className="t6-round t6-mode" />
             <Link href={`${baseUrl}/contact`} className="t6-btn">
               Book a viewing
             </Link>

@@ -84,12 +84,12 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   }),
   // Real estate — "Estate"
   t6: config("t6", {
-    accent: "#2f5bff",
-    accent2: "#0e1726",
-    ink: "#121620",
-    muted: "#5b6474",
-    bg: "#f3f1ec",
-    surface: "#ffffff",
+    accent: "#3e6b48",
+    accent2: "#161615",
+    ink: "#141413",
+    muted: "#6d6c68",
+    bg: "#ffffff",
+    surface: "#f3f2ee",
   }),
 };
 

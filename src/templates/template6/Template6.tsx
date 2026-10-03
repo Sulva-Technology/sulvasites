@@ -9,6 +9,7 @@ import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import TemplateFonts from "@/templates/shared/fonts";
+import { useColorMode } from "@/templates/shared/colorMode";
 import T6Footer from "./components/T6Footer";
 import T6Header from "./components/T6Header";
 import { T6Provider } from "./ctx";
@@ -16,7 +17,7 @@ import T6Sections from "./sections/T6Sections";
 import "./template6.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap";
+  "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap";
 
 function galleryPhotos(pages: PageData[]) {
   const seen = new Set<string>();
@@ -65,7 +66,30 @@ export default function Template6({
     () => galleryPhotos([pageData, pages.home, pages.about, pages.contact]),
     [pageData, pages],
   );
-  const ctx = useMemo(() => ({ baseUrl, navPages, photos, profile }), [baseUrl, navPages, photos, profile]);
+  const listings = useMemo(() => {
+    const out: string[] = [];
+    for (const page of [pages.home, pageData, pages.about]) {
+      for (const s of page?.sections ?? []) {
+        if (s?.type !== "use_cases" && s?.type !== "services") continue;
+        for (const it of s.items ?? []) {
+          const t = it.title?.trim();
+          if (t && !out.includes(t)) out.push(t);
+        }
+      }
+    }
+    return out;
+  }, [pageData, pages]);
+  const [mode, toggleMode] = useColorMode();
+  const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
+    ? "extra"
+    : effectivePage === "about" || effectivePage === "contact"
+      ? effectivePage
+      : "home";
+  const pageLabel = navPages.find((p) => p.key === currentExtraKey)?.label || pageData?.seo?.title || "";
+  const ctx = useMemo(
+    () => ({ baseUrl, navPages, photos, listings, profile, pageKind, pageLabel, mode, toggleMode }),
+    [baseUrl, navPages, photos, listings, profile, pageKind, pageLabel, mode, toggleMode],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -91,7 +115,7 @@ export default function Template6({
 
   return (
     <T6Provider value={ctx}>
-      <div ref={rootRef} className="template6" style={themeStyle}>
+      <div ref={rootRef} className="template6" data-mode={mode} data-page={pageKind} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <T6Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>

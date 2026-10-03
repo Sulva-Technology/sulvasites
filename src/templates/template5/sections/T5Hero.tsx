@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import type { HeroSection } from "@/lib/pageSchema";
@@ -30,6 +30,17 @@ function upcomingDays(n: number) {
   return out;
 }
 
+type Day = { day: string; date: string };
+const NO_DAYS: Day[] = [];
+let dayCache: { key: string; days: Day[] } | null = null;
+/** Stable per-day snapshot of upcoming days (client only — depends on the visitor's clock). */
+function clientDays() {
+  const key = new Date().toDateString();
+  if (!dayCache || dayCache.key !== key) dayCache = { key, days: upcomingDays(5) };
+  return dayCache.days;
+}
+const noSubscribe = () => () => {};
+
 /**
  * Beauty heroes, one per page (light and dark mode):
  *  - home: rounded full-width photo card, award pill, headline + pills, glass "in progress"
@@ -50,9 +61,8 @@ export default function T5Hero({
   const ctx = useT5();
   const { photos, profile, serviceNames, valueTitles, pageKind, pageLabel } = ctx;
   const { set } = useSectionEditor(section, sectionIndex);
-  // Dates depend on the visitor's clock/locale, so they're filled in after hydration.
-  const [days, setDays] = useState<Array<{ day: string; date: string }>>([]);
-  useEffect(() => setDays(upcomingDays(5)), []);
+  // Dates depend on the visitor's clock/locale, so the server renders none.
+  const days = useSyncExternalStore(noSubscribe, clientDays, () => NO_DAYS);
   const headline = section.headline || "Soft glam, made for you";
   const subtext =
     section.subtext ||
