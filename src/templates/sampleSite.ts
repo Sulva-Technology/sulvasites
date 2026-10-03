@@ -718,6 +718,160 @@ function clinicSite(): TemplateProps {
   };
 }
 
+const fit = (i: number) => {
+  const p = STOCK_PHOTOS.fitness[i % STOCK_PHOTOS.fitness.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const fitnessHome: PageData = {
+  seo: { title: "Ironhouse Training Club — strength & conditioning in Ikoyi, Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Train hard. Get strong.",
+      subtext: "Coach-led strength, conditioning and yoga classes for every level — small groups, real programming and a crew that keeps you coming back.",
+      ctaText: "Start free trial",
+      ctaHref: "",
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Strength Lab", desc: "Barbell fundamentals and progressive lifting in small, coached groups." },
+        { title: "HIIT Burn", desc: "Fast intervals on the rower, bike and floor. Scaled for every level." },
+        { title: "Boxing Conditioning", desc: "Pad work, footwork and bag rounds for power and stamina." },
+        { title: "Kettlebell Flow", desc: "Swings, carries and complexes to build a strong, resilient body." },
+        { title: "Power Yoga", desc: "A strong, sweaty vinyasa class for mobility, balance and breath." },
+        { title: "Mobility & Recovery", desc: "Slow stretching and breathwork to reset after a hard week." },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Starter", desc: "Two coached classes a week — the easiest way to build the habit." },
+        { title: "Unlimited", desc: "Every class on the timetable, open-gym access and a monthly coach check-in." },
+        { title: "Personal training", desc: "One-to-one sessions with a programme written around your goals." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Inside the club",
+      images: [fit(0), fit(3), fit(6), fit(1), fit(8), fit(5)],
+    },
+    {
+      type: "testimonials",
+      title: "Real results",
+      items: [
+        { name: "Chioma N.", role: "Member since 2023", company: "", quote: "I walked in unable to do a push-up. Now I look forward to heavy days." },
+        { name: "Seyi O.", role: "Unlimited member", company: "", quote: "The coaches actually watch your form. I've never felt this strong or this confident." },
+        { name: "Bisi A.", role: "Power Yoga regular", company: "", quote: "Yoga twice a week fixed my back and my sleep. The community is the best part." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Questions, answered",
+      items: [
+        { question: "I'm a complete beginner. Is that okay?", answer: "Absolutely. Every class can be scaled, and your coach will show you each movement before you start." },
+        { question: "What does the free trial include?", answer: "A session with a coach to talk through your goals, followed by a class of your choice." },
+        { question: "What should I bring?", answer: "Comfortable kit, trainers and a water bottle. We have towels, mats and lockers." },
+        { question: "Can I freeze my membership?", answer: "Yes — talk to the front desk if you're travelling or recovering from an injury." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+const fitnessAbout: PageData = {
+  seo: { title: "About the club", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Built by coaches, run for members",
+      subtext: "Ironhouse started as a garage gym with six regulars. Today it's a full training club — but every session is still coached, and we still know your name.",
+      ctaText: "Start free trial",
+      ctaHref: "",
+    },
+    {
+      type: "backed_by",
+      title: "Partners & affiliations",
+      logos: [
+        { name: "Certified strength coaches", url: null },
+        { name: "Partner physiotherapy clinic", url: null },
+        { name: "Corporate wellness partner", url: null },
+      ],
+    },
+    {
+      type: "richtext",
+      title: "How we train",
+      body: "<p>Every member starts with a coached intro session, so we can understand your history, your goals and any injuries before you join a class.</p><ul><li>Small groups so coaches can correct your form</li><li>Programming that progresses week to week</li><li>Open-gym time to practise on your own</li></ul>",
+    },
+    {
+      type: "team",
+      title: "Meet the coaches",
+      subtitle: "Experienced, qualified and genuinely invested in your progress.",
+      members: [
+        { name: "Tunde Bakare", role: "Head coach · Strength", bio: "Founded Ironhouse. Lives for big lifts done with good technique.", photoUrl: person(6), linkedinUrl: "" },
+        { name: "Adaeze Obi", role: "HIIT & conditioning", bio: "Former sprinter. Her classes are hard, fast and always fun.", photoUrl: person(15), linkedinUrl: "" },
+        { name: "Musa Ibrahim", role: "Boxing coach", bio: "Teaches proper technique first, then makes you sweat.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Funmi Coker", role: "Yoga & mobility", bio: "Strong flows, slow stretches and breathwork that sticks.", photoUrl: person(5), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Programmes for every goal",
+      description: "Not sure where to start? Pick the goal that sounds most like you.",
+      items: [
+        { title: "Get strong", description: "Learn the big lifts safely and add weight to the bar every month.", linkText: "Start free trial", linkHref: "" },
+        { title: "Lose fat", description: "Conditioning classes plus simple nutrition habits you can keep.", linkText: "Start free trial", linkHref: "" },
+        { title: "Move better", description: "Yoga and mobility work for stiff backs, hips and desk-bound days.", linkText: "Start free trial", linkHref: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "The space",
+      images: [fit(2), fit(4), fit(7), fit(9)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const fitnessContact: PageData = {
+  seo: { title: "Contact & free trial", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Come train with us",
+      subtext: "Request your free trial below, call the front desk, or message us on WhatsApp.",
+      ctaText: "Start free trial",
+      ctaHref: "#join",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function fitnessSite(): TemplateProps {
+  const base = sampleSiteBase("t9");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Ironhouse",
+      tagline: "Coach-led strength, conditioning and yoga in Ikoyi, Lagos.",
+      description: "Strength and conditioning gym with group classes and personal training.",
+      address: "24 Kingsway Road, Ikoyi, Lagos",
+      phone: "+234 809 555 0147",
+      email: "train@ironhouse.ng",
+      whatsapp: "+2348095550147",
+      socials: {
+        instagram: "https://instagram.com",
+        tiktok: "https://tiktok.com",
+        youtube: "https://youtube.com",
+        hours: "Mon–Fri · 05:30–22:00\nSaturday · 07:00–18:00\nSunday · 08:00–14:00",
+      },
+    },
+    pages: { home: fitnessHome, about: fitnessAbout, contact: fitnessContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -731,7 +885,9 @@ export function sampleSite(templateKey: string): TemplateProps {
             ? restaurantSite()
             : templateKey === "t8"
               ? clinicSite()
-              : sampleSiteBase(templateKey);
+              : templateKey === "t9"
+                ? fitnessSite()
+                : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

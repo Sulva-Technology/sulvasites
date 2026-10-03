@@ -10,6 +10,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t6", name: "Estate", category: "Real estate", description: "Agencies, developers and property managers. Catalogue style, light + dark modes." },
   { key: "t7", name: "Tavola", category: "Restaurant", description: "Restaurants, cafés, caterers and bakeries." },
   { key: "t8", name: "Vital", category: "Clinic & health", description: "Clinics, dentists, pharmacies and wellness practices." },
+  { key: "t9", name: "Pulse", category: "Fitness", description: "Gyms, personal trainers, yoga and dance studios." },
 ];
 
 export function templateLabel(key: string) {

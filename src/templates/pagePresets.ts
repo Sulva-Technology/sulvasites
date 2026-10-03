@@ -58,6 +58,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "doctors", label: "Our doctors", headline: "Meet our doctors", sections: ["hero", "team", "testimonials", "contact_card"] },
     { key: "book", label: "Book a visit", headline: "Book a visit", sections: ["hero", "richtext", "faq", "contact_card"] },
   ],
+  // Fitness
+  t9: [
+    { key: "classes", label: "Classes", headline: "Classes", sections: ["hero", "services", "gallery", "contact_card"] },
+    { key: "membership", label: "Membership", headline: "Membership", sections: ["hero", "values", "faq", "contact_card"] },
+    { key: "coaches", label: "Coaches", headline: "Coaches", sections: ["hero", "team", "testimonials", "contact_card"] },
+  ],
 };
 
 export function getPagePresets(templateKey: string): PagePreset[] {

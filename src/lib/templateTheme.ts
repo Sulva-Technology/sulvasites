@@ -109,6 +109,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#ffffff",
     surface: "#eef6f4",
   }, { accent2: "Dark bands & footer", surface: "Mint cards / panels" }),
+  // Fitness — "Pulse"
+  t9: config("t9", {
+    accent: "#e5322d",
+    accent2: "#0b0b0c",
+    ink: "#111112",
+    muted: "#6a6a70",
+    bg: "#ffffff",
+    surface: "#f2f2f3",
+  }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {
