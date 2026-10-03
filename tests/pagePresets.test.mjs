@@ -8,11 +8,12 @@ import {
   sortPageKeys,
 } from "../src/templates/pagePresets.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
+import { TEMPLATE_THEME_CONFIGS } from "../src/lib/templateTheme.ts";
 
 const RESERVED = ["home", "about", "contact", "p"];
 
 test("every template has presets that build valid pages with safe keys", () => {
-  for (const t of ["t1", "t2", "t3", "t4", "t5", "t6"]) {
+  for (const t of Object.keys(TEMPLATE_THEME_CONFIGS)) {
     const presets = getPagePresets(t);
     assert.ok(presets.length >= 2, `${t} should ship at least 2 extra pages`);
     const keys = new Set();
