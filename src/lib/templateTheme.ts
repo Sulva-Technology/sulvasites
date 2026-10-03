@@ -66,11 +66,11 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   }, { accent2: "Band / cover colour", bg: "Paper background" }),
   // Product — "Launch"
   t4: config("t4", {
-    accent: "#ff5a1f",
-    accent2: "#121216",
-    ink: "#121216",
-    muted: "#62626c",
-    bg: "#fafaf7",
+    accent: "#6c5cff",
+    accent2: "#0c0e1a",
+    ink: "#0c0e1a",
+    muted: "#5c6178",
+    bg: "#f7f8fc",
     surface: "#ffffff",
   }),
   // Glam / booking — "Maison"

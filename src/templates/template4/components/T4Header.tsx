@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
+import { ModeToggle } from "@/templates/shared/colorMode";
 import { useT4 } from "../ctx";
 import { IconArrow, IconMenu } from "../icons";
 
@@ -20,7 +21,7 @@ export default function T4Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
-  const { baseUrl, navPages, profile } = useT4();
+  const { baseUrl, navPages, profile, mode, toggleMode } = useT4();
   const editor = useInlineEditor();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -77,6 +78,7 @@ export default function T4Header({
         </nav>
 
         <div className="t4-header-actions">
+          <ModeToggle mode={mode} onToggle={toggleMode} className="t4-mode" />
           <Link className="t4-btn t4-btn-accent" href={`${baseUrl}/contact`}>
             Get started <IconArrow size={16} />
           </Link>

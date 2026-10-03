@@ -9,6 +9,7 @@ import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
 import TemplateFonts from "@/templates/shared/fonts";
+import { useColorMode } from "@/templates/shared/colorMode";
 import T4Footer from "./components/T4Footer";
 import T4Header from "./components/T4Header";
 import { collectProductMedia, T4Provider } from "./ctx";
@@ -16,7 +17,7 @@ import T4Sections from "./sections/T4Sections";
 import "./template4.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
 
 /** Template 4 — "Launch": product / app / startup. */
 export default function Template4({
@@ -46,7 +47,17 @@ export default function Template4({
     () => collectProductMedia([pageData, pages.home, pages.about, pages.contact]),
     [pageData, pages],
   );
-  const ctx = useMemo(() => ({ baseUrl, navPages, profile, ...media }), [baseUrl, navPages, profile, media]);
+  const [mode, toggleMode] = useColorMode();
+  const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
+    ? "extra"
+    : effectivePage === "about" || effectivePage === "contact"
+      ? effectivePage
+      : "home";
+  const pageLabel = navPages.find((p) => p.key === currentExtraKey)?.label || pageData?.seo?.title || "";
+  const ctx = useMemo(
+    () => ({ baseUrl, navPages, profile, pageKind, pageLabel, mode, toggleMode, ...media }),
+    [baseUrl, navPages, profile, pageKind, pageLabel, mode, toggleMode, media],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -72,7 +83,7 @@ export default function Template4({
 
   return (
     <T4Provider value={ctx}>
-      <div ref={rootRef} className="template4" style={themeStyle}>
+      <div ref={rootRef} className="template4" data-mode={mode} data-page={pageKind} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <T4Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
