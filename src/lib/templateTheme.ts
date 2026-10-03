@@ -100,6 +100,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#fbf6ee",
     surface: "#f2e8d9",
   }, { accent2: "Dark bands & footer", surface: "Menu cards / panels" }),
+  // Clinic / health — "Vital"
+  t8: config("t8", {
+    accent: "#0f8a7e",
+    accent2: "#0d2b33",
+    ink: "#10262c",
+    muted: "#5d7178",
+    bg: "#ffffff",
+    surface: "#eef6f4",
+  }, { accent2: "Dark bands & footer", surface: "Mint cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

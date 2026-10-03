@@ -52,6 +52,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "reservations", label: "Reservations", headline: "Book a table", sections: ["hero", "richtext", "faq", "contact_card"] },
     { key: "events", label: "Private dining", headline: "Private dining & events", sections: ["hero", "richtext", "gallery", "contact_card"] },
   ],
+  // Clinic / health
+  t8: [
+    { key: "services", label: "Treatments", headline: "Treatments & services", sections: ["hero", "services", "faq", "contact_card"] },
+    { key: "doctors", label: "Our doctors", headline: "Meet our doctors", sections: ["hero", "team", "testimonials", "contact_card"] },
+    { key: "book", label: "Book a visit", headline: "Book a visit", sections: ["hero", "richtext", "faq", "contact_card"] },
+  ],
 };
 
 export function getPagePresets(templateKey: string): PagePreset[] {

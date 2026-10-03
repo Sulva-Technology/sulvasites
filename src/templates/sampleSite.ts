@@ -565,6 +565,159 @@ function restaurantSite(): TemplateProps {
   };
 }
 
+const clinic = (i: number) => {
+  const p = STOCK_PHOTOS.clinic[i % STOCK_PHOTOS.clinic.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const clinicHome: PageData = {
+  seo: { title: "Cedar Family Clinic — family doctors in Lekki, Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Unhurried care for the whole family",
+      subtext: "Same-week appointments with GPs, paediatricians and dentists who take time to listen — all under one roof in Lekki.",
+      ctaText: "Book an appointment",
+      ctaHref: "",
+    },
+    {
+      type: "backed_by",
+      title: "Registered & accredited",
+      logos: [
+        { name: "Medical and Dental Council of Nigeria", url: null },
+        { name: "HEFAMAA accredited", url: null },
+        { name: "NHIA provider", url: null },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "General consultations", desc: "See a family doctor for new symptoms, ongoing conditions or a second opinion." },
+        { title: "Children's health", desc: "Check-ups, growth reviews and sick visits with our paediatric team." },
+        { title: "Women's health", desc: "Antenatal care, family planning and well-woman screening." },
+        { title: "Dental care", desc: "Check-ups, cleaning, fillings and gentle care for nervous patients." },
+        { title: "Lab tests & screening", desc: "Blood tests and health screens on site, with results explained by a doctor." },
+        { title: "Vaccinations", desc: "Childhood immunisations, travel vaccines and seasonal flu shots." },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Time to talk", desc: "Appointments are long enough to ask every question on your list." },
+        { title: "One record, one team", desc: "Your doctor, dentist and lab share notes, so you only tell your story once." },
+        { title: "Clear, upfront pricing", desc: "We share costs before treatment and work with major HMOs." },
+        { title: "Care for all ages", desc: "From newborn checks to managing long-term conditions in later life." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Inside the clinic",
+      images: [clinic(0), clinic(7), clinic(1), clinic(6), clinic(4), clinic(11)],
+    },
+    {
+      type: "testimonials",
+      title: "What our patients say",
+      items: [
+        { name: "Ngozi E.", role: "Patient since 2021", company: "", quote: "Dr Bello actually listened. I left with a plan I understood and a follow-up call two days later." },
+        { name: "Tunde A.", role: "Parent", company: "", quote: "Our son hates hospitals, but the paediatric team made his check-up feel like a game." },
+        { name: "Halima S.", role: "Dental patient", company: "", quote: "Calm, spotless and on time. The first dentist I haven't been nervous to visit." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Frequently asked questions",
+      items: [
+        { question: "Do I need a referral to book?", answer: "No. You can book directly with any of our doctors or dentists." },
+        { question: "Do you accept HMO and insurance plans?", answer: "Yes, we work with most major HMOs. Bring your card and we'll confirm your cover at reception." },
+        { question: "Can I see a doctor on the same day?", answer: "We keep a few same-day slots each morning. Call us early and we'll do our best to fit you in." },
+        { question: "What should I bring to my first visit?", answer: "A photo ID, your HMO card if you have one, and a list of any medicines you take." },
+      ],
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+const clinicAbout: PageData = {
+  seo: { title: "About the clinic", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A neighbourhood clinic that knows your name",
+      subtext: "Cedar was founded by two family doctors who wanted care in Lekki to feel personal again — longer appointments, one shared record and a team you see every time.",
+      ctaText: "Book an appointment",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How we work",
+      body: "<p>Every new patient starts with a longer first appointment, so your doctor can understand your history and what matters to you. After that, you'll see the same small team whenever you visit.</p><ul><li>GP, paediatric, women's health and dental care in one building</li><li>On-site laboratory with results reviewed by your doctor</li><li>Follow-up calls after every new diagnosis</li></ul>",
+    },
+    {
+      type: "team",
+      title: "Meet our doctors",
+      subtitle: "Experienced clinicians who take the time to explain, and to listen.",
+      members: [
+        { name: "Dr Amaka Bello", role: "Family physician", bio: "Co-founder. Looks after adults and long-term conditions like diabetes and hypertension.", photoUrl: person(9), linkedinUrl: "" },
+        { name: "Dr Femi Adeyemi", role: "Paediatrician", bio: "Co-founder. Leads children's health, from newborn checks to teenage visits.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Dr Kemi Okoro", role: "Dental surgeon", bio: "Gentle general dentistry, with extra time for nervous patients.", photoUrl: person(10), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Who we care for",
+      description: "Whatever your stage of life, there's a doctor here who looks after people like you.",
+      items: [
+        { title: "Families & children", description: "Check-ups, vaccinations and sick visits for every member of the family.", linkText: "Book a visit", linkHref: "" },
+        { title: "Women's health", description: "Antenatal care, screening and advice in a private, unhurried setting.", linkText: "Book a visit", linkHref: "" },
+        { title: "Long-term conditions", description: "Regular reviews and medicine checks for diabetes, hypertension and asthma.", linkText: "Book a visit", linkHref: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Our space",
+      images: [clinic(2), clinic(3), clinic(5), clinic(8)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const clinicContact: PageData = {
+  seo: { title: "Contact & appointments", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Book a visit or get in touch",
+      subtext: "Send an appointment request below, call reception, or message us on WhatsApp during opening hours.",
+      ctaText: "Request an appointment",
+      ctaHref: "#book",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function clinicSite(): TemplateProps {
+  const base = sampleSiteBase("t8");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Cedar Family Clinic",
+      tagline: "Family doctors, paediatrics and dental care in Lekki, Lagos.",
+      description: "Family medical and dental clinic.",
+      address: "7 Fola Osibo Road, Lekki Phase 1, Lagos",
+      phone: "+234 803 555 0192",
+      email: "care@cedarclinic.ng",
+      whatsapp: "+2348035550192",
+      socials: {
+        instagram: "https://instagram.com",
+        facebook: "https://facebook.com",
+        hours: "Mon–Fri · 08:00–20:00\nSaturday · 09:00–16:00\nSunday · Closed",
+      },
+    },
+    pages: { home: clinicHome, about: clinicAbout, contact: clinicContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -576,7 +729,9 @@ export function sampleSite(templateKey: string): TemplateProps {
           ? beautySite()
           : templateKey === "t7"
             ? restaurantSite()
-            : sampleSiteBase(templateKey);
+            : templateKey === "t8"
+              ? clinicSite()
+              : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
