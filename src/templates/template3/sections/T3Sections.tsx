@@ -1,7 +1,8 @@
 "use client";
 
 import type { PageData } from "@/lib/pageSchema";
-import type { TemplateProps } from "@/templates/registry";
+import type { T3HeroData, T3PageKind } from "./T3Hero";
+import type { NavPage, TemplateProps } from "@/templates/registry";
 import T3BackedBy from "./T3BackedBy";
 import T3ContactCard from "./T3ContactCard";
 import T3FAQ from "./T3FAQ";
@@ -22,9 +23,21 @@ import T3Values from "./T3Values";
 export default function T3Sections({
   pageData,
   profile,
+  pageKind = "home",
+  pageLabel = "",
+  pageNumber = 1,
+  heroData,
+  navPages = [],
+  baseUrl = "",
 }: {
   pageData: PageData;
   profile: TemplateProps["profile"];
+  pageKind?: T3PageKind;
+  pageLabel?: string;
+  pageNumber?: number;
+  heroData?: T3HeroData;
+  navPages?: NavPage[];
+  baseUrl?: string;
 }) {
   const sections = (pageData.sections || []).filter(
     (s): s is NonNullable<typeof s> => s != null && s.type != null,
@@ -54,6 +67,13 @@ export default function T3Sections({
                 businessName={profile.business_name}
                 available={i === 0}
                 secondary={secondary}
+                pageKind={pageKind}
+                pageLabel={pageLabel}
+                pageNumber={pageNumber}
+                heroData={heroData}
+                navPages={navPages}
+                baseUrl={baseUrl}
+                profile={profile}
               />
             );
           case "services":

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { getPublicAssetUrl } from "@/lib/assets";
@@ -15,7 +15,7 @@ import T3Sections from "./sections/T3Sections";
 import "./template3.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap";
 
 /** Template 3 — "Atelier": portfolio / personal brand. */
 export default function Template3({
@@ -43,6 +43,37 @@ export default function Template3({
   );
   const motion = !editor?.enabled;
 
+  const pageKind = currentExtraKey ? "extra" : effectivePage === "about" || effectivePage === "contact" ? effectivePage : "home";
+  const extraIndex = navPages.findIndex((p) => p.key === currentExtraKey);
+  const pageLabel = navPages[extraIndex]?.label || pageData?.seo?.title || "";
+  // Home, About, extras..., Contact — matches the header's numbering.
+  const pageNumber = extraIndex >= 0 ? extraIndex + 3 : 1;
+  // Media + titles gathered from the whole site, used by the page heroes.
+  const heroData = useMemo(() => {
+    const photos: Array<{ url: string; alt: string }> = [];
+    const highlights: string[] = [];
+    const projects: string[] = [];
+    const push = (list: string[], v?: string) => {
+      const t = v?.trim();
+      if (t && !list.includes(t)) list.push(t);
+    };
+    for (const page of [pageData, pages.home, pages.about, pages.contact]) {
+      for (const s of page?.sections ?? []) {
+        if (s?.type === "gallery") {
+          for (const img of s.images ?? []) {
+            const url = img.url?.trim();
+            if (url && !photos.some((p) => p.url === url)) photos.push({ url, alt: img.alt || "" });
+          }
+        } else if (s?.type === "values") {
+          for (const it of s.items ?? []) push(highlights, it.title);
+        } else if (s?.type === "use_cases" || s?.type === "services") {
+          for (const it of s.items ?? []) push(projects, it.title);
+        }
+      }
+    }
+    return { photos, highlights, projects };
+  }, [pageData, pages]);
+
   // Scroll-reveal: mark elements visible as they enter the viewport.
   useEffect(() => {
     const root = rootRef.current;
@@ -67,7 +98,7 @@ export default function Template3({
   }, [motion, pageData]);
 
   return (
-    <div ref={rootRef} className="template3" style={themeStyle}>
+    <div ref={rootRef} className="template3" data-page={pageKind} style={themeStyle}>
         <TemplateFonts href={FONTS} />
       <T3Header
         businessName={profile.business_name}
@@ -80,7 +111,16 @@ export default function Template3({
       />
 
       <main>
-        <T3Sections pageData={pageData} profile={profile} />
+        <T3Sections
+          pageData={pageData}
+          profile={profile}
+          pageKind={pageKind}
+          pageLabel={pageLabel}
+          pageNumber={pageNumber}
+          heroData={heroData}
+          navPages={navPages}
+          baseUrl={baseUrl}
+        />
       </main>
 
       <T3Footer

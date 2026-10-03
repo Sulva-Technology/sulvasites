@@ -57,12 +57,12 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   }, { accent2: "Black sections & footer", surface: "Paper sections" }),
   // Portfolio — "Atelier"
   t3: config("t3", {
-    accent: "#b4532a",
-    accent2: "#1f3a34",
-    ink: "#1b1a17",
-    muted: "#6e685f",
-    bg: "#f4efe7",
-    surface: "#fffdf9",
+    accent: "#3d6bff",
+    accent2: "#14151a",
+    ink: "#121317",
+    muted: "#6b6e76",
+    bg: "#f6f6f3",
+    surface: "#ffffff",
   }, { accent2: "Band / cover colour", bg: "Paper background" }),
   // Product — "Launch"
   t4: config("t4", {
