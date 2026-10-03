@@ -8,11 +8,15 @@ import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import TemplateFonts from "@/templates/shared/fonts";
 import T1Footer from "./components/T1Footer";
 import T1Header from "./components/T1Header";
 import { collectCorporateMedia, T1Provider } from "./ctx";
 import T1Sections from "./sections/T1Sections";
 import "./template1.css";
+
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap";
 
 /** Template 1 — "Meridian": corporate / consultancy / professional services. */
 export default function Template1({
@@ -42,7 +46,16 @@ export default function Template1({
     () => collectCorporateMedia([pageData, pages.home, pages.about, pages.contact]),
     [pageData, pages],
   );
-  const ctx = useMemo(() => ({ baseUrl, navPages, profile, ...media }), [baseUrl, navPages, profile, media]);
+  const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
+    ? "extra"
+    : effectivePage === "about" || effectivePage === "contact"
+      ? effectivePage
+      : "home";
+  const pageLabel = navPages.find((p) => p.key === currentExtraKey)?.label || pageData?.seo?.title || "";
+  const ctx = useMemo(
+    () => ({ baseUrl, navPages, profile, pageKind, pageLabel, ...media }),
+    [baseUrl, navPages, profile, pageKind, pageLabel, media],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -69,6 +82,7 @@ export default function Template1({
   return (
     <T1Provider value={ctx}>
       <div ref={rootRef} className="template1" style={themeStyle}>
+        <TemplateFonts href={FONTS} />
         <T1Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T1Sections pageData={pageData} />

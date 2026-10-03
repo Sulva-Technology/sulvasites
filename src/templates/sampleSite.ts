@@ -1,4 +1,6 @@
-import type { PageData } from "@/lib/pageSchema";
+import { defaultSection, type PageData, type Section } from "@/lib/pageSchema";
+import { categoryForTemplate, fillSiteImages } from "@/lib/stockPhotos";
+import { getPagePresets } from "@/templates/pagePresets";
 import type { TemplateProps } from "@/templates/registry";
 
 /** Realistic sample content for previewing templates without a database (dev only). */
@@ -406,11 +408,11 @@ function productSite(): TemplateProps {
   };
 }
 
+/** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
-  if (templateKey === "t4") return productSite();
-  if (templateKey === "t6") return estateSite();
-  if (templateKey === "t5") return beautySite();
-  return sampleSiteBase(templateKey);
+  const base =
+    templateKey === "t4" ? productSite() : templateKey === "t6" ? estateSite() : templateKey === "t5" ? beautySite() : sampleSiteBase(templateKey);
+  return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
 function sampleSiteBase(templateKey: string): TemplateProps {
@@ -429,9 +431,29 @@ function sampleSiteBase(templateKey: string): TemplateProps {
       logo_path: null,
     },
     pages: { home, about, contact },
-    navPages: [
-      { key: "work", label: "Work" },
-      { key: "services", label: "Services" },
-    ],
+    navPages: getPagePresets(templateKey).map((p) => ({ key: p.key, label: p.label })),
   };
+}
+
+/**
+ * Builds an extra page from the template's preset, reusing the sample site's own
+ * sections (first match by type across home/about/contact) so previews aren't blank.
+ */
+export function sampleExtraPage(templateKey: string, props: TemplateProps, key: string): PageData | null {
+  const preset = getPagePresets(templateKey).find((p) => p.key === key);
+  if (!preset) return null;
+  const pool: Section[] = [props.pages.home, props.pages.about, props.pages.contact].flatMap((p) => p?.sections ?? []);
+  const used = new Set<Section>();
+  const sections = preset.sections.map((type, i): Section => {
+    if (type === "hero" && i === 0) {
+      return { ...defaultSection("hero"), headline: preset.headline || preset.label } as Section;
+    }
+    const found = pool.find((s) => s.type === type && !used.has(s));
+    if (found) {
+      used.add(found);
+      return found;
+    }
+    return defaultSection(type);
+  });
+  return { seo: { title: preset.label, description: "" }, sections };
 }

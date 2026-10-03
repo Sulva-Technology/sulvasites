@@ -88,7 +88,7 @@ export default function T1Header({
         </nav>
 
         <div className="t1-header-actions">
-          <Link className="t1-btn" href={`${baseUrl}/contact`}>
+          <Link className="t1-btn t1-btn-ink" href={`${baseUrl}/contact`}>
             Book a consultation
           </Link>
           <button

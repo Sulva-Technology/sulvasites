@@ -14,6 +14,10 @@ export type T1Ctx = {
   /** Value titles from any values section — used as hero trust points. */
   valueTitles: string[];
   profile: TemplateProps["profile"];
+  /** Which page is rendering — each kind gets its own hero layout. */
+  pageKind: "home" | "about" | "contact" | "extra";
+  /** Label of the current extra page (for breadcrumbs). */
+  pageLabel: string;
 };
 
 const Ctx = createContext<T1Ctx | null>(null);

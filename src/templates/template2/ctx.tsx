@@ -9,7 +9,11 @@ export type T2Ctx = {
   baseUrl: string;
   navPages: NavPage[];
   photos: Array<{ url: string; alt: string }>;
+  /** Service / story titles — listed as the cover's "In this issue" contents. */
+  contents: string[];
   profile: TemplateProps["profile"];
+  pageKind: "home" | "about" | "contact" | "extra";
+  pageLabel: string;
 };
 
 const Ctx = createContext<T2Ctx | null>(null);
@@ -37,4 +41,18 @@ export function collectPhotos(pages: PageData[]) {
     }
   }
   return photos;
+}
+
+export function collectContents(pages: PageData[]) {
+  const out: string[] = [];
+  for (const page of pages) {
+    for (const s of page?.sections ?? []) {
+      if (s?.type !== "services" && s?.type !== "use_cases") continue;
+      for (const it of s.items ?? []) {
+        const t = it.title?.trim();
+        if (t && !out.includes(t)) out.push(t);
+      }
+    }
+  }
+  return out;
 }

@@ -39,21 +39,21 @@ function config(
 export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   // Corporate — "Meridian"
   t1: config("t1", {
-    accent: "#0e8a74",
-    accent2: "#0f1e2e",
-    ink: "#0f1e2e",
-    muted: "#58677a",
+    accent: "#0ea58c",
+    accent2: "#0b1220",
+    ink: "#0b1220",
+    muted: "#66707f",
     bg: "#ffffff",
-    surface: "#f3f6f8",
+    surface: "#f4f5f7",
   }, { surface: "Grey sections" }),
   // Editorial — "Journal"
   t2: config("t2", {
-    accent: "#e4322b",
-    accent2: "#111111",
-    ink: "#111111",
-    muted: "#5c5c5c",
+    accent: "#9e1b3c",
+    accent2: "#141212",
+    ink: "#141212",
+    muted: "#6b6562",
     bg: "#ffffff",
-    surface: "#f4f1ea",
+    surface: "#f5f0ea",
   }, { accent2: "Black sections & footer", surface: "Paper sections" }),
   // Portfolio — "Atelier"
   t3: config("t3", {

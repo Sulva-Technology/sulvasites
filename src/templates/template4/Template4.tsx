@@ -8,11 +8,15 @@ import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import TemplateFonts from "@/templates/shared/fonts";
 import T4Footer from "./components/T4Footer";
 import T4Header from "./components/T4Header";
 import { collectProductMedia, T4Provider } from "./ctx";
 import T4Sections from "./sections/T4Sections";
 import "./template4.css";
+
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
 
 /** Template 4 — "Launch": product / app / startup. */
 export default function Template4({
@@ -69,6 +73,7 @@ export default function Template4({
   return (
     <T4Provider value={ctx}>
       <div ref={rootRef} className="template4" style={themeStyle}>
+        <TemplateFonts href={FONTS} />
         <T4Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T4Sections pageData={pageData} />

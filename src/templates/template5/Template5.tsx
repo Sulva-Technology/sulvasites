@@ -8,11 +8,15 @@ import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import TemplateFonts from "@/templates/shared/fonts";
 import T5Footer from "./components/T5Footer";
 import T5Header from "./components/T5Header";
 import { collectSiteMedia, T5Provider } from "./ctx";
 import T5Sections from "./sections/T5Sections";
 import "./template5.css";
+
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500;600&display=swap";
 
 /** Template 5 — "Maison": beauty / glam / booking. */
 export default function Template5({
@@ -69,6 +73,7 @@ export default function Template5({
   return (
     <T5Provider value={ctx}>
       <div ref={rootRef} className="template5" style={themeStyle}>
+        <TemplateFonts href={FONTS} />
         <T5Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T5Sections pageData={pageData} />

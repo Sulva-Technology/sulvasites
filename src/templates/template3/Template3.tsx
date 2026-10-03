@@ -8,10 +8,14 @@ import type { PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
 import type { TemplateProps } from "@/templates/registry";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import TemplateFonts from "@/templates/shared/fonts";
 import T3Footer from "./components/T3Footer";
 import T3Header from "./components/T3Header";
 import T3Sections from "./sections/T3Sections";
 import "./template3.css";
+
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap";
 
 /** Template 3 — "Atelier": portfolio / personal brand. */
 export default function Template3({
@@ -64,6 +68,7 @@ export default function Template3({
 
   return (
     <div ref={rootRef} className="template3" style={themeStyle}>
+        <TemplateFonts href={FONTS} />
       <T3Header
         businessName={profile.business_name}
         logoUrl={logoUrl}
