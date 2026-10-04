@@ -1,5 +1,5 @@
 /** Lightweight template descriptions for admin UI (no component imports). */
-export type TemplateMeta = { key: string; name: string; category: string; description: string };
+export type TemplateMeta = { key: string; name: string; category: string; description: string; shop?: boolean };
 
 export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t1", name: "Meridian", category: "Corporate", description: "Consultancies, agencies, clinics and professional services. Crisp fintech look." },
@@ -19,4 +19,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
 export function templateLabel(key: string) {
   const m = TEMPLATE_META.find((t) => t.key === key);
   return m ? `${m.name} — ${m.category}` : key.toUpperCase();
+}
+
+/** True for e-commerce templates (set `shop: true` on their TEMPLATE_META entry). */
+export function templateSupportsShop(key: string) {
+  return TEMPLATE_META.some((t) => t.key === key && t.shop === true);
 }

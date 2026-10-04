@@ -239,3 +239,45 @@ export async function POST(req: Request, ctx: Ctx) {
   if (secrets.error) return dbFailure("secrets re-read", secrets.error);
   return json(maskedStatus(settings.data, secrets.data));
 }
+
+/**
+ * "Remove my keys": deletes the shop's own Paystack secret key (ciphertext + last4) and, if the shop
+ * was taking payments with its own keys, switches payments off (mode and public key cleared).
+ * Platform subaccount data is untouched. Orders created in own_keys mode can no longer be verified.
+ */
+export async function DELETE(req: Request, ctx: Ctx) {
+  const loaded = await loadSite(req, ctx, 10);
+  if (!loaded.ok) return loaded.response;
+  const { db, siteId } = loaded;
+
+  // Stop taking own-key payments first, then drop the secret.
+  const patch: Record<string, unknown> = { paystack_public_key: null };
+  if (loaded.settings?.payment_mode === "own_keys") patch.payment_mode = null;
+  if (loaded.settings) {
+    const { error } = await db.from("shop_settings").update(patch).eq("site_id", siteId);
+    if (error) return dbFailure("settings clear", error);
+  }
+  if (loaded.secrets) {
+    const { error } = await db
+      .from("shop_payment_secrets")
+      .update({ secret_key_ciphertext: null, secret_key_last4: null })
+      .eq("site_id", siteId);
+    if (error) return dbFailure("secrets clear", error);
+  }
+
+  const [settings, secrets] = await Promise.all([
+    db
+      .from("shop_settings")
+      .select("payment_mode, paystack_public_key, platform_fee_bps")
+      .eq("site_id", siteId)
+      .maybeSingle<SettingsRow>(),
+    db
+      .from("shop_payment_secrets")
+      .select("subaccount_code, settlement_bank, account_last4, secret_key_last4")
+      .eq("site_id", siteId)
+      .maybeSingle<SecretsRow>(),
+  ]);
+  if (settings.error) return dbFailure("settings re-read", settings.error);
+  if (secrets.error) return dbFailure("secrets re-read", secrets.error);
+  return json(maskedStatus(settings.data, secrets.data));
+}
