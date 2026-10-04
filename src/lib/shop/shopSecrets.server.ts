@@ -1,11 +1,17 @@
 import { decryptSecret } from "./secretBox";
+import { canonicalSiteId } from "./paymentInput";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "./serviceClient.server";
 
 export type ShopPaymentMode = "platform" | "own_keys";
 
+/**
+ * `publicKey` is null only when a specific mode was requested (e.g. `own_keys` for an order created
+ * before the shop switched to platform mode, which clears the stored public key). Server-side
+ * verification does not need it.
+ */
 export type ShopPaymentConfig =
   | { mode: "platform"; subaccountCode: string; platformSecret: string }
-  | { mode: "own_keys"; secret: string; publicKey: string };
+  | { mode: "own_keys"; secret: string; publicKey: string | null };
 
 /** Thrown when server env (service role, PAYSTACK_SECRET_KEY, SHOP_SECRETS_KEY) is missing or broken. */
 export class ShopPaymentsNotConfiguredError extends Error {
@@ -17,28 +23,34 @@ export class ShopPaymentsNotConfiguredError extends Error {
 
 /**
  * Server-only. Resolves how a shop takes payments, with the secret needed to talk to Paystack.
- * Returns null when the shop has no (complete) payment setup for the mode.
+ *
+ * - No `mode`: uses the shop's current `payment_mode`; null when unset or incomplete.
+ * - With `mode` (verify/webhook pass `orders.payment_mode`): returns that mode's config regardless
+ *   of the current mode; null when that mode's data is missing.
  *
  * Never log the returned value.
  */
-export async function getShopPaymentConfig(siteId: string): Promise<ShopPaymentConfig | null> {
+export async function getShopPaymentConfig(
+  siteIdInput: string,
+  mode?: ShopPaymentMode,
+): Promise<ShopPaymentConfig | null> {
+  const siteId = canonicalSiteId(siteIdInput);
+  if (!siteId) return null;
+
   const db = requireServiceClient();
   if (!db) throw new ShopPaymentsNotConfiguredError();
 
-  let mode: ShopPaymentMode | null = null;
-  let publicKey: string | null = null;
-  {
-    const { data, error } = await db
-      .from("shop_settings")
-      .select("payment_mode, paystack_public_key")
-      .eq("site_id", siteId)
-      .maybeSingle();
-    if (error) throw new Error("Could not load shop settings");
-    if (!data) return null;
-    mode = data.payment_mode as ShopPaymentMode | null;
-    publicKey = (data.paystack_public_key as string | null) ?? null;
-  }
-  if (mode !== "platform" && mode !== "own_keys") return null;
+  const { data: settings, error } = await db
+    .from("shop_settings")
+    .select("payment_mode, paystack_public_key")
+    .eq("site_id", siteId)
+    .maybeSingle();
+  if (error) throw new Error("Could not load shop settings");
+
+  const effectiveMode: ShopPaymentMode | null =
+    mode ?? ((settings?.payment_mode as ShopPaymentMode | null | undefined) ?? null);
+  if (effectiveMode !== "platform" && effectiveMode !== "own_keys") return null;
+  const publicKey = (settings?.paystack_public_key as string | null | undefined) ?? null;
 
   const { data: secrets, error: secretsError } = await db
     .from("shop_payment_secrets")
@@ -48,7 +60,7 @@ export async function getShopPaymentConfig(siteId: string): Promise<ShopPaymentC
   if (secretsError) throw new Error("Could not load shop payment secrets");
   if (!secrets) return null;
 
-  if (mode === "platform") {
+  if (effectiveMode === "platform") {
     const subaccountCode = secrets.subaccount_code as string | null;
     if (!subaccountCode) return null;
     const platformSecret = process.env.PAYSTACK_SECRET_KEY;
@@ -57,7 +69,9 @@ export async function getShopPaymentConfig(siteId: string): Promise<ShopPaymentC
   }
 
   const ciphertext = secrets.secret_key_ciphertext as string | null;
-  if (!ciphertext || !publicKey) return null;
+  if (!ciphertext) return null;
+  // Current-mode lookups (checkout) need the public key too; explicit-mode lookups don't.
+  if (!mode && !publicKey) return null;
   const keyB64 = process.env.SHOP_SECRETS_KEY;
   if (!keyB64) throw new ShopPaymentsNotConfiguredError();
   let secret: string;

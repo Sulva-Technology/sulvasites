@@ -136,3 +136,25 @@ test("body: fee only, fee with mode, and invalid shapes", () => {
   assert.equal(parsePaymentSettingsBody({ mode: "bogus" }).ok, false);
   assert.equal(parsePaymentSettingsBody({ mode: "platform", bankCode: "058", accountNumber: "123" , businessName: "Ada" }).ok, false);
 });
+
+test("canonicalSiteId lowercases/trims UUIDs and rejects others", async () => {
+  const { canonicalSiteId } = await import("../src/lib/shop/paymentInput.ts");
+  const id = "3f2a9c1e-7b4d-4e8a-9c2b-1a2b3c4d5e6f";
+  assert.equal(canonicalSiteId(id), id);
+  assert.equal(canonicalSiteId(id.toUpperCase()), id);
+  assert.equal(canonicalSiteId(`  ${id.toUpperCase()}\n`), id);
+  for (const bad of ["", "not-a-uuid", id + "0", 42, null, undefined]) {
+    assert.equal(canonicalSiteId(bad), null);
+  }
+});
+
+test("canonical AAD: secret encrypted under an uppercase id decrypts with the DB (lowercase) id", async () => {
+  const { canonicalSiteId } = await import("../src/lib/shop/paymentInput.ts");
+  const { encryptSecret, decryptSecret } = await import("../src/lib/shop/secretBox.ts");
+  const { randomBytes } = await import("node:crypto");
+  const key = randomBytes(32).toString("base64");
+  const upper = "3F2A9C1E-7B4D-4E8A-9C2B-1A2B3C4D5E6F";
+  const box = encryptSecret("sk_test_x", key, canonicalSiteId(upper));
+  assert.equal(decryptSecret(box, key, canonicalSiteId(upper.toLowerCase())), "sk_test_x");
+  assert.throws(() => decryptSecret(box, key, upper));
+});

@@ -113,3 +113,15 @@ export function parsePaymentSettingsBody(body: unknown): Parsed<PaymentSettingsI
   }
   return { ok: true, value: out };
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * Canonical site id (trimmed, lowercase UUID) or null. Used as the AES-GCM AAD for shop secrets,
+ * so encrypt and decrypt must always agree on the exact string.
+ */
+export function canonicalSiteId(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const s = v.trim().toLowerCase();
+  return UUID_RE.test(s) ? s : null;
+}

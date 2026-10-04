@@ -5,6 +5,7 @@ import { paystackRequest, PaystackError } from "@/lib/shop/paystack.server";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "@/lib/shop/serviceClient.server";
 import { encryptSecret } from "@/lib/shop/secretBox";
 import {
+  canonicalSiteId,
   last4,
   parsePaymentSettingsBody,
   percentageChargeFromBps,
@@ -18,7 +19,6 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ siteId: string }> };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SUBACCOUNT_RE = /^ACCT_[A-Za-z0-9]+$/;
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -54,15 +54,18 @@ async function loadSite(req: Request, ctx: Ctx, limit: number): Promise<Loaded> 
   const limited = rateLimit(`shop-payment:${auth.userId}`, { limit, windowMs: 60_000 });
   if (limited) return { ok: false, response: limited };
 
-  const { siteId } = await ctx.params;
-  if (!UUID_RE.test(siteId)) return { ok: false, response: json({ error: "Site not found." }, 404) };
+  const requested = canonicalSiteId((await ctx.params).siteId);
+  if (!requested) return { ok: false, response: json({ error: "Site not found." }, 404) };
 
   const db = requireServiceClient();
   if (!db) return { ok: false, response: notConfigured() };
 
-  const site = await db.from("sites").select("id").eq("id", siteId).maybeSingle();
+  const site = await db.from("sites").select("id").eq("id", requested).maybeSingle<{ id: string }>();
   if (site.error) return { ok: false, response: dbFailure("site lookup", site.error) };
   if (!site.data) return { ok: false, response: json({ error: "Site not found." }, 404) };
+  // The DB id (canonicalised) is used for everything below — it is the AES-GCM AAD for the secret.
+  const siteId = canonicalSiteId(site.data.id);
+  if (!siteId) return { ok: false, response: json({ error: "Site not found." }, 404) };
 
   const [settings, secrets] = await Promise.all([
     db
@@ -232,5 +235,7 @@ export async function POST(req: Request, ctx: Ctx) {
       .eq("site_id", siteId)
       .maybeSingle<SecretsRow>(),
   ]);
+  if (settings.error) return dbFailure("settings re-read", settings.error);
+  if (secrets.error) return dbFailure("secrets re-read", secrets.error);
   return json(maskedStatus(settings.data, secrets.data));
 }

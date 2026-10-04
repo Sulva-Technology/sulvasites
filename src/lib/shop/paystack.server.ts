@@ -19,11 +19,23 @@ function safeMessage(raw: unknown, fallback: string): string {
   return raw.replace(/\b[sp]k_(test|live)_[A-Za-z0-9]+/g, "[redacted]").slice(0, 300);
 }
 
-export async function paystackRequest<T>(
+type RequestOptions = { method?: "GET" | "POST" | "PUT"; secret: string; body?: unknown };
+
+/** Paystack pagination/cursor info (e.g. `{ next: "cursor" | null }` with `use_cursor=true`). */
+export type PaystackMeta = Record<string, unknown>;
+
+/** Like `paystackRequest`, but also returns the envelope's `meta` (pagination). */
+export async function paystackRequestWithMeta<T>(
   path: string,
-  { method = "GET", secret, body }: { method?: "GET" | "POST" | "PUT"; secret: string; body?: unknown },
-): Promise<T> {
-  if (!path.startsWith("/") || path.startsWith("//") || path.includes("://")) {
+  { method = "GET", secret, body }: RequestOptions,
+): Promise<{ data: T; meta: PaystackMeta | null }> {
+  if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    path.includes("://") ||
+    /[\\\s]/.test(path)
+  ) {
     throw new PaystackError(500, "Invalid Paystack path");
   }
   if (!secret) throw new PaystackError(500, "Paystack is not configured");
@@ -42,13 +54,14 @@ export async function paystackRequest<T>(
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
-    const timedOut = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+    const name = (err as { name?: unknown } | null)?.name;
+    const timedOut = name === "TimeoutError" || name === "AbortError";
     throw new PaystackError(timedOut ? 504 : 502, timedOut ? "Paystack timed out" : "Could not reach Paystack");
   }
 
-  let json: PaystackEnvelope<T> | null = null;
+  let json: (PaystackEnvelope<T> & { meta?: unknown }) | null = null;
   try {
-    json = (await res.json()) as PaystackEnvelope<T>;
+    json = (await res.json()) as PaystackEnvelope<T> & { meta?: unknown };
   } catch {
     json = null;
   }
@@ -59,5 +72,10 @@ export async function paystackRequest<T>(
   if (!json || json.status !== true) {
     throw new PaystackError(502, safeMessage(json?.message, "Paystack request failed"));
   }
-  return json.data as T;
+  const meta = json.meta && typeof json.meta === "object" && !Array.isArray(json.meta) ? (json.meta as PaystackMeta) : null;
+  return { data: json.data as T, meta };
+}
+
+export async function paystackRequest<T>(path: string, options: RequestOptions): Promise<T> {
+  return (await paystackRequestWithMeta<T>(path, options)).data;
 }
