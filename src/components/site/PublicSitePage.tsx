@@ -9,6 +9,8 @@ import {
   type PublicPage,
   type PublicSiteContext,
 } from "@/lib/publicSite.server";
+import { loadPublicShop } from "@/lib/shop/loadPublicShop.server";
+import { templateSupportsShop } from "@/templates/meta";
 import { getTemplate } from "@/templates/registry";
 
 /** Renders a public site page (JSON-LD + the site's template) for any route. */
@@ -23,6 +25,8 @@ export default async function PublicSitePage({
   const Template = getTemplate(siteData.site.template_key);
   if (!Template) notFound();
   const navPages = await loadNavPages(siteData.site.id, siteData.site.template_key);
+  // Shop templates show the bag and "shop the looks" on every page while the shop is live.
+  const shop = templateSupportsShop(siteData.site.template_key) ? await loadPublicShop(siteData.site.id) : null;
 
   const schemaId =
     page.kind === "extra"
@@ -50,6 +54,7 @@ export default async function PublicSitePage({
         pageOverride: page.kind === "extra" ? page.data : undefined,
         navPages,
         currentExtraKey: page.kind === "extra" ? page.key : null,
+        shop: shop ?? undefined,
       })}
     </>
   );

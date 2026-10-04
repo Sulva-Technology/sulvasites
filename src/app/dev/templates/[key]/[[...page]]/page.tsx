@@ -28,6 +28,8 @@ export default async function DevTemplatePreview({
 
   const props = sampleSite(key);
   const baseUrl = `/dev/templates/${key}`;
+  // Shop templates get the sample catalogue on every page (bag, "shop the looks"), like live sites.
+  const pageShop = templateSupportsShop(key) ? sampleShop(key) : undefined;
 
   if (page?.[0] === "shop") {
     if (!templateSupportsShop(key)) notFound();
@@ -40,11 +42,11 @@ export default async function DevTemplatePreview({
   if (page?.[0] === "p" && page[1]) {
     const extra = sampleExtraPage(key, props, page[1]);
     if (!extra) notFound();
-    return createElement(Template, { ...props, currentPage: null, pageOverride: extra, currentExtraKey: page[1], baseUrl });
+    return createElement(Template, { ...props, currentPage: null, pageOverride: extra, currentExtraKey: page[1], baseUrl, shop: pageShop });
   }
 
   const pageKey = page?.[0] ?? "home";
   if (!isPageKey(pageKey)) notFound();
 
-  return createElement(Template, { ...props, currentPage: pageKey, baseUrl });
+  return createElement(Template, { ...props, currentPage: pageKey, baseUrl, shop: pageShop });
 }

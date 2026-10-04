@@ -145,6 +145,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f6f5f2",
     surface: "#ffffff",
   }, { accent2: "Charcoal bands & footer", surface: "Cards / panels" }),
+  // Fashion boutique shop — "Mode"
+  t13: config("t13", {
+    accent: "#b4532a",
+    accent2: "#121212",
+    ink: "#121212",
+    muted: "#6e6a66",
+    bg: "#fbfaf7",
+    surface: "#f1eee8",
+  }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

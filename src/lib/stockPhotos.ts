@@ -9,7 +9,7 @@ export { PEOPLE_PHOTOS, PHOTO_CATEGORIES, STOCK_PHOTOS, type PhotoCategory, type
 const GALLERY_SIZE = 6;
 
 const TEMPLATE_CATEGORY: Record<string, PhotoCategory> = {
-  t1: "corporate", t2: "creative", t3: "creative", t4: "tech", t5: "beauty", t6: "real_estate", t7: "food", t8: "clinic", t9: "fitness", t10: "education", t11: "events", t12: "construction",
+  t1: "corporate", t2: "creative", t3: "creative", t4: "tech", t5: "beauty", t6: "real_estate", t7: "food", t8: "clinic", t9: "fitness", t10: "education", t11: "events", t12: "construction", t13: "fashion",
 };
 
 export const PHOTO_CATEGORY_PROMPT = `Also include a top-level "photoCategory" field: the ONE value from this list that best fits the business: ${PHOTO_CATEGORIES.join(", ")}. Leave every image "url" and "photoUrl" as "" — the server fills in photos.`;

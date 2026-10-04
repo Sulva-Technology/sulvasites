@@ -1341,6 +1341,250 @@ function tradesSite(): TemplateProps {
   };
 }
 
+const fashionPhoto = (i: number) => {
+  const p = STOCK_PHOTOS.fashion[i % STOCK_PHOTOS.fashion.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const fashionHome: PageData = {
+  seo: { title: "Nkem Atelier — considered womenswear from Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "The Autumn Edit",
+      subtext: "Quiet tailoring, soft knits and pieces made to be worn on repeat. Shop the new collection online.",
+      ctaText: "Shop the collection",
+      ctaHref: "",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Made to repeat", desc: "Pieces designed to move between work, weekends and evenings." },
+        { title: "Honest materials", desc: "Fabric and care details on every product page." },
+        { title: "Fit that is clear", desc: "Size guidance on each product so you can order with confidence." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "The lookbook",
+      images: [fashionPhoto(0), fashionPhoto(3), fashionPhoto(5), fashionPhoto(6), fashionPhoto(4), fashionPhoto(2)],
+    },
+    {
+      type: "testimonials",
+      title: "Kind words",
+      items: [
+        { name: "Chioma A.", role: "Lagos", company: "", quote: "The coat fits beautifully and goes with everything. I have worn it every week since it arrived." },
+        { name: "Dami O.", role: "Abuja", company: "", quote: "Sizing guidance was spot on and the knit is so soft. Lovely details throughout." },
+        { name: "Zainab M.", role: "Ibadan", company: "", quote: "Simple, well made pieces. Exactly what I wanted for my work wardrobe." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Before you order",
+      items: [
+        { question: "How do I choose my size?", answer: "Open the size guide on any product page. If you are between sizes, message us and we will help." },
+        { question: "How does delivery work?", answer: "Delivery and pickup options are shown at checkout, along with the delivery fee." },
+        { question: "Can I pay securely online?", answer: "Yes. Payment is handled on the secure Paystack page after you place your order." },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const fashionAbout: PageData = {
+  seo: { title: "About Nkem Atelier", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A small label with a clear point of view",
+      subtext: "Nkem Atelier designs everyday womenswear in Lagos: simple shapes, careful cutting and colours that work together.",
+      ctaText: "Shop the collection",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "Our approach",
+      body: "<p>We design in small collections and focus on pieces that work hard in a real wardrobe.</p><ul><li>Simple silhouettes that layer well</li><li>A tight colour palette across every drop</li><li>Clear fit and fabric notes on every product</li></ul>",
+    },
+    {
+      type: "team",
+      title: "The studio",
+      subtitle: "The people behind the label.",
+      members: [
+        { name: "Nkem Eze", role: "Founder & designer", bio: "Designs every collection.", photoUrl: person(9), linkedinUrl: "" },
+        { name: "Tobi Salako", role: "Pattern cutter", bio: "Turns sketches into fitted garments.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Amara Obi", role: "Customer care", bio: "Helps with sizing and orders.", photoUrl: person(1), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "backed_by",
+      title: "As seen in",
+      logos: [
+        { name: "Lagos Fashion Week", url: null },
+        { name: "Style Notebook", url: null },
+        { name: "The Edit Lagos", url: null },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Collections",
+      description: "A look at recent drops.",
+      items: [
+        { title: "The Autumn Edit", description: "Coats, knits and tailoring in a muted palette.", linkText: "Shop now", linkHref: "" },
+        { title: "Essentials", description: "Simple tops and trousers designed to be mixed and matched.", linkText: "Shop now", linkHref: "" },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Made-to-measure enquiries", desc: "Ask us about adjustments and special orders." },
+        { title: "Gift orders", desc: "Message us to arrange gift wrapping and notes." },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const fashionContact: PageData = {
+  seo: { title: "Contact", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Talk to the studio",
+      subtext: "Questions about sizing, orders or styling? Send us a message and we will reply as soon as we can.",
+      ctaText: "Send a message",
+      ctaHref: "#contact",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function fashionSite(): TemplateProps {
+  const base = sampleSiteBase("t13");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Nkem Atelier",
+      tagline: "Considered womenswear, designed in Lagos.",
+      description: "Everyday womenswear label with an online shop.",
+      address: "7 Akin Adesola Street, Victoria Island, Lagos",
+      phone: "+234 802 555 0187",
+      email: "hello@nkematelier.ng",
+      whatsapp: "+2348025550187",
+      socials: {
+        instagram: "https://instagram.com",
+        tiktok: "https://tiktok.com",
+        hours: "Mon–Sat · 10:00–18:00\nSunday · Closed",
+      },
+    },
+    pages: { home: fashionHome, about: fashionAbout, contact: fashionContact },
+  };
+}
+
+type SampleProduct = ShopData["products"][number];
+const FASHION_SIZES = ["XS", "S", "M", "L", "XL"];
+
+/** Size x colour variants; `stocks` cycles across them (null = untracked, 0 = sold out). */
+function fashionVariants(pid: string, sizes: string[], colours: string[], stocks: Array<number | null>): SampleProduct["variants"] {
+  const out: SampleProduct["variants"] = [];
+  let n = 0;
+  for (const colour of colours.length ? colours : [""]) {
+    for (const size of sizes.length ? sizes : [""]) {
+      const options: Record<string, string> = {};
+      if (size) options.Size = size;
+      if (colour) options.Colour = colour;
+      if (Object.keys(options).length === 0) continue;
+      out.push({ id: `${pid}-v${n + 1}`, options, priceKobo: null, stock: stocks[n % stocks.length] ?? null, sku: null, position: n });
+      n += 1;
+    }
+  }
+  return out;
+}
+
+function fashionShop(): ShopData {
+  const cats = [
+    { id: "c-outerwear", slug: "outerwear", name: "Outerwear", position: 0 },
+    { id: "c-knitwear", slug: "knitwear", name: "Knitwear", position: 1 },
+    { id: "c-dresses", slug: "dresses", name: "Dresses and skirts", position: 2 },
+    { id: "c-tops", slug: "tops", name: "Tops", position: 3 },
+    { id: "c-trousers", slug: "trousers", name: "Trousers", position: 4 },
+    { id: "c-accessories", slug: "accessories", name: "Accessories and shoes", position: 5 },
+  ];
+  const make = (
+    n: number,
+    slug: string,
+    name: string,
+    category: string,
+    priceNaira: number,
+    compareNaira: number | null,
+    featured: boolean,
+    description: string,
+    photos: number[],
+    sizes: string[],
+    colours: string[],
+    stocks: Array<number | null>,
+  ): SampleProduct => ({
+    id: `p-${slug}`,
+    slug,
+    name,
+    description,
+    images: photos.map((i) => fashionPhoto(i)),
+    priceKobo: priceNaira * 100,
+    compareAtKobo: compareNaira === null ? null : compareNaira * 100,
+    categoryId: category,
+    featured,
+    position: n,
+    variants: fashionVariants(`p-${slug}`, sizes, colours, stocks),
+  });
+  const S = FASHION_SIZES;
+  const products: SampleProduct[] = [
+    make(0, "structured-wool-coat", "Structured wool coat", "c-outerwear", 98000, null, true,
+      "A long, structured coat with a clean shoulder and a relaxed drape. Layer it over knits and tailoring.\n\nFull lining\nTwo side pockets",
+      [0, 6], S, ["Camel", "Black"], [4, 2, 0, 6, 3]),
+    make(1, "wide-brim-felt-hat", "Wide-brim felt hat", "c-accessories", 24000, null, true,
+      "A soft felt hat with a wide brim and a flat crown.",
+      [1, 5], [], [], [null]),
+    make(2, "satin-wrap-blouse", "Satin wrap blouse", "c-tops", 32000, 40000, false,
+      "A fluid wrap blouse with a tie at the waist. Wear it open over a camisole or closed on its own.",
+      [2, 9], S, ["Ivory", "Terracotta"], [5, 3, 8, null, 2]),
+    make(3, "ribbed-turtleneck", "Ribbed turtleneck", "c-knitwear", 28000, null, false,
+      "A close-fitting ribbed knit with a fold-over neck, easy to layer.",
+      [3, 4], S, ["Black", "Oat", "Olive"], [6, 4, 2, 0, 7]),
+    make(4, "relaxed-knit-sweater", "Relaxed knit sweater", "c-knitwear", 36000, 45000, true,
+      "A roomy sweater with dropped shoulders and a ribbed hem. Sized to sit loose.",
+      [4, 3], S, ["Olive", "Cream"], [3, 5, 4, 1, 0]),
+    make(5, "column-dress", "Column dress", "c-dresses", 54000, null, true,
+      "A straight, floor-skimming dress with a high neck. Dress it up with heels or down with flat shoes.",
+      [5, 2], S, ["Black"], [2, 4, 3, 5, 1]),
+    make(6, "cropped-utility-jacket", "Cropped utility jacket", "c-outerwear", 62000, null, false,
+      "A cropped jacket with patch pockets and a boxy fit. Pairs well with high-waisted trousers.",
+      [6, 0], S, ["Stone", "Black"], [null, null, 5, null, 3]),
+    make(7, "oversized-linen-shirt", "Oversized linen shirt", "c-tops", 26000, null, false,
+      "A light, oversized shirt with a soft collar and a curved hem. Wear it buttoned or open.",
+      [7, 9], S, ["White", "Sage"], [8, 6, 4, 2, 5]),
+    make(8, "printed-button-blouse", "Printed button blouse", "c-tops", 30000, 38000, false,
+      "A button-through blouse in a bold repeat print, with a relaxed fit and a pointed collar.",
+      [9, 11], S, [], [4, 6, 3, 0, 2]),
+    make(9, "wide-leg-trousers", "Wide-leg trousers", "c-trousers", 42000, null, true,
+      "High-waisted trousers with a wide, flowing leg and a pressed front crease.",
+      [10, 7], S, ["Charcoal", "Sand"], [5, 5, 4, 3, 0]),
+    make(10, "leather-loafers", "Leather loafers", "c-accessories", 58000, null, false,
+      "Classic loafers with a low heel and a cushioned insole.",
+      [11, 8], ["38", "39", "40", "41", "42"], ["Black", "Tan"], [2, 3, 3, 1, 0]),
+    make(11, "pleated-midi-skirt", "Pleated midi skirt", "c-dresses", 34000, null, false,
+      "A fluid pleated skirt that falls to mid-calf, with a concealed elastic waist.",
+      [8, 10], S, ["Navy", "Terracotta"], [3, 2, 0, 4, 6]),
+  ];
+  return {
+    siteId: "sample",
+    currency: "NGN",
+    settings: { deliveryFeeKobo: 250000, pickupEnabled: true, pickupNote: "Collect from the studio, Mon–Sat 10:00–18:00." },
+    categories: cats,
+    products,
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1362,7 +1606,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                     ? eventsSite()
                     : templateKey === "t12"
                       ? tradesSite()
-                      : sampleSiteBase(templateKey);
+                      : templateKey === "t13"
+                        ? fashionSite()
+                        : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
@@ -1413,7 +1659,9 @@ export function sampleExtraPage(templateKey: string, props: TemplateProps, key: 
  * Per-template sample catalogues for `/dev/templates/<key>/shop/...` previews. Shop templates
  * (t13 Mode, t14 Cartly) register a builder here; anything else gets the empty default.
  */
-export const SHOP_SAMPLES: Record<string, (() => ShopData) | undefined> = {};
+export const SHOP_SAMPLES: Record<string, (() => ShopData) | undefined> = {
+  t13: fashionShop,
+};
 
 /** Generic empty-safe default: no products, so templates must render their empty states. */
 function emptyShop(): ShopData {
