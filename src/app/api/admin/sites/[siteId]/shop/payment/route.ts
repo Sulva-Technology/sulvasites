@@ -8,7 +8,6 @@ import {
   canonicalSiteId,
   last4,
   parsePaymentSettingsBody,
-  percentageChargeFromBps,
   type PaymentSettingsInput,
 } from "@/lib/shop/paymentInput";
 
@@ -114,13 +113,14 @@ async function saveSubaccount(
   platformSecret: string,
   existingCode: string | null,
   input: NonNullable<PaymentSettingsInput["platform"]>,
-  feeBps: number,
 ): Promise<{ code: string; bank: string }> {
   const body = {
     business_name: input.businessName,
     settlement_bank: input.bankCode,
     account_number: input.accountNumber,
-    percentage_charge: percentageChargeFromBps(feeBps),
+    // Fee is applied per transaction (checkout transaction_charge); a stored percentage here would
+    // keep charging after the fee is lowered to 0.
+    percentage_charge: 0,
   };
   let data: SubaccountData | null = null;
   if (existingCode && SUBACCOUNT_RE.test(existingCode)) {
@@ -168,7 +168,6 @@ export async function POST(req: Request, ctx: Ctx) {
   if (!parsed.ok) return json({ error: parsed.error }, 400);
   const input = parsed.value;
 
-  const feeBps = input.platformFeeBps ?? loaded.settings?.platform_fee_bps ?? 0;
   let settingsPatch: Record<string, unknown> = {};
   let secretsPatch: Record<string, unknown> | null = null;
 
@@ -177,7 +176,7 @@ export async function POST(req: Request, ctx: Ctx) {
     if (!platformSecret) return notConfigured();
     let result: { code: string; bank: string };
     try {
-      result = await saveSubaccount(platformSecret, loaded.secrets?.subaccount_code ?? null, input.platform, feeBps);
+      result = await saveSubaccount(platformSecret, loaded.secrets?.subaccount_code ?? null, input.platform);
     } catch (err) {
       return paystackFailure(err);
     }
