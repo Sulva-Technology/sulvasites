@@ -31,16 +31,16 @@ export default function T8Hours({ className, limit }: { className?: string; limi
 
   return (
     <ul className={`t8-hours ${className ?? ""}`}>
-      {hours.slice(0, limit ?? hours.length).map((line) => {
+      {hours.slice(0, limit ?? hours.length).map((line, idx) => {
         const parts = splitHoursLine(line);
         const closed = /closed/i.test(line);
         return parts ? (
-          <li key={line} data-closed={closed}>
+          <li key={idx} data-closed={closed}>
             <span>{parts[0]}</span>
             <b>{parts[1]}</b>
           </li>
         ) : (
-          <li key={line} data-closed={closed}>
+          <li key={idx} data-closed={closed}>
             <span>{line}</span>
           </li>
         );

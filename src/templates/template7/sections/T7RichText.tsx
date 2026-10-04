@@ -23,11 +23,12 @@ export default function T7RichText({ section, sectionIndex }: { section: RichTex
           {title || enabled ? (
             <EditableText as="h2" className="t7-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
           ) : null}
-          <div className="t7-prose">
-            <EditableHtml
-              html={body || (enabled ? "<p>Tell your story: who cooks, what you serve and why guests come back.</p>" : "")}
-              onCommit={(nextHtml) => set({ body: nextHtml })}
-            />
+          {/* Empty-body hint is CSS-only (data-hint), so it is never saved as content. */}
+          <div
+            className="t7-prose"
+            data-hint={enabled ? "Tell your story: who cooks, what you serve and why guests come back." : undefined}
+          >
+            <EditableHtml html={body} onCommit={(nextHtml) => set({ body: nextHtml })} />
           </div>
         </article>
       </div>

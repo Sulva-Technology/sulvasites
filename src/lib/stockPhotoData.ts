@@ -225,7 +225,7 @@ export const PEOPLE_PHOTOS: StockPhoto[] = [
   { id: "photo-1780733057950-0dc9055ddae9", alt: "Smiling man in a blue blazer" },
   { id: "photo-1642257859842-c95f9fa8121d", alt: "Man in a suit and glasses" },
   { id: "photo-1532076904124-d4e8fe7fbbec", alt: "Woman wearing a head wrap" },
-  { id: "photo-1668752741330-8adc5cef7485", alt: "Smiling man outdoors" },
+  { id: "photo-1668752741330-8adc5cef7485", alt: "Smiling young woman outdoors" },
   { id: "photo-1772714601004-23b94ae3913d", alt: "Woman in a beige suit" },
   { id: "photo-1585240975858-7264fd020798", alt: "Smiling woman in a black blazer" },
   { id: "photo-1573497161161-c3e73707e25c", alt: "Smiling professional woman" },

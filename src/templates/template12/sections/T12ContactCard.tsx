@@ -10,8 +10,9 @@ import { Hazard, IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../ic
 
 /**
  * "Request a quote": a charcoal panel with contact rows and working hours beside a square quote
- * form (or a map when the form is off). `?service=`, `?name=` and `?phone=` prefill the form —
- * that is how the home hero's mini-form and every "Get a quote" link hand over.
+ * form (or a map when the form is off). `?service=` prefills the form, and the home hero's
+ * mini-form hands name and phone over via sessionStorage (legacy `?name=`/`?phone=` still work
+ * and are stripped from the URL).
  */
 export default function T12ContactCard({
   section,
@@ -29,8 +30,37 @@ export default function T12ContactCard({
     if (!form) return;
     const params = new URLSearchParams(window.location.search);
     const service = params.get("service")?.trim();
-    const name = params.get("name")?.trim();
-    const phone = params.get("phone")?.trim();
+    let name = params.get("name")?.trim();
+    let phone = params.get("phone")?.trim();
+
+    // Hero mini-form hands name/phone over via sessionStorage (read once, then removed).
+    try {
+      const raw = window.sessionStorage.getItem("t12-quote-prefill");
+      if (raw) {
+        window.sessionStorage.removeItem("t12-quote-prefill");
+        const saved = JSON.parse(raw) as { name?: unknown; phone?: unknown };
+        if (!name && typeof saved.name === "string") name = saved.name.trim();
+        if (!phone && typeof saved.phone === "string") phone = saved.phone.trim();
+      }
+    } catch {
+      /* storage blocked or bad JSON: ignore */
+    }
+
+    // Old-style links carried name/phone in the URL: prefill from them, then strip them.
+    if (params.has("name") || params.has("phone")) {
+      params.delete("name");
+      params.delete("phone");
+      const qs = params.toString();
+      try {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`,
+        );
+      } catch {
+        /* ignore */
+      }
+    }
     const field = <T extends Element>(n: string) => form.elements.namedItem(n) as T | null;
 
     if (name) {

@@ -74,7 +74,8 @@ export default function T9FAQ({ section, sectionIndex }: { section: FAQSection; 
                     </span>
                   </button>
                 </h3>
-                <div className="t9-faq-a" id={id}>
+                {/* Closed answers stay in the DOM for the height animation but leave the a11y tree / tab order. */}
+                <div className="t9-faq-a" id={id} inert={!isOpen}>
                   <div>
                     <EditableText
                       as="p"

@@ -31,16 +31,16 @@ export default function T7Hours({ className }: { className?: string }) {
 
   return (
     <ul className={`t7-hours ${className ?? ""}`}>
-      {hours.map((line) => {
+      {hours.map((line, idx) => {
         const parts = splitHoursLine(line);
         return parts ? (
-          <li key={line}>
+          <li key={idx}>
             <span>{parts[0]}</span>
             <i aria-hidden="true" />
             <b>{parts[1]}</b>
           </li>
         ) : (
-          <li key={line}>
+          <li key={idx}>
             <span>{line}</span>
           </li>
         );

@@ -16,9 +16,10 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
   const { profile, hours, pageKind } = useT7();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Preselect ?occasion= (set by "Enquire" links on private dining / events cards).
+  // Preselect ?occasion= (set by "Enquire" links on private dining / events cards); ?service= works too, occasion wins.
   useEffect(() => {
-    const occasion = new URLSearchParams(window.location.search).get("occasion");
+    const params = new URLSearchParams(window.location.search);
+    const occasion = params.get("occasion")?.trim() || params.get("service")?.trim();
     const select = formRef.current?.elements.namedItem("occasion") as HTMLSelectElement | null;
     if (!occasion || !select) return;
     if (![...select.options].some((o) => o.value === occasion)) select.add(new Option(occasion, occasion));
@@ -48,7 +49,7 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
             <h2 className="t7-h2">Book a table</h2>
             <p className="t7-reserve-lead">
               {section.showForm
-                ? "Tell us when you'd like to come and how many you'll be — we'll be in touch to confirm."
+                ? "Tell us when you'd like to come and how many you'll be. Send a request and we'll get back to you."
                 : "Get in touch to book a table or ask about larger groups."}
             </p>
 

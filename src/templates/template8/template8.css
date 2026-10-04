@@ -1782,9 +1782,22 @@ a.t8-topbar-item:hover {
 }
 
 .t8-prose {
+  position: relative;
   color: var(--t8-muted);
   font-size: 1.05rem;
   line-height: 1.75;
+}
+
+.t8-prose[data-hint]:has(> [contenteditable]:empty)::before {
+  content: attr(data-hint);
+  position: absolute;
+  inset: 0 auto auto 0;
+  color: var(--t8-muted);
+  pointer-events: none;
+}
+
+.t8-prose[data-hint] > [contenteditable] {
+  min-height: 1.75em;
 }
 
 .t8-prose > div > :first-child,

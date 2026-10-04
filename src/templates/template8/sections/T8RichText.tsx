@@ -19,11 +19,12 @@ export default function T8RichText({ section, sectionIndex }: { section: RichTex
           {title || enabled ? (
             <EditableText as="h2" className="t8-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
           ) : null}
-          <div className="t8-prose">
-            <EditableHtml
-              html={body || (enabled ? "<p>Tell patients about your practice, how visits work and what to bring.</p>" : "")}
-              onCommit={(nextHtml) => set({ body: nextHtml })}
-            />
+          {/* Empty-body hint is CSS-only (data-hint), so it is never saved as content. */}
+          <div
+            className="t8-prose"
+            data-hint={enabled ? "Tell patients about your practice, how visits work and what to bring." : undefined}
+          >
+            <EditableHtml html={body} onCommit={(nextHtml) => set({ body: nextHtml })} />
           </div>
         </article>
       </div>

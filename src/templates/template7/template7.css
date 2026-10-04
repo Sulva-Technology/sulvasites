@@ -1457,8 +1457,21 @@ a.t7-strip-item:hover span {
 }
 
 .t7-prose {
+  position: relative;
   font-size: 1.1rem;
   line-height: 1.78;
+}
+
+.t7-prose[data-hint]:has(> [contenteditable]:empty)::before {
+  content: attr(data-hint);
+  position: absolute;
+  inset: 0 auto auto 0;
+  color: var(--t7-muted);
+  pointer-events: none;
+}
+
+.t7-prose[data-hint] > [contenteditable] {
+  min-height: 1.75em;
 }
 
 .t7-prose p {

@@ -26,7 +26,7 @@ type Photo = { url: string; alt: string };
 
 /**
  * The home hero's quote request: name, phone and service. Submitting goes to the contact page
- * with `?service=…&name=…&phone=…`, where the full quote form arrives prefilled.
+ * with `?service=…` (name and phone travel via sessionStorage), where the full quote form arrives prefilled.
  * Does nothing while inline editing.
  */
 function QuoteMiniForm({ editing }: { editing: boolean }) {
@@ -37,9 +37,16 @@ function QuoteMiniForm({ editing }: { editing: boolean }) {
     if (editing) return;
     const data = new FormData(e.currentTarget);
     const get = (k: string) => String(data.get(k) ?? "");
-    window.location.assign(
-      `${baseUrl}/contact${quoteQuery({ service: get("service"), name: get("name"), phone: get("phone") })}#quote`,
-    );
+    // Name and phone never go in the URL (history, logs, referrers); the contact card reads them from sessionStorage.
+    try {
+      window.sessionStorage.setItem(
+        "t12-quote-prefill",
+        JSON.stringify({ name: get("name").trim(), phone: get("phone").trim() }),
+      );
+    } catch {
+      /* storage blocked: the visitor just retypes them */
+    }
+    window.location.assign(`${baseUrl}/contact${quoteQuery({ service: get("service") })}#quote`);
   };
 
   return (

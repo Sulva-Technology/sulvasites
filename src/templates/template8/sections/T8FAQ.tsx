@@ -71,7 +71,8 @@ export default function T8FAQ({ section, sectionIndex }: { section: FAQSection; 
                     </span>
                   </button>
                 </h3>
-                <div className="t8-faq-a" id={id}>
+                {/* Closed answers stay in the DOM for the height animation but leave the a11y tree / tab order. */}
+                <div className="t8-faq-a" id={id} inert={!isOpen}>
                   <div>
                     <EditableText
                       as="p"
