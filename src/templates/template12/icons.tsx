@@ -99,12 +99,6 @@ export const IconHelmet = ({ size = 20 }: P) => (
   </svg>
 );
 
-export const IconStar = ({ size = 16 }: P) => (
-  <svg {...base(size)} fill="currentColor" stroke="none">
-    <path d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8L12 2.8Z" />
-  </svg>
-);
-
 export const IconQuote = ({ size = 34 }: P) => (
   <svg {...base(size)} fill="currentColor" stroke="none">
     <path d="M4 18v-5.5C4 8.4 6.2 6 10 5.5V8c-2 .5-3 1.8-3 4h3v6H4Zm10 0v-5.5c0-4.1 2.2-6.5 6-7V8c-2 .5-3 1.8-3 4h3v6h-6Z" />

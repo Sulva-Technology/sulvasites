@@ -3,11 +3,11 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
-import { IconQuote, IconStar } from "../icons";
+import { IconQuote } from "../icons";
 
 /**
- * Customer words on square cards with a thick orange top edge and a decorative star row
- * (purely ornamental — testimonials carry no rating, so none is announced or implied).
+ * Customer words on square cards with a thick orange top edge, a short hazard-ticked orange
+ * rule and a big orange quote mark (no star row — testimonials carry no rating to show).
  */
 export default function T12Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -34,13 +34,9 @@ export default function T12Testimonials({ section, sectionIndex }: { section: Te
           {items.map((t, idx) => (
             <figure key={idx} className="t12-review t12-reveal">
               <div className="t12-review-top" aria-hidden="true">
-                <span className="t12-stars">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <IconStar key={i} size={16} />
-                  ))}
-                </span>
+                <span className="t12-review-rule" />
                 <span className="t12-review-mark">
-                  <IconQuote size={30} />
+                  <IconQuote size={40} />
                 </span>
               </div>
               <EditableText
