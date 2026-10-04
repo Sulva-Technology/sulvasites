@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { paystackRequest, PaystackError } from "./paystack.server";
-import { getShopPaymentConfig, type ShopPaymentMode } from "./shopSecrets.server";
+import { getShopPaymentConfig, ShopPaymentsNotConfiguredError } from "./shopSecrets.server";
+import { isBlockedTestPayment } from "./testMode";
 
 export type SettleableOrder = {
   id: string;
@@ -15,6 +16,7 @@ export type SettleResult =
   | { kind: "not_success"; paystackStatus: string } // abandoned / failed / ongoing
   | { kind: "not_started" } // Paystack has no such transaction yet
   | { kind: "flagged"; reason: "amount_mismatch" | "paid_after_cancel" | "reference_mismatch" | "not_pending" | "not_found" | "verify_mismatch" }
+  | { kind: "test_mode" } // Paystack test-mode payment in production: never marked paid
   | { kind: "unconfigured" }; // order's payment mode has no usable config
 
 type VerifyData = {
@@ -22,6 +24,7 @@ type VerifyData = {
   reference?: unknown;
   amount?: unknown;
   currency?: unknown;
+  domain?: unknown;
 };
 
 /**
@@ -36,14 +39,26 @@ export async function settleOrder(db: SupabaseClient, order: SettleableOrder): P
   const mode = order.payment_mode;
   if (mode !== "platform" && mode !== "own_keys") return { kind: "unconfigured" };
 
-  const cfg = await getShopPaymentConfig(order.site_id, mode as ShopPaymentMode);
-  if (!cfg) return { kind: "unconfigured" };
-  const secret = cfg.mode === "platform" ? cfg.platformSecret : cfg.secret;
+  // Platform verification only needs the platform secret (no subaccount lookup); own_keys needs the shop's secret.
+  let secret: string;
+  if (mode === "platform") {
+    const platformSecret = process.env.PAYSTACK_SECRET_KEY;
+    if (!platformSecret) throw new ShopPaymentsNotConfiguredError();
+    secret = platformSecret;
+  } else {
+    const cfg = await getShopPaymentConfig(order.site_id, "own_keys");
+    if (!cfg || cfg.mode !== "own_keys") return { kind: "unconfigured" };
+    secret = cfg.secret;
+  }
 
   let tx: VerifyData;
   try {
     tx = await paystackRequest<VerifyData>(`/transaction/verify/${encodeURIComponent(order.reference)}`, { secret });
   } catch (err) {
+    if (err instanceof PaystackError && (err.status === 401 || err.status === 403)) {
+      console.warn("[shop] paystack rejected credentials during verify", { order: order.id, status: err.status });
+      return { kind: "unconfigured" };
+    }
     if (err instanceof PaystackError && err.status >= 400 && err.status < 500 && err.status !== 429) {
       return { kind: "not_started" };
     }
@@ -52,6 +67,11 @@ export async function settleOrder(db: SupabaseClient, order: SettleableOrder): P
 
   const status = typeof tx?.status === "string" ? tx.status : "unknown";
   if (status !== "success") return { kind: "not_success", paystackStatus: status };
+
+  if (isBlockedTestPayment(tx.domain, process.env.NODE_ENV)) {
+    console.warn("[shop] ignoring test-mode payment in production", { order: order.id, reference: order.reference });
+    return { kind: "test_mode" };
+  }
 
   if (tx.reference !== order.reference) {
     console.warn("[shop] verify reference differs from order", { order: order.id });

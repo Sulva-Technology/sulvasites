@@ -4,9 +4,12 @@ import { canonicalSiteId } from "./paymentInput";
 import { isOrderReference } from "./reference";
 import { getShopPaymentConfig, ShopPaymentsNotConfiguredError } from "./shopSecrets.server";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "./serviceClient.server";
+import { shopRateLimit } from "./rateLimit";
+import { clientIp } from "./requestIp";
 import { settleOrder } from "./settleOrder.server";
 
 const MAX_BODY_CHARS = 256 * 1024;
+const SITE_MAX_BODY_BYTES = 64 * 1024;
 
 export type WebhookScope = { kind: "platform" } | { kind: "site"; siteIdParam: string };
 
@@ -26,9 +29,17 @@ function status(code: number, error: string) {
  * Infrastructure failures => 5xx so Paystack retries.
  */
 export async function handlePaystackWebhook(req: Request, scope: WebhookScope): Promise<NextResponse> {
+  if (scope.kind === "site") {
+    // Public per-site endpoint: cap size and rate before any DB read.
+    const declared = Number(req.headers.get("content-length") ?? "0");
+    if (Number.isFinite(declared) && declared > SITE_MAX_BODY_BYTES) return status(413, "Payload too large");
+    const key = `shop-webhook-site:${scope.siteIdParam.toLowerCase().slice(0, 64)}:${clientIp(req)}`;
+    const limited = shopRateLimit(key, 60, 60_000);
+    if (limited) return limited;
+  }
   // Raw body must be read exactly once, before any parsing, so the HMAC matches.
   const raw = await req.text();
-  if (raw.length > MAX_BODY_CHARS) return status(413, "Payload too large");
+  if (raw.length > (scope.kind === "site" ? SITE_MAX_BODY_BYTES : MAX_BODY_CHARS)) return status(413, "Payload too large");
   const signature = req.headers.get("x-paystack-signature");
 
   let secret: string;

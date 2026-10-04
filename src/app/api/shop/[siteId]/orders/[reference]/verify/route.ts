@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit } from "@/lib/supabase/requireAdmin.server";
+import { shopRateLimit } from "@/lib/shop/rateLimit";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "@/lib/shop/serviceClient.server";
 import { ShopPaymentsNotConfiguredError } from "@/lib/shop/shopSecrets.server";
 import { canonicalSiteId } from "@/lib/shop/paymentInput";
@@ -37,7 +37,9 @@ const ORDER_COLUMNS =
   "id, site_id, reference, status, payment_mode, customer_name, delivery_method, subtotal_kobo, delivery_kobo, total_kobo, paid_at, created_at";
 
 /** Maps settlement to a shopper-facing payment state. */
-function paymentState(order: OrderRow, settle: SettleResult | null): "paid" | "pending" | "failed" | "cancelled" {
+function paymentState(order: OrderRow, settle: SettleResult | null): "paid" | "pending" | "failed" | "cancelled" | "refund_pending" {
+  // Cancelled after payment was received: money is held; shop owner must refund.
+  if (order.status === "cancelled" && order.paid_at) return "refund_pending";
   if (order.paid_at || order.status === "paid" || order.status === "fulfilled" || order.status === "refunded") {
     return "paid";
   }
@@ -53,11 +55,12 @@ export async function GET(req: Request, ctx: Ctx) {
   const siteId = canonicalSiteId(siteParam);
   if (!siteId || !isOrderReference(reference)) return json({ error: "Order not found." }, 404);
 
-  // Each poll can hit Paystack, so cap by IP and per order.
-  const ipLimited = rateLimit(`shop-verify:${clientIp(req)}`, { limit: 60, windowMs: 60_000 });
+  // Each poll can hit Paystack, so cap by IP and per site. No per-reference limit: a stranger who
+  // knows a reference must not be able to block the shopper's own polling.
+  const ipLimited = shopRateLimit(`shop-verify:${clientIp(req)}`, 60, 60_000);
   if (ipLimited) return ipLimited;
-  const refLimited = rateLimit(`shop-verify-ref:${reference}`, { limit: 20, windowMs: 60_000 });
-  if (refLimited) return refLimited;
+  const siteLimited = shopRateLimit(`shop-verify-site:${siteId}`, 600, 60_000);
+  if (siteLimited) return siteLimited;
 
   const db = requireServiceClient();
   if (!db) return json({ error: SHOP_NOT_CONFIGURED }, 500);

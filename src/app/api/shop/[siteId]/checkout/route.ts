@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit } from "@/lib/supabase/requireAdmin.server";
+import { shopRateLimit } from "@/lib/shop/rateLimit";
 import { paystackRequest, PaystackError } from "@/lib/shop/paystack.server";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "@/lib/shop/serviceClient.server";
 import { getShopPaymentConfig, ShopPaymentsNotConfiguredError } from "@/lib/shop/shopSecrets.server";
@@ -30,11 +30,10 @@ export async function POST(req: Request, ctx: Ctx) {
   const siteId = canonicalSiteId(siteParam);
   if (!siteId) return json({ error: "Shop not found." }, 404);
 
-  // Per-IP limit plus a per-site backstop (IP headers can be spoofed behind some proxies).
-  const ipLimited = rateLimit(`shop-checkout:${clientIp(req)}`, { limit: 10, windowMs: 60_000 });
+  // Cheap per-IP limit up front; the per-site backstop runs only after the request is valid and priced,
+  // so garbage requests can't exhaust the site's budget and lock out real shoppers.
+  const ipLimited = shopRateLimit(`shop-checkout:${clientIp(req)}`, 10, 60_000);
   if (ipLimited) return ipLimited;
-  const siteLimited = rateLimit(`shop-checkout-site:${siteId}`, { limit: 120, windowMs: 60_000 });
-  if (siteLimited) return siteLimited;
 
   const rawBody = await req.text();
   if (rawBody.length > MAX_BODY_CHARS) return json({ error: "Request too large." }, 413);
@@ -80,6 +79,9 @@ export async function POST(req: Request, ctx: Ctx) {
     if (priced.items.length === 0 || priced.totalKobo <= 0) {
       return json({ error: "Your cart is empty." }, 400);
     }
+
+    const siteLimited = shopRateLimit(`shop-checkout-site:${siteId}`, 300, 60_000);
+    if (siteLimited) return siteLimited;
 
     const platformDomain = (process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "soothecontrols.site").trim().toLowerCase();
     const customHosts = await loadActiveHostnames(db, siteId);
@@ -161,7 +163,8 @@ export async function POST(req: Request, ctx: Ctx) {
       initBody.subaccount = payment.subaccountCode;
       initBody.bearer = "subaccount";
       const fee = platformFeeKobo(priced.totalKobo, settings.platform_fee_bps);
-      // Omitted when 0 so Paystack doesn't fall back to a stale subaccount percentage.
+      // Omitted when 0. Only correct if subaccounts are created with percentage_charge 0
+      // (otherwise Paystack applies the subaccount's stored percentage when this is absent).
       if (fee > 0) initBody.transaction_charge = fee;
     } else {
       secret = payment.secret;
