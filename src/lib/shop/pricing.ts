@@ -7,7 +7,7 @@ export type PricedVariant = {
 export type ShopPricingSettings = { delivery_fee_kobo: number; pickup_enabled: boolean };
 export type PriceProblem = {
   lineIndex: number;
-  reason: "unavailable" | "out_of_stock" | "insufficient_stock" | "variant_required";
+  reason: "unavailable" | "out_of_stock" | "insufficient_stock" | "variant_required" | "invalid_quantity";
   available?: number;
 };
 export type PricedItem = {
@@ -25,12 +25,20 @@ export function priceCart(
   variants: PricedVariant[],
   settings: ShopPricingSettings,
   deliveryMethod: "delivery" | "pickup",
+  maxQty: number = 99,
 ): { items: PricedItem[]; subtotalKobo: number; deliveryKobo: number; totalKobo: number; problems: PriceProblem[] } {
   const items: PricedItem[] = [];
   const problems: PriceProblem[] = [];
   let subtotalKobo = 0;
+  // Quantity already accepted per variant id (or product id when it has no variants).
+  const reserved = new Map<string, number>();
 
   lines.forEach((line, lineIndex) => {
+    const q = line.quantity as unknown;
+    if (typeof q !== "number" || !Number.isSafeInteger(q) || q < 1 || q > maxQty) {
+      problems.push({ lineIndex, reason: "invalid_quantity" });
+      return;
+    }
     const product = products.find((p) => p.id === line.productId);
     if (!product || !product.active) {
       problems.push({ lineIndex, reason: "unavailable" });
@@ -50,18 +58,27 @@ export function priceCart(
         return;
       }
       if (variant.stock !== null) {
-        if (variant.stock <= 0) {
+        const stock = Number.isSafeInteger(variant.stock) ? Math.max(0, variant.stock) : 0;
+        const available = Math.max(0, stock - (reserved.get(variant.id) ?? 0));
+        if (available <= 0) {
           problems.push({ lineIndex, reason: "out_of_stock" });
           return;
         }
-        if (line.quantity > variant.stock) {
-          problems.push({ lineIndex, reason: "insufficient_stock", available: variant.stock });
+        if (line.quantity > available) {
+          problems.push({ lineIndex, reason: "insufficient_stock", available });
           return;
         }
       }
     }
     const unitKobo = variant?.price_kobo ?? product.price_kobo;
     const lineTotalKobo = unitKobo * line.quantity;
+    if (!Number.isSafeInteger(unitKobo) || unitKobo < 0 || !Number.isSafeInteger(lineTotalKobo)
+      || !Number.isSafeInteger(subtotalKobo + lineTotalKobo)) {
+      problems.push({ lineIndex, reason: "unavailable" });
+      return;
+    }
+    const reserveKey = variant ? variant.id : product.id;
+    reserved.set(reserveKey, (reserved.get(reserveKey) ?? 0) + line.quantity);
     subtotalKobo += lineTotalKobo;
     items.push({
       lineIndex,
@@ -75,6 +92,8 @@ export function priceCart(
     });
   });
 
-  const deliveryKobo = deliveryMethod === "delivery" && subtotalKobo > 0 ? settings.delivery_fee_kobo : 0;
+  const fee = settings.delivery_fee_kobo as unknown;
+  const safeFee = typeof fee === "number" && Number.isSafeInteger(fee) && fee > 0 ? fee : 0;
+  const deliveryKobo = deliveryMethod === "delivery" && subtotalKobo > 0 ? safeFee : 0;
   return { items, subtotalKobo, deliveryKobo, totalKobo: subtotalKobo + deliveryKobo, problems };
 }

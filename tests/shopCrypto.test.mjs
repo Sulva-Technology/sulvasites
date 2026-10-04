@@ -30,6 +30,24 @@ test("verifyPaystackSignature length mismatch does not throw", () => {
   assert.equal(verifyPaystackSignature("{}", sign("{}", "sk") + "00", "sk"), false);
 });
 
+test("verifyPaystackSignature is case-insensitive on hex", () => {
+  const body = '{"a":1}';
+  assert.equal(verifyPaystackSignature(body, sign(body, "sk").toUpperCase(), "sk"), true);
+});
+
+test("verifyPaystackSignature rejects bad secret/signature types without throwing", () => {
+  const body = "{}";
+  const good = sign(body, "sk");
+  assert.equal(verifyPaystackSignature(body, good, ""), false);
+  assert.equal(verifyPaystackSignature(body, good, undefined), false);
+  assert.equal(verifyPaystackSignature(body, good, 123), false);
+  assert.equal(verifyPaystackSignature(body, 123, "sk"), false);
+  assert.equal(verifyPaystackSignature(body, ["x"], "sk"), false);
+  assert.equal(verifyPaystackSignature(body, "₦".repeat(good.length), "sk"), false);
+  assert.equal(verifyPaystackSignature(body, "é" + good.slice(1), "sk"), false);
+  assert.equal(verifyPaystackSignature(body, good.slice(0, -1), "sk"), false);
+});
+
 const newKey = () => crypto.randomBytes(32).toString("base64");
 
 test("secretBox round trip and format", () => {
@@ -57,6 +75,49 @@ test("secretBox tamper throws", () => {
   const tbuf = Buffer.from(tag, "base64");
   tbuf[0] ^= 0xff;
   assert.throws(() => decryptSecret([v, iv, tbuf.toString("base64"), data].join(":"), key));
+});
+
+test("secretBox tampered IV and truncated tag throw", () => {
+  const key = newKey();
+  const [v, iv, tag, data] = encryptSecret("hello world", key).split(":");
+  const ib = Buffer.from(iv, "base64");
+  ib[0] ^= 0xff;
+  assert.throws(() => decryptSecret([v, ib.toString("base64"), tag, data].join(":"), key));
+  const short = Buffer.from(tag, "base64").subarray(0, 8).toString("base64");
+  assert.throws(() => decryptSecret([v, iv, short, data].join(":"), key));
+});
+
+test("secretBox strict key validation", () => {
+  const k33 = crypto.randomBytes(33).toString("base64");
+  const good = newKey();
+  assert.throws(() => encryptSecret("x", k33));
+  assert.throws(() => decryptSecret(encryptSecret("x", good), k33));
+  assert.throws(() => encryptSecret("x", good.slice(0, 10) + "!!!" + good.slice(13)));
+  assert.throws(() => encryptSecret("x", good.replace("=", "")));
+  assert.throws(() => encryptSecret("x", good + "\n"));
+  assert.throws(() => encryptSecret("x", ""));
+  assert.throws(() => encryptSecret("x", undefined));
+});
+
+test("secretBox errors do not leak key or plaintext", () => {
+  const key = newKey();
+  const box = encryptSecret("super-secret-plain", key);
+  for (const fn of [() => decryptSecret(box, newKey()), () => encryptSecret("super-secret-plain", key.slice(1))]) {
+    try { fn(); assert.fail("should throw"); } catch (e) {
+      assert.ok(!String(e.message).includes(key));
+      assert.ok(!String(e.message).includes("super-secret-plain"));
+    }
+  }
+});
+
+test("secretBox AAD match and mismatch", () => {
+  const key = newKey();
+  const box = encryptSecret("sk", key, "site-1");
+  assert.equal(decryptSecret(box, key, "site-1"), "sk");
+  assert.throws(() => decryptSecret(box, key, "site-2"));
+  assert.throws(() => decryptSecret(box, key));
+  assert.throws(() => decryptSecret(encryptSecret("sk", key), key, "site-1"));
+  assert.equal(decryptSecret(encryptSecret("sk", key), key), "sk");
 });
 
 test("secretBox wrong key / malformed box / bad key length throws", () => {

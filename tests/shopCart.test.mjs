@@ -86,6 +86,23 @@ test("parseCart treats missing variantId as null and caps quantity", () => {
   ]);
 });
 
+test("addLine ignores invalid lines", () => {
+  const a = [L("p1")];
+  for (const bad of [L("p2", null, 0), L("p2", null, -1), L("p2", null, 1.5), L("p2", null, Number.NaN),
+    L("p2", null, Infinity), L("", null, 1), { productId: "p", variantId: 3, quantity: 1 }, null]) {
+    assert.deepEqual(addLine(a, bad), a);
+  }
+});
+
+test("setQty caps at max and rejects non-integers", () => {
+  const a = [L("p1")];
+  assert.equal(setQty(a, 0, 500)[0].quantity, 99);
+  assert.equal(setQty(a, 0, 500, 10)[0].quantity, 10);
+  assert.deepEqual(setQty(a, 0, 1.5), a);
+  assert.deepEqual(setQty(a, 0, Number.NaN), a);
+  assert.deepEqual(setQty(a, 0, Infinity), a);
+});
+
 test("cartStorageKey", () => {
   assert.equal(cartStorageKey("abc"), "sulva-cart-abc");
 });
