@@ -3,7 +3,14 @@
 -- Depends on 005 helpers: public.site_role / is_site_member / can_edit_site.
 -- Requires Postgres 15+ (FK "on delete set null (column)").
 -- Idempotent: create if not exists, drop policy/trigger if exists, create or replace function.
--- Money is integer kobo everywhere.
+-- Money is integer kobo (bigint) everywhere.
+
+do $$
+begin
+  if current_setting('server_version_num')::int < 150000 then
+    raise exception '006_commerce.sql requires Postgres 15 or newer (found %).', current_setting('server_version');
+  end if;
+end $$;
 
 -- =============================================================================
 -- 1) TABLES
@@ -14,7 +21,7 @@ create table if not exists public.shop_settings (
   site_id uuid primary key references public.sites(id) on delete cascade,
   enabled boolean not null default false,
   currency text not null default 'NGN' check (currency = 'NGN'),
-  delivery_fee_kobo integer not null default 0 check (delivery_fee_kobo >= 0),
+  delivery_fee_kobo bigint not null default 0 check (delivery_fee_kobo >= 0),
   pickup_enabled boolean not null default false,
   pickup_note text null,
   payment_mode text null check (payment_mode in ('platform','own_keys')),
@@ -52,8 +59,8 @@ create table if not exists public.products (
   slug text not null,
   description text null,
   images jsonb not null default '[]'::jsonb check (jsonb_typeof(images) = 'array'),
-  price_kobo integer not null check (price_kobo >= 0),
-  compare_at_kobo integer null check (compare_at_kobo >= 0),
+  price_kobo bigint not null check (price_kobo >= 0),
+  compare_at_kobo bigint null check (compare_at_kobo >= 0),
   active boolean not null default true,
   featured boolean not null default false,
   position integer not null default 0,
@@ -71,7 +78,7 @@ create table if not exists public.product_variants (
   product_id uuid not null,
   site_id uuid not null references public.sites(id) on delete cascade,
   options jsonb not null default '{}'::jsonb check (jsonb_typeof(options) = 'object'),
-  price_kobo integer null check (price_kobo >= 0),   -- null = use product price
+  price_kobo bigint null check (price_kobo >= 0),    -- null = use product price
   stock integer null check (stock >= 0),             -- null = untracked
   sku text null,
   position integer not null default 0,
@@ -92,14 +99,15 @@ create table if not exists public.orders (
   delivery_method text not null check (delivery_method in ('delivery','pickup')),
   delivery_address text null,
   notes text null,
-  subtotal_kobo integer not null check (subtotal_kobo >= 0),
-  delivery_kobo integer not null default 0 check (delivery_kobo >= 0),
-  total_kobo integer not null check (total_kobo >= 0),
+  subtotal_kobo bigint not null check (subtotal_kobo >= 0),
+  delivery_kobo bigint not null default 0 check (delivery_kobo >= 0),
+  total_kobo bigint not null check (total_kobo >= 0),
   payment_mode text null check (payment_mode in ('platform','own_keys')),
   paystack_reference text null,
   paid_at timestamptz null,
   stock_issue boolean not null default false,
   amount_mismatch boolean not null default false,
+  paid_after_cancel boolean not null default false,  -- payment arrived for a non-pending order
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (id, site_id)            -- target for same-site composite FK from order_items
@@ -113,12 +121,36 @@ create table if not exists public.order_items (
   variant_id uuid null references public.product_variants(id) on delete set null,
   name text not null,
   variant_label text null,
-  unit_price_kobo integer not null check (unit_price_kobo >= 0),
+  unit_price_kobo bigint not null check (unit_price_kobo >= 0),
   quantity integer not null check (quantity > 0),
-  line_total_kobo integer not null check (line_total_kobo >= 0),
+  line_total_kobo bigint not null check (line_total_kobo >= 0),
   constraint order_items_order_same_site_fk foreign key (order_id, site_id)
     references public.orders (id, site_id) on delete cascade
 );
+
+-- Re-run safety for databases that applied an earlier draft of this migration.
+alter table public.orders add column if not exists paid_after_cancel boolean not null default false;
+alter table public.shop_settings alter column delivery_fee_kobo type bigint;
+alter table public.products alter column price_kobo type bigint, alter column compare_at_kobo type bigint;
+alter table public.product_variants alter column price_kobo type bigint;
+alter table public.orders alter column subtotal_kobo type bigint, alter column delivery_kobo type bigint,
+  alter column total_kobo type bigint;
+alter table public.order_items alter column unit_price_kobo type bigint, alter column line_total_kobo type bigint;
+
+-- Slugs: URL-safe; product slugs must not shadow the static /shop/... routes.
+do $$
+begin
+  if not exists (select 1 from pg_constraint
+                 where conname = 'products_slug_format' and conrelid = 'public.products'::regclass) then
+    alter table public.products add constraint products_slug_format
+      check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and slug not in ('cart','checkout','order','c'));
+  end if;
+  if not exists (select 1 from pg_constraint
+                 where conname = 'product_categories_slug_format' and conrelid = 'public.product_categories'::regclass) then
+    alter table public.product_categories add constraint product_categories_slug_format
+      check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$');
+  end if;
+end $$;
 
 -- =============================================================================
 -- 2) INDEXES
@@ -163,6 +195,7 @@ alter table public.product_variants enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 
+-- (revoking a table privilege also revokes the matching column privileges)
 revoke all on table public.shop_settings, public.shop_payment_secrets, public.product_categories,
   public.products, public.product_variants, public.orders, public.order_items
   from anon, authenticated;
@@ -175,8 +208,10 @@ grant select on public.shop_settings, public.product_categories, public.products
 grant select, insert, update, delete on public.product_categories, public.products, public.product_variants to authenticated;
 -- shop_settings: no client delete (delete + re-insert would reset Sulvatech-only fields).
 grant select, insert, update on public.shop_settings to authenticated;
--- orders: members read and update status; insert/delete only via service role.
-grant select, update on public.orders to authenticated;
+-- orders: members read and update ONLY the status column; insert/delete only via service role.
+revoke update on public.orders from authenticated;
+grant select on public.orders to authenticated;
+grant update (status) on public.orders to authenticated;
 -- order_items: members read only.
 grant select on public.order_items to authenticated;
 -- shop_payment_secrets: nothing for clients (revoked above); no policies.
@@ -196,11 +231,14 @@ drop policy if exists owners_update on public.shop_settings;
 create policy owners_update on public.shop_settings for update to authenticated
   using (public.can_edit_site(site_id)) with check (public.can_edit_site(site_id));
 
+-- Public catalogue: site published AND shop enabled.
 -- product_categories
 drop policy if exists public_read on public.product_categories;
 create policy public_read on public.product_categories for select to anon, authenticated
   using (exists (select 1 from public.sites s
-         where s.id = product_categories.site_id and s.status = 'published'::public.site_status));
+                 where s.id = product_categories.site_id and s.status = 'published'::public.site_status)
+         and exists (select 1 from public.shop_settings ss
+                 where ss.site_id = product_categories.site_id and ss.enabled));
 drop policy if exists members_read on public.product_categories;
 create policy members_read on public.product_categories for select to authenticated
   using (public.is_site_member(site_id));
@@ -211,8 +249,11 @@ create policy owners_write on public.product_categories for all to authenticated
 -- products
 drop policy if exists public_read on public.products;
 create policy public_read on public.products for select to anon, authenticated
-  using (active and exists (select 1 from public.sites s
-         where s.id = products.site_id and s.status = 'published'::public.site_status));
+  using (active
+         and exists (select 1 from public.sites s
+                 where s.id = products.site_id and s.status = 'published'::public.site_status)
+         and exists (select 1 from public.shop_settings ss
+                 where ss.site_id = products.site_id and ss.enabled));
 drop policy if exists members_read on public.products;
 create policy members_read on public.products for select to authenticated
   using (public.is_site_member(site_id));
@@ -220,13 +261,15 @@ drop policy if exists owners_write on public.products;
 create policy owners_write on public.products for all to authenticated
   using (public.can_edit_site(site_id)) with check (public.can_edit_site(site_id));
 
--- product_variants (public: parent product active + site published)
+-- product_variants (public: parent product active + site published + shop enabled)
 drop policy if exists public_read on public.product_variants;
 create policy public_read on public.product_variants for select to anon, authenticated
   using (exists (select 1 from public.products p
                  join public.sites s on s.id = p.site_id
                  where p.id = product_variants.product_id and p.site_id = product_variants.site_id
-                   and p.active and s.status = 'published'::public.site_status));
+                   and p.active and s.status = 'published'::public.site_status)
+         and exists (select 1 from public.shop_settings ss
+                 where ss.site_id = product_variants.site_id and ss.enabled));
 drop policy if exists members_read on public.product_variants;
 create policy members_read on public.product_variants for select to authenticated
   using (public.is_site_member(site_id));
@@ -234,7 +277,8 @@ drop policy if exists owners_write on public.product_variants;
 create policy owners_write on public.product_variants for all to authenticated
   using (public.can_edit_site(site_id)) with check (public.can_edit_site(site_id));
 
--- orders: members read + update (status only, enforced by orders_member_guard). No insert/delete policy.
+-- orders: members read + update (status column only; transitions enforced by orders_member_guard).
+-- No insert/delete policy.
 drop policy if exists members_read on public.orders;
 create policy members_read on public.orders for select to authenticated
   using (public.is_site_member(site_id));
@@ -274,7 +318,8 @@ drop trigger if exists shop_settings_owner_guard on public.shop_settings;
 create trigger shop_settings_owner_guard before insert or update on public.shop_settings
   for each row execute function public.shop_settings_owner_guard();
 
--- orders: members may change only status; payment states (pending/paid) are server-only;
+-- orders: members may change only status (also enforced by the column-level grant);
+-- payment states (pending/paid) are server-only; transitions follow a state machine;
 -- only owners may set refunded.
 create or replace function public.orders_member_guard() returns trigger language plpgsql set search_path = public, auth as $$
 begin
@@ -285,6 +330,12 @@ begin
     if new.status is distinct from old.status then
       if new.status in ('pending','paid') then
         raise exception 'Payment status is set by the payment provider.' using errcode = '42501';
+      end if;
+      if not (   (old.status = 'pending'   and new.status = 'cancelled')
+              or (old.status = 'paid'      and new.status in ('fulfilled','cancelled','refunded'))
+              or (old.status = 'fulfilled' and new.status = 'refunded')
+              or (old.status = 'cancelled' and new.status = 'refunded' and old.paid_at is not null)) then
+        raise exception 'This order status change is not allowed.' using errcode = '42501';
       end if;
       if new.status = 'refunded' and public.site_role(old.site_id) is distinct from 'owner' then
         raise exception 'Only the shop owner can mark an order refunded.' using errcode = '42501';
@@ -299,11 +350,18 @@ create trigger orders_member_guard before update on public.orders
 
 -- =============================================================================
 -- 6) mark_order_paid — service role only.
--- Returns: 'paid' | 'already_paid' | 'not_pending' | 'amount_mismatch' | 'not_found'.
--- Locks the order row; idempotent; decrements tracked variant stock (never below 0) and
--- flags stock_issue when stock was insufficient (order is still marked paid).
+-- Returns, in order of checks:
+--   'not_found'          unknown order
+--   'already_paid'       status paid or paid_at already set (idempotent)
+--   'reference_mismatch' p_paystack_ref <> orders.reference (checkout uses the order reference)
+--   'amount_mismatch'    amount null or <> total (flags amount_mismatch)
+--   'paid_after_cancel'  order not pending (e.g. cancelled): records paid_at/reference and flags
+--                        paid_after_cancel; no status or stock change (owner refunds manually)
+--   'paid'               marks paid, decrements tracked variant stock (never below 0) and flags
+--                        stock_issue when stock was insufficient (order is still marked paid)
 -- =============================================================================
-create or replace function public.mark_order_paid(p_order uuid, p_paystack_ref text, p_amount_kobo int)
+drop function if exists public.mark_order_paid(uuid, text, int);
+create or replace function public.mark_order_paid(p_order uuid, p_paystack_ref text, p_amount_kobo bigint)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   o public.orders%rowtype;
@@ -314,10 +372,16 @@ begin
   select * into o from public.orders where id = p_order for update;
   if not found then return 'not_found'; end if;
   if o.status = 'paid' or o.paid_at is not null then return 'already_paid'; end if;
-  if o.status <> 'pending' then return 'not_pending'; end if;
+  if p_paystack_ref is distinct from o.reference then return 'reference_mismatch'; end if;
   if p_amount_kobo is null or p_amount_kobo <> o.total_kobo then
     update public.orders set amount_mismatch = true where id = o.id;
     return 'amount_mismatch';
+  end if;
+  if o.status <> 'pending' then
+    update public.orders
+       set paid_at = now(), paystack_reference = p_paystack_ref, paid_after_cancel = true
+     where id = o.id;
+    return 'paid_after_cancel';
   end if;
 
   -- Lock variants in id order (consistent lock order across concurrent payments).
@@ -343,5 +407,5 @@ begin
    where id = o.id;
   return 'paid';
 end $$;
-revoke all on function public.mark_order_paid(uuid, text, int) from public, anon, authenticated;
-grant execute on function public.mark_order_paid(uuid, text, int) to service_role;
+revoke all on function public.mark_order_paid(uuid, text, bigint) from public, anon, authenticated;
+grant execute on function public.mark_order_paid(uuid, text, bigint) to service_role;
