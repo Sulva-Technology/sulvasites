@@ -136,6 +136,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#fdf8ff",
     surface: "#f3ebfb",
   }, { accent2: "Plum bands & footer", surface: "Cards / panels" }),
+  // Trades & construction — "Forge"
+  t12: config("t12", {
+    accent: "#f26b1d",
+    accent2: "#1d2124",
+    ink: "#1b1e21",
+    muted: "#646b71",
+    bg: "#f6f5f2",
+    surface: "#ffffff",
+  }, { accent2: "Charcoal bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

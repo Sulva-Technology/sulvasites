@@ -13,6 +13,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t9", name: "Pulse", category: "Fitness", description: "Gyms, personal trainers, yoga and dance studios." },
   { key: "t10", name: "Campus", category: "Education", description: "Schools, tutors, academies and training centres." },
   { key: "t11", name: "Soirée", category: "Events", description: "Event planners, venues, caterers and celebrations." },
+  { key: "t12", name: "Forge", category: "Trades & construction", description: "Builders, renovators, electricians, plumbers and home services." },
 ];
 
 export function templateLabel(key: string) {

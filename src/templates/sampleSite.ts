@@ -1184,6 +1184,162 @@ function eventsSite(): TemplateProps {
   };
 }
 
+const build = (i: number) => {
+  const p = STOCK_PHOTOS.construction[i % STOCK_PHOTOS.construction.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const tradesHome: PageData = {
+  seo: { title: "Ironwood Builders — renovations, repairs and building work in Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Built right. Built to last.",
+      subtext: "Renovations, extensions, electrical and plumbing work across Lagos — one reliable crew, clear quotes and tidy sites.",
+      ctaText: "Request a quote",
+      ctaHref: "",
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Home renovations", desc: "Full and partial refurbishments — layouts, finishes and everything in between." },
+        { title: "Extensions & new builds", desc: "From foundations to roof, managed by one team from start to handover." },
+        { title: "Electrical wiring", desc: "Rewiring, new circuits, lighting and safety checks by qualified electricians." },
+        { title: "Plumbing & water", desc: "Leaks, new bathrooms, water tanks, pumps and drainage, done properly." },
+        { title: "Kitchens & bathrooms", desc: "Design, supply and fit — tiling, cabinets, fittings and finishing." },
+        { title: "Painting & finishing", desc: "Interior and exterior painting, plastering and screeding with clean lines." },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Tell us about the job", desc: "Call, WhatsApp or send the quote form with a few details and photos if you have them." },
+        { title: "Site visit", desc: "We come and look at the work, take measurements and talk through options." },
+        { title: "Clear written quote", desc: "You get an itemised price and a timeline before any work starts." },
+        { title: "Build & handover", desc: "We do the work, keep you updated, clean up and walk you through the finished job." },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "Recent projects",
+      description: "A few jobs from the last season — from single rooms to whole houses.",
+      items: [
+        { title: "Duplex renovation, Lekki", description: "New layout downstairs, rewiring throughout and a full repaint inside and out.", linkText: "Start a similar project", linkHref: "" },
+        { title: "Two-room extension, Ikeja", description: "Foundations, blockwork, roofing and finishing for a ground-floor extension.", linkText: "Start a similar project", linkHref: "" },
+        { title: "Bathroom refit, Surulere", description: "Stripped back to the walls: new plumbing, tiling, fittings and ventilation.", linkText: "Start a similar project", linkHref: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "On site",
+      images: [build(0), build(3), build(5), build(7), build(1), build(6)],
+    },
+    {
+      type: "testimonials",
+      title: "What customers say",
+      items: [
+        { name: "Mrs. Adebayo", role: "Home renovation", company: "", quote: "They turned up when they said they would, kept the site tidy and finished the job properly. The written quote matched the final bill." },
+        { name: "Tunde O.", role: "Extension", company: "", quote: "Clear about every step from foundations to roof. We always knew what was happening next." },
+        { name: "Grace E.", role: "Bathroom refit", company: "", quote: "Fixed a leak two other plumbers couldn't find, then redid the whole bathroom beautifully." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Common questions",
+      items: [
+        { question: "How do quotes work?", answer: "Send us a few details and we'll arrange a site visit. After that you get a written, itemised quote and a timeline." },
+        { question: "Do you handle permits and approvals?", answer: "We can guide you through what your job needs and help prepare the paperwork where required." },
+        { question: "Can you work while we live in the house?", answer: "Usually, yes. We plan the work in stages, protect floors and furniture, and clean up at the end of each day." },
+        { question: "Which areas do you cover?", answer: "Most of our jobs are across Lagos. Further afield? Ask us — it depends on the size of the job." },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const tradesAbout: PageData = {
+  seo: { title: "About Ironwood Builders", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A local crew that shows up and does it right",
+      subtext: "Builders, electricians and plumbers working as one team — so your job has one point of contact from first visit to handover.",
+      ctaText: "Request a quote",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How we work",
+      body: "<p>Every job starts with a site visit and a straight conversation about what you need, what it will cost and how long it will take.</p><ul><li>One site lead from start to finish</li><li>Written, itemised quotes before any work starts</li><li>Tidy sites, protected floors and a clean handover</li></ul>",
+    },
+    {
+      type: "backed_by",
+      title: "Credentials",
+      logos: [
+        { name: "Registered with the state builders' board", url: null },
+        { name: "Qualified electricians on every wiring job", url: null },
+        { name: "Health & safety trained crews", url: null },
+        { name: "Public liability insurance", url: null },
+      ],
+    },
+    {
+      type: "team",
+      title: "Meet the crew",
+      subtitle: "The people who'll be on your site.",
+      members: [
+        { name: "Chidi Okeke", role: "Founder & site lead", bio: "Runs every job from first visit to handover.", photoUrl: person(13), linkedinUrl: "" },
+        { name: "Bisi Adeyemi", role: "Projects & quotes", bio: "Plans schedules and keeps customers in the loop.", photoUrl: person(1), linkedinUrl: "" },
+        { name: "Kunle Ojo", role: "Lead electrician", bio: "Rewiring, lighting and safety checks.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Halima Musa", role: "Interiors & finishing", bio: "Tiling, painting and the details that finish a room.", photoUrl: person(9), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Plans to handover",
+      images: [build(8), build(11), build(4)],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const tradesContact: PageData = {
+  seo: { title: "Request a quote", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Let's talk about your job",
+      subtext: "Send the quote form below, or call, WhatsApp or email us. We'll get back to you to arrange a visit.",
+      ctaText: "Request a quote",
+      ctaHref: "#quote",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function tradesSite(): TemplateProps {
+  const base = sampleSiteBase("t12");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Ironwood Builders",
+      tagline: "Renovations, extensions, electrical and plumbing work across Lagos.",
+      description: "Building, renovation, electrical and plumbing services for homes and small businesses.",
+      address: "14 Industrial Avenue, Ikeja, Lagos",
+      phone: "+234 803 555 0142",
+      email: "hello@ironwoodbuilders.ng",
+      whatsapp: "+2348035550142",
+      socials: {
+        facebook: "https://facebook.com",
+        instagram: "https://instagram.com",
+        hours: "Mon–Fri · 07:30–17:30\nSaturday · 08:00–13:00\nSunday · Closed",
+        licence: "Licensed & insured",
+      },
+    },
+    pages: { home: tradesHome, about: tradesAbout, contact: tradesContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1203,7 +1359,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                   ? educationSite()
                   : templateKey === "t11"
                     ? eventsSite()
-                    : sampleSiteBase(templateKey);
+                    : templateKey === "t12"
+                      ? tradesSite()
+                      : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
