@@ -47,13 +47,14 @@ Helpers (security definer, `search_path = public, auth`, granted to `authenticat
 RLS (added alongside existing policies, which stay):
 - `site_members`: select where `is_site_member(site_id)`; insert/update/delete via server route only (service role) — no client write policy except admins (`is_admin()`).
 - `sites`: select where `is_site_member(id)`; update where `can_edit_site(id)` **plus** trigger guard below.
-- `business_profiles`, `pages`, `extra_pages`: select where `is_site_member(site_id)`; insert/update/delete where `can_edit_site(site_id)`.
-- `assets`: select/insert/delete where `can_edit_site(site_id)`; storage `site-assets` objects: owners may write under the `<siteId>/` prefix of sites they can edit (policy using `split_part(name,'/',1)::uuid`).
+- `business_profiles`, `pages`: select where `is_site_member(site_id)`; **update only** where `can_edit_site(site_id)` (owners cannot insert/delete profiles or core home/about/contact pages, so the palette guard cannot be bypassed by delete + re-insert).
+- `extra_pages`: select where `is_site_member(site_id)`; full insert/update/delete where `can_edit_site(site_id)`.
+- `assets`: select/insert/delete where `can_edit_site(site_id)`; storage `site-assets` objects: owners may write under the `<siteId>/` prefix of sites they can edit (policy using the strictly validated UUID in `split_part(name,'/',1)`; non-UUID prefixes are denied by RLS, not a cast error).
 - `domains`: unchanged (admins + public read active).
 
-Guard triggers (raise `'Only Sulvatech can change this setting.'` when `not is_admin()`):
+Guard triggers (raise `'Only Sulvatech can change this setting.'`). They are **not** SECURITY DEFINER and are gated on `current_user in ('authenticated','anon') and not is_admin()`, so service_role / postgres (server routes, ops) pass through while client JWT roles are restricted:
 - `sites_owner_guard` before update on `sites`: `template_key`, `slug` or `status` changed.
-- `profiles_owner_guard` before update on `business_profiles`: `theme_colors` or `brand_colors` changed.
+- `profiles_owner_guard` before insert or update on `business_profiles`: on insert `theme_colors`/`brand_colors` must be null; on update neither may change.
 - `sites` insert/delete stay admin-only (no owner policy).
 
 ## Accounts
