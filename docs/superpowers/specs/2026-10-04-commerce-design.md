@@ -71,6 +71,7 @@ Routes:
 ## Storefront (shared, any template with `shopEnabled`)
 
 - Public routes for subdomain/custom-domain/slug sites mirroring existing routing: `/shop`, `/shop/c/[category]`, `/shop/[product]`, `/cart`, `/checkout`, `/order/[reference]` (and slug/d variants). Host routing (`hostRouting.ts`) must pass these through like other paths.
+- **Route paths (implementation decision):** shop routes live under `/shop/...` — `/shop/cart`, `/shop/checkout`, `/shop/order/[reference]` (alongside `/shop`, `/shop/c/[category]`, `/shop/[product]`) — instead of top-level `/cart`, `/checkout`, `/order/[reference]`, to avoid clashing with the `[pageKey]` route. Paystack `callback_url` is `<site origin>/shop/order/<reference>`.
 - Loader `loadShop(siteId)` (server, service-free public RLS) → settings, categories, active products+variants.
 - Templates render shop pages via new optional template props: `shop?: ShopData`, `shopView?: {kind:'list'|'category'|'product'|'cart'|'checkout'|'order', …}`. Templates t1–t12 ignore them (shop routes 404 unless template supports shop: `TEMPLATE_META.shop = true` for t13/t14).
 - Client: `useCart(siteId)` hook (localStorage, cross-tab sync via `storage` event), cart drawer, checkout form → POST checkout → redirect to Paystack → callback `/order/[ref]` page calls verify endpoint and shows status (paid / pending / failed with retry).
