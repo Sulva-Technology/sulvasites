@@ -3,13 +3,16 @@ import { notFound } from "next/navigation";
 
 import { isPageKey } from "@/lib/pageSchema";
 import { getTemplate } from "@/templates/registry";
-import { sampleExtraPage, sampleSite } from "@/templates/sampleSite";
+import { parseShopPath, shopViewExists } from "@/lib/shop/shopPath";
+import { templateSupportsShop } from "@/templates/meta";
+import { sampleExtraPage, sampleShop, sampleSite } from "@/templates/sampleSite";
 
 /**
  * Dev-only template preview with sample content (no database needed):
  *   /dev/templates/t3            → home
  *   /dev/templates/t3/about      → about
  *   /dev/templates/t3/p/work     → extra page (template preset, filled with sample sections)
+ *   /dev/templates/t13/shop/...  → storefront views (shop templates only; sampleShop data)
  * Disabled in production.
  */
 export default async function DevTemplatePreview({
@@ -25,6 +28,14 @@ export default async function DevTemplatePreview({
 
   const props = sampleSite(key);
   const baseUrl = `/dev/templates/${key}`;
+
+  if (page?.[0] === "shop") {
+    if (!templateSupportsShop(key)) notFound();
+    const view = parseShopPath(page.slice(1));
+    const shop = sampleShop(key);
+    if (!view || !shopViewExists(shop, view)) notFound();
+    return createElement(Template, { ...props, currentPage: null, baseUrl, shop, shopView: view });
+  }
 
   if (page?.[0] === "p" && page[1]) {
     const extra = sampleExtraPage(key, props, page[1]);

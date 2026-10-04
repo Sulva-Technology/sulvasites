@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 
 import type { PageData, PageKey } from "@/lib/pageSchema";
+import type { ShopData, ShopView } from "@/lib/shop/types";
 import type { SiteData } from "@/lib/siteResolver.server";
 import Template1 from "@/templates/template1/Template1";
 import Template2 from "@/templates/template2/Template2";
@@ -29,6 +30,9 @@ export type TemplateProps = {
   navPages?: NavPage[];
   /** Key of the extra page being rendered (to highlight it in the nav). */
   currentExtraKey?: string | null;
+  /** Storefront data; only set (with `shopView`) on /shop/... routes of shop-capable templates. */
+  shop?: ShopData;
+  shopView?: ShopView;
 };
 
 /** Single source of truth for which template_key renders which component. */

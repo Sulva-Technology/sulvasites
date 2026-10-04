@@ -1,6 +1,7 @@
 import { defaultSection, type PageData, type Section } from "@/lib/pageSchema";
 import { categoryForTemplate, fillSiteImages, PEOPLE_PHOTOS, photoUrl, STOCK_PHOTOS } from "@/lib/stockPhotos";
 import { getPagePresets } from "@/templates/pagePresets";
+import type { ShopData } from "@/lib/shop/types";
 import type { TemplateProps } from "@/templates/registry";
 
 /** Realistic sample content for previewing templates without a database (dev only). */
@@ -1406,4 +1407,25 @@ export function sampleExtraPage(templateKey: string, props: TemplateProps, key: 
     return defaultSection(type);
   });
   return { seo: { title: preset.label, description: "" }, sections };
+}
+
+/**
+ * Per-template sample catalogues for `/dev/templates/<key>/shop/...` previews. Shop templates
+ * (t13 Mode, t14 Cartly) register a builder here; anything else gets the empty default.
+ */
+export const SHOP_SAMPLES: Record<string, (() => ShopData) | undefined> = {};
+
+/** Generic empty-safe default: no products, so templates must render their empty states. */
+function emptyShop(): ShopData {
+  return {
+    siteId: "sample",
+    currency: "NGN",
+    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Pick up from our store, Mon-Sat 9am-5pm." },
+    categories: [],
+    products: [],
+  };
+}
+
+export function sampleShop(templateKey: string): ShopData {
+  return SHOP_SAMPLES[templateKey]?.() ?? emptyShop();
 }

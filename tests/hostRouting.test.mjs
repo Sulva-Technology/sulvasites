@@ -26,6 +26,16 @@ test("platform root, localhost, vercel previews untouched", () => {
   assert.equal(rewritePathForHost("app-git-x.vercel.app", "/", P), null);
 });
 
+test("shop paths rewrite like any other path (subdomain and custom domain)", () => {
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/shop", P), "/bakery/shop");
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/shop/c/shoes", P), "/bakery/shop/c/shoes");
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/shop/order/SV-ABC123-XYZ789", P), "/bakery/shop/order/SV-ABC123-XYZ789");
+  assert.equal(rewritePathForHost("www.client.com", "/shop/cart", P), "/d/client.com/shop/cart");
+  assert.equal(rewritePathForHost("client.com", "/shop/red-dress", P), "/d/client.com/shop/red-dress");
+  // platform domain keeps path-based /<slug>/shop/...
+  assert.equal(rewritePathForHost("soothecontrols.site", "/bakery/shop", P), null);
+});
+
 test("bypass paths untouched on any host", () => {
   for (const path of ["/api/ai/generate-site", "/admin", "/login", "/_next/x", "/d/x.com", "/favicon.ico"]) {
     assert.equal(rewritePathForHost("client.com", path, P), null, path);
