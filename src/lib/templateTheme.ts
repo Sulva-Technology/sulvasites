@@ -145,15 +145,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f6f5f2",
     surface: "#ffffff",
   }, { accent2: "Charcoal bands & footer", surface: "Cards / panels" }),
-  // Fashion boutique shop — "Mode"
+  // Fashion shop — "Mode" (cinematic, dark-first; these are the paper-mode values)
   t13: config("t13", {
-    accent: "#b4532a",
-    accent2: "#121212",
-    ink: "#121212",
-    muted: "#6e6a66",
-    bg: "#fbfaf7",
-    surface: "#f1eee8",
-  }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
+    accent: "#6d5efc",
+    accent2: "#0a0a0b",
+    ink: "#111113",
+    muted: "#5d6069",
+    bg: "#f6f5f2",
+    surface: "#ecebe7",
+  }, { accent2: "Night bands & footer", surface: "Cards / panels" }),
   // General store — "Cartly"
   t14: config("t14", {
     accent: "#1f6feb",

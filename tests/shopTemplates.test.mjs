@@ -11,8 +11,10 @@ test("t13 Mode is registered as a shop template", () => {
   const meta = TEMPLATE_META.find((t) => t.key === "t13");
   assert.equal(meta?.name, "Mode");
   assert.equal(meta?.shop, true);
-  assert.ok(TEMPLATE_THEME_CONFIGS.t13);
-  assert.equal(TEMPLATE_THEME_CONFIGS.t13.defaults.accent, "#b4532a");
+  assert.match(meta?.description ?? "", /cinematic/i);
+  assert.equal(TEMPLATE_THEME_CONFIGS.t13.defaults.accent, "#6d5efc");
+  assert.equal(TEMPLATE_THEME_CONFIGS.t13.defaults.accent2, "#0a0a0b");
+  assert.equal(TEMPLATE_THEME_CONFIGS.t13.defaults.bg, "#f6f5f2");
 });
 
 test("t13 presets: shop, lookbook, size-guide", () => {

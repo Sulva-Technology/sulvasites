@@ -1,85 +1,125 @@
-/* Template 13 — "Mode": fashion boutiques and clothing brands with an online shop.
-   Editorial and quiet: Italiana display headlines over Manrope, hairline rules, square corners,
-   portrait photography and one terracotta accent. A full-bleed campaign hero, "shop the looks",
-   a product grid with hover photos, product pages with swatches and a size-guide drawer, a
-   slide-out bag, minimal checkout and an order status page. Dark mode is warm near-black. */
+/* Template 13 — "Mode": fashion brands with an online shop.
+   Cinematic and dark-first (after offloop.org): Instrument Serif headlines over Inter, JetBrains Mono
+   for prices/SKUs/numbering, blue-graded full-bleed photography with light beams, frosted glass pills,
+   sticky split sections, a product marquee, a gradient "studio" window and a floating search composer.
+   Paper (light) mode keeps the same layout on warm off-white. */
 
 .template13 {
-  --t13-accent: #b4532a;
-  --t13-accent2: #121212;
-  --t13-ink: #121212;
-  --t13-muted: #6e6a66;
-  --t13-bg: #fbfaf7;
-  --t13-surface: #f1eee8;
+  /* Owner palette (paper values; dark mode re-maps the neutrals, never the accent). */
+  --t13-accent: #6d5efc;
+  --t13-accent2: #0a0a0b;
+  --t13-ink: #111113;
+  --t13-muted: #5d6069;
+  --t13-bg: #f6f5f2;
+  --t13-surface: #ecebe7;
 
-  /* Fixed colours for always-dark surfaces (hero overlay, black bands, footer). */
-  --t13-black: #121212;
-  --t13-on-dark: #f4f0e9;
-  --t13-on-dark-muted: #b9b3aa;
+  --t13-card: #ffffff;
+  --t13-card-2: #f1f0ec;
+  --t13-dim: #8a8d94;                 /* decorative / large text only */
+  --t13-line: color-mix(in srgb, var(--t13-ink) 9%, transparent);
+  --t13-line-strong: color-mix(in srgb, var(--t13-ink) 20%, transparent);
+  --t13-text-accent: color-mix(in oklab, var(--t13-accent) 82%, black); /* >=4.5:1 on bg for default */
+  --t13-glass: rgb(255 255 255 / 0.62);
+  --t13-glass-line: rgb(17 17 19 / 0.08);
+  --t13-ok: #1f8a4c;
+  --t13-warn: #a8620b;
+
+  /* Always-dark stage (hero, studio caption, footer in paper mode keeps light). */
+  --t13-night: #0a0a0b;
+  --t13-on-night: #ffffff;
+  --t13-on-night-2: #9ea3ad;          /* 7.4:1 on night */
+  --t13-on-night-3: #5f636a;          /* decorative only */
+
+  --t13-serif: "Instrument Serif", "Iowan Old Style", "Times New Roman", serif;
+  --t13-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --t13-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  --t13-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t13-max: 1280px;
+  --t13-gutter: clamp(20px, 3vw, 36px);
+  --t13-section: clamp(64px, 9vw, 120px);
+  --t13-r-lg: 28px;
+  --t13-r-md: 16px;
+  --t13-r-sm: 12px;
+
+  /* TEMP aliases — removed in A9 (old names still used by rules rewritten in A3-A8) */
+  --t13-black: var(--t13-night);
+  --t13-lead: var(--t13-muted);
+  --t13-display: var(--t13-serif);
+  --t13-radius: 0;
+  --t13-on-dark: var(--t13-on-night);
+  --t13-on-dark-muted: var(--t13-on-night-2);
   --t13-on-dark-line: rgb(255 255 255 / 0.16);
-  --t13-on-dark-accent: #eea07a;
-
-  --t13-line: color-mix(in srgb, var(--t13-ink) 14%, transparent);
-  --t13-line-strong: color-mix(in srgb, var(--t13-ink) 32%, transparent);
-  --t13-lead: color-mix(in srgb, var(--t13-ink) 82%, var(--t13-bg));
-
-  /* Mode-dependent roles (every colour pairing below is checked in both modes). */
-  --t13-text-accent: #9c4522; /* 6.1:1 on bg, 5.5:1 on surface */
+  --t13-on-dark-accent: color-mix(in oklab, var(--t13-accent) 55%, white);
   --t13-btn-bg: var(--t13-ink);
   --t13-btn-ink: var(--t13-bg);
-  --t13-btn-hover: var(--t13-accent); /* white on #b4532a = 5.0:1 */
+  --t13-btn-hover: var(--t13-accent);
   --t13-btn-hover-ink: #ffffff;
-  --t13-focus: #9c4522;
   --t13-band: var(--t13-accent2);
-  --t13-card: var(--t13-surface);
-  --t13-shadow: 0 24px 60px -30px rgb(18 18 18 / 0.45);
-  --t13-ok: #2f6b3d;
-  --t13-bad: #a62a1e;
-
-  --t13-font: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --t13-display: "Italiana", "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --t13-ease: cubic-bezier(0.2, 0.8, 0.25, 1);
-  --t13-gutter: clamp(16px, 3.4vw, 48px);
-  --t13-section: clamp(56px, 8vw, 112px);
-  --t13-max: 1320px;
+  --t13-focus: var(--t13-text-accent);
+  --t13-bad: #b3261e;
+  --t13-shadow: 0 24px 60px -30px rgb(10 10 11 / 0.45);
 
   position: relative;
   background: var(--t13-bg);
   color: var(--t13-ink);
   font-family: var(--t13-font);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: clip;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.4s var(--t13-ease), color 0.4s var(--t13-ease);
 }
 
-/* Warm night: !important so it wins over the site's saved light palette (inline vars). */
+/* Night (default mode): neutrals re-mapped with !important to beat saved inline palettes. */
 .template13[data-mode="dark"] {
-  --t13-accent: #e48a5c !important;
-  --t13-accent2: #0a0908 !important;
-  --t13-ink: #f2eee7 !important;
-  --t13-muted: #aaa49b !important;
-  --t13-bg: #131110 !important;
-  --t13-surface: #1d1a18 !important;
-
-  --t13-line: color-mix(in srgb, var(--t13-ink) 15%, transparent);
-  --t13-line-strong: color-mix(in srgb, var(--t13-ink) 34%, transparent);
-  --t13-lead: color-mix(in srgb, var(--t13-ink) 86%, var(--t13-bg));
-
-  --t13-text-accent: #f0a07a; /* 8.2:1 on bg */
-  --t13-btn-bg: #f2eee7;
-  --t13-btn-ink: #131110; /* 15:1 */
-  --t13-btn-hover: #e48a5c;
-  --t13-btn-hover-ink: #131110; /* 7.5:1 */
-  --t13-focus: #f0a07a;
-  --t13-band: #0a0908;
-  --t13-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.9);
-  --t13-ok: #7fcf90;
+  --t13-ink: #f4f4f5 !important;
+  --t13-muted: #9ea3ad !important;     /* 7.4:1 on bg */
+  --t13-bg: #0a0a0b !important;
+  --t13-surface: #111113 !important;
+  --t13-card: #161618;
+  --t13-card-2: #1c1c1f;
+  --t13-dim: #5f636a;
+  --t13-line: rgb(255 255 255 / 0.08);
+  --t13-line-strong: rgb(255 255 255 / 0.16);
+  --t13-text-accent: color-mix(in oklab, var(--t13-accent) 55%, white); /* default ~#b3abff, 8.9:1 */
+  --t13-glass: rgb(255 255 255 / 0.08);
+  --t13-glass-line: rgb(255 255 255 / 0.14);
+  --t13-ok: #61df84;
+  --t13-warn: #f5b454;
   --t13-bad: #ff9b8f;
+  --t13-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.9);
   color-scheme: dark;
 }
+
+.t13-container { width: min(100% - 2 * var(--t13-gutter), var(--t13-max)); margin-inline: auto; }
+.t13-serif { font-family: var(--t13-serif); font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
+.t13-h1 { font: 400 clamp(44px, 5.6vw, 76px)/1 var(--t13-serif); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.t13-h2 { font: 400 clamp(40px, 4.6vw, 64px)/1 var(--t13-serif); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.t13-h3 { font: 500 15px/1.35 var(--t13-font); margin: 0; }
+.t13-lead { font-size: 14px; line-height: 1.65; color: var(--t13-muted); max-width: 36ch; margin: 18px 0 0; }
+.t13-label { font: 600 11px/1 var(--t13-font); letter-spacing: 0.09em; text-transform: uppercase; color: var(--t13-muted); margin: 0 0 14px; }
+.t13-mono { font-family: var(--t13-mono); font-size: 12px; letter-spacing: 0; }
+.t13-section { padding-block: var(--t13-section); }
+.t13-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Pills */
+.t13-pill {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px;
+  font: 500 13px/1 var(--t13-font); border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  transition: transform 0.25s var(--t13-ease), background-color 0.25s, color 0.25s, border-color 0.25s;
+}
+.t13-pill:active { transform: scale(0.97); }
+.t13-pill-solid { background: var(--t13-ink); color: var(--t13-bg); }
+.t13-pill-solid:hover { background: color-mix(in srgb, var(--t13-ink) 86%, var(--t13-bg)); }
+.t13-pill-white { background: #fff; color: #0a0a0b; }               /* on photos / night, 19:1 */
+.t13-pill-glass {
+  background: var(--t13-glass); color: inherit; border-color: var(--t13-glass-line);
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+.t13-pill-lg { height: 52px; padding: 0 24px; font-size: 14px; }
+.template13 :focus-visible { outline: 2px solid var(--t13-text-accent); outline-offset: 3px; border-radius: 8px; }
 
 .template13 *,
 .template13 *::before,
