@@ -119,9 +119,9 @@ export default function TeamManager({ siteId, actor, currentUserId }: Props) {
     <div className="space-y-4">
       {loadError ? <Notice kind="error">{loadError}</Notice> : null}
 
-      <ul className="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-200">
-        {members === null && !loadError ? <li className="px-4 py-3 text-sm text-gray-600">Loading…</li> : null}
-        {members?.length === 0 ? <li className="px-4 py-3 text-sm text-gray-600">No team members yet.</li> : null}
+      <ul className="divide-y divide-koi-ink/5 rounded-lg ring-1 ring-koi-ink/10">
+        {members === null && !loadError ? <li className="px-4 py-3 text-sm text-koi-ink/60">Loading…</li> : null}
+        {members?.length === 0 ? <li className="px-4 py-3 text-sm text-koi-ink/60">No team members yet.</li> : null}
         {(members ?? []).map((m) => {
           const verdict = canRemove(actor, { role: m.role, userId: m.userId }, {
             actorId: currentUserId ?? "",
@@ -131,11 +131,11 @@ export default function TeamManager({ siteId, actor, currentUserId }: Props) {
           return (
             <li key={m.userId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
               <div>
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-koi-ink">
                   {m.email || m.userId}
-                  {isSelf ? <span className="ml-2 text-xs text-gray-500">(you)</span> : null}
+                  {isSelf ? <span className="ml-2 text-xs text-koi-ink/55">(you)</span> : null}
                 </div>
-                <div className="text-xs text-gray-500">{m.role}</div>
+                <div className="text-xs text-koi-ink/55">{m.role}</div>
               </div>
               {verdict.ok && !isSelf ? (
                 <button type="button" className={btnDangerCls} disabled={busy} onClick={() => remove(m)}>
@@ -149,7 +149,7 @@ export default function TeamManager({ siteId, actor, currentUserId }: Props) {
 
       <form onSubmit={invite} className="space-y-3">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="block text-sm font-medium text-gray-800">
+          <label className="block text-sm font-medium text-koi-ink/80">
             Email
             <input
               type="email"
@@ -161,7 +161,7 @@ export default function TeamManager({ siteId, actor, currentUserId }: Props) {
             />
           </label>
           {actor === "admin" ? (
-            <label className="block text-sm font-medium text-gray-800">
+            <label className="block text-sm font-medium text-koi-ink/80">
               Role
               <select value={role} onChange={(e) => setRole(e.target.value as SiteRole)} className={inputCls}>
                 <option value="staff">Staff</option>
@@ -173,7 +173,7 @@ export default function TeamManager({ siteId, actor, currentUserId }: Props) {
             {busy ? "Working…" : actor === "owner" ? "Add staff member" : "Add member"}
           </button>
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-koi-ink/55">
           {actor === "owner"
             ? "Staff can see orders, the inbox and the business details, but cannot edit content. They need an existing account; Sulvatech creates accounts."
             : "Creates the account if the email is new. The temporary password is never shown here; share it separately."}

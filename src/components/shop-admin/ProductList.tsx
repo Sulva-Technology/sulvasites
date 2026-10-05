@@ -124,14 +124,14 @@ function Inner(props: ShopAdminProps) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="products" />
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <label className="min-w-[12rem] flex-1 text-sm font-medium text-gray-800">
+        <label className="min-w-[12rem] flex-1 text-sm font-medium text-koi-ink/80">
           Search
           <input className={inputCls} value={q} placeholder="Name or URL name" onChange={(e) => setQ(e.target.value)} />
         </label>
-        <label className="text-sm font-medium text-gray-800">
+        <label className="text-sm font-medium text-koi-ink/80">
           Category
           <select className={inputCls} value={cat} onChange={(e) => setCat(e.target.value)}>
             <option value="">All</option>
@@ -154,18 +154,18 @@ function Inner(props: ShopAdminProps) {
       ) : null}
       <section className={cardCls}>
         {!loaded ? (
-          <div className="text-sm text-gray-600">Loading…</div>
+          <div className="text-sm text-koi-ink/60">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-sm text-gray-600">{products.length === 0 ? "No products yet." : "No products match."}</div>
+          <div className="text-sm text-koi-ink/60">{products.length === 0 ? "No products yet." : "No products match."}</div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-koi-ink/5">
             {filtered.map((p) => {
               const i = products.findIndex((x) => x.id === p.id);
               const st = stock[p.id];
               const img = p.images?.[0]?.url;
               return (
                 <li key={p.id} className="flex flex-wrap items-center gap-3 py-2">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-gray-100">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-koi-ink/5">
                     {img ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={img} alt="" className="h-full w-full object-cover" />
@@ -175,7 +175,7 @@ function Inner(props: ShopAdminProps) {
                     <Link href={`${basePath}/products/${p.id}`} className="block truncate text-sm font-medium text-blue-800 hover:underline">
                       {p.name}
                     </Link>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-koi-ink/55">
                       {formatNaira(p.price_kobo)}
                       {p.category_id ? ` · ${catName.get(p.category_id) ?? ""}` : " · Uncategorised"}
                     </div>
@@ -190,7 +190,7 @@ function Inner(props: ShopAdminProps) {
                       )
                     ) : null}
                   </div>
-                  <label className="flex items-center gap-1 text-xs text-gray-700">
+                  <label className="flex items-center gap-1 text-xs text-koi-ink/75">
                     <input type="checkbox" checked={p.active} disabled={busy} onChange={() => toggleActive(p)} />
                     Active
                   </label>

@@ -81,9 +81,9 @@ export default function LogoSection({
   }
 
   return (
-    <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-      <h2 className="text-lg font-semibold">Logo</h2>
-      <p className="mt-1 text-sm text-gray-600">
+    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Logo</h2>
+      <p className="mt-1 text-sm text-koi-ink/60">
         Upload a logo (stored in Supabase Storage: bucket <span className="font-mono">site-assets</span>).
       </p>
 
@@ -99,7 +99,7 @@ export default function LogoSection({
             type="button"
             onClick={onUploadLogo}
             disabled={isLogoUploading}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isLogoUploading ? "Uploading…" : "Upload logo"}
           </button>
@@ -111,7 +111,7 @@ export default function LogoSection({
               type="button"
               onClick={onRemoveLogo}
               disabled={isLogoUploading}
-              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               Remove logo
             </button>
@@ -120,7 +120,7 @@ export default function LogoSection({
       </div>
 
       {logoError ? (
-        <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {logoError}
         </div>
       ) : null}
@@ -137,9 +137,9 @@ export default function LogoSection({
             <img
               src={logoUrl}
               alt="Site logo"
-              className="h-16 w-16 rounded bg-white object-contain ring-1 ring-gray-200"
+              className="h-16 w-16 rounded bg-white object-contain ring-1 ring-koi-ink/10"
             />
-            <div className="text-xs text-gray-600">
+            <div className="text-xs text-koi-ink/60">
               <div>
                 <span className="font-medium">Asset ID:</span>{" "}
                 <span className="font-mono">{logoAsset?.id ?? "—"}</span>
@@ -151,7 +151,7 @@ export default function LogoSection({
             </div>
           </div>
         ) : (
-          <div className="text-sm text-gray-600">No logo uploaded.</div>
+          <div className="text-sm text-koi-ink/60">No logo uploaded.</div>
         )}
       </div>
     </section>

@@ -390,10 +390,10 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-semibold tracking-tight text-koi-ink">
             Edit page: <span className="font-mono">{pageKey}</span>
           </h1>
-          <div className="mt-2 text-sm text-gray-700">
+          <div className="mt-2 text-sm text-koi-ink/75">
             <div>
               <span className="font-medium">Site:</span>{" "}
               <span className="font-mono">{siteId}</span>
@@ -421,14 +421,14 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
         <div className="flex flex-col items-end gap-2">
           <Link
             href={basePath}
-            className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
           >
             {mode === "owner" ? "Back to content" : "Back to site overview"}
           </Link>
           <button
             type="button"
             onClick={onResetDefaults}
-            className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
           >
             Reset to defaults
           </button>
@@ -436,15 +436,15 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-gray-600">Loading…</div>
+        <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : loadError ? (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
         </div>
       ) : null}
 
       {seedNotice ? (
-        <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {seedNotice}
         </div>
       ) : null}
@@ -457,7 +457,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
           className={`rounded px-3 py-2 text-sm font-medium ring-1 ${
             tab === "form"
               ? "bg-black text-white ring-black"
-              : "bg-white text-gray-900 ring-gray-200 hover:bg-gray-50"
+              : "bg-white text-koi-ink ring-koi-ink/10 hover:bg-koi-paper"
           }`}
         >
           Form Editor
@@ -468,7 +468,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
           className={`rounded px-3 py-2 text-sm font-medium ring-1 ${
             tab === "raw"
               ? "bg-black text-white ring-black"
-              : "bg-white text-gray-900 ring-gray-200 hover:bg-gray-50"
+              : "bg-white text-koi-ink ring-koi-ink/10 hover:bg-koi-paper"
           }`}
         >
           Raw JSON
@@ -477,13 +477,13 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
 
       {/* Content */}
       {pageDraft ? (
-        <div className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
+        <div className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
           {tab === "form" ? (
             <div className="space-y-6">
               {/* SEO */}
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <h2 className="text-lg font-semibold">SEO</h2>
+                  <h2 className="text-lg font-semibold tracking-tight text-koi-ink">SEO</h2>
                   {pageKey && showAi ? (
                     <AiSeoButton
                       label="AI: improve SEO & alt text"
@@ -503,23 +503,23 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-sm font-medium text-gray-800">
+                    <span className="text-sm font-medium text-koi-ink/80">
                       Title
                     </span>
                     <input
                       value={pageDraft.seo.title}
                       onChange={(e) => setSeo({ title: e.target.value })}
-                      className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                      className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-gray-800">
+                    <span className="text-sm font-medium text-koi-ink/80">
                       Description
                     </span>
                     <input
                       value={pageDraft.seo.description}
                       onChange={(e) => setSeo({ description: e.target.value })}
-                      className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                      className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     />
                   </label>
                 </div>
@@ -528,7 +528,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
               {/* Sections */}
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-semibold">Sections</h2>
+                  <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Sections</h2>
                   <div className="flex items-center gap-2">
                     <select
                       defaultValue=""
@@ -538,7 +538,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                         addSection(t);
                         e.target.value = "";
                       }}
-                      className="rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                      className="rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     >
                       <option value="" disabled>
                         Add section…
@@ -553,16 +553,16 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                 </div>
 
                 {pageDraft.sections.length === 0 ? (
-                  <div className="text-sm text-gray-600">No sections.</div>
+                  <div className="text-sm text-koi-ink/60">No sections.</div>
                 ) : (
                   <div className="space-y-4">
                     {pageDraft.sections.map((section, idx) => (
                       <div
                         key={`${section.type}-${idx}`}
-                        className="rounded border border-gray-200 bg-gray-50 p-4"
+                        className="rounded border border-koi-ink/10 bg-koi-paper p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="text-sm font-semibold text-gray-900">
+                          <div className="text-sm font-semibold text-koi-ink">
                             {idx + 1}. {section.type}
                           </div>
                           <div className="flex items-center gap-2">
@@ -577,7 +577,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                               type="button"
                               onClick={() => moveSection(idx, -1)}
                               disabled={idx === 0}
-                              className="rounded bg-white px-2 py-1 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                              className="rounded-full bg-white px-3 py-1 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-50"
                             >
                               Up
                             </button>
@@ -585,7 +585,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                               type="button"
                               onClick={() => moveSection(idx, 1)}
                               disabled={idx === pageDraft.sections.length - 1}
-                              className="rounded bg-white px-2 py-1 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                              className="rounded-full bg-white px-3 py-1 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-50"
                             >
                               Down
                             </button>
@@ -665,7 +665,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-koi-ink/75">
                 Edit the JSON directly. Must be valid JSON with{" "}
                 <span className="font-mono">{"{ seo: object, sections: array }"}</span>.
               </p>
@@ -673,10 +673,10 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                 value={rawText}
                 onChange={(e) => onRawChange(e.target.value)}
                 rows={18}
-                className="w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-black"
+                className="w-full resize-y rounded border border-koi-ink/15 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-koi-sea"
               />
               {rawError ? (
-                <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {rawError}
                 </div>
               ) : null}
@@ -689,22 +689,22 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
           {saveError ? (
-            <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {saveError}
             </div>
           ) : null}
           {saveSuccess ? (
-            <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
               Draft saved.
             </div>
           ) : null}
           {publishSuccess ? (
-            <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
               Page published.
             </div>
           ) : null}
           {unpublishSuccess ? (
-            <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
               Page unpublished.
             </div>
           ) : null}
@@ -716,7 +716,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
               type="button"
               onClick={onUnpublishPage}
               disabled={isSaving}
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               {isSaving ? "Working…" : "Unpublish Page"}
             </button>
@@ -726,7 +726,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
             type="button"
             onClick={onSaveDraft}
             disabled={isSaving || !!rawError || !pageDraft}
-            className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isSaving ? "Saving…" : "Save Draft"}
           </button>
@@ -735,7 +735,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
             type="button"
             onClick={onPublishPage}
             disabled={isSaving || !!rawError || !pageDraft}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isSaving ? "Publishing…" : "Publish Page"}
           </button>

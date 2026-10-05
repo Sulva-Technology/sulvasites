@@ -88,7 +88,7 @@ export default function InboxView({ siteId }: { siteId: string }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <label className="min-w-[12rem] flex-1 text-sm font-medium text-gray-800">
+        <label className="min-w-[12rem] flex-1 text-sm font-medium text-koi-ink/80">
           Search
           <input
             className={inputCls}
@@ -97,7 +97,7 @@ export default function InboxView({ siteId }: { siteId: string }) {
             onChange={(e) => setFilter((f) => ({ ...f, q: e.target.value }))}
           />
         </label>
-        <label className="text-sm font-medium text-gray-800">
+        <label className="text-sm font-medium text-koi-ink/80">
           Status
           <select
             className={inputCls}
@@ -112,7 +112,7 @@ export default function InboxView({ siteId }: { siteId: string }) {
             <option value="archived">Archived</option>
           </select>
         </label>
-        <label className="text-sm font-medium text-gray-800">
+        <label className="text-sm font-medium text-koi-ink/80">
           Type
           <select
             className={inputCls}
@@ -133,39 +133,39 @@ export default function InboxView({ siteId }: { siteId: string }) {
           <Notice kind="error">{err}</Notice>
         </div>
       ) : null}
-      <p className="mb-2 text-xs text-gray-500" aria-live="polite">
+      <p className="mb-2 text-xs text-koi-ink/55" aria-live="polite">
         {unread} unread
       </p>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <section className={`${cardCls} p-0`} aria-label="Messages">
           {!loaded ? (
-            <div className="p-4 text-sm text-gray-600">Loading…</div>
+            <div className="p-4 text-sm text-koi-ink/60">Loading…</div>
           ) : visible.length === 0 ? (
-            <div className="p-4 text-sm text-gray-600">
+            <div className="p-4 text-sm text-koi-ink/60">
               {rows.length === 0 ? "No messages yet. Enquiries and bookings from your website will appear here." : "No messages match."}
             </div>
           ) : (
-            <ul className="max-h-[32rem] divide-y divide-gray-100 overflow-y-auto">
+            <ul className="max-h-[32rem] divide-y divide-koi-ink/5 overflow-y-auto">
               {visible.map((r) => (
                 <li key={r.id}>
                   <button
                     type="button"
                     onClick={() => open(r)}
                     aria-current={r.id === selectedId}
-                    className={`block w-full px-4 py-3 text-left hover:bg-gray-50 ${r.id === selectedId ? "bg-gray-50" : ""}`}
+                    className={`block w-full px-4 py-3 text-left hover:bg-koi-paper ${r.id === selectedId ? "bg-koi-paper" : ""}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`truncate text-sm ${r.status === "new" ? "font-semibold text-gray-900" : "text-gray-800"}`}>
+                      <span className={`truncate text-sm ${r.status === "new" ? "font-semibold text-koi-ink" : "text-koi-ink/80"}`}>
                         {r.name}
                       </span>
-                      <span className="shrink-0 text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString()}</span>
+                      <span className="shrink-0 text-xs text-koi-ink/55">{new Date(r.created_at).toLocaleDateString()}</span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-2">
                       <Badge tone={statusTone(r.status)}>{INBOX_STATUS_LABEL[r.status]}</Badge>
-                      <span className="text-xs text-gray-500">{r.kind === "booking" ? "Booking" : "Enquiry"}</span>
+                      <span className="text-xs text-koi-ink/55">{r.kind === "booking" ? "Booking" : "Enquiry"}</span>
                     </div>
-                    <div className="mt-1 truncate text-xs text-gray-600">
+                    <div className="mt-1 truncate text-xs text-koi-ink/60">
                       {r.message || Object.values(r.extra).join(" · ") || r.email || r.phone}
                     </div>
                   </button>
@@ -173,18 +173,18 @@ export default function InboxView({ siteId }: { siteId: string }) {
               ))}
             </ul>
           )}
-          {rows.length >= LIMIT ? <p className="px-4 py-2 text-xs text-gray-500">Showing the latest {LIMIT} messages.</p> : null}
+          {rows.length >= LIMIT ? <p className="px-4 py-2 text-xs text-koi-ink/55">Showing the latest {LIMIT} messages.</p> : null}
         </section>
 
         <section className={cardCls} aria-label="Message detail">
           {!selected ? (
-            <div className="text-sm text-gray-600">Select a message to read it.</div>
+            <div className="text-sm text-koi-ink/60">Select a message to read it.</div>
           ) : (
             <div>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{selected.name}</h2>
-                  <p className="text-xs text-gray-500">
+                  <h2 className="text-lg font-semibold tracking-tight text-koi-ink">{selected.name}</h2>
+                  <p className="text-xs text-koi-ink/55">
                     {selected.kind === "booking" ? "Booking request" : "Enquiry"} · {new Date(selected.created_at).toLocaleString()}
                     {selected.source_page ? ` · from ${selected.source_page}` : ""}
                   </p>
@@ -195,26 +195,26 @@ export default function InboxView({ siteId }: { siteId: string }) {
               <dl className="mt-4 grid grid-cols-[6rem_1fr] gap-x-3 gap-y-1 text-sm">
                 {selected.email ? (
                   <>
-                    <dt className="text-gray-500">Email</dt>
-                    <dd className="break-all text-gray-900">{selected.email}</dd>
+                    <dt className="text-koi-ink/55">Email</dt>
+                    <dd className="break-all text-koi-ink">{selected.email}</dd>
                   </>
                 ) : null}
                 {selected.phone ? (
                   <>
-                    <dt className="text-gray-500">Phone</dt>
-                    <dd className="text-gray-900">{selected.phone}</dd>
+                    <dt className="text-koi-ink/55">Phone</dt>
+                    <dd className="text-koi-ink">{selected.phone}</dd>
                   </>
                 ) : null}
                 {Object.entries(selected.extra).map(([k, v]) => (
                   <div key={k} className="contents">
-                    <dt className="capitalize text-gray-500">{k.replace(/_/g, " ")}</dt>
-                    <dd className="text-gray-900">{v}</dd>
+                    <dt className="capitalize text-koi-ink/55">{k.replace(/_/g, " ")}</dt>
+                    <dd className="text-koi-ink">{v}</dd>
                   </div>
                 ))}
               </dl>
 
               {selected.message ? (
-                <p className="mt-4 whitespace-pre-wrap rounded bg-gray-50 p-3 text-sm text-gray-900">{selected.message}</p>
+                <p className="mt-4 whitespace-pre-wrap rounded bg-koi-paper p-3 text-sm text-koi-ink">{selected.message}</p>
               ) : null}
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export default function InboxView({ siteId }: { siteId: string }) {
                 ) : null}
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-koi-ink/5 pt-4">
                 <button
                   type="button"
                   className={btnGhostCls}

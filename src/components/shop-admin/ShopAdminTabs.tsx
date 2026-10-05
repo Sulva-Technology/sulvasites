@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Tabs } from "@/components/ui/Tabs";
 
 import type { ShopAdminProps } from "./common";
 
@@ -16,19 +16,16 @@ const TABS: Array<{ key: ShopTabKey; label: string; path: string; roles: string[
 
 export default function ShopAdminTabs({ basePath, role, active }: ShopAdminProps & { active: ShopTabKey }) {
   return (
-    <nav aria-label="Shop sections" className="mb-6 flex flex-wrap gap-1 border-b border-gray-200">
-      {TABS.filter((t) => t.roles.includes(role)).map((t) => (
-        <Link
-          key={t.key}
-          href={`${basePath}${t.path}`}
-          aria-current={t.key === active ? "page" : undefined}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
-            t.key === active ? "border-gray-900 text-gray-900" : "border-transparent text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          {t.label}
-        </Link>
-      ))}
-    </nav>
+    <div className="mb-6">
+      <Tabs
+        label="Shop sections"
+        active={active}
+        items={TABS.filter((t) => t.roles.includes(role)).map((t) => ({
+          id: t.key,
+          label: t.label,
+          href: `${basePath}${t.path}`,
+        }))}
+      />
+    </div>
   );
 }

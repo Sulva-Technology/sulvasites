@@ -8,7 +8,7 @@ export default function ShopAdminLink({ siteId, templateKey }: { siteId: string;
   return (
     <Link
       href={`/admin/sites/${siteId}/shop`}
-      className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+      className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
     >
       Shop
     </Link>

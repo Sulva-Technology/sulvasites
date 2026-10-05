@@ -124,7 +124,7 @@ function Inner(props: ShopAdminProps) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="categories" />
       {err ? (
         <div className="mb-3">
@@ -139,7 +139,7 @@ function Inner(props: ShopAdminProps) {
             void add();
           }}
         >
-          <label className="min-w-[14rem] flex-1 text-sm font-medium text-gray-800">
+          <label className="min-w-[14rem] flex-1 text-sm font-medium text-koi-ink/80">
             New category
             <input className={inputCls} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
           </label>
@@ -150,11 +150,11 @@ function Inner(props: ShopAdminProps) {
       </section>
       <section className={`${cardCls} mt-4`}>
         {!loaded ? (
-          <div className="text-sm text-gray-600">Loading…</div>
+          <div className="text-sm text-koi-ink/60">Loading…</div>
         ) : cats.length === 0 ? (
-          <div className="text-sm text-gray-600">No categories yet.</div>
+          <div className="text-sm text-koi-ink/60">No categories yet.</div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-koi-ink/5">
             {cats.map((c, i) => (
               <li key={c.id} className="flex flex-wrap items-center gap-3 py-2">
                 {editing?.id === c.id ? (
@@ -181,8 +181,8 @@ function Inner(props: ShopAdminProps) {
                 ) : (
                   <>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-gray-900">{c.name}</div>
-                      <div className="truncate font-mono text-xs text-gray-500">/shop/c/{c.slug}</div>
+                      <div className="truncate text-sm font-medium text-koi-ink">{c.name}</div>
+                      <div className="truncate font-mono text-xs text-koi-ink/55">/shop/c/{c.slug}</div>
                     </div>
                     <button type="button" className={btnGhostCls} disabled={busy || i === 0} aria-label={`Move ${c.name} up`} onClick={() => move(i, -1)}>
                       Up

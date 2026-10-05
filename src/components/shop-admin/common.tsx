@@ -10,14 +10,14 @@ import { formatSupabaseError } from "@/lib/supabase/formatError";
 export type ShopAdminProps = { siteId: string; basePath: string; role: ShopRole };
 
 export const inputCls =
-  "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none disabled:bg-gray-100";
+  "mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15 disabled:bg-koi-paper";
 export const btnCls =
-  "rounded bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-700 disabled:opacity-50";
+  "rounded-full bg-koi-ink px-4 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-50";
 export const btnGhostCls =
-  "rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-50";
+  "rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-50";
 export const btnDangerCls =
-  "rounded bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-50";
-export const cardCls = "rounded-lg border border-gray-200 bg-white p-4 shadow-sm";
+  "rounded-full bg-white px-4 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-50";
+export const cardCls = "rounded-3xl bg-white p-5 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5";
 
 export function errMsg(e: unknown): string {
   return formatSupabaseError(e) ?? "Something went wrong.";
@@ -55,9 +55,9 @@ export function Notice({ kind, children }: { kind: "error" | "ok" | "warn" | "in
         ? "border-green-200 bg-green-50 text-green-800"
         : kind === "warn"
           ? "border-amber-200 bg-amber-50 text-amber-900"
-          : "border-gray-200 bg-gray-50 text-gray-700";
+          : "border-koi-ink/10 bg-koi-paper text-koi-ink/75";
   return (
-    <div role={kind === "error" ? "alert" : "status"} className={`rounded border px-3 py-2 text-sm ${cls}`}>
+    <div role={kind === "error" ? "alert" : "status"} className={`rounded-2xl border px-3 py-2 text-sm ${cls}`}>
       {children}
     </div>
   );
@@ -65,13 +65,13 @@ export function Notice({ kind, children }: { kind: "error" | "ok" | "warn" | "in
 
 export function Badge({ tone, children }: { tone: "gray" | "green" | "amber" | "red" | "blue"; children: ReactNode }) {
   const cls = {
-    gray: "bg-gray-100 text-gray-700",
+    gray: "bg-koi-ink/5 text-koi-ink/70",
     green: "bg-green-100 text-green-800",
     amber: "bg-amber-100 text-amber-900",
     red: "bg-red-100 text-red-800",
-    blue: "bg-blue-100 text-blue-800",
+    blue: "bg-koi-sea/10 text-koi-deep",
   }[tone];
-  return <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${cls}`}>{children}</span>;
+  return <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>;
 }
 
 export function NoAccess() {

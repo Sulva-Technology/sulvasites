@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { templateLabel } from "@/templates/meta";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { publishSite, unpublishSite } from "@/lib/publishing";
@@ -16,6 +16,10 @@ import ShopAdminLink from "@/components/admin/site/ShopAdminLink";
 import ProfileEditor from "@/components/site-editor/ProfileEditor";
 import TeamManager from "@/components/team/TeamManager";
 import type { ExtraPageRow } from "@/lib/extraPages";
+import { useAdminSiteChrome } from "@/components/admin/site/AdminSiteChrome";
+import { PillButton } from "@/components/ui/Button";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 type SiteRow = {
   id: string;
@@ -51,6 +55,9 @@ export default function SiteOverviewPage({
     (params && typeof params === "object" && "siteId" in params && !("then" in params)
       ? (params as { siteId: string }).siteId
       : null) || null;
+
+  const view = useSearchParams()?.get("view") === "settings" ? "settings" : "overview";
+  const chrome = useAdminSiteChrome();
 
   const [site, setSite] = useState<SiteRow | null>(null);
   const [pages, setPages] = useState<PageRow[]>([]);
@@ -171,7 +178,7 @@ export default function SiteOverviewPage({
 
   if (!siteId) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         Invalid site ID. Please go back to the sites list.
       </div>
     );
@@ -195,6 +202,7 @@ export default function SiteOverviewPage({
           return updated ? { ...p, status: updated.status } : p;
         }),
       );
+      chrome?.setStatus(res.site.status);
       setPublishSuccess("Site published.");
     } catch (err) {
       setPublishError(formatSupabaseError(err));
@@ -221,6 +229,7 @@ export default function SiteOverviewPage({
           return updated ? { ...p, status: updated.status } : p;
         }),
       );
+      chrome?.setStatus(res.site.status);
       setPublishSuccess("Site unpublished.");
     } catch (err) {
       setPublishError(formatSupabaseError(err));
@@ -230,12 +239,16 @@ export default function SiteOverviewPage({
   }
 
   if (isLoading) {
-    return <div className="text-sm text-gray-600">Loading…</div>;
+    return (
+      <Card>
+        <p className="text-sm text-koi-ink/60">Loading…</p>
+      </Card>
+    );
   }
 
   if (loadError) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {loadError}
       </div>
     );
@@ -243,231 +256,190 @@ export default function SiteOverviewPage({
 
   if (!site) {
     return (
-      <div className="text-sm text-gray-700">
-        Site not found (or you don&apos;t have access).
+      <Card>
+        <p className="text-sm text-koi-ink/75">Site not found (or you don&apos;t have access).</p>
+      </Card>
+    );
+  }
+
+  const publishCard = (
+    <Card>
+      <CardHeader
+        title="Publishing"
+        description="Manage profile and page content for this site."
+        action={
+          site.status === "published" ? (
+            <PillButton variant="quiet" onClick={onUnpublishSite} loading={isPublishing}>
+              {isPublishing ? "Working…" : "Unpublish site"}
+            </PillButton>
+          ) : (
+            <PillButton onClick={onPublishSite} loading={isPublishing}>
+              {isPublishing ? "Publishing…" : "Publish site"}
+            </PillButton>
+          )
+        }
+      />
+
+      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Slug</dt>
+          <dd className="mt-1 break-all font-mono text-sm">{site.slug}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Preview URL</dt>
+          <dd className="mt-1 break-all font-mono text-sm">
+            https://{site.slug}.{platformDomain}
+          </dd>
+          <dd className="mt-1 text-xs text-koi-ink/55">
+            Local dev uses path-based routing: <span className="font-mono">http://localhost:3000/{site.slug}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Admin preview</dt>
+          <dd className="mt-1">
+            <Link
+              href={`/admin/sites/${siteId}/preview`}
+              className="text-sm font-medium text-koi-deep underline underline-offset-2 hover:text-koi-sea"
+            >
+              View preview
+            </Link>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Custom domain</dt>
+          <dd className="mt-1 break-all font-mono text-sm">
+            {activeDomain ? `https://${activeDomain.hostname}` : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Template</dt>
+          <dd className="mt-1 text-sm">{templateLabel(site.template_key)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-koi-ink/60">Status</dt>
+          <dd className="mt-1">
+            <StatusPill tone={site.status === "published" ? "live" : site.status === "draft" ? "draft" : "warn"}>
+              {site.status}
+            </StatusPill>
+          </dd>
+        </div>
+      </dl>
+
+      {publishError ? (
+        <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {publishError}
+        </div>
+      ) : null}
+      {publishSuccess ? (
+        <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {publishSuccess}
+        </div>
+      ) : null}
+    </Card>
+  );
+
+  if (view === "settings") {
+    return (
+      <div className="space-y-6">
+        {publishCard}
+
+        {/* A3) Logo + B) Business Profile Editor */}
+        <ProfileEditor siteId={siteId} mode="admin" basePath={`/admin/sites/${siteId}`} />
+
+        {/* B2) AI content generator (optional) */}
+        <AiSiteContentGenerator siteId={siteId} templateKey={site.template_key} />
+
+        <AiSeoAllPages siteId={siteId} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* A) Site Summary */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold">Site overview</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Manage profile and page content for this site.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Link
-              href={`/admin/sites/${siteId}/inbox`}
-              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-            >
-              Inbox
-            </Link>
-            <Link
-              href={`/admin/sites/${siteId}/business`}
-              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-            >
-              Business data
-            </Link>
-            <Link
-              href={`/admin/sites/${siteId}/insights`}
-              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-            >
-              Insights
-            </Link>
-            <ShopAdminLink siteId={siteId} templateKey={site.template_key} />
-            <Link
-              href="/admin/sites"
-              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-            >
-              Back to sites
-            </Link>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {publishCard}
 
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Slug</dt>
-            <dd className="mt-1 font-mono text-sm">{site.slug}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Preview URL</dt>
-            <dd className="mt-1 font-mono text-sm">
-              https://{site.slug}.{platformDomain}
-            </dd>
-            <dd className="mt-1 text-xs text-gray-500">
-              Local dev uses path-based routing: <span className="font-mono">http://localhost:3000/{site.slug}</span>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Admin Preview</dt>
-            <dd className="mt-1">
-              <Link
-                href={`/admin/sites/${siteId}/preview`}
-                className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
-              >
-                View Preview
-              </Link>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Custom domain</dt>
-            <dd className="mt-1 font-mono text-sm">
-              {activeDomain ? `https://${activeDomain.hostname}` : "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Template</dt>
-            <dd className="mt-1 text-sm text-gray-900">{templateLabel(site.template_key)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-gray-600">Status</dt>
-            <dd className="mt-1 text-sm text-gray-900">{site.status}</dd>
-          </div>
-        </dl>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        {/* C) Pages quick links */}
+        <Card>
+          <CardHeader
+            title="Pages"
+            description="Jump into Home/About/Contact editing."
+            action={<ShopAdminLink siteId={siteId} templateKey={site.template_key} />}
+          />
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          {site.status === "published" ? (
-            <button
-              type="button"
-              onClick={onUnpublishSite}
-              disabled={isPublishing}
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
-            >
-              {isPublishing ? "Working…" : "Unpublish Site"}
-            </button>
+          {/* Warning if pages aren't published */}
+          {site.status === "published" && sortedPages.some((p) => p.status !== "published") ? (
+            <div className="mb-4 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              <strong>⚠️ Warning:</strong> Your site is published, but some pages are still in draft.
+              The site won&apos;t be accessible until all pages (home, about, contact) are published.
+              Click &quot;Publish Site&quot; again to publish all pages, or publish each page individually.
+            </div>
+          ) : null}
+
+          {sortedPages.length < 3 ? (
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <strong>⚠️ Error:</strong> Missing pages! Expected 3 pages (home, about, contact), but found {sortedPages.length}.
+              The database trigger may not have run. Please check your database or contact support.
+            </div>
+          ) : null}
+
+          {sortedPages.length === 0 ? (
+            <p className="text-sm text-koi-ink/60">No pages found (the DB trigger may not have run).</p>
           ) : (
-            <button
-              type="button"
-              onClick={onPublishSite}
-              disabled={isPublishing}
-              className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {isPublishing ? "Publishing…" : "Publish Site"}
-            </button>
+            <ul className="space-y-2">
+              {sortedPages.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl bg-koi-paper px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium capitalize">{p.key}</span>
+                    <StatusPill tone={p.status === "published" ? "live" : "draft"}>{p.status}</StatusPill>
+                  </div>
+                  <PillButton href={`/admin/sites/${siteId}/pages/${p.key}`} variant="quiet" size="sm">
+                    Edit
+                  </PillButton>
+                </li>
+              ))}
+            </ul>
           )}
+        </Card>
+
+        {/* A2) Domains */}
+        <DomainsSection
+          siteId={siteId}
+          siteSlug={site.slug}
+          platformDomain={platformDomain}
+          domains={domains}
+          setDomains={setDomains}
+        />
+
+        {/* B4) Extra pages (per site) */}
+        <ExtraPagesSection
+          siteId={siteId}
+          siteSlug={site.slug}
+          templateKey={site.template_key}
+          platformDomain={platformDomain}
+          extraPages={extraPages}
+          setExtraPages={setExtraPages}
+        />
+
+        {/* A2b) Team */}
+        <Card>
+          <CardHeader
+            title="Team"
+            description="Owners can edit content and manage staff; staff can view orders, inbox and business details."
+          />
+          <TeamManager siteId={siteId} actor="admin" />
+        </Card>
+      </div>
+
+      <Card className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">Logo, profile, AI content &amp; SEO</h2>
+          <p className="mt-1 text-sm text-koi-ink/60">Business profile, logo upload and AI tools live under Settings.</p>
         </div>
-
-        {publishError ? (
-          <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {publishError}
-          </div>
-        ) : null}
-        {publishSuccess ? (
-          <div className="mt-3 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {publishSuccess}
-          </div>
-        ) : null}
-      </section>
-
-      {/* A2) Domains */}
-      <DomainsSection
-        siteId={siteId}
-        siteSlug={site.slug}
-        platformDomain={platformDomain}
-        domains={domains}
-        setDomains={setDomains}
-      />
-
-      {/* A2b) Team */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Team</h2>
-        <p className="mt-1 mb-4 text-sm text-gray-600">
-          Owners can edit content and manage staff; staff can view orders, inbox and business details.
-        </p>
-        <TeamManager siteId={siteId} actor="admin" />
-      </section>
-
-      {/* A3) Logo + B) Business Profile Editor */}
-      <ProfileEditor siteId={siteId} mode="admin" basePath={`/admin/sites/${siteId}`} />
-
-      {/* B2) AI content generator (optional) */}
-      <AiSiteContentGenerator siteId={siteId} templateKey={site.template_key} />
-
-      <AiSeoAllPages siteId={siteId} />
-
-      {/* B4) Extra pages (per site) */}
-      <ExtraPagesSection
-        siteId={siteId}
-        siteSlug={site.slug}
-        templateKey={site.template_key}
-        platformDomain={platformDomain}
-        extraPages={extraPages}
-        setExtraPages={setExtraPages}
-      />
-
-      {/* C) Pages quick links */}
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Pages</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Jump into Home/About/Contact editing.
-        </p>
-
-        {/* Warning if pages aren't published */}
-        {site.status === "published" && sortedPages.some((p) => p.status !== "published") ? (
-          <div className="mt-4 rounded border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-            <strong>⚠️ Warning:</strong> Your site is published, but some pages are still in draft. 
-            The site won&apos;t be accessible until all pages (home, about, contact) are published. 
-            Click &quot;Publish Site&quot; again to publish all pages, or publish each page individually.
-          </div>
-        ) : null}
-
-        {sortedPages.length < 3 ? (
-          <div className="mt-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <strong>⚠️ Error:</strong> Missing pages! Expected 3 pages (home, about, contact), but found {sortedPages.length}. 
-            The database trigger may not have run. Please check your database or contact support.
-          </div>
-        ) : null}
-
-        <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-gray-200">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-4 py-3">Page</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {sortedPages.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-gray-600" colSpan={3}>
-                    No pages found (the DB trigger may not have run).
-                  </td>
-                </tr>
-              ) : (
-                sortedPages.map((p) => (
-                  <tr key={p.id}>
-                    <td className="px-4 py-3 font-medium">{p.key}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        p.status === "published" 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/admin/sites/${siteId}/pages/${p.key}`}
-                        className="text-sm font-medium text-black underline underline-offset-2"
-                      >
-                        Edit
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <PillButton href={`/admin/sites/${siteId}?view=settings`} variant="quiet">
+          Open settings
+        </PillButton>
+      </Card>
     </div>
   );
 }
-

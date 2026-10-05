@@ -19,7 +19,7 @@ function Profile() {
   const basePath = `/dashboard/${siteId}/content`;
   return (
     <div className="space-y-4">
-      <Link href={basePath} className="text-sm text-gray-700 underline">
+      <Link href={basePath} className="text-sm text-koi-ink/75 underline">
         Back to content
       </Link>
       <ProfileEditor siteId={siteId} mode="owner" basePath={basePath} />

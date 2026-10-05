@@ -75,23 +75,23 @@ export default function DomainsSection({
   }
 
   return (
-    <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-      <h2 className="text-lg font-semibold">Domains</h2>
-      <p className="mt-1 text-sm text-gray-600">Use either subdomains (recommended) or a custom domain.</p>
+    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Domains</h2>
+      <p className="mt-1 text-sm text-koi-ink/60">Use either subdomains (recommended) or a custom domain.</p>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-900">Subdomains (recommended)</div>
-          <div className="mt-1 text-sm text-gray-700">
+        <div className="rounded-2xl bg-koi-paper p-4">
+          <div className="text-sm font-semibold text-koi-ink">Subdomains (recommended)</div>
+          <div className="mt-1 text-sm text-koi-ink/75">
             Your site is automatically available at:
           </div>
-          <div className="mt-2 rounded bg-white px-3 py-2 font-mono text-sm ring-1 ring-gray-200">
+          <div className="mt-2 rounded bg-white px-3 py-2 font-mono text-sm ring-1 ring-koi-ink/10">
             https://{siteSlug}.{platformDomain}
           </div>
-          <div className="mt-3 text-sm text-gray-700">
+          <div className="mt-3 text-sm text-koi-ink/75">
             DNS setup (one-time, for your whole platform):
           </div>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-koi-ink/75">
             <li>
               Add <span className="font-mono">{platformDomain}</span> to your hosting provider (Vercel/Netlify) as a domain.
             </li>
@@ -104,13 +104,13 @@ export default function DomainsSection({
           </ul>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-900">Custom domain (per site)</div>
-          <div className="mt-1 text-sm text-gray-700">
+        <div className="rounded-2xl bg-koi-paper p-4">
+          <div className="text-sm font-semibold text-koi-ink">Custom domain (per site)</div>
+          <div className="mt-1 text-sm text-koi-ink/75">
             If a client has their own domain (e.g. <span className="font-mono">client.com</span>), add it below.
             After your DNS points to this app, mark it <b>Active</b>.
           </div>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 text-xs text-koi-ink/55">
             This uses custom-domain routing (requests to <span className="font-mono">client.com</span> are routed to this site).
           </div>
         </div>
@@ -121,26 +121,26 @@ export default function DomainsSection({
           value={domainHostname}
           onChange={(e) => setDomainHostname(e.target.value)}
           placeholder="kingsbakery.com"
-          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+          className="w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
         />
         <button
           type="submit"
           disabled={isDomainSaving}
-          className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
         >
           {isDomainSaving ? "Adding…" : "Add domain"}
         </button>
       </form>
 
       {domainError ? (
-        <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {domainError}
         </div>
       ) : null}
 
-      <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-gray-200">
+      <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-koi-ink/10">
         <table className="w-full table-auto">
-          <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
+          <thead className="bg-koi-paper text-left text-xs font-semibold text-koi-ink/75">
             <tr>
               <th className="px-4 py-3">Hostname</th>
               <th className="px-4 py-3">Status</th>
@@ -148,10 +148,10 @@ export default function DomainsSection({
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
+          <tbody className="divide-y divide-koi-ink/5 text-sm">
             {domains.length === 0 ? (
               <tr>
-                <td className="px-4 py-4 text-gray-600" colSpan={4}>
+                <td className="px-4 py-4 text-koi-ink/60" colSpan={4}>
                   No domains yet.
                 </td>
               </tr>
@@ -160,7 +160,7 @@ export default function DomainsSection({
                 <tr key={d.id}>
                   <td className="px-4 py-3 font-mono">{d.hostname}</td>
                   <td className="px-4 py-3">{d.status}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-koi-ink/75">
                     {new Date(d.created_at).toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -170,7 +170,7 @@ export default function DomainsSection({
                           type="button"
                           onClick={() => onSetDomainStatus(d.id, "active")}
                           disabled={domainActionLoadingId === d.id}
-                          className="rounded bg-white px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+                          className="rounded bg-white px-3 py-1.5 text-sm font-medium text-koi-ink shadow-sm ring-1 ring-koi-ink/10 hover:bg-koi-paper disabled:opacity-60"
                         >
                           {domainActionLoadingId === d.id ? "Working…" : "Mark Active"}
                         </button>
@@ -180,7 +180,7 @@ export default function DomainsSection({
                           type="button"
                           onClick={() => onSetDomainStatus(d.id, "blocked")}
                           disabled={domainActionLoadingId === d.id}
-                          className="rounded bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+                          className="rounded bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm ring-1 ring-koi-ink/10 hover:bg-koi-paper disabled:opacity-60"
                         >
                           {domainActionLoadingId === d.id ? "Working…" : "Block"}
                         </button>

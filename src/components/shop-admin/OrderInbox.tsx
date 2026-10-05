@@ -95,14 +95,14 @@ export default function OrderInbox(props: ShopAdminProps) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="orders" />
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <label className="min-w-[12rem] flex-1 text-sm font-medium text-gray-800">
+        <label className="min-w-[12rem] flex-1 text-sm font-medium text-koi-ink/80">
           Search
           <input className={inputCls} value={q} placeholder="Reference, name or email" onChange={(e) => setQ(e.target.value)} />
         </label>
-        <label className="text-sm font-medium text-gray-800">
+        <label className="text-sm font-medium text-koi-ink/80">
           Status
           <select className={inputCls} value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
             <option value="active">Active (hides old unpaid)</option>
@@ -130,13 +130,13 @@ export default function OrderInbox(props: ShopAdminProps) {
       ) : null}
       <section className={cardCls}>
         {!loaded ? (
-          <div className="text-sm text-gray-600">Loading…</div>
+          <div className="text-sm text-koi-ink/60">Loading…</div>
         ) : rows.length === 0 ? (
-          <div className="text-sm text-gray-600">No orders to show.</div>
+          <div className="text-sm text-koi-ink/60">No orders to show.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-sm">
-              <thead className="text-xs uppercase text-gray-500">
+              <thead className="text-xs uppercase text-koi-ink/55">
                 <tr>
                   <th className="py-1 pr-3">Order</th>
                   <th className="py-1 pr-3">Customer</th>
@@ -147,31 +147,31 @@ export default function OrderInbox(props: ShopAdminProps) {
               </thead>
               <tbody>
                 {rows.map((o) => (
-                  <tr key={o.id} className="border-t border-gray-100 align-top">
+                  <tr key={o.id} className="border-t border-koi-ink/5 align-top">
                     <td className="py-2 pr-3">
                       <Link href={`${basePath}/orders/${o.id}`} className="font-mono text-xs font-medium text-blue-800 hover:underline">
                         {o.reference}
                       </Link>
                     </td>
                     <td className="py-2 pr-3">
-                      <div className="text-gray-900">{o.customer_name}</div>
-                      <div className="text-xs text-gray-500">{o.customer_email}</div>
+                      <div className="text-koi-ink">{o.customer_name}</div>
+                      <div className="text-xs text-koi-ink/55">{o.customer_email}</div>
                     </td>
-                    <td className="py-2 pr-3 font-medium text-gray-900">{formatNaira(o.total_kobo)}</td>
+                    <td className="py-2 pr-3 font-medium text-koi-ink">{formatNaira(o.total_kobo)}</td>
                     <td className="py-2 pr-3">
                       <div className="flex flex-wrap gap-1">
                         <StatusBadge status={o.status} />
                         <OrderFlags o={o} />
                       </div>
                     </td>
-                    <td className="py-2 text-xs text-gray-500">{new Date(o.created_at).toLocaleString()}</td>
+                    <td className="py-2 text-xs text-koi-ink/55">{new Date(o.created_at).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        {orders.length >= LIMIT ? <p className="mt-3 text-xs text-gray-500">Showing the latest {LIMIT} orders.</p> : null}
+        {orders.length >= LIMIT ? <p className="mt-3 text-xs text-koi-ink/55">Showing the latest {LIMIT} orders.</p> : null}
       </section>
     </div>
   );

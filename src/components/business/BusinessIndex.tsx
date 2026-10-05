@@ -47,7 +47,7 @@ export default function BusinessIndex({ siteId, basePath, templateKey: provided 
   }, [siteId]);
 
   if (failed) return <Notice kind="error">Site not found, or you do not have access to it.</Notice>;
-  if (!templateKey) return <div className="text-sm text-gray-600">Loading…</div>;
+  if (!templateKey) return <div className="text-sm text-koi-ink/60">Loading…</div>;
 
   const kinds = kindsForTemplate(templateKey);
   const category = categoryForTemplate(templateKey);
@@ -55,8 +55,8 @@ export default function BusinessIndex({ siteId, basePath, templateKey: provided 
   if (kinds.length === 0) {
     return (
       <div className={cardCls}>
-        <div className="font-medium text-gray-900">Nothing to manage here</div>
-        <p className="mt-1 text-sm text-gray-600">
+        <div className="font-medium text-koi-ink">Nothing to manage here</div>
+        <p className="mt-1 text-sm text-koi-ink/60">
           {templateSupportsShop(templateKey)
             ? "Your products, prices and orders are managed in the Shop tab."
             : "This website template has no business lists."}
@@ -67,7 +67,7 @@ export default function BusinessIndex({ siteId, basePath, templateKey: provided 
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-koi-ink/60">
         Keep these lists up to date and your website shows them automatically. Changes go live as soon as you save.
       </p>
       {missing ? (
@@ -81,13 +81,13 @@ export default function BusinessIndex({ siteId, basePath, templateKey: provided 
           return (
             <Link key={k} href={`${basePath}/${k}`} className={`${cardCls} block hover:border-gray-400`}>
               <div className="flex items-baseline justify-between gap-2">
-                <div className="font-medium text-gray-900">{def.plural}</div>
-                <div className="text-xs text-gray-500">
+                <div className="font-medium text-koi-ink">{def.plural}</div>
+                <div className="text-xs text-koi-ink/55">
                   {c ? `${c.total} item${c.total === 1 ? "" : "s"}${c.active !== c.total ? `, ${c.active} live` : ""}` : "Empty"}
                 </div>
               </div>
-              <p className="mt-1 text-sm text-gray-600">{def.blurb}</p>
-              <span className="mt-3 inline-block text-sm font-medium text-blue-700">Manage {def.plural.toLowerCase()} →</span>
+              <p className="mt-1 text-sm text-koi-ink/60">{def.blurb}</p>
+              <span className="mt-3 inline-block text-sm font-medium text-koi-deep">Manage {def.plural.toLowerCase()} →</span>
             </Link>
           );
         })}

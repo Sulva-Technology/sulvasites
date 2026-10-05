@@ -16,7 +16,7 @@ export default function RoleGate({
   const { role } = useSite();
   if (!allow.includes(role)) {
     return (
-      <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         Your role does not have access to this section.
       </div>
     );

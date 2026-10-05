@@ -242,26 +242,26 @@ function Inner(props: ShopAdminProps & { productId: string }) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="products" />
       <div className="mb-3">
-        <Link href={`${basePath}/products`} className="text-sm text-blue-700 underline">
+        <Link href={`${basePath}/products`} className="text-sm text-koi-deep underline">
           Back to products
         </Link>
       </div>
       {!loaded ? (
-        <div className="text-sm text-gray-600">Loading…</div>
+        <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : (
         <div className="space-y-4">
           {err ? <Notice kind="error">{err}</Notice> : null}
           {ok ? <Notice kind="ok">{ok}</Notice> : null}
 
           <section className={`${cardCls} grid gap-3 md:grid-cols-2`}>
-            <label className="text-sm font-medium text-gray-800 md:col-span-2">
+            <label className="text-sm font-medium text-koi-ink/80 md:col-span-2">
               Name
               <input className={inputCls} value={form.name} maxLength={160} onChange={(e) => setName(e.target.value)} />
             </label>
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-sm font-medium text-koi-ink/80">
               URL name
               <input
                 className={`${inputCls} font-mono`}
@@ -273,7 +273,7 @@ function Inner(props: ShopAdminProps & { productId: string }) {
                 }}
               />
             </label>
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-sm font-medium text-koi-ink/80">
               Category
               <select className={inputCls} value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
                 <option value="">Uncategorised</option>
@@ -284,39 +284,39 @@ function Inner(props: ShopAdminProps & { productId: string }) {
                 ))}
               </select>
             </label>
-            <div className="text-sm font-medium text-gray-800">
+            <div className="text-sm font-medium text-koi-ink/80">
               <label htmlFor="price">Price (₦)</label>
               <NairaInput id="price" valueKobo={form.price_kobo} onChange={(k) => setForm((f) => ({ ...f, price_kobo: k }))} />
             </div>
-            <div className="text-sm font-medium text-gray-800">
+            <div className="text-sm font-medium text-koi-ink/80">
               <label htmlFor="compare">Compare-at price (₦, optional)</label>
               <NairaInput id="compare" valueKobo={form.compare_at_kobo} onChange={(k) => setForm((f) => ({ ...f, compare_at_kobo: k }))} />
             </div>
-            <label className="text-sm font-medium text-gray-800 md:col-span-2">
+            <label className="text-sm font-medium text-koi-ink/80 md:col-span-2">
               Description
               <textarea className={inputCls} rows={5} value={form.description} maxLength={5000} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-800">
+            <label className="flex items-center gap-2 text-sm text-koi-ink/80">
               <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
               Active (visible in the shop)
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-800">
+            <label className="flex items-center gap-2 text-sm text-koi-ink/80">
               <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} />
               Featured
             </label>
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Images</h2>
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Images</h2>
             <div className="space-y-4">
               {form.images.map((img, i) => (
-                <div key={i} className="rounded border border-gray-100 p-3">
+                <div key={i} className="rounded border border-koi-ink/5 p-3">
                   <ImageField
                     label={i === 0 ? "Main image" : `Image ${i + 1}`}
                     value={img.url}
                     onChange={(url) => setForm((f) => ({ ...f, images: f.images.map((x, j) => (j === i ? { ...x, url } : x)) }))}
                   />
-                  <label className="mt-2 block text-sm font-medium text-gray-800">
+                  <label className="mt-2 block text-sm font-medium text-koi-ink/80">
                     Alt text
                     <input
                       className={inputCls}
@@ -350,7 +350,7 @@ function Inner(props: ShopAdminProps & { productId: string }) {
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Variants and stock</h2>
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Variants and stock</h2>
             <VariantTable key={tableKey} variants={variants} onChange={setVariants} basePriceKobo={form.price_kobo} />
           </section>
 

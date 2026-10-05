@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -52,6 +53,7 @@ export function AppShell({
   links,
   right,
   hero,
+  bareRoutes,
   children,
 }: {
   brand: string;
@@ -59,11 +61,18 @@ export function AppShell({
   links: NavLink[];
   right?: ReactNode;
   hero?: ReactNode;
+  /** Regex source; matching routes (full-screen editors/previews) render without the shell. */
+  bareRoutes?: string;
   children: ReactNode;
 }) {
+  const pathname = usePathname() ?? "";
   const [pageHero, setPageHeroState] = useState<ReactNode>(null);
   const setPageHero = useCallback<SetHero>((node) => setPageHeroState(node), []);
   const shown = pageHero ?? hero ?? null;
+
+  if (bareRoutes && new RegExp(bareRoutes).test(pathname)) {
+    return <ShellHeroContext.Provider value={setPageHero}>{children}</ShellHeroContext.Provider>;
+  }
 
   return (
     <ShellHeroContext.Provider value={setPageHero}>

@@ -197,12 +197,12 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
   }
 
   if (isLoading) {
-    return <div className="text-sm text-gray-600">Loading…</div>;
+    return <div className="text-sm text-koi-ink/60">Loading…</div>;
   }
 
   if (loadError) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {loadError}
       </div>
     );
@@ -210,7 +210,7 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
 
   if (!profile) {
     return (
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-koi-ink/75">
         Profile not found (or you don&apos;t have access).
       </div>
     );
@@ -230,16 +230,16 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
         />
 
         {/* B) Business Profile Editor */}
-        <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-          <h2 className="text-lg font-semibold">Business profile</h2>
-          <p className="mt-1 text-sm text-gray-600">
+        <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+          <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Business profile</h2>
+          <p className="mt-1 text-sm text-koi-ink/60">
             These fields power the public website template.
           </p>
   
           <form onSubmit={onSaveProfile} className="mt-6 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">
+                <span className="text-sm font-medium text-koi-ink/80">
                   Business name
                 </span>
                 <input
@@ -247,25 +247,25 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
                   onChange={(e) =>
                     setForm((v) => ({ ...v, business_name: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                   required
                 />
               </label>
   
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">Tagline</span>
+                <span className="text-sm font-medium text-koi-ink/80">Tagline</span>
                 <input
                   value={form.tagline}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, tagline: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                 />
               </label>
             </div>
   
             <label className="block">
-              <span className="text-sm font-medium text-gray-800">
+              <span className="text-sm font-medium text-koi-ink/80">
                 Description
               </span>
               <textarea
@@ -274,61 +274,61 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
                   setForm((v) => ({ ...v, description: e.target.value }))
                 }
                 rows={5}
-                className="mt-1 w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                className="mt-1 w-full resize-y rounded border border-koi-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-koi-sea"
               />
             </label>
   
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">Address</span>
+                <span className="text-sm font-medium text-koi-ink/80">Address</span>
                 <input
                   value={form.address}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, address: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                 />
               </label>
   
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">Phone</span>
+                <span className="text-sm font-medium text-koi-ink/80">Phone</span>
                 <input
                   value={form.phone}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, phone: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                 />
               </label>
   
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">Email</span>
+                <span className="text-sm font-medium text-koi-ink/80">Email</span>
                 <input
                   value={form.email}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, email: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                 />
               </label>
   
               <label className="block">
-                <span className="text-sm font-medium text-gray-800">WhatsApp</span>
+                <span className="text-sm font-medium text-koi-ink/80">WhatsApp</span>
                 <input
                   value={form.whatsapp}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, whatsapp: e.target.value }))
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                 />
               </label>
             </div>
   
             <div className="pt-2">
-              <h3 className="text-sm font-semibold text-gray-900">Socials</h3>
+              <h3 className="text-sm font-semibold text-koi-ink">Socials</h3>
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-sm font-medium text-koi-ink/80">
                     Instagram
                   </span>
                   <input
@@ -336,13 +336,13 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
                     onChange={(e) =>
                       setSocials((v) => ({ ...v, instagram: e.target.value }))
                     }
-                    className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                    className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     placeholder="https://instagram.com/..."
                   />
                 </label>
   
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-sm font-medium text-koi-ink/80">
                     Facebook
                   </span>
                   <input
@@ -350,31 +350,31 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
                     onChange={(e) =>
                       setSocials((v) => ({ ...v, facebook: e.target.value }))
                     }
-                    className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                    className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     placeholder="https://facebook.com/..."
                   />
                 </label>
   
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-800">Twitter</span>
+                  <span className="text-sm font-medium text-koi-ink/80">Twitter</span>
                   <input
                     value={socials.twitter}
                     onChange={(e) =>
                       setSocials((v) => ({ ...v, twitter: e.target.value }))
                     }
-                    className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                    className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     placeholder="https://x.com/..."
                   />
                 </label>
   
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-800">TikTok</span>
+                  <span className="text-sm font-medium text-koi-ink/80">TikTok</span>
                   <input
                     value={socials.tiktok}
                     onChange={(e) =>
                       setSocials((v) => ({ ...v, tiktok: e.target.value }))
                     }
-                    className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                    className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                     placeholder="https://tiktok.com/@..."
                   />
                 </label>
@@ -382,12 +382,12 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
             </div>
   
             {saveError ? (
-              <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {saveError}
               </div>
             ) : null}
             {saveSuccess ? (
-              <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                 Saved.
               </div>
             ) : null}
@@ -395,7 +395,7 @@ export default function ProfileEditor({ siteId }: SiteEditorProps) {
             <button
               type="submit"
               disabled={isSaving}
-              className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               {isSaving ? "Saving…" : "Save profile"}
             </button>

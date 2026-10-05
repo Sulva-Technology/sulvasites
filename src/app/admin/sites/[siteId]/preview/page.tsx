@@ -248,89 +248,34 @@ export default function SitePreviewPage() {
     <div style={{ width: "100vw", height: "100vh", overflow: "auto", position: "relative" }}>
       {/* Floating Page Selector */}
       <div
-        style={{
-          position: "fixed",
-          top: "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 999,
-          display: "flex",
-          gap: "8px",
-          background: "rgba(255, 255, 255, 0.95)",
-          padding: "8px",
-          borderRadius: "8px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-          alignItems: "center",
-        }}
+        className="fixed left-1/2 top-4 z-[999] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-1 rounded-[1.75rem] border border-white/15 bg-koi-ink/80 p-1.5 font-sans text-white shadow-[0_12px_40px_-12px_rgba(10,15,31,.6)] backdrop-blur-xl"
       >
         <button
           onClick={() => setCurrentPage("home")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "none",
-            background: currentPage === "home" ? "#6B46C1" : "transparent",
-            color: currentPage === "home" ? "#FFFFFF" : "#1F2937",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "600",
-            transition: "all 0.2s",
-          }}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange ${currentPage === "home" ? "bg-white text-koi-ink" : "text-white/85 hover:bg-white/15 hover:text-white"}`}
         >
           Home
         </button>
         <button
           onClick={() => setCurrentPage("about")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "none",
-            background: currentPage === "about" ? "#6B46C1" : "transparent",
-            color: currentPage === "about" ? "#FFFFFF" : "#1F2937",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "600",
-            transition: "all 0.2s",
-          }}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange ${currentPage === "about" ? "bg-white text-koi-ink" : "text-white/85 hover:bg-white/15 hover:text-white"}`}
         >
           About
         </button>
         <button
           onClick={() => setCurrentPage("contact")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "none",
-            background: currentPage === "contact" ? "#6B46C1" : "transparent",
-            color: currentPage === "contact" ? "#FFFFFF" : "#1F2937",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "600",
-            transition: "all 0.2s",
-          }}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange ${currentPage === "contact" ? "bg-white text-koi-ink" : "text-white/85 hover:bg-white/15 hover:text-white"}`}
         >
           Contact
         </button>
         <Link
           href={`/admin/sites/${siteId}`}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "1px solid #E5E7EB",
-            background: "transparent",
-            color: "#1F2937",
-            textDecoration: "none",
-            fontSize: "14px",
-            fontWeight: "600",
-            display: "flex",
-            alignItems: "center",
-            marginLeft: "8px",
-          }}
+          className="ml-1 rounded-full px-3.5 py-1.5 text-sm font-medium text-white ring-1 ring-white/25 hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
         >
           Back
         </Link>
 
-        <div style={{ width: 1, height: 24, background: "#E5E7EB", marginLeft: 8 }} />
+        <div aria-hidden="true" className="mx-1 h-6 w-px bg-white/20" />
 
         <button
           onClick={() => {
@@ -338,16 +283,7 @@ export default function SitePreviewPage() {
             setSaveSuccess(false);
             setEditMode((v) => !v);
           }}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #E5E7EB",
-            background: editMode ? "#111827" : "transparent",
-            color: editMode ? "#FFFFFF" : "#111827",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: 700,
-          }}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange ${editMode ? "bg-koi-orange text-white" : "text-white ring-1 ring-white/25 hover:bg-white/15"}`}
         >
           {editMode ? "Editing" : "Edit"}
         </button>
@@ -392,17 +328,7 @@ export default function SitePreviewPage() {
             }
           }}
           disabled={isApplyingBrand}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #E5E7EB",
-            background: "#FFFFFF",
-            color: "#111827",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: 700,
-            opacity: isApplyingBrand ? 0.7 : 1,
-          }}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange bg-white text-koi-ink hover:bg-white/90 ${isApplyingBrand ? "opacity-70" : ""}`}
           title={logoUrl ? "Extract dominant + accent colors from the uploaded logo" : "Upload a logo first"}
         >
           {isApplyingBrand ? "Applying…" : "Apply logo colors"}
@@ -410,8 +336,8 @@ export default function SitePreviewPage() {
 
         {brandColors ? (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 2 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: brandColors.dominant, border: "1px solid rgba(0,0,0,0.10)" }} />
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: brandColors.accent, border: "1px solid rgba(0,0,0,0.10)" }} />
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: brandColors.dominant, border: "1px solid rgba(255,255,255,0.4)" }} />
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: brandColors.accent, border: "1px solid rgba(255,255,255,0.4)" }} />
             <button
               onClick={async () => {
                 if (!siteData) return;
@@ -437,16 +363,7 @@ export default function SitePreviewPage() {
 
                 resetBrandColors(root, tk);
               }}
-              style={{
-                padding: "6px 8px",
-                borderRadius: "6px",
-                border: "1px solid #E5E7EB",
-                background: "transparent",
-                color: "#6B7280",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 700,
-              }}
+              className="rounded-full px-2.5 py-1 text-xs font-medium text-white/70 hover:bg-white/15 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
             >
               Reset
             </button>
@@ -486,22 +403,12 @@ export default function SitePreviewPage() {
                 }
               }}
               disabled={isSaving}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "none",
-                background: "#6B46C1",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: 700,
-                opacity: isSaving ? 0.7 : 1,
-              }}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange bg-koi-sea text-white hover:bg-koi-deep ${isSaving ? "opacity-70" : ""}`}
             >
               {isSaving ? "Saving…" : "Save Draft"}
             </button>
 
-            <div style={{ fontSize: 12, color: "#6B7280", marginLeft: 6 }}>
+            <div className="px-2 text-xs text-white/70">
               Click text to edit
             </div>
           </>

@@ -15,17 +15,17 @@ import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { templateSupportsShop } from "@/templates/meta";
 
 function Tile({ label, value, change, note }: { label: string; value: string; change?: number | null; note?: string }) {
-  const tone = change === null || change === undefined ? "text-gray-500" : change > 0 ? "text-green-700" : change < 0 ? "text-red-700" : "text-gray-500";
+  const tone = change === null || change === undefined ? "text-koi-ink/55" : change > 0 ? "text-green-700" : change < 0 ? "text-red-700" : "text-koi-ink/55";
   return (
     <div className={cardCls}>
-      <div className="text-xs font-medium text-gray-600">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">{value}</div>
+      <div className="text-xs font-medium text-koi-ink/60">{label}</div>
+      <div className="mt-1 text-2xl font-semibold tabular-nums text-koi-ink">{value}</div>
       {change !== undefined ? (
         <div className={`mt-1 text-xs ${tone}`}>
-          {formatChange(change)} <span className="text-gray-500">vs previous period</span>
+          {formatChange(change)} <span className="text-koi-ink/55">vs previous period</span>
         </div>
       ) : null}
-      {note ? <div className="mt-1 text-xs text-gray-500">{note}</div> : null}
+      {note ? <div className="mt-1 text-xs text-koi-ink/55">{note}</div> : null}
     </div>
   );
 }
@@ -33,14 +33,14 @@ function Tile({ label, value, change, note }: { label: string; value: string; ch
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className={cardCls} aria-label={title}>
-      <h2 className="mb-3 text-sm font-semibold text-gray-900">{title}</h2>
+      <h2 className="mb-3 text-sm font-semibold text-koi-ink">{title}</h2>
       {children}
     </section>
   );
 }
 
 function Empty({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-gray-500">{children}</p>;
+  return <p className="text-sm text-koi-ink/55">{children}</p>;
 }
 
 /** Bar-backed table row list: label, value and a proportional bar (value is also text, so colour is not required). */
@@ -56,16 +56,16 @@ function BarRows({ rows, total, caption }: { rows: { key: string; label: string;
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.key} className="border-t border-gray-100 first:border-t-0">
+          <tr key={r.key} className="border-t border-koi-ink/5 first:border-t-0">
             <td className="max-w-0 py-1.5 pr-3">
-              <div className="truncate text-gray-900" title={r.label}>{r.label}</div>
-              <div aria-hidden className="mt-1 h-1 rounded bg-gray-100">
-                <div className="h-1 rounded bg-blue-600" style={{ width: `${Math.max(2, shareOf(r.value, total))}%` }} />
+              <div className="truncate text-koi-ink" title={r.label}>{r.label}</div>
+              <div aria-hidden className="mt-1 h-1 rounded bg-koi-ink/5">
+                <div className="h-1 rounded bg-koi-sea" style={{ width: `${Math.max(2, shareOf(r.value, total))}%` }} />
               </div>
             </td>
-            <td className="whitespace-nowrap py-1.5 text-right tabular-nums text-gray-700">
+            <td className="whitespace-nowrap py-1.5 text-right tabular-nums text-koi-ink/75">
               {formatCount(r.value)}
-              {r.extra ? <span className="ml-1 text-xs text-gray-500">{r.extra}</span> : null}
+              {r.extra ? <span className="ml-1 text-xs text-koi-ink/55">{r.extra}</span> : null}
             </td>
           </tr>
         ))}
@@ -129,17 +129,17 @@ export default function InsightsView({ siteId }: { siteId: string }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Insights</h2>
-          <p className="text-sm text-gray-600">How visitors use your website. No cookies, no personal data.</p>
+          <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Insights</h2>
+          <p className="text-sm text-koi-ink/60">How visitors use your website. No cookies, no personal data.</p>
         </div>
-        <div role="group" aria-label="Period" className="inline-flex overflow-hidden rounded-md shadow-sm ring-1 ring-gray-200">
+        <div role="group" aria-label="Period" className="inline-flex overflow-hidden rounded-md shadow-sm ring-1 ring-koi-ink/10">
           {PERIODS.map((p) => (
             <button
               key={p}
               type="button"
               aria-pressed={period === p}
               onClick={() => setPeriod(parsePeriod(p))}
-              className={`px-3 py-1.5 text-sm font-medium ${period === p ? "bg-gray-900 text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
+              className={`px-3 py-1.5 text-sm font-medium ${period === p ? "bg-gray-900 text-white" : "bg-white text-koi-ink/80 hover:bg-koi-paper"}`}
             >
               {p} days
             </button>
@@ -148,7 +148,7 @@ export default function InsightsView({ siteId }: { siteId: string }) {
       </div>
 
       {err ? <Notice kind="error">{err}</Notice> : null}
-      {loading && !o ? <div className="text-sm text-gray-600">Loading…</div> : null}
+      {loading && !o ? <div className="text-sm text-koi-ink/60">Loading…</div> : null}
 
       {o ? (
         <div className={loading ? "space-y-4 opacity-60" : "space-y-4"} aria-busy={loading}>
@@ -214,10 +214,10 @@ export default function InsightsView({ siteId }: { siteId: string }) {
             ) : (
               <ul className="grid gap-3 sm:grid-cols-3">
                 {o.devices.map((d) => (
-                  <li key={d.device} className="rounded border border-gray-200 p-3">
-                    <div className="text-xs text-gray-600">{deviceLabel(d.device)}</div>
-                    <div className="text-xl font-semibold tabular-nums text-gray-900">{shareOf(d.views, deviceTotal)}%</div>
-                    <div className="text-xs text-gray-500">{formatCount(d.views)} views</div>
+                  <li key={d.device} className="rounded border border-koi-ink/10 p-3">
+                    <div className="text-xs text-koi-ink/60">{deviceLabel(d.device)}</div>
+                    <div className="text-xl font-semibold tabular-nums text-koi-ink">{shareOf(d.views, deviceTotal)}%</div>
+                    <div className="text-xs text-koi-ink/55">{formatCount(d.views)} views</div>
                   </li>
                 ))}
               </ul>
@@ -235,13 +235,13 @@ export default function InsightsView({ siteId }: { siteId: string }) {
                   note="Paid and fulfilled orders"
                 />
               </div>
-              <h3 className="mb-2 mt-4 text-sm font-medium text-gray-900">Top products</h3>
+              <h3 className="mb-2 mt-4 text-sm font-medium text-koi-ink">Top products</h3>
               {o.shop.topProducts.length === 0 ? (
                 <Empty>No paid orders in this period yet.</Empty>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="text-xs text-gray-600">
+                    <thead className="text-xs text-koi-ink/60">
                       <tr>
                         <th scope="col" className="py-1 pr-3 font-medium">Product</th>
                         <th scope="col" className="py-1 pr-3 text-right font-medium">Sold</th>
@@ -250,8 +250,8 @@ export default function InsightsView({ siteId }: { siteId: string }) {
                     </thead>
                     <tbody>
                       {o.shop.topProducts.map((p) => (
-                        <tr key={p.name} className="border-t border-gray-100">
-                          <td className="py-1.5 pr-3 text-gray-900">{p.name}</td>
+                        <tr key={p.name} className="border-t border-koi-ink/5">
+                          <td className="py-1.5 pr-3 text-koi-ink">{p.name}</td>
                           <td className="py-1.5 pr-3 text-right tabular-nums">{formatCount(p.quantity)}</td>
                           <td className="py-1.5 text-right tabular-nums">{formatNaira(p.revenueKobo)}</td>
                         </tr>
@@ -263,7 +263,7 @@ export default function InsightsView({ siteId }: { siteId: string }) {
             </Panel>
           ) : null}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-koi-ink/55">
             Visits are stored for 90 days. Visitors are anonymous and counted once per day; the same person on two
             days counts twice.
           </p>

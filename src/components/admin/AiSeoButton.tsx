@@ -100,7 +100,7 @@ export default function AiSeoButton({
           type="button"
           onClick={generate}
           disabled={busy || applying}
-          className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+          className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
         >
           {busy ? "AI working…" : label}
         </button>
@@ -108,12 +108,12 @@ export default function AiSeoButton({
       </div>
 
       {error ? (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
       {session ? (
-        <div className="rounded border border-gray-300 bg-white p-4">
-          <div className="text-sm font-semibold text-gray-900">
+        <div className="rounded border border-koi-ink/15 bg-white p-4">
+          <div className="text-sm font-semibold text-koi-ink">
             AI suggestions: {selected.size} of {session.changes.length} selected
           </div>
           <div className="mt-3 max-h-96 space-y-3 overflow-auto">
@@ -121,17 +121,17 @@ export default function AiSeoButton({
               <label key={c.id} className="flex cursor-pointer items-start gap-2 text-sm">
                 <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} className="mt-1" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-medium text-gray-500">
+                  <span className="block text-xs font-medium text-koi-ink/55">
                     {session.pages.length > 1 ? `${c.pageKey} · ` : ""}
                     {c.label}
                     {c.field !== "alt" ? ` (${c.after.length} chars)` : ""}
                   </span>
                   {c.before ? (
-                    <span className="block break-words text-gray-500 line-through">{c.before}</span>
+                    <span className="block break-words text-koi-ink/55 line-through">{c.before}</span>
                   ) : (
                     <span className="block italic text-gray-400">(empty)</span>
                   )}
-                  <span className="block break-words text-gray-900">{c.after}</span>
+                  <span className="block break-words text-koi-ink">{c.after}</span>
                 </span>
               </label>
             ))}
@@ -149,7 +149,7 @@ export default function AiSeoButton({
               type="button"
               onClick={() => setSession(null)}
               disabled={applying}
-              className="rounded bg-white px-3 py-1.5 text-sm text-gray-900 ring-1 ring-gray-200 hover:bg-gray-50"
+              className="rounded bg-white px-3 py-1.5 text-sm text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-paper"
             >
               Discard
             </button>

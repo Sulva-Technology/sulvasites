@@ -7,10 +7,15 @@ import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
-import { templateSupportsShop } from "@/templates/meta";
+import { templateLabel, templateSupportsShop } from "@/templates/meta";
 import { tabsForRole, type DashboardTab, type SiteRole } from "@/lib/siteAccess";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { INBOX_CHANGED_EVENT } from "@/components/inbox/InboxView";
+import { Card } from "@/components/ui/Card";
+import { useShellHero } from "@/components/ui/AppShell";
+import { PageHero } from "@/components/ui/PageHero";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { Tabs } from "@/components/ui/Tabs";
 
 export type SiteContextValue = {
   siteId: string;
@@ -39,7 +44,7 @@ const TAB_LABELS: Record<DashboardTab, string> = {
 
 function NotFound() {
   return (
-    <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
       Site not found, or you do not have access to it.{" "}
       <Link href="/dashboard" className="underline">
         Back to your sites
@@ -125,7 +130,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       businessName: membership.businessName,
     };
   } else if (needsAdminLookup) {
-    if (!adminChecked) return <div className="text-sm text-gray-600">Loading…</div>;
+    if (!adminChecked) return <Card><p className="text-sm text-koi-ink/60">Loading…</p></Card>;
     value = adminSite;
   }
 
@@ -136,45 +141,42 @@ export default function SiteShell({ children }: { children: ReactNode }) {
     shop: templateSupportsShop(value.site.template_key),
     business: kindsForTemplate(value.site.template_key).length > 0,
   });
+  const activeTab =
+    tabs.find((tab) => tab !== "overview" && pathname.startsWith(`${base}/${tab}`)) ?? "overview";
 
   return (
     <SiteContext.Provider value={value}>
+      <SiteHero value={value} />
       <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{value.businessName}</h1>
-          <p className="text-xs text-gray-500">
-            {value.role === "admin" ? "Sulvatech admin" : value.role === "owner" ? "Owner" : "Staff"}
-          </p>
-        </div>
-        <nav className="flex gap-1 border-b border-gray-200 text-sm">
-          {tabs.map((tab) => {
-            const href = tab === "overview" ? base : `${base}/${tab}`;
-            const active = tab === "overview" ? pathname === base : pathname.startsWith(href);
-            return (
-              <Link
-                key={tab}
-                href={href}
-                className={`-mb-px border-b-2 px-3 py-2 ${
-                  active
-                    ? "border-black font-medium text-gray-900"
-                    : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {TAB_LABELS[tab]}
-                {tab === "inbox" && unread > 0 ? (
-                  <span
-                    className="ml-1.5 inline-block min-w-[1.25rem] rounded-full bg-blue-600 px-1.5 text-center text-xs font-medium leading-5 text-white"
-                    aria-label={`${unread} unread`}
-                  >
-                    {unread > 99 ? "99+" : unread}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
+        <Tabs
+          label="Site sections"
+          active={activeTab}
+          items={tabs.map((tab) => ({
+            id: tab,
+            label: TAB_LABELS[tab],
+            href: tab === "overview" ? base : `${base}/${tab}`,
+            count: tab === "inbox" && unread > 0 ? Math.min(unread, 99) : undefined,
+          }))}
+        />
         {children}
       </div>
     </SiteContext.Provider>
   );
+}
+
+function SiteHero({ value }: { value: SiteContextValue }) {
+  const published = value.site.status === "published";
+  useShellHero(
+    <PageHero
+      status={
+        <StatusPill tone={published ? "live" : "draft"} onDark>
+          {published ? "Published" : "Draft"} ·{" "}
+          {value.role === "admin" ? "Sulvatech admin" : value.role === "owner" ? "Owner" : "Staff"}
+        </StatusPill>
+      }
+      title={value.businessName}
+      accent={templateLabel(value.site.template_key)}
+    />,
+  );
+  return null;
 }

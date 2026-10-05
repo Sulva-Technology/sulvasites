@@ -65,31 +65,31 @@ function Content() {
   return (
     <div className="space-y-8">
       {err ? (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{err}</div>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{err}</div>
       ) : null}
 
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Pages</h2>
-        <p className="mt-1 text-sm text-gray-600">Edit and publish the text and images on your site.</p>
-        <ul className="mt-4 divide-y divide-gray-100 rounded-lg ring-1 ring-gray-200">
+      <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+        <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Pages</h2>
+        <p className="mt-1 text-sm text-koi-ink/60">Edit and publish the text and images on your site.</p>
+        <ul className="mt-4 divide-y divide-koi-ink/5 rounded-lg ring-1 ring-koi-ink/10">
           {pages.map((p) => (
             <li key={p.key} className="flex items-center justify-between px-4 py-3 text-sm">
               <span className="font-medium">{p.key}</span>
               <span className="flex items-center gap-4">
-                <span className={p.status === "published" ? "text-green-700" : "text-gray-500"}>{p.status}</span>
+                <span className={p.status === "published" ? "text-green-700" : "text-koi-ink/55"}>{p.status}</span>
                 <Link href={`${base}/pages/${p.key}`} className="font-medium underline underline-offset-2">
                   Edit
                 </Link>
               </span>
             </li>
           ))}
-          {pages.length === 0 && !err ? <li className="px-4 py-3 text-sm text-gray-500">No pages yet.</li> : null}
+          {pages.length === 0 && !err ? <li className="px-4 py-3 text-sm text-koi-ink/55">No pages yet.</li> : null}
         </ul>
       </section>
 
-      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-        <h2 className="text-lg font-semibold">Business profile</h2>
-        <p className="mt-1 text-sm text-gray-600">Name, contact details, socials and logo.</p>
+      <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+        <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Business profile</h2>
+        <p className="mt-1 text-sm text-koi-ink/60">Name, contact details, socials and logo.</p>
         <Link
           href={`${base}/profile`}
           className="mt-3 inline-block text-sm font-medium underline underline-offset-2"

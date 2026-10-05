@@ -45,35 +45,35 @@ export default function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
-        <div className="text-sm font-medium text-gray-900">Your website</div>
-        <div className="mt-1 text-sm text-gray-600">
+      <section className="rounded-3xl bg-white p-5 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+        <div className="text-sm font-medium text-koi-ink">Your website</div>
+        <div className="mt-1 text-sm text-koi-ink/60">
           Status: <span className="font-medium">{site.status}</span>
         </div>
         <a
           href={liveUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-1 inline-block text-sm text-blue-700 underline"
+          className="mt-1 inline-block text-sm text-koi-deep underline"
         >
           {liveUrl}
         </a>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
-        <div className="text-sm font-medium text-gray-900">Pages</div>
+      <section className="rounded-3xl bg-white p-5 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+        <div className="text-sm font-medium text-koi-ink">Pages</div>
         {err ? <p className="mt-2 text-sm text-red-700">{err}</p> : null}
-        <ul className="mt-2 divide-y divide-gray-100">
+        <ul className="mt-2 divide-y divide-koi-ink/5">
           {pages.map((p) => (
             <li key={`${p.extra ? "x" : "p"}-${p.key}`} className="flex justify-between py-2 text-sm">
-              <span className="text-gray-800">{p.key}</span>
-              <span className={p.status === "published" ? "text-green-700" : "text-gray-500"}>
+              <span className="text-koi-ink/80">{p.key}</span>
+              <span className={p.status === "published" ? "text-green-700" : "text-koi-ink/55"}>
                 {p.status}
               </span>
             </li>
           ))}
           {pages.length === 0 && !err ? (
-            <li className="py-2 text-sm text-gray-500">No pages yet.</li>
+            <li className="py-2 text-sm text-koi-ink/55">No pages yet.</li>
           ) : null}
         </ul>
       </section>

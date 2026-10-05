@@ -108,19 +108,19 @@ function Inner(props: ShopAdminProps) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="overview" />
       {!loaded ? (
-        <div className="text-sm text-gray-600">Loading…</div>
+        <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-gray-900">Shop settings</h2>
-            <label className="flex items-center gap-2 text-sm text-gray-800">
+            <h2 className="mb-3 text-sm font-semibold text-koi-ink">Shop settings</h2>
+            <label className="flex items-center gap-2 text-sm text-koi-ink/80">
               <input type="checkbox" checked={s.enabled} onChange={(e) => setS({ ...s, enabled: e.target.checked })} />
               Shop enabled (visible to customers once the site is published)
             </label>
-            <div className="mt-3 text-sm font-medium text-gray-800">
+            <div className="mt-3 text-sm font-medium text-koi-ink/80">
               <label htmlFor="delivery-fee">Delivery fee (₦)</label>
               <NairaInput
                 id="delivery-fee"
@@ -128,7 +128,7 @@ function Inner(props: ShopAdminProps) {
                 onChange={(k) => setS({ ...s, delivery_fee_kobo: k ?? 0 })}
               />
             </div>
-            <label className="mt-3 flex items-center gap-2 text-sm text-gray-800">
+            <label className="mt-3 flex items-center gap-2 text-sm text-koi-ink/80">
               <input
                 type="checkbox"
                 checked={s.pickup_enabled}
@@ -137,7 +137,7 @@ function Inner(props: ShopAdminProps) {
               Offer pickup
             </label>
             {s.pickup_enabled ? (
-              <label className="mt-3 block text-sm font-medium text-gray-800">
+              <label className="mt-3 block text-sm font-medium text-koi-ink/80">
                 Pickup note
                 <input
                   className={inputCls}
@@ -162,15 +162,15 @@ function Inner(props: ShopAdminProps) {
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-gray-900">Payments</h2>
+            <h2 className="mb-3 text-sm font-semibold text-koi-ink">Payments</h2>
             {payErr ? (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-koi-ink/60">
                 {role === "staff"
                   ? "Payment setup is managed by the shop owner."
                   : "Payment status is not available right now."}
               </p>
             ) : pay ? (
-              <div className="space-y-2 text-sm text-gray-800">
+              <div className="space-y-2 text-sm text-koi-ink/80">
                 <div>
                   Mode:{" "}
                   <b>
@@ -197,7 +197,7 @@ function Inner(props: ShopAdminProps) {
             ) : null}
             {role === "admin" || role === "owner" ? (
               <div className="mt-3">
-                <Link className="text-sm font-medium text-blue-700 underline" href={`${basePath}/payments`}>
+                <Link className="text-sm font-medium text-koi-deep underline" href={`${basePath}/payments`}>
                   Manage payment settings
                 </Link>
               </div>
@@ -205,12 +205,12 @@ function Inner(props: ShopAdminProps) {
             {counts ? (
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <dt className="text-gray-500">Products</dt>
-                  <dd className="font-semibold text-gray-900">{counts.products}</dd>
+                  <dt className="text-koi-ink/55">Products</dt>
+                  <dd className="font-semibold text-koi-ink">{counts.products}</dd>
                 </div>
                 <div>
-                  <dt className="text-gray-500">Paid, to fulfil</dt>
-                  <dd className="font-semibold text-gray-900">{counts.paid}</dd>
+                  <dt className="text-koi-ink/55">Paid, to fulfil</dt>
+                  <dd className="font-semibold text-koi-ink">{counts.paid}</dd>
                 </div>
               </dl>
             ) : null}

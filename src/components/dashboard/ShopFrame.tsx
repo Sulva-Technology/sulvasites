@@ -29,11 +29,11 @@ export default function ShopFrame({
 
   if (!templateSupportsShop(site.template_key)) {
     return (
-      <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         This website does not have a shop.
       </div>
     );
   }
-  if (redirect) return <div className="text-sm text-gray-600">Loading…</div>;
+  if (redirect) return <div className="text-sm text-koi-ink/60">Loading…</div>;
   return <>{render({ siteId, basePath: base, role })}</>;
 }

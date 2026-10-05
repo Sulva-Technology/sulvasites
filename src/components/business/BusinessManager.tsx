@@ -41,12 +41,12 @@ export default function BusinessManager({
 }) {
   const { templateKey, failed } = useTemplateKey(siteId, provided);
   if (failed) return <Notice kind="error">Site not found, or you do not have access to it.</Notice>;
-  if (!templateKey) return <div className="text-sm text-gray-600">Loading…</div>;
+  if (!templateKey) return <div className="text-sm text-koi-ink/60">Loading…</div>;
   if (!templateOffersKind(templateKey, kind)) {
     return (
       <div className="space-y-3">
         <Notice kind="warn">This list is not available for your website.</Notice>
-        <Link href={basePath} className="text-sm text-blue-700 underline">Back to business</Link>
+        <Link href={basePath} className="text-sm text-koi-deep underline">Back to business</Link>
       </div>
     );
   }
@@ -191,9 +191,9 @@ function Inner({ siteId, basePath, kind, templateKey }: { siteId: string; basePa
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <Link href={basePath} className="text-xs text-gray-500 underline">Business</Link>
-          <h2 className="text-lg font-semibold text-gray-900">{def.plural}</h2>
-          <p className="text-sm text-gray-600">{def.blurb}</p>
+          <Link href={basePath} className="text-xs text-koi-ink/55 underline">Business</Link>
+          <h2 className="text-lg font-semibold tracking-tight text-koi-ink">{def.plural}</h2>
+          <p className="text-sm text-koi-ink/60">{def.blurb}</p>
         </div>
         <div className="flex gap-2">
           <button className={btnGhostCls} disabled={busy || !loaded} onClick={() => void importFromSite()}>
@@ -222,13 +222,13 @@ function Inner({ siteId, basePath, kind, templateKey }: { siteId: string; basePa
         />
       ) : null}
 
-      {!loaded ? <div className="text-sm text-gray-600">Loading…</div> : null}
+      {!loaded ? <div className="text-sm text-koi-ink/60">Loading…</div> : null}
 
       {loaded && items.length === 0 && editing !== "new" ? (
         <div className={`${cardCls} text-center`}>
-          <div className="font-medium text-gray-900">No {def.plural.toLowerCase()} yet</div>
-          <p className="mt-1 text-sm text-gray-600">{def.emptyHint}</p>
-          <p className="mt-1 text-xs text-gray-500">Until you add some, your website keeps showing its current content.</p>
+          <div className="font-medium text-koi-ink">No {def.plural.toLowerCase()} yet</div>
+          <p className="mt-1 text-sm text-koi-ink/60">{def.emptyHint}</p>
+          <p className="mt-1 text-xs text-koi-ink/55">Until you add some, your website keeps showing its current content.</p>
           <div className="mt-3 flex justify-center gap-2">
             <button className={btnCls} disabled={busy} onClick={() => setEditing("new")}>Add {def.singular.toLowerCase()}</button>
             <button className={btnGhostCls} disabled={busy} onClick={() => void importFromSite()}>Import from my site content</button>
@@ -250,7 +250,7 @@ function Inner({ siteId, basePath, kind, templateKey }: { siteId: string; basePa
           const dayLabel = def.autoSort ? DAYS.find((d) => d.value === it.data.day)?.short : null;
           return (
             <li key={it.id}>
-              {heading ? <div className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{heading}</div> : null}
+              {heading ? <div className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-koi-ink/55">{heading}</div> : null}
               {editingItem?.id === it.id ? (
                 <ItemForm
                   key={it.id}
@@ -271,11 +271,11 @@ function Inner({ siteId, basePath, kind, templateKey }: { siteId: string; basePa
                   ) : null}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-gray-900">{it.name}</span>
+                      <span className="font-medium text-koi-ink">{it.name}</span>
                       {dayLabel ? <Badge tone="blue">{dayLabel}</Badge> : null}
                       {!it.active ? <Badge tone="amber">{def.inactiveBadge}</Badge> : null}
                     </div>
-                    {summary(def, it) ? <p className="mt-0.5 line-clamp-2 text-sm text-gray-600">{summary(def, it)}</p> : null}
+                    {summary(def, it) ? <p className="mt-0.5 line-clamp-2 text-sm text-koi-ink/60">{summary(def, it)}</p> : null}
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                     {!def.autoSort ? (
@@ -294,7 +294,7 @@ function Inner({ siteId, basePath, kind, templateKey }: { siteId: string; basePa
           );
         })}
       </ul>
-      {def.autoSort && items.length > 1 ? <p className="text-xs text-gray-500">Sorted by day and start time automatically.</p> : null}
+      {def.autoSort && items.length > 1 ? <p className="text-xs text-koi-ink/55">Sorted by day and start time automatically.</p> : null}
     </div>
   );
 }

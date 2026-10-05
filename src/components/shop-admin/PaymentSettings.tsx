@@ -137,7 +137,7 @@ function Inner(props: ShopAdminProps) {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="payments" />
       {err ? (
         <div className="mb-3">
@@ -150,12 +150,12 @@ function Inner(props: ShopAdminProps) {
         </div>
       ) : null}
       {!loaded ? (
-        <div className="text-sm text-gray-600">Loading…</div>
+        <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : !status ? null : (
         <div className="space-y-4">
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Current setup</h2>
-            <p className="text-sm text-gray-800">
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Current setup</h2>
+            <p className="text-sm text-koi-ink/80">
               {status.mode === "platform"
                 ? "Customers pay through Sulvatech's Paystack account; the money settles to the shop's bank account."
                 : status.mode === "own_keys"
@@ -171,7 +171,7 @@ function Inner(props: ShopAdminProps) {
                 these if you are sure. You must enter your account password to confirm, and we email you and the shop&apos;s
                 contact address every time they change.
               </Notice>
-              <label className="mt-3 block text-sm font-medium text-gray-800">
+              <label className="mt-3 block text-sm font-medium text-koi-ink/80">
                 Your account password
                 <input className={inputCls} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
               </label>
@@ -189,20 +189,20 @@ function Inner(props: ShopAdminProps) {
 
           {tab === "platform" ? (
             <section className={cardCls}>
-              <h2 className="mb-2 text-sm font-semibold text-gray-900">Payout bank account</h2>
+              <h2 className="mb-2 text-sm font-semibold text-koi-ink">Payout bank account</h2>
               {!status.platformAvailable ? (
                 <Notice kind="warn">The platform Paystack account is not configured on this server.</Notice>
               ) : (
                 <>
                   {status.platform.subaccount ? (
-                    <p className="mb-3 text-sm text-gray-800">
+                    <p className="mb-3 text-sm text-koi-ink/80">
                       Saved account ending <b>{status.platform.accountLast4 ?? "••••"}</b>
                       {status.platform.bank ? ` at ${status.platform.bank}` : ""}. Fill the form to replace it.
                     </p>
                   ) : null}
                   {banksErr ? <Notice kind="error">{banksErr}</Notice> : null}
                   <div className="grid gap-3 md:grid-cols-2">
-                    <label className="text-sm font-medium text-gray-800">
+                    <label className="text-sm font-medium text-koi-ink/80">
                       Bank
                       <select className={inputCls} value={bankCode} onChange={(e) => setBankCode(e.target.value)}>
                         <option value="">Select a bank</option>
@@ -213,11 +213,11 @@ function Inner(props: ShopAdminProps) {
                         ))}
                       </select>
                     </label>
-                    <label className="text-sm font-medium text-gray-800">
+                    <label className="text-sm font-medium text-koi-ink/80">
                       Account number
                       <input className={inputCls} inputMode="numeric" maxLength={10} autoComplete="off" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} />
                     </label>
-                    <label className="text-sm font-medium text-gray-800 md:col-span-2">
+                    <label className="text-sm font-medium text-koi-ink/80 md:col-span-2">
                       Business name
                       <input className={inputCls} maxLength={100} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
                     </label>
@@ -230,24 +230,24 @@ function Inner(props: ShopAdminProps) {
             </section>
           ) : (
             <section className={cardCls}>
-              <h2 className="mb-2 text-sm font-semibold text-gray-900">Paystack keys</h2>
+              <h2 className="mb-2 text-sm font-semibold text-koi-ink">Paystack keys</h2>
               {status.ownKeys.secretLast4 ? (
-                <p className="mb-3 text-sm text-gray-800">
+                <p className="mb-3 text-sm text-koi-ink/80">
                   Secret key saved (ending <b>{status.ownKeys.secretLast4}</b>
                   {status.ownKeys.publicKey ? `, public key ${status.ownKeys.publicKey.slice(0, 8)}…` : ""}). It is never shown again. Enter new keys to replace it.
                 </p>
               ) : null}
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm font-medium text-gray-800">
+                <label className="text-sm font-medium text-koi-ink/80">
                   Public key
                   <input className={`${inputCls} font-mono`} autoComplete="off" placeholder="pk_live_…" value={publicKey} onChange={(e) => setPublicKey(e.target.value)} />
                 </label>
-                <label className="text-sm font-medium text-gray-800">
+                <label className="text-sm font-medium text-koi-ink/80">
                   Secret key
                   <input className={`${inputCls} font-mono`} type="password" autoComplete="new-password" placeholder="sk_live_…" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} />
                 </label>
               </div>
-              <p className="mt-2 text-xs text-gray-500">The secret key is encrypted on the server. Use matching test or live keys.</p>
+              <p className="mt-2 text-xs text-koi-ink/55">The secret key is encrypted on the server. Use matching test or live keys.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className={btnCls} disabled={busy || !publicKey.trim() || !secretKey.trim()} onClick={saveOwnKeys}>
                   {busy ? "Saving…" : "Save keys"}
@@ -263,16 +263,16 @@ function Inner(props: ShopAdminProps) {
 
           {role !== "admin" ? (
             <section className={cardCls}>
-              <h2 className="mb-2 text-sm font-semibold text-gray-900">Platform fee</h2>
-              <p className="text-sm text-gray-800">
+              <h2 className="mb-2 text-sm font-semibold text-koi-ink">Platform fee</h2>
+              <p className="text-sm text-koi-ink/80">
                 Fee: <b>{status.platformFeeBps / 100}%</b> of each sale. Set by Sulvatech; contact us to change it.
               </p>
             </section>
           ) : (
             <section className={cardCls}>
-              <h2 className="mb-2 text-sm font-semibold text-gray-900">Platform fee (Sulvatech only)</h2>
+              <h2 className="mb-2 text-sm font-semibold text-koi-ink">Platform fee (Sulvatech only)</h2>
               <div className="flex flex-wrap items-end gap-3">
-                <label className="text-sm font-medium text-gray-800">
+                <label className="text-sm font-medium text-koi-ink/80">
                   Fee (% of each sale)
                   <input className={`${inputCls} w-32`} inputMode="decimal" value={feePct} onChange={(e) => setFeePct(e.target.value)} />
                 </label>

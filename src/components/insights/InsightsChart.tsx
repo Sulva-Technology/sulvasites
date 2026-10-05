@@ -9,7 +9,8 @@ const PAD = { top: 12, right: 12, bottom: 28, left: 40 };
 /**
  * Daily views (bars) and visitors (line) as inline SVG. Accessible: the figure has a text summary, each day has
  * a <title> tooltip, and the full data is available as a table. Colours are CSS tokens (the back office is
- * light-only today; a `.dark` / `data-theme="dark"` ancestor swaps in the dark palette).
+ * light-only today; a `.dark` / `data-theme="dark"` ancestor swaps in the dark palette). Series use the koi
+ * tokens: views = koi-sea bars, visitors = koi-orange line (both >= 3:1 against white).
  */
 export default function InsightsChart({ daily }: { daily: DailyPoint[] }) {
   const n = daily.length;
@@ -30,10 +31,10 @@ export default function InsightsChart({ daily }: { daily: DailyPoint[] }) {
   return (
     <figure className="ins-chart m-0">
       <style>{`
-        .ins-chart { --ins-views: #2563eb; --ins-visitors: #b45309; --ins-grid: #e5e7eb; --ins-text: #4b5563; }
-        .dark .ins-chart, [data-theme="dark"] .ins-chart { --ins-views: #60a5fa; --ins-visitors: #fbbf24; --ins-grid: #374151; --ins-text: #9ca3af; }
+        .ins-chart { --ins-views: var(--color-koi-sea, #1b8cff); --ins-visitors: var(--color-koi-orange, #ff5a2c); --ins-grid: rgba(10,15,31,.08); --ins-text: rgba(10,15,31,.65); }
+        .dark .ins-chart, [data-theme="dark"] .ins-chart { --ins-views: var(--color-koi-foam, #7fd0ff); --ins-visitors: #ff8a63; --ins-grid: #374151; --ins-text: #9ca3af; }
       `}</style>
-      <div className="mb-2 flex flex-wrap items-center gap-4 text-xs text-gray-700">
+      <div className="mb-2 flex flex-wrap items-center gap-4 text-xs text-koi-ink/75">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "var(--ins-views)" }} />
           Page views
@@ -76,11 +77,11 @@ export default function InsightsChart({ daily }: { daily: DailyPoint[] }) {
         ))}
       </svg>
       <figcaption className="mt-2">
-        <details className="text-sm text-gray-700">
-          <summary className="cursor-pointer text-xs text-gray-600 underline">View data as a table</summary>
-          <div className="mt-2 max-h-64 overflow-auto rounded border border-gray-200">
+        <details className="text-sm text-koi-ink/75">
+          <summary className="cursor-pointer text-xs text-koi-ink/60 underline">View data as a table</summary>
+          <div className="mt-2 max-h-64 overflow-auto rounded border border-koi-ink/10">
             <table className="w-full text-left text-xs">
-              <thead className="sticky top-0 bg-gray-50 text-gray-600">
+              <thead className="sticky top-0 bg-koi-paper text-koi-ink/60">
                 <tr>
                   <th scope="col" className="px-2 py-1 font-medium">Day</th>
                   <th scope="col" className="px-2 py-1 text-right font-medium">Views</th>
@@ -89,7 +90,7 @@ export default function InsightsChart({ daily }: { daily: DailyPoint[] }) {
               </thead>
               <tbody>
                 {daily.map((d) => (
-                  <tr key={d.day} className="border-t border-gray-100">
+                  <tr key={d.day} className="border-t border-koi-ink/5">
                     <th scope="row" className="px-2 py-1 font-normal">{shortDay(d.day)}</th>
                     <td className="px-2 py-1 text-right tabular-nums">{formatCount(d.views)}</td>
                     <td className="px-2 py-1 text-right tabular-nums">{formatCount(d.visitors)}</td>

@@ -77,16 +77,16 @@ export default function ExtraPagesSection({
   }
 
   return (
-    <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-      <h2 className="text-lg font-semibold">Extra pages</h2>
-      <p className="mt-1 text-sm text-gray-600">
+    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Extra pages</h2>
+      <p className="mt-1 text-sm text-koi-ink/60">
         Create additional pages for this specific site (not template-wide). URLs will be:
         <span className="ml-2 font-mono text-xs">
           https://{siteSlug}.{platformDomain}/p/&lt;key&gt;
         </span>
       </p>
 
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-koi-ink/60">
         Published extra pages appear in the site&apos;s navigation automatically.
       </p>
 
@@ -100,7 +100,7 @@ export default function ExtraPagesSection({
             type="button"
             onClick={onAddRecommended}
             disabled={isCreatingExtra}
-            className="shrink-0 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="shrink-0 rounded bg-koi-sea px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
             {isCreatingExtra ? "Adding…" : "Add as drafts"}
           </button>
@@ -112,26 +112,26 @@ export default function ExtraPagesSection({
           value={newExtraKey}
           onChange={(e) => setNewExtraKey(e.target.value)}
           placeholder="pricing"
-          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+          className="w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
         />
         <button
           type="submit"
           disabled={isCreatingExtra || !newExtraKey.trim()}
-          className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
         >
           {isCreatingExtra ? "Creating…" : "Create page"}
         </button>
       </form>
 
       {extraError ? (
-        <div className="mt-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {extraError}
         </div>
       ) : null}
 
-      <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-gray-200">
+      <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-koi-ink/10">
         <table className="w-full table-auto">
-          <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
+          <thead className="bg-koi-paper text-left text-xs font-semibold text-koi-ink/75">
             <tr>
               <th className="px-4 py-3">Key</th>
               <th className="px-4 py-3">Status</th>
@@ -139,10 +139,10 @@ export default function ExtraPagesSection({
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
+          <tbody className="divide-y divide-koi-ink/5 text-sm">
             {extraPages.length === 0 ? (
               <tr>
-                <td className="px-4 py-4 text-gray-600" colSpan={4}>
+                <td className="px-4 py-4 text-koi-ink/60" colSpan={4}>
                   No extra pages yet.
                 </td>
               </tr>
@@ -151,7 +151,7 @@ export default function ExtraPagesSection({
                 <tr key={p.id}>
                   <td className="px-4 py-3 font-mono">{p.key}</td>
                   <td className="px-4 py-3">{p.status}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-koi-ink/75">
                     {new Date(p.updated_at).toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">

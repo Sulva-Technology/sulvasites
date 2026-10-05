@@ -95,17 +95,17 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
   }
 
   return (
-    <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
+    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">AI content (optional)</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-lg font-semibold tracking-tight text-koi-ink">AI content (optional)</h2>
+          <p className="mt-1 text-sm text-koi-ink/60">
             Paste a business brief and generate high-quality content for every section. Works across all templates.
           </p>
         </div>
         <Link
           href={`/admin/sites/${siteId}/preview`}
-          className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+          className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
         >
           Preview
         </Link>
@@ -117,7 +117,7 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
           onChange={(e) => setBrief(e.target.value)}
           rows={10}
           placeholder="Paste your company details here..."
-          className="w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+          className="w-full resize-y rounded border border-koi-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-koi-sea"
         />
 
         <div className="flex flex-wrap items-center gap-2">
@@ -125,7 +125,7 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
             type="button"
             onClick={onGenerate}
             disabled={isGenerating || !canGenerate}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isGenerating ? "Generating…" : "Generate"}
           </button>
@@ -133,17 +133,17 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
             type="button"
             onClick={onApply}
             disabled={isApplying || !generated}
-            className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isApplying ? "Applying…" : "Apply to drafts"}
           </button>
 
           {isGenerating && progress ? (
-            <span role="status" className="text-xs text-gray-600">
+            <span role="status" className="text-xs text-koi-ink/60">
               {progress.label} ({Math.min(progress.step, progress.total)}/{progress.total})
             </span>
           ) : generated ? (
-            <span className="text-xs text-gray-600">Generated pages: Home/About/Contact.</span>
+            <span className="text-xs text-koi-ink/60">Generated pages: Home/About/Contact.</span>
           ) : null}
         </div>
 
@@ -153,12 +153,12 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
           </div>
         ) : null}
         {success ? (
-          <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {success}
           </div>
         ) : null}
         {generated && generated.notes.length ? (
-          <ul className="list-disc space-y-1 pl-5 text-xs text-gray-600">
+          <ul className="list-disc space-y-1 pl-5 text-xs text-koi-ink/60">
             {generated.notes.map((n) => (
               <li key={n}>{n}</li>
             ))}
@@ -166,11 +166,11 @@ export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId
         ) : null}
 
         {generated ? (
-          <details className="rounded border border-gray-200 bg-gray-50 px-4 py-3">
-            <summary className="cursor-pointer text-sm font-medium text-gray-900">
+          <details className="rounded border border-koi-ink/10 bg-koi-paper px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium text-koi-ink">
               Show generated JSON (preview)
             </summary>
-            <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-gray-800">
+            <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-koi-ink/80">
               {JSON.stringify({ profile: generated.profile, pages: generated.pages, photoCategory: generated.photoCategory }, null, 2)}
             </pre>
           </details>

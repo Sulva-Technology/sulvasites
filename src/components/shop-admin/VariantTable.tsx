@@ -51,8 +51,8 @@ export default function VariantTable({
   return (
     <div className="space-y-4">
       <div>
-        <div className="text-sm font-medium text-gray-800">Options</div>
-        <p className="text-xs text-gray-500">
+        <div className="text-sm font-medium text-koi-ink/80">Options</div>
+        <p className="text-xs text-koi-ink/55">
           Add options such as Size and Colour, list the values separated by commas, then generate the variants. Existing
           variants keep their price and stock when they still match. Stock is tracked per variant; products without
           variants do not track stock.
@@ -103,7 +103,7 @@ export default function VariantTable({
       {variants.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="text-xs uppercase text-gray-500">
+            <thead className="text-xs uppercase text-koi-ink/55">
               <tr>
                 <th className="py-1 pr-2">Variant</th>
                 <th className="py-1 pr-2">Price override (₦)</th>
@@ -114,8 +114,8 @@ export default function VariantTable({
             </thead>
             <tbody>
               {variants.map((v, i) => (
-                <tr key={v.id ?? `new-${variantLabel(v.options)}-${i}`} className="border-t border-gray-100 align-top">
-                  <td className="py-2 pr-2 font-medium text-gray-900">{variantLabel(v.options) || "Default"}</td>
+                <tr key={v.id ?? `new-${variantLabel(v.options)}-${i}`} className="border-t border-koi-ink/5 align-top">
+                  <td className="py-2 pr-2 font-medium text-koi-ink">{variantLabel(v.options) || "Default"}</td>
                   <td className="py-1 pr-2">
                     <NairaInput
                       aria-label={`Price override for ${variantLabel(v.options)}`}

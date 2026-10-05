@@ -10,9 +10,9 @@ const KEYS = ["home", "about", "contact"] as const;
 
 export default function AiSeoAllPages({ siteId }: { siteId: string }) {
   return (
-    <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
-      <h2 className="text-lg font-semibold">AI SEO &amp; image alt text</h2>
-      <p className="mt-1 text-sm text-gray-600">
+    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <h2 className="text-lg font-semibold tracking-tight text-koi-ink">AI SEO &amp; image alt text</h2>
+      <p className="mt-1 text-sm text-koi-ink/60">
         Writes page titles, meta descriptions and gallery alt text for Home, About and Contact from your page content.
         You review each suggestion before anything is saved. Changes are saved as drafts.
       </p>

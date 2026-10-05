@@ -209,16 +209,16 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
     }
   }
 
-  if (isLoading) return <div className="text-sm text-gray-600">Loading…</div>;
+  if (isLoading) return <div className="text-sm text-koi-ink/60">Loading…</div>;
   if (loadError) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {loadError}
       </div>
     );
   }
   if (!pageRow || !pageDraft) {
-    return <div className="text-sm text-gray-700">Extra page not found.</div>;
+    return <div className="text-sm text-koi-ink/75">Extra page not found.</div>;
   }
 
   return (
@@ -226,15 +226,15 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Extra page: {pageRow.key}</h1>
-          <div className="mt-1 text-sm text-gray-600">
-            Status: <span className="font-medium text-gray-900">{pageRow.status}</span>
+          <h1 className="text-xl font-semibold tracking-tight text-koi-ink">Extra page: {pageRow.key}</h1>
+          <div className="mt-1 text-sm text-koi-ink/60">
+            Status: <span className="font-medium text-koi-ink">{pageRow.status}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href={basePath}
-            className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
           >
             Back
           </Link>
@@ -242,7 +242,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
             type="button"
             onClick={onSaveDraft}
             disabled={isSaving}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
             {isSaving ? "Working…" : "Save draft"}
           </button>
@@ -251,7 +251,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
               type="button"
               onClick={onUnpublish}
               disabled={isSaving}
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               Unpublish
             </button>
@@ -260,7 +260,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
               type="button"
               onClick={onPublish}
               disabled={isSaving || !canPublish}
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               Publish
             </button>
@@ -272,36 +272,36 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
         <button
           type="button"
           onClick={() => setTab("form")}
-          className={`rounded px-3 py-1.5 text-sm font-medium ring-1 ring-gray-200 ${tab === "form" ? "bg-black text-white" : "bg-white text-gray-900"}`}
+          className={`rounded px-3 py-1.5 text-sm font-medium ring-1 ring-koi-ink/10 ${tab === "form" ? "bg-black text-white" : "bg-white text-koi-ink"}`}
         >
           Form
         </button>
         <button
           type="button"
           onClick={() => setTab("raw")}
-          className={`rounded px-3 py-1.5 text-sm font-medium ring-1 ring-gray-200 ${tab === "raw" ? "bg-black text-white" : "bg-white text-gray-900"}`}
+          className={`rounded px-3 py-1.5 text-sm font-medium ring-1 ring-koi-ink/10 ${tab === "raw" ? "bg-black text-white" : "bg-white text-koi-ink"}`}
         >
           Raw JSON
         </button>
       </div>
 
       {saveError ? (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {saveError}
         </div>
       ) : null}
       {saveSuccess ? (
-        <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           Saved.
         </div>
       ) : null}
       {publishSuccess ? (
-        <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           Published.
         </div>
       ) : null}
       {unpublishSuccess ? (
-        <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           Unpublished.
         </div>
       ) : null}
@@ -312,7 +312,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             rows={18}
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-black"
+            className="w-full rounded border border-koi-ink/15 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-koi-sea"
           />
           {rawError ? (
             <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -321,7 +321,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
           ) : null}
           <button
             type="button"
-            className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
             onClick={() => {
               setRawError(null);
               try {
@@ -342,12 +342,12 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-lg bg-white p-4 ring-1 ring-gray-200">
+          <div className="rounded-3xl bg-white p-5 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-gray-900">Sections</div>
+              <div className="text-sm font-semibold text-koi-ink">Sections</div>
               <div className="flex items-center gap-2">
                 <select
-                  className="rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                  className="rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
                   onChange={(e) => {
                     const v = e.target.value as Section["type"];
                     if (!v) return;
@@ -370,13 +370,13 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
           </div>
 
           {sections.length === 0 ? (
-            <div className="text-sm text-gray-600">No sections yet.</div>
+            <div className="text-sm text-koi-ink/60">No sections yet.</div>
           ) : null}
 
           {sections.map((section, idx) => (
-            <div key={`${section.type}-${idx}`} className="rounded-lg bg-white p-4 ring-1 ring-gray-200">
+            <div key={`${section.type}-${idx}`} className="rounded-3xl bg-white p-5 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-gray-900">{section.type}</div>
+                <div className="text-sm font-semibold text-koi-ink">{section.type}</div>
                 <div className="flex items-center gap-3">
                   {showAi ? (
                     <AiRewriteMenu

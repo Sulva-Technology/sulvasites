@@ -49,8 +49,8 @@ const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[8rem_1fr] gap-2 py-1 text-sm">
-      <dt className="text-gray-500">{label}</dt>
-      <dd className="min-w-0 break-words text-gray-900">{children}</dd>
+      <dt className="text-koi-ink/55">{label}</dt>
+      <dd className="min-w-0 break-words text-koi-ink">{children}</dd>
     </div>
   );
 }
@@ -128,10 +128,10 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Shop</h1>
+      <h1 className="mb-4 text-xl font-semibold tracking-tight text-koi-ink">Shop</h1>
       <ShopAdminTabs {...props} active="orders" />
       <div className="mb-3">
-        <Link href={`${basePath}/orders`} className="text-sm text-blue-700 underline">
+        <Link href={`${basePath}/orders`} className="text-sm text-koi-deep underline">
           Back to orders
         </Link>
       </div>
@@ -146,7 +146,7 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
         </div>
       ) : null}
       {!loaded ? (
-        <div className="text-sm text-gray-600">Loading…</div>
+        <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : order ? (
         <div className="space-y-4">
           {order.paid_after_cancel ? (
@@ -164,7 +164,7 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
 
           <section className={cardCls}>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h2 className="font-mono text-sm font-semibold text-gray-900">{order.reference}</h2>
+              <h2 className="font-mono text-sm font-semibold text-koi-ink">{order.reference}</h2>
               <StatusBadge status={order.status} />
               <OrderFlags o={order} />
             </div>
@@ -177,7 +177,7 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Customer</h2>
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Customer</h2>
             <dl>
               <Row label="Name">{order.customer_name}</Row>
               <Row label="Email">{order.customer_email}</Row>
@@ -189,10 +189,10 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Items</h2>
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Items</h2>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[28rem] text-left text-sm">
-                <thead className="text-xs uppercase text-gray-500">
+                <thead className="text-xs uppercase text-koi-ink/55">
                   <tr>
                     <th className="py-1 pr-3">Item</th>
                     <th className="py-1 pr-3">Price</th>
@@ -202,10 +202,10 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
                 </thead>
                 <tbody>
                   {items.map((i) => (
-                    <tr key={i.id} className="border-t border-gray-100">
-                      <td className="py-2 pr-3 text-gray-900">
+                    <tr key={i.id} className="border-t border-koi-ink/5">
+                      <td className="py-2 pr-3 text-koi-ink">
                         {i.name}
-                        {i.variant_label ? <span className="text-gray-500"> ({i.variant_label})</span> : null}
+                        {i.variant_label ? <span className="text-koi-ink/55"> ({i.variant_label})</span> : null}
                       </td>
                       <td className="py-2 pr-3">{formatNaira(i.unit_price_kobo)}</td>
                       <td className="py-2 pr-3">{i.quantity}</td>
@@ -216,16 +216,16 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
               </table>
             </div>
             <dl className="mt-3 ml-auto max-w-xs text-sm">
-              <div className="flex justify-between py-0.5"><dt className="text-gray-500">Subtotal</dt><dd>{formatNaira(order.subtotal_kobo)}</dd></div>
-              <div className="flex justify-between py-0.5"><dt className="text-gray-500">Delivery</dt><dd>{formatNaira(order.delivery_kobo)}</dd></div>
-              <div className="flex justify-between border-t border-gray-200 py-1 font-semibold text-gray-900"><dt>Total</dt><dd>{formatNaira(order.total_kobo)}</dd></div>
+              <div className="flex justify-between py-0.5"><dt className="text-koi-ink/55">Subtotal</dt><dd>{formatNaira(order.subtotal_kobo)}</dd></div>
+              <div className="flex justify-between py-0.5"><dt className="text-koi-ink/55">Delivery</dt><dd>{formatNaira(order.delivery_kobo)}</dd></div>
+              <div className="flex justify-between border-t border-koi-ink/10 py-1 font-semibold text-koi-ink"><dt>Total</dt><dd>{formatNaira(order.total_kobo)}</dd></div>
             </dl>
           </section>
 
           <section className={cardCls}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Actions</h2>
+            <h2 className="mb-2 text-sm font-semibold text-koi-ink">Actions</h2>
             {actions.length === 0 ? (
-              <p className="text-sm text-gray-600">No status changes are available for this order.</p>
+              <p className="text-sm text-koi-ink/60">No status changes are available for this order.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {actions.map((a) => (
@@ -241,7 +241,7 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
                 ))}
               </div>
             )}
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-koi-ink/55">
               Refunds are made in Paystack by hand; &quot;Mark refunded&quot; only records it here.
               {role === "staff" ? " Only the shop owner can mark an order refunded." : ""}
             </p>
