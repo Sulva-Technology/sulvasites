@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import { kindsForTemplate } from "@/lib/businessData/kinds";
 import { templateSupportsShop } from "@/templates/meta";
 import { tabsForRole, type DashboardTab, type SiteRole } from "@/lib/siteAccess";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -130,7 +131,10 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   if (!value) return <NotFound />;
 
   const base = `/dashboard/${siteId}`;
-  const tabs = tabsForRole(value.role, { shop: templateSupportsShop(value.site.template_key) });
+  const tabs = tabsForRole(value.role, {
+    shop: templateSupportsShop(value.site.template_key),
+    business: kindsForTemplate(value.site.template_key).length > 0,
+  });
 
   return (
     <SiteContext.Provider value={value}>

@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 
+import { loadBusinessItems } from "@/lib/businessData/load.server";
+import { mergeBusinessData } from "@/lib/businessData/merge";
 import { serializeJsonLd } from "@/lib/jsonLd";
 import {
   buildStructuredData,
@@ -29,6 +31,17 @@ export default async function PublicSitePage({
   // Shop templates show the bag and "shop the looks" on every page while the shop is live.
   const shop = templateSupportsShop(siteData.site.template_key) ? await loadPublicShop(siteData.site.id) : null;
 
+  // Owner-managed business data (menu, timetable, doctors...) replaces the matching sections' items;
+  // sites without items (or before migration 009) render their own page content unchanged.
+  const items = await loadBusinessItems(siteData.site.id);
+  const mergeOpts = { templateKey: siteData.site.template_key, homeTeaser: navPages.length > 0 };
+  const pages = {
+    home: mergeBusinessData(siteData.pages.home, items, { ...mergeOpts, pageKey: "home" }),
+    about: mergeBusinessData(siteData.pages.about, items, { ...mergeOpts, pageKey: "about" }),
+    contact: mergeBusinessData(siteData.pages.contact, items, { ...mergeOpts, pageKey: "contact" }),
+  };
+  const pageOverride = page.kind === "extra" ? mergeBusinessData(page.data, items, { ...mergeOpts, pageKey: null }) : undefined;
+
   const schemaId =
     page.kind === "extra"
       ? `p-${page.key}-schema`
@@ -50,10 +63,10 @@ export default async function PublicSitePage({
       {createElement(Template, {
         site: siteData.site,
         profile: siteData.profile,
-        pages: siteData.pages,
+        pages,
         currentPage: page.kind === "core" ? page.key : null,
         baseUrl: ctx.baseUrl,
-        pageOverride: page.kind === "extra" ? page.data : undefined,
+        pageOverride,
         navPages,
         currentExtraKey: page.kind === "extra" ? page.key : null,
         shop: shop ?? undefined,
