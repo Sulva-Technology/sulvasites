@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
+import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { formatNaira } from "@/lib/shop/money";
 import type { ShopData } from "@/lib/shop/types";
 import { IconArrowUp, IconPlus } from "../icons";
@@ -24,6 +25,7 @@ const START: TypeState = { i: 0, len: 0, dir: 1, hold: 0 };
 export default function T13Composer() {
   const { shop, baseUrl, pageKind, shopViewKind, cartOpen } = useT13();
   const router = useRouter();
+  const editor = useInlineEditor();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -34,8 +36,10 @@ export default function T13Composer() {
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const eligible = composerEligible(shop, pageKind, shopViewKind);
+  const eligible = composerEligible(shop, pageKind, shopViewKind) && !editor?.enabled;
   const onList = shopViewKind === "list" || shopViewKind === "category";
+  // On short lists the footer is always in view, so only home steps aside for it.
+  const visible = (onList || scrolled) && !cartOpen && !(atFooter && !onList);
 
   const phrases = useMemo(() => {
     if (!shop) return [];
@@ -77,7 +81,7 @@ export default function T13Composer() {
     return () => io.disconnect();
   }, [eligible]);
 
-  const typing = eligible && !reduced && !focused && !q && phrases.length > 0;
+  const typing = eligible && visible && !reduced && !focused && !q && phrases.length > 0;
   useEffect(() => {
     if (!typing) return;
     const word = phrases[ty.i % phrases.length] ?? "";
@@ -103,7 +107,6 @@ export default function T13Composer() {
 
   if (!shop || !eligible) return null;
 
-  const visible = (onList || scrolled) && !cartOpen && !atFooter;
   const typed = typing ? typewriterText(ty, phrases) : "";
   const cats = [...shop.categories].sort((a, b) => a.position - b.position);
 
@@ -142,6 +145,7 @@ export default function T13Composer() {
           className="t13-composer-plus"
           aria-label="Browse categories"
           aria-expanded={open}
+          aria-controls="t13-composer-menu"
           data-open={open}
           onClick={() => setOpen((v) => !v)}
         >
@@ -165,15 +169,15 @@ export default function T13Composer() {
           <IconArrowUp size={16} />
         </button>
         {open ? (
-          <ul className="t13-composer-menu" role="menu" aria-label="Categories">
-            <li role="none">
-              <Link role="menuitem" href={`${baseUrl}/shop`} onClick={() => setOpen(false)}>
+          <ul id="t13-composer-menu" className="t13-composer-menu" aria-label="Categories">
+            <li>
+              <Link href={`${baseUrl}/shop`} onClick={() => setOpen(false)}>
                 All products
               </Link>
             </li>
             {cats.map((c) => (
-              <li key={c.id} role="none">
-                <Link role="menuitem" href={`${baseUrl}/shop/c/${c.slug}`} onClick={() => setOpen(false)}>
+              <li key={c.id}>
+                <Link href={`${baseUrl}/shop/c/${c.slug}`} onClick={() => setOpen(false)}>
                   {c.name}
                 </Link>
               </li>

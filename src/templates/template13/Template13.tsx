@@ -173,7 +173,7 @@ export default function Template13({
 
   return (
     <T13Provider value={ctx}>
-      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} data-composer={composerEligible(shop ?? null, pageKind, shopView?.kind ?? null)} style={themeStyle}>
+      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} data-composer={!editor?.enabled && composerEligible(shop ?? null, pageKind, shopView?.kind ?? null)} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <a className="t13-skip" href="#t13-main">
           Skip to content

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 
 import { shopHref, useT13 } from "../ctx";
 import { matchesQuery } from "../lib";
@@ -12,22 +13,14 @@ import ProductCard from "./ProductCard";
 export default function ShopList({ categorySlug }: { categorySlug?: string }) {
   const { shop, baseUrl, profile } = useT13();
   const [sort, setSort] = useState<SortId>("featured");
-  const [q, setQ] = useState("");
-
-  // Links such as /shop?q=coat (home search, composer) pre-set the search.
-  useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get("q");
-    // Applied after the effect body so the first paint matches the server render.
-    queueMicrotask(() => {
-      if (param) setQ(param);
-    });
-  }, []);
+  const router = useRouter();
+  // The list follows the URL, so the composer, back/forward and Clear all stay in sync.
+  const q = useSearchParams()?.get("q") ?? "";
 
   const clearQuery = () => {
-    setQ("");
     const url = new URL(window.location.href);
     url.searchParams.delete("q");
-    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
   };
 
   const category = shop?.categories.find((c) => c.slug === categorySlug) ?? null;
