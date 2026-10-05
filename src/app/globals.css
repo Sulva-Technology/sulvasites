@@ -35,3 +35,75 @@ span[data-inline-edit="true"]:empty {
   display: inline-block;
   min-width: 2ch;
 }
+
+/* ------------------------------------------------------------------ */
+/* Koi admin design system (admin, dashboard, login only).             */
+/* Public template sites never use these classes.                      */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-koi-ink: #0a0f1f;
+  --color-koi-deep: #0a4fe0;
+  --color-koi-sea: #1b8cff;
+  --color-koi-foam: #7fd0ff;
+  --color-koi-orange: #ff5a2c;
+  --color-koi-paper: #f4f7fc;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  /* Keep the page default on the system stack so public sites are unchanged. */
+  --default-font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+:root {
+  --koi-ink: #0a0f1f;
+  --koi-deep: #0a4fe0;
+  --koi-sea: #1b8cff;
+  --koi-foam: #7fd0ff;
+  --koi-orange: #ff5a2c;
+  --koi-paper: #f4f7fc;
+  --koi-line: rgba(10, 15, 31, 0.08);
+}
+
+.koi-app {
+  background: var(--color-koi-paper);
+  color: var(--color-koi-ink);
+  font-family: var(--font-sans);
+}
+
+.koi-water {
+  background:
+    radial-gradient(60% 80% at 75% 35%, rgba(127, 208, 255, 0.55), transparent 60%),
+    radial-gradient(80% 90% at 20% 110%, rgba(127, 208, 255, 0.6), transparent 55%),
+    linear-gradient(160deg, #0a3fc4 0%, var(--color-koi-deep) 35%, var(--color-koi-sea) 75%, #4fb6ff 100%);
+}
+
+.koi-glass {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+@keyframes koi-ripple {
+  from { transform: scale(0.6); opacity: 0.55; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+.koi-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: koi-ripple 6s ease-out infinite;
+}
+
+@keyframes koi-swim {
+  0% { transform: translate(-10%, 30%) rotate(-8deg); }
+  50% { transform: translate(55%, 10%) rotate(6deg); }
+  100% { transform: translate(110%, 35%) rotate(-4deg); }
+}
+.koi-fish {
+  animation: koi-swim 28s linear infinite;
+  filter: blur(1.5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .koi-ripple, .koi-fish { animation: none !important; }
+  .koi-ripple { opacity: 0.35; }
+}
