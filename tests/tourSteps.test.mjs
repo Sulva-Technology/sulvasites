@@ -42,3 +42,20 @@ test("needsNavigation exact vs prefix", () => {
   assert.equal(needsNavigation("/dashboard/1", "/dashboard/12", true), true);
   assert.equal(needsNavigation("/dashboard/1", "/dashboard", true), true);
 });
+
+import { hasUnsavedWorkRisk } from "../src/lib/tour/steps.ts";
+
+test("hasUnsavedWorkRisk flags editors and new-site", () => {
+  for (const p of [
+    "/admin/sites/new",
+    "/admin/sites/abc/pages/home",
+    "/admin/sites/abc/extra-pages/about",
+    "/dashboard/abc/content/pages/home",
+    "/dashboard/abc/content/extra-pages/faq",
+  ]) assert.equal(hasUnsavedWorkRisk(p), true, p);
+});
+
+test("hasUnsavedWorkRisk false for other paths", () => {
+  for (const p of ["/admin/sites", "/dashboard/x/inbox", "/admin/users", "/dashboard", "/admin/sites/abc"])
+    assert.equal(hasUnsavedWorkRisk(p), false, p);
+});

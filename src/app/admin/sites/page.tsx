@@ -13,7 +13,6 @@ import { PageHero } from "@/components/ui/PageHero";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { StatusTone } from "@/components/ui/StatusPill";
 import { Tabs } from "@/components/ui/Tabs";
-import { TourContextSync } from "@/components/tour/TourProvider";
 
 type SiteRow = {
   id: string;
@@ -181,8 +180,6 @@ export default function AdminSitesPage() {
           />
         </label>
       </div>
-
-      <TourContextSync firstSiteId={sites[0]?.id} />
 
       {error ? (
         <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

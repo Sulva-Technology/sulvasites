@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import LogoutButton from "@/components/LogoutButton";
 import RequireAdmin from "@/components/RequireAdmin";
+import { AdminTourContext } from "@/components/tour/AdminTourContext";
 import { TourButton } from "@/components/tour/TourButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AppShell } from "@/components/ui/AppShell";
@@ -14,6 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RequireAdmin>
       <TourProvider tour={adminTour}>
+        <AdminTourContext />
         <AppShell
           brand="Sulva Sites"
           brandHref="/admin/sites"

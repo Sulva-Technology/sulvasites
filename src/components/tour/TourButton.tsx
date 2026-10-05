@@ -16,7 +16,7 @@ export function TourButton() {
       <span aria-hidden="true" className="grid h-4 w-4 place-items-center rounded-full bg-white/25 text-[10px] font-semibold">
         ?
       </span>
-      Tour
+      <span className="sr-only sm:not-sr-only">Tour</span>
     </button>
   );
 }

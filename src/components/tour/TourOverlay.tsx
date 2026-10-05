@@ -53,6 +53,11 @@ export function TourOverlay({
     let raf = 0;
     const tick = () => {
       const el = document.querySelector(selector);
+      if (el && !seen && el.getClientRects().length === 0) {
+        // Present but not rendered (display:none, e.g. desktop-only nav on mobile): skip now.
+        missingRef.current();
+        return;
+      }
       const r = el?.getBoundingClientRect();
       if (el && r && r.width > 0 && r.height > 0) {
         if (!seen) {
