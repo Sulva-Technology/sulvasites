@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import SiteAssistantPanel from "@/components/assistant/SiteAssistantPanel";
 import { TourContextSync } from "@/components/tour/TourProvider";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
 import { templateLabel, templateSupportsShop } from "@/templates/meta";
@@ -171,6 +172,9 @@ export default function SiteShell({ children }: { children: ReactNode }) {
         />
         {children}
       </div>
+      {value.role === "owner" || value.role === "admin" ? (
+        <SiteAssistantPanel siteId={siteId} editorBase={`${base}/content`} />
+      ) : null}
     </SiteContext.Provider>
   );
 }

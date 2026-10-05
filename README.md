@@ -15,8 +15,9 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
-   GROQ_API_KEY=...                     # AI (site generator + section rewrite)
+   GROQ_API_KEY=...                     # AI (site generator, section rewrite, "Ask AI" assistant)
    # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional model overrides
+   # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
    ```
 
 3. In the Supabase SQL editor run, in order:
@@ -24,6 +25,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/migrations/*.sql` (numbered order) up to `011`
    - `supabase/admin/add_current_user_as_admin.sql` (after creating your user)
    - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
+   - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
