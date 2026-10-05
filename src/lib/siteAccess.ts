@@ -3,8 +3,18 @@ export type SiteRole = "owner" | "staff";
 export type Membership = { siteId: string; role: SiteRole };
 export type DashboardTab = "overview" | "content" | "inbox" | "business" | "insights" | "team" | "shop";
 
-export function postLoginRoute(i: { isAdmin: boolean; mustChangePassword: boolean; memberships: Membership[] }): string {
+/** `hostSiteId`: signing in on a site's own address lands on that site's admin / dashboard. */
+export function postLoginRoute(i: {
+  isAdmin: boolean;
+  mustChangePassword: boolean;
+  memberships: Membership[];
+  hostSiteId?: string | null;
+}): string {
   if (i.mustChangePassword) return "/change-password";
+  if (i.hostSiteId) {
+    if (i.isAdmin) return `/admin/sites/${i.hostSiteId}`;
+    if (i.memberships.some((m) => m.siteId === i.hostSiteId)) return `/dashboard/${i.hostSiteId}`;
+  }
   if (i.isAdmin) return "/admin/sites";
   if (i.memberships.length === 1) return `/dashboard/${i.memberships[0]!.siteId}`;
   if (i.memberships.length > 1) return "/dashboard";
