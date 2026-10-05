@@ -27,7 +27,8 @@ export const BRIEF_SHAPE = `{
   "contact": { "phone": string, "email": string, "whatsapp": string, "address": string, "instagram": string, "facebook": string, "twitter": string, "tiktok": string },
   "languages": string[],
   "shopIntent": boolean | null,
-  "notes": string
+  "notes": string,
+  "colors": string
 }`;
 
 export const MAX_CHAT_QUESTIONS = 3;
@@ -58,7 +59,8 @@ export function buildChatPrompt(args: { messages: ChatMessage[]; state: Brief; q
     "",
     "QUESTION POLICY (very important)",
     `- You may ask at most ${MAX_CHAT_QUESTIONS} questions in the entire chat. You have already asked ${questionsAsked}, so ${remaining} remain.`,
-    "- Never ask for something the owner already told you. Never ask about templates, colours, fonts or design: the builder chooses.",
+    "- Never ask for something the owner already told you.",
+    "- Never ask about templates, fonts, colours, logo or photos — the app asks for those itself after the chat. But if the owner states colours (e.g. 'our colours are navy and gold'), copy them into colors.",
     "- If the owner gave a full brief in one message, ask nothing and set ready to true.",
     "- Ask for the most valuable missing thing first, in this order: (a) business name and what it does, (b) town or city and who the customers are, (c) main services or products and a phone or WhatsApp number to show on the site.",
     "- At most two short questions per reply. One sentence each.",

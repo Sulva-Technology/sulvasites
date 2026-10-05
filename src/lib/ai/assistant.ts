@@ -79,7 +79,7 @@ export function cleanQuickReplies(v: unknown): string[] {
 export function readyReply(state: Brief): string {
   const where = state.location ? ` in ${state.location}` : "";
   const what = state.whatTheyDo.replace(/[.!\s]+$/, "");
-  return `Got it: ${state.businessName}${what ? `, ${what}` : ""}${where}. I will pick a template, write your pages and add photos. Tap "Build my site" when you are ready.`;
+  return `Got it: ${state.businessName}${what ? `, ${what}` : ""}${where}. Next, add your logo, pick your colours and choose photos below — or skip any of them and I will choose.`;
 }
 
 export function fallbackReply(state: Brief): { reply: string; quickReplies: string[] } {

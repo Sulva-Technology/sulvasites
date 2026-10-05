@@ -23,6 +23,8 @@ export type Brief = {
   /** true = wants to sell online, false = explicitly not, null = unknown. */
   shopIntent: boolean | null;
   notes: string;
+  /** Brand colours in the owner's own words (e.g. "navy and gold"); "" when not stated. */
+  colors: string;
 };
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -41,6 +43,7 @@ export function emptyBrief(): Brief {
     languages: [],
     shopIntent: null,
     notes: "",
+    colors: "",
   };
 }
 
@@ -72,6 +75,7 @@ export function normalizeBrief(raw: unknown): Brief {
   b.services = strList(r.services, 8, 80);
   b.languages = strList(r.languages, 4, 30);
   b.notes = str(r.notes, 400);
+  b.colors = str(r.colors, 80);
   b.shopIntent = typeof r.shopIntent === "boolean" ? r.shopIntent : null;
   const c = r.contact && typeof r.contact === "object" ? (r.contact as Record<string, unknown>) : {};
   for (const k of CONTACT_KEYS) b.contact[k] = str(c[k], k === "address" ? 200 : 120);
@@ -81,7 +85,7 @@ export function normalizeBrief(raw: unknown): Brief {
 /** Newer non-empty values win; lists are unioned. */
 export function mergeBrief(prev: Brief, next: Brief): Brief {
   const out = emptyBrief();
-  for (const k of ["businessName", "whatTheyDo", "location", "audience", "tone", "notes"] as const) {
+  for (const k of ["businessName", "whatTheyDo", "location", "audience", "tone", "notes", "colors"] as const) {
     out[k] = next[k] || prev[k];
   }
   out.services = strList([...next.services, ...prev.services], 8, 80);
@@ -157,6 +161,7 @@ export function briefToText(b: Brief): string {
     b.location && `Location: ${b.location}`,
     b.audience && `Customers: ${b.audience}`,
     b.tone && `Tone: ${b.tone}`,
+    b.colors && `Colours: ${b.colors}`,
     b.services.length && `Services/products: ${b.services.join("; ")}`,
     b.languages.length && `Languages: ${b.languages.join(", ")}`,
     b.shopIntent !== null && `Wants to sell online: ${b.shopIntent ? "yes" : "no"}`,

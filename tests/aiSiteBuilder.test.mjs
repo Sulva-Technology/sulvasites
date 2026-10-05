@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { GroqError } from "../src/lib/ai/groq.server.ts";
-import { runAssistantTurn, decideReady, countQuestions } from "../src/lib/ai/assistant.ts";
-import { extractContactFromText, normalizeBrief, verifyContact, emptyBrief } from "../src/lib/ai/brief.ts";
+import { runAssistantTurn, decideReady, countQuestions, readyReply } from "../src/lib/ai/assistant.ts";
+import { extractContactFromText, normalizeBrief, verifyContact, emptyBrief, mergeBrief, briefToText } from "../src/lib/ai/brief.ts";
+import { buildChatPrompt } from "../src/lib/ai/prompts/builders.ts";
 import { MAX_REPAIR_ROUNDS, buildSite, patientChat, planSite, rehydratePlan, writePage, writeProfile } from "../src/lib/ai/siteBuilder.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
 import { getPagePresets } from "../src/templates/pagePresets.ts";
@@ -293,4 +294,29 @@ test("rate limits are surfaced by stages (so the browser can wait) and waited ou
   assert.equal(await chat({ user: "x" }), "ok");
   assert.deepEqual(waits, [2500, 2500]);
   await assert.rejects(patientChat(async () => { throw limited; }, async () => {}, 2)({ user: "x" }), (e) => e.code === "rate_limited");
+});
+
+// ----- setup handoff (brand + photos) -----
+test("brief keeps stated colours", () => {
+  const b = normalizeBrief({ businessName: "X", colors: "navy and gold" });
+  assert.equal(b.colors, "navy and gold");
+  assert.equal(mergeBrief(b, normalizeBrief({})).colors, "navy and gold");
+  assert.equal(mergeBrief(b, normalizeBrief({ colors: "red" })).colors, "red");
+  assert.equal(normalizeBrief({ colors: "x".repeat(200) }).colors.length, 80);
+  assert.match(briefToText(b), /Colours: navy and gold/);
+  assert.ok(!/Colours:/.test(briefToText(normalizeBrief({ businessName: "X" }))));
+});
+
+test("ready reply announces logo, colours and photos", () => {
+  const r = readyReply({ ...emptyBrief(), businessName: "Kings Bakery", whatTheyDo: "bakes bread" });
+  assert.match(r, /logo/i);
+  assert.match(r, /colou?rs/i);
+  assert.match(r, /photos/i);
+});
+
+test("chat prompt leaves design to the app but captures stated colours", () => {
+  const { system } = buildChatPrompt({ messages: ownerSaid, state: emptyBrief(), questionsAsked: 0 });
+  assert.match(system, /"colors": string/);
+  assert.match(system, /copy them into colors/);
+  assert.ok(!system.includes("the builder chooses"));
 });
