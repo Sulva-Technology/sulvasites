@@ -7,7 +7,7 @@ import { shopHref, useT13 } from "../ctx";
 import { IconArrow, IconHanger } from "../icons";
 
 /**
- * Use cases as "Collections": tall image cards with a cover borrowed from the site's gallery
+ * Use cases as "Collections": a bento of dark cards with a cover borrowed from the site's gallery
  * (else a tinted panel), a numeral, title, description and a link (defaults to the shop).
  */
 export default function T13UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
@@ -25,7 +25,7 @@ export default function T13UseCases({ section, sectionIndex }: { section: UseCas
   return (
     <section className="t13-section t13-collections-section">
       <div className="t13-container">
-        <header className="t13-head t13-head-split t13-reveal">
+        <header className="t13-sec-head t13-reveal">
           <div>
             <p className="t13-label">Collections</p>
             <EditableText as="h2" className="t13-h2" value={title} placeholder="Collections" onCommit={(next) => set({ title: next })} />
@@ -33,7 +33,7 @@ export default function T13UseCases({ section, sectionIndex }: { section: UseCas
           {description || enabled ? (
             <EditableText
               as="p"
-              className="t13-head-note"
+              className="t13-sec-note"
               value={description}
               placeholder="Short intro (optional)"
               multiline
@@ -42,13 +42,13 @@ export default function T13UseCases({ section, sectionIndex }: { section: UseCas
           ) : null}
         </header>
 
-        <ul className="t13-collections" data-count={items.length}>
+        <ul className="t13-bento" data-count={items.length}>
           {items.map((it, idx) => {
             const cover = photos.length ? photos[(idx + 3) % photos.length] : null;
             const href = it.linkHref || (shop ? shopHref(baseUrl) : "");
             const linkText = it.linkText || (enabled ? "" : shop ? "Shop now" : "");
             return (
-              <li key={idx} className="t13-collection t13-reveal">
+              <li key={idx} className="t13-collection t13-reveal" style={{ ["--d" as string]: idx % 3 }}>
                 <div className="t13-collection-cover" data-photo={!!cover}>
                   {cover ? (
                     // The title below names the card; the borrowed cover is decorative.
@@ -82,7 +82,7 @@ export default function T13UseCases({ section, sectionIndex }: { section: UseCas
                     />
                   ) : null}
                   {href && (linkText || enabled) ? (
-                    <a className="t13-textlink" href={href}>
+                    <a className="t13-collection-link" href={href}>
                       <EditableText
                         as="span"
                         value={linkText}

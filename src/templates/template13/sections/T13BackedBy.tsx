@@ -8,7 +8,7 @@ function isImageUrl(url: string | null | undefined): url is string {
   return !!url && /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(url);
 }
 
-/** Press and stockist names set in Italiana on a hairline band (logos are shown greyscale). */
+/** Press and stockist names under a centred mono label (logos are shown greyscale, full colour on hover). */
 export default function T13BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const real = (section.logos ?? []).filter((l) => l.name?.trim() || isImageUrl(l.url));
@@ -19,7 +19,7 @@ export default function T13BackedBy({ section, sectionIndex }: { section: Backed
   return (
     <section className="t13-press-band">
       <div className="t13-container t13-press-inner t13-reveal">
-        <EditableText as="h2" className="t13-label t13-press-title" value={title} placeholder="As seen in" onCommit={(next) => set({ title: next })} />
+        <EditableText as="h2" className="t13-press-title" value={title} placeholder="As seen in" onCommit={(next) => set({ title: next })} />
         <ul className="t13-press">
           {logos.map((l, idx) => (
             <li key={idx}>
