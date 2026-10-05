@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 import SiteAssistant from "@/components/admin/SiteAssistant";
 import { createPresetPages } from "@/lib/extraPages";
@@ -19,13 +19,13 @@ import { Tabs } from "@/components/ui/Tabs";
 
 const templateOptions = TEMPLATE_META.map((t) => t.key);
 
-function ManualSetup() {
+function ManualSetup({ initialTemplate }: { initialTemplate: string | null }) {
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [templateKey, setTemplateKey] = useState<string>("t1");
+  const [templateKey, setTemplateKey] = useState<string>(initialTemplate ?? "t1");
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +143,19 @@ function ManualSetup() {
 }
 
 export default function NewSitePage() {
-  const [mode, setMode] = useState<"assistant" | "manual">("assistant");
+  return (
+    <Suspense>
+      <NewSite />
+    </Suspense>
+  );
+}
+
+function NewSite() {
+  // "Use this template" in /admin/templates links here with ?template=tN → manual setup
+  // with that template preselected (the assistant picks its own).
+  const picked = useSearchParams().get("template");
+  const initialTemplate = picked && templateOptions.includes(picked) ? picked : null;
+  const [mode, setMode] = useState<"assistant" | "manual">(initialTemplate ? "manual" : "assistant");
 
   useShellHero(
     <PageHero
@@ -179,7 +191,7 @@ export default function NewSitePage() {
           <SiteAssistant />
         ) : (
           <div className="max-w-xl">
-            <ManualSetup />
+            <ManualSetup initialTemplate={initialTemplate} />
           </div>
         )}
       </div>

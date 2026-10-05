@@ -42,12 +42,12 @@
 
 /* Candlelit dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template7[data-mode="dark"] {
-  --t7-accent: #e0784f !important;
-  --t7-accent2: #24150f !important;
-  --t7-ink: #f3e7d6 !important;
-  --t7-muted: #b8a595 !important;
-  --t7-bg: #140d0a !important;
-  --t7-surface: #1e140f !important;
+  --t7-accent: var(--t7-dark-accent, #e0784f) !important;
+  --t7-accent2: var(--t7-dark-accent2, #24150f) !important;
+  --t7-ink: var(--t7-dark-ink, #f3e7d6) !important;
+  --t7-muted: var(--t7-dark-muted, #b8a595) !important;
+  --t7-bg: var(--t7-dark-bg, #140d0a) !important;
+  --t7-surface: var(--t7-dark-surface, #1e140f) !important;
   --t7-on-accent: #1a0f0b;
   --t7-accent-light: color-mix(in srgb, var(--t7-accent) 80%, #fbf6ee);
   --t7-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");

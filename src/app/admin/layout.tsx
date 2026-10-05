@@ -11,9 +11,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <AppShell
         brand="Sulva Sites"
         brandHref="/admin/sites"
-        bareRoutes="^/admin/sites/[^/]+/preview$"
+        bareRoutes="^/admin/(sites/[^/]+/preview|templates/[^/]+(/.*)?)$"
         links={[
           { href: "/admin/sites", label: "Sites" },
+          { href: "/admin/templates", label: "Templates" },
           { href: "/admin/users", label: "Users" },
         ]}
         right={

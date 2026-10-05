@@ -57,12 +57,12 @@
 
 /* Warm night: !important so it wins over the site's saved light palette (inline vars). */
 .template13[data-mode="dark"] {
-  --t13-accent: #e48a5c !important;
-  --t13-accent2: #0a0908 !important;
-  --t13-ink: #f2eee7 !important;
-  --t13-muted: #aaa49b !important;
-  --t13-bg: #131110 !important;
-  --t13-surface: #1d1a18 !important;
+  --t13-accent: var(--t13-dark-accent, #e48a5c) !important;
+  --t13-accent2: var(--t13-dark-accent2, #0a0908) !important;
+  --t13-ink: var(--t13-dark-ink, #f2eee7) !important;
+  --t13-muted: var(--t13-dark-muted, #aaa49b) !important;
+  --t13-bg: var(--t13-dark-bg, #131110) !important;
+  --t13-surface: var(--t13-dark-surface, #1d1a18) !important;
 
   --t13-line: color-mix(in srgb, var(--t13-ink) 15%, transparent);
   --t13-line-strong: color-mix(in srgb, var(--t13-ink) 34%, transparent);

@@ -57,12 +57,12 @@
 
 /* Charcoal night: !important so it wins over the site's saved light palette (inline vars). */
 .template12[data-mode="dark"] {
-  --t12-accent: #ff8a3d !important;
-  --t12-accent2: #0e1011 !important;
-  --t12-ink: #eef0f1 !important;
-  --t12-muted: #a3abb1 !important;
-  --t12-bg: #16191b !important;
-  --t12-surface: #1f2326 !important;
+  --t12-accent: var(--t12-dark-accent, #ff8a3d) !important;
+  --t12-accent2: var(--t12-dark-accent2, #0e1011) !important;
+  --t12-ink: var(--t12-dark-ink, #eef0f1) !important;
+  --t12-muted: var(--t12-dark-muted, #a3abb1) !important;
+  --t12-bg: var(--t12-dark-bg, #16191b) !important;
+  --t12-surface: var(--t12-dark-surface, #1f2326) !important;
 
   --t12-line: color-mix(in srgb, var(--t12-ink) 14%, transparent);
   --t12-line-strong: color-mix(in srgb, var(--t12-ink) 28%, transparent);

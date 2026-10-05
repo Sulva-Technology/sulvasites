@@ -11,7 +11,16 @@ export type TemplateThemeConfig = {
   defaults: ThemeSemanticColors;
   variables: Record<string, string>;
   labels: Record<string, string>;
+  /**
+   * Dark-mode palette for templates with a light/dark toggle. Saved under `dark_<key>`
+   * and emitted as `--tN-dark-<key>`; the template's `[data-mode="dark"]` block reads
+   * them with its own values as fallback. Keys missing here aren't re-mapped in dark mode.
+   */
+  dark?: { defaults: ThemeSemanticColors; variables: Record<string, string> };
 };
+
+/** Prefix for dark-mode keys in a saved palette (`dark_bg`, `dark_accent`, ...). */
+export const DARK_PREFIX = "dark_";
 
 const SEMANTIC_KEYS = ["accent", "accent2", "ink", "muted", "bg", "surface"] as const;
 type SemanticKey = (typeof SEMANTIC_KEYS)[number];
@@ -165,6 +174,28 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
 };
 
+// Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
+const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
+  t4: { accent2: "#12152a", ink: "#eef0fb", muted: "#9aa0ba", bg: "#05060c", surface: "#0e1120" },
+  t5: { accent2: "#2a1f26", ink: "#f6eef2", muted: "#b4a7b0", bg: "#120d10", surface: "#1c1519" },
+  t6: { accent2: "#1d1d1b", ink: "#f1f0eb", muted: "#a3a29c", bg: "#0f0f0e", surface: "#1a1a18" },
+  t7: { accent: "#e0784f", accent2: "#24150f", ink: "#f3e7d6", muted: "#b8a595", bg: "#140d0a", surface: "#1e140f" },
+  t8: { accent: "#4fd1b5", accent2: "#061a20", ink: "#e3f1ee", muted: "#9bb4b6", bg: "#0b2129", surface: "#0f2c35" },
+  t9: { accent: "#ff3b35", accent2: "#0f0f10", ink: "#f4f4f5", muted: "#a1a1a9", bg: "#000000", surface: "#0d0d0e" },
+  t10: { accent: "#8ea3ff", accent2: "#090f29", ink: "#f4f2ea", muted: "#aab2d0", bg: "#0e1533", surface: "#131c40" },
+  t11: { accent: "#b18cff", accent2: "#0c0616", ink: "#f6effc", muted: "#b9a9cc", bg: "#130a22", surface: "#1c1030" },
+  t12: { accent: "#ff8a3d", accent2: "#0e1011", ink: "#eef0f1", muted: "#a3abb1", bg: "#16191b", surface: "#1f2326" },
+  t13: { accent: "#e48a5c", accent2: "#0a0908", ink: "#f2eee7", muted: "#aaa49b", bg: "#131110", surface: "#1d1a18" },
+  t14: { accent: "#5b9cff", accent2: "#070d18", ink: "#eaf0fa", muted: "#9aa6bb", bg: "#0b1220", surface: "#131c2e" },
+};
+
+for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {
+  TEMPLATE_THEME_CONFIGS[key].dark = {
+    defaults: defaults as ThemeSemanticColors,
+    variables: Object.fromEntries(Object.keys(defaults).map((k) => [k, `--${key}-dark-${k}`])),
+  };
+}
+
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {
   return TEMPLATE_THEME_CONFIGS[templateKey] ?? null;
 }
@@ -175,14 +206,60 @@ export function toCssVarMap(templateKey: string, colors: ThemeSemanticColors): R
 
   const cssVars: Record<string, string> = {};
   for (const [semanticKey, value] of Object.entries(colors)) {
-    const cssVar = cfg.variables[semanticKey];
-    if (cssVar && typeof value === "string") cssVars[cssVar] = value;
+    if (typeof value !== "string") continue;
+    const cssVar = semanticKey.startsWith(DARK_PREFIX)
+      ? cfg.dark?.variables[semanticKey.slice(DARK_PREFIX.length)]
+      : cfg.variables[semanticKey];
+    if (cssVar) cssVars[cssVar] = value;
   }
+  const carried = carriedDarkAccent(templateKey, colors);
+  if (carried && cfg.dark?.variables.accent) cssVars[cfg.dark.variables.accent] = carried;
   return cssVars;
 }
 
+function hexLuminance(input: string | undefined): number | null {
+  const m = typeof input === "string" ? input.trim().match(/^#([0-9a-f]{6})$/i) : null;
+  if (!m) return null;
+  const lin = (i: number) => {
+    const v = parseInt(m[1].slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+}
+
+/**
+ * When the owner picked a light-mode accent but no dark one, reuse it in dark mode
+ * if it stays readable (>= 3:1) on the dark background — keeps the brand colour.
+ */
+export function carriedDarkAccent(templateKey: string, colors: ThemeSemanticColors): string | null {
+  const dark = getTemplateThemeConfig(templateKey)?.dark;
+  if (!dark?.defaults.accent || !colors.accent || colors[`${DARK_PREFIX}accent`]) return null;
+  const a = hexLuminance(colors.accent);
+  const b = hexLuminance(colors[`${DARK_PREFIX}bg`] ?? dark.defaults.bg);
+  if (a == null || b == null) return null;
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3 ? colors.accent : null;
+}
+
+/** Dark-mode colours the editor should show: saved value, else carried accent, else default. */
+export function effectiveDarkColors(templateKey: string, colors: ThemeSemanticColors): ThemeSemanticColors {
+  const dark = getTemplateThemeConfig(templateKey)?.dark;
+  if (!dark) return {};
+  const carried = carriedDarkAccent(templateKey, colors);
+  const out: ThemeSemanticColors = {};
+  for (const [k, v] of Object.entries(dark.defaults)) {
+    out[k] = colors[`${DARK_PREFIX}${k}`] ?? (k === "accent" && carried ? carried : v);
+  }
+  return out;
+}
+
 export function applyThemeColors(root: HTMLElement, templateKey: string, colors: ThemeSemanticColors) {
-  for (const [k, v] of Object.entries(toCssVarMap(templateKey, colors))) {
+  const vars = toCssVarMap(templateKey, colors);
+  // Drop dark vars the palette no longer sets (e.g. after Reset); a logo-carried
+  // dark accent stays unless this palette has its own accent.
+  for (const [k, cssVar] of Object.entries(getTemplateThemeConfig(templateKey)?.dark?.variables ?? {})) {
+    if (!(cssVar in vars) && (k !== "accent" || colors.accent)) root.style.removeProperty(cssVar);
+  }
+  for (const [k, v] of Object.entries(vars)) {
     root.style.setProperty(k, v);
   }
 }
@@ -191,4 +268,5 @@ export function clearThemeColors(root: HTMLElement, templateKey: string) {
   const cfg = getTemplateThemeConfig(templateKey);
   if (!cfg) return;
   for (const cssVar of Object.values(cfg.variables)) root.style.removeProperty(cssVar);
+  for (const cssVar of Object.values(cfg.dark?.variables ?? {})) root.style.removeProperty(cssVar);
 }

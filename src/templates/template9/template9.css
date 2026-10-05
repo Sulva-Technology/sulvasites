@@ -43,12 +43,12 @@
 
 /* Full-black dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template9[data-mode="dark"] {
-  --t9-accent: #ff3b35 !important;
-  --t9-accent2: #0f0f10 !important;
-  --t9-ink: #f4f4f5 !important;
-  --t9-muted: #a1a1a9 !important;
-  --t9-bg: #000000 !important;
-  --t9-surface: #0d0d0e !important;
+  --t9-accent: var(--t9-dark-accent, #ff3b35) !important;
+  --t9-accent2: var(--t9-dark-accent2, #0f0f10) !important;
+  --t9-ink: var(--t9-dark-ink, #f4f4f5) !important;
+  --t9-muted: var(--t9-dark-muted, #a1a1a9) !important;
+  --t9-bg: var(--t9-dark-bg, #000000) !important;
+  --t9-surface: var(--t9-dark-surface, #0d0d0e) !important;
   --t9-accent-text: var(--t9-accent);
   --t9-card: #111112;
   --t9-line: color-mix(in srgb, var(--t9-ink) 14%, transparent);

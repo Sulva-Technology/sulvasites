@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { toCssVarMap } from "@/lib/templateTheme";
+import { carriedDarkAccent, getTemplateThemeConfig, toCssVarMap } from "@/lib/templateTheme";
 
 type BrandColors = {
   dominant: string;
@@ -63,6 +63,9 @@ export function brandColorVars(templateKey: string, brand: BrandColors): Record<
   if (!/^t\d+$/.test(templateKey)) return {};
   const vars: Record<string, string> = { [`--${templateKey}-accent`]: brand.dominant };
   if (relativeLuminance(brand.accent) < 0.12) vars[`--${templateKey}-accent2`] = brand.accent;
+  const darkAccentVar = getTemplateThemeConfig(templateKey)?.dark?.variables.accent;
+  const carried = carriedDarkAccent(templateKey, { accent: brand.dominant });
+  if (darkAccentVar && carried) vars[darkAccentVar] = carried;
   return vars;
 }
 

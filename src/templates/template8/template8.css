@@ -46,12 +46,12 @@
 
 /* Deep teal-navy dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template8[data-mode="dark"] {
-  --t8-accent: #4fd1b5 !important;
-  --t8-accent2: #061a20 !important;
-  --t8-ink: #e3f1ee !important;
-  --t8-muted: #9bb4b6 !important;
-  --t8-bg: #0b2129 !important;
-  --t8-surface: #0f2c35 !important;
+  --t8-accent: var(--t8-dark-accent, #4fd1b5) !important;
+  --t8-accent2: var(--t8-dark-accent2, #061a20) !important;
+  --t8-ink: var(--t8-dark-ink, #e3f1ee) !important;
+  --t8-muted: var(--t8-dark-muted, #9bb4b6) !important;
+  --t8-bg: var(--t8-dark-bg, #0b2129) !important;
+  --t8-surface: var(--t8-dark-surface, #0f2c35) !important;
   --t8-accent-deep: var(--t8-accent);
   --t8-accent-text: var(--t8-accent);
   --t8-mint: color-mix(in srgb, var(--t8-accent) 80%, #ffffff);
