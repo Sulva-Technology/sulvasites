@@ -1,7 +1,7 @@
 // Relative-import-safe pure helpers for site membership rules.
 export type SiteRole = "owner" | "staff";
 export type Membership = { siteId: string; role: SiteRole };
-export type DashboardTab = "overview" | "content" | "inbox" | "business" | "team" | "shop";
+export type DashboardTab = "overview" | "content" | "inbox" | "business" | "insights" | "team" | "shop";
 
 export function postLoginRoute(i: { isAdmin: boolean; mustChangePassword: boolean; memberships: Membership[] }): string {
   if (i.mustChangePassword) return "/change-password";
@@ -17,11 +17,18 @@ export function tabsForRole(
   opts: { shop?: boolean; business?: boolean } = {},
 ): DashboardTab[] {
   let tabs: DashboardTab[] =
-    role === "staff" ? ["overview", "inbox", "business"] : ["overview", "content", "inbox", "business", "team"];
+    role === "staff"
+      ? ["overview", "inbox", "business"]
+      : ["overview", "content", "inbox", "business", "insights", "team"];
   // Templates without business managers (shop templates) have nothing to show under Business.
   if (opts.business === false) tabs = tabs.filter((t) => t !== "business");
   if (opts.shop) tabs.splice(role === "staff" ? 1 : 2, 0, "shop");
   return tabs;
+}
+
+/** Insights (site analytics, shop revenue): owners and Sulvatech admins only; staff do not see them. */
+export function canViewInsights(role: SiteRole | "admin" | null | undefined): boolean {
+  return role === "owner" || role === "admin";
 }
 
 /** Business data managers (menu, timetable...): owners, staff and Sulvatech admins may read and write. */

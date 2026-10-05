@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canInvite, canRemove, canManageBusinessData, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
+import { canInvite, canRemove, canManageBusinessData, canViewInsights, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
 
 test("postLoginRoute", () => {
   assert.equal(postLoginRoute({ isAdmin: true, mustChangePassword: true, memberships: [] }), "/change-password");
@@ -11,22 +11,22 @@ test("postLoginRoute", () => {
 });
 
 test("tabsForRole", () => {
-  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "inbox", "business", "team"]);
-  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "inbox", "business", "team"]);
+  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "inbox", "business", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff"), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole with shop", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "shop", "inbox", "business", "team"]);
-  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "shop", "inbox", "business", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "shop", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "shop", "inbox", "business", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff", { shop: true }), ["overview", "shop", "inbox", "business"]);
   assert.deepEqual(tabsForRole("staff", { shop: false }), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole hides Business for templates without managers", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "shop", "inbox", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "shop", "inbox", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff", { shop: true, business: false }), ["overview", "shop", "inbox"]);
-  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "inbox", "business", "team"]);
+  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "inbox", "business", "insights", "team"]);
 });
 
 test("canManageBusinessData", () => {
@@ -64,4 +64,12 @@ test("isEmailExistsError", () => {
   assert.equal(isEmailExistsError({ message: "A user with this email address has already been registered" }), true);
   assert.equal(isEmailExistsError({ code: "weak_password", message: "Password too short" }), false);
   assert.equal(isEmailExistsError(null), false);
+});
+
+test("tabsForRole: insights for owner and admin only, never staff", () => {
+  assert.ok(tabsForRole("owner").includes("insights"));
+  assert.ok(tabsForRole("admin", { shop: true, business: false }).includes("insights"));
+  assert.ok(!tabsForRole("staff", { shop: true }).includes("insights"));
+  assert.ok(canViewInsights("owner") && canViewInsights("admin"));
+  assert.ok(!canViewInsights("staff") && !canViewInsights(null));
 });
