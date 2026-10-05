@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { resolveMode, type ColorMode } from "./colorModeCore";
 
-export type ColorMode = "light" | "dark";
+export type { ColorMode } from "./colorModeCore";
 
 const KEY = "sulva-color-mode";
 
@@ -20,16 +21,16 @@ function readStored(): ColorMode | null {
  * choice, else their system preference, and follows system changes until they pick.
  * Templates apply it as `data-mode` on their root.
  */
-export function useColorMode(): [ColorMode, () => void] {
-  const [mode, setMode] = useState<ColorMode>("light");
+export function useColorMode(fallback?: ColorMode): [ColorMode, () => void] {
+  const [mode, setMode] = useState<ColorMode>(fallback ?? "light");
 
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const sync = () => setMode(readStored() ?? (mq?.matches ? "dark" : "light"));
+    const sync = () => setMode(resolveMode(readStored(), !!mq?.matches, fallback));
     sync();
     mq?.addEventListener?.("change", sync);
     return () => mq?.removeEventListener?.("change", sync);
-  }, []);
+  }, [fallback]);
 
   const toggle = useCallback(() => {
     setMode((m) => {
