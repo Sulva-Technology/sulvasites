@@ -7,44 +7,8 @@ import { cityOf, shopHref, useT13 } from "../ctx";
 import { IconArrow } from "../icons";
 import { initials } from "../lib";
 import { PriceText } from "../shop/ProductCard";
-import {
-  categoryName,
-  isSizeOption,
-  optionGroups,
-  productHref,
-  productSoldOut,
-  quickAddTarget,
-  stockOf,
-  variantInStock,
-} from "../shop/helpers";
-
-/** Stock line for a product: worst state across variants that can still be bought. */
-export function stockLine(product: ShopProduct): { state: "in" | "low" | "out"; label: string } {
-  if (productSoldOut(product)) return { state: "out", label: "Sold out" };
-  const live = product.variants.filter(variantInStock);
-  if (live.length > 0 && live.every((v) => stockOf(v).kind === "low")) {
-    const left = Math.max(...live.map((v) => v.stock ?? 0));
-    return { state: "low", label: `Only ${left} left` };
-  }
-  return { state: "in", label: "In stock" };
-}
-
-/** Same cart call as ProductPage; callers link to the product page when options need choosing. */
-export function useQuickAdd() {
-  const { cart, announce, baseUrl } = useT13();
-  return (product: ShopProduct) => {
-    const target = quickAddTarget(product);
-    return {
-      target,
-      href: productHref(baseUrl, product),
-      add: () => {
-        if (target === "choose" || target === "out") return;
-        cart.add({ productId: product.id, variantId: target.variantId, quantity: 1 });
-        announce("Added to your bag");
-      },
-    };
-  };
-}
+import { categoryName, isSizeOption, optionGroups } from "../shop/helpers";
+import { stockLine, useQuickAdd } from "../shop/useQuickAdd";
 
 function optionSummary(product: ShopProduct): string {
   const groups = optionGroups(product);
@@ -68,7 +32,7 @@ export default function T13NewIn() {
   const n = shop.products.length;
 
   return (
-    <section id="t13-new-in" className="t13-section t13-split" aria-labelledby="t13-newin-h">
+    <section id="t13-new-in" className="t13-section t13-newin" aria-labelledby="t13-newin-h">
       <div className="t13-container t13-split-grid">
         <div className="t13-split-side">
           <div className="t13-sticky">

@@ -8,7 +8,7 @@ import { buildWhatsAppLink } from "@/templates/shared/links";
 import { useT13 } from "../ctx";
 import { IconChat } from "../icons";
 import { isOnSale, isSizeOption, optionGroups, priceRange } from "../shop/helpers";
-import { useQuickAdd } from "./T13NewIn";
+import { useQuickAdd } from "../shop/useQuickAdd";
 
 /** Light gradient band holding a live mini-shop "app window" (Offloop's light band). Always light, whatever the mode. */
 export default function T13Studio() {
