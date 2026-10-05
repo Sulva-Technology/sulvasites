@@ -39,7 +39,8 @@ export function Tabs({
 }) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const linkMode = items.length > 0 && items.every((i) => i.href);
-  const wrap = `inline-flex max-w-full overflow-x-auto rounded-full bg-koi-ink/5 p-1 ${className}`;
+  // Opaque-ish so tabs stay readable when they overlap the water band.
+  const wrap = `inline-flex max-w-full overflow-x-auto rounded-full bg-koi-paper/90 p-1 ring-1 ring-koi-ink/5 backdrop-blur [scrollbar-width:none] ${className}`;
 
   if (linkMode) {
     return (

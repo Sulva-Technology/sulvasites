@@ -9,26 +9,28 @@ function Shell({
   label,
   hint,
   error,
+  onDark = false,
   children,
 }: {
   id: string;
   label: string;
   hint?: ReactNode;
   error?: string;
+  onDark?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-xs font-medium text-koi-ink/70">
+      <label htmlFor={id} className={`block text-xs font-medium ${onDark ? "text-white/90" : "text-koi-ink/70"}`}>
         {label}
       </label>
       {children}
       {error ? (
-        <p id={`${id}-error`} className="text-xs text-red-600">
+        <p id={`${id}-error`} className={onDark ? "rounded-xl bg-white px-2 py-1 text-xs text-red-700" : "text-xs text-red-600"}>
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="text-xs text-koi-ink/50">
+        <p id={`${id}-hint`} className={`text-xs ${onDark ? "text-white/85" : "text-koi-ink/50"}`}>
           {hint}
         </p>
       ) : null}
@@ -40,14 +42,15 @@ export function TextField({
   label,
   hint,
   error,
+  onDark,
   id,
   className = "",
   ...input
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: ReactNode; error?: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: ReactNode; error?: string; onDark?: boolean }) {
   const auto = useId();
   const fid = id ?? auto;
   return (
-    <Shell id={fid} label={label} hint={hint} error={error}>
+    <Shell id={fid} label={label} hint={hint} error={error} onDark={onDark}>
       <input
         id={fid}
         aria-invalid={error ? true : undefined}
