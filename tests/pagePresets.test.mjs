@@ -2,10 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  PAGE_STARTERS,
   buildPresetPageData,
+  describeSections,
+  getPageIdeas,
   getPagePresets,
   labelForPageKey,
   sortPageKeys,
+  uniquePageKey,
 } from "../src/templates/pagePresets.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
 import { TEMPLATE_THEME_CONFIGS } from "../src/lib/templateTheme.ts";
@@ -40,4 +44,40 @@ test("sort: presets first in preset order, then alphabetical", () => {
     "about-me",
     "pricing",
   ]);
+});
+
+test("starters build valid pages with safe, unique keys", () => {
+  const keys = new Set();
+  for (const p of PAGE_STARTERS) {
+    assert.ok(!RESERVED.includes(p.key), `${p.key} is reserved`);
+    assert.match(p.key, /^[a-z0-9-]+$/);
+    assert.ok(!keys.has(p.key));
+    keys.add(p.key);
+    assert.ok(p.description, `${p.key} needs a description`);
+    assert.ok(validatePageData(buildPresetPageData(p)).ok);
+  }
+});
+
+test("uniquePageKey avoids existing and reserved keys", () => {
+  assert.equal(uniquePageKey("pricing", []), "pricing");
+  assert.equal(uniquePageKey("pricing", ["pricing", "pricing-2"]), "pricing-3");
+  assert.equal(uniquePageKey("about", []), "about-2");
+  assert.equal(uniquePageKey("", []), "page-2");
+});
+
+test("page ideas: recommendations first, no duplicates, skip pages the site has", () => {
+  const ideas = getPageIdeas("t3", ["work"]);
+  const keys = ideas.map((i) => i.key);
+  assert.equal(new Set(keys).size, keys.length);
+  assert.ok(!keys.includes("work"));
+  assert.equal(ideas[0].key, "services");
+  assert.equal(ideas[0].recommended, true);
+  assert.ok(ideas.filter((i) => i.key === "services").length === 1);
+  assert.ok(keys.includes("pricing"));
+  // Blank page is always offered, under a free key.
+  assert.ok(getPageIdeas("t3", ["page"]).some((i) => i.key === "page-2"));
+});
+
+test("describeSections uses plain names without repeats", () => {
+  assert.equal(describeSections(["hero", "richtext", "richtext", "faq"]), "Banner · Text · FAQs");
 });
