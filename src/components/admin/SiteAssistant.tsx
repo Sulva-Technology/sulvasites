@@ -296,7 +296,7 @@ export default function SiteAssistant() {
             <span className="flex -space-x-2">
               {[...setup.uploads.map((u) => u.previewUrl), ...setup.stockIds.map((id) => photoUrl(id, 120))].slice(0, 4).map((u) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={u} src={u} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-black" />
+                <img key={u} src={u} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-koi-ink" />
               ))}
             </span>
             {[n ? `${n} photo${n === 1 ? "" : "s"}` : "", k ? `${k} demo pick${k === 1 ? "" : "s"}` : ""].filter(Boolean).join(" + ")}
@@ -318,7 +318,7 @@ export default function SiteAssistant() {
   }
 
   return (
-    <div className="flex flex-col rounded-3xl bg-white ring-1 ring-gray-200">
+    <div className="flex flex-col rounded-3xl bg-white p-0 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
       <div
         ref={logRef}
         role="log"
@@ -333,8 +333,8 @@ export default function SiteAssistant() {
             <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
               <div
                 className={
-                  "max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-2 text-sm " +
-                  (m.role === "user" ? "rounded-br-sm bg-black text-white" : "rounded-bl-sm bg-gray-100 text-gray-900")
+                  "max-w-[85%] whitespace-pre-line rounded-3xl px-4 py-2.5 text-sm " +
+                  (m.role === "user" ? "rounded-br-md bg-koi-ink text-white" : "rounded-bl-md bg-koi-paper text-koi-ink")
                 }
               >
                 <span className="sr-only">{m.role === "user" ? "You: " : "Assistant: "}</span>
@@ -346,10 +346,10 @@ export default function SiteAssistant() {
 
         {thinking ? (
           <div className="flex justify-start" role="status">
-            <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-gray-100 px-4 py-3">
+            <div className="flex items-center gap-1 rounded-3xl rounded-bl-md bg-koi-paper px-4 py-3">
               <span className="sr-only">The assistant is typing</span>
               {[0, 150, 300].map((d) => (
-                <span key={d} aria-hidden className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: `${d}ms` }} />
+                <span key={d} aria-hidden className="h-2 w-2 animate-bounce rounded-full bg-koi-sea/60 motion-reduce:animate-none" style={{ animationDelay: `${d}ms` }} />
               ))}
             </div>
           </div>
@@ -401,17 +401,17 @@ export default function SiteAssistant() {
         ) : null}
 
         {building ? (
-          <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 text-sm" role="status">
-            <p className="font-medium text-gray-900">
+          <div className="rounded-3xl bg-koi-paper p-4 text-sm" role="status">
+            <p className="font-medium text-koi-ink">
               {progress?.label}{" "}
-              <span className="font-normal text-gray-500">
+              <span className="font-normal text-koi-ink/55">
                 (step {Math.min(progress?.step ?? 0, progress?.total ?? 1)} of {progress?.total})
               </span>
             </p>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200" aria-hidden>
-              <div className="h-full bg-black transition-all" style={{ width: `${Math.round(((progress?.step ?? 0) / (progress?.total || 1)) * 100)}%` }} />
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-koi-ink/10" aria-hidden>
+              <div className="h-full bg-koi-sea transition-all" style={{ width: `${Math.round(((progress?.step ?? 0) / (progress?.total || 1)) * 100)}%` }} />
             </div>
-            <ul className="mt-2 space-y-0.5 text-xs text-gray-600">
+            <ul className="mt-2 space-y-0.5 text-xs text-koi-ink/60">
               {doneStages
                 .filter((x) => x.stage !== progress?.stage)
                 .map((x) => (
@@ -422,18 +422,18 @@ export default function SiteAssistant() {
         ) : null}
 
         {result ? (
-          <section aria-label="Build result" className="rounded-3xl border border-gray-200 p-4 sm:p-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Chosen template</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">{templateLabel(result.templateKey)}</p>
-            <p className="mt-1 text-sm text-gray-700">{result.reason}</p>
+          <section aria-label="Build result" className="rounded-3xl p-4 ring-1 ring-koi-ink/10 sm:p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-koi-ink/55">Chosen template</p>
+            <p className="mt-1 text-base font-semibold text-koi-ink">{templateLabel(result.templateKey)}</p>
+            <p className="mt-1 text-sm text-koi-ink/75">{result.reason}</p>
 
             <label className="mt-3 block">
-              <span className="text-sm font-medium text-gray-800">Use a different template</span>
+              <span className="text-sm font-medium text-koi-ink/80">Use a different template</span>
               <select
                 value={templateKey}
                 onChange={(e) => setTemplateKey(e.target.value)}
                 disabled={busy}
-                className="mt-1 w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
               >
                 {TEMPLATE_META.map((t) => (
                   <option key={t.key} value={t.key}>
@@ -448,54 +448,54 @@ export default function SiteAssistant() {
                   type="button"
                   onClick={() => build(templateKey)}
                   disabled={busy}
-                  className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-60"
+                  className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
                 >
                   Rewrite for {TEMPLATE_META.find((t) => t.key === templateKey)?.name}
                 </button>
-                <span className="text-xs text-gray-600">Pages are written per template, so rewrite before creating.</span>
+                <span className="text-xs text-koi-ink/60">Pages are written per template, so rewrite before creating.</span>
               </div>
             ) : null}
 
             <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-gray-500">Business</dt>
-                <dd className="text-gray-900">{result.profile.business_name}</dd>
+                <dt className="text-xs text-koi-ink/55">Business</dt>
+                <dd className="text-koi-ink">{result.profile.business_name}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-500">Tagline</dt>
-                <dd className="text-gray-900">{result.profile.tagline ?? "None"}</dd>
+                <dt className="text-xs text-koi-ink/55">Tagline</dt>
+                <dd className="text-koi-ink">{result.profile.tagline ?? "None"}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-gray-500">Home headline</dt>
-                <dd className="text-gray-900">{hero && hero.type === "hero" ? hero.headline : "None"}</dd>
+                <dt className="text-xs text-koi-ink/55">Home headline</dt>
+                <dd className="text-koi-ink">{hero && hero.type === "hero" ? hero.headline : "None"}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-gray-500">Brand</dt>
-                <dd className="mt-1 flex flex-wrap items-center gap-3 text-gray-900" data-testid="brand-row">
+                <dt className="text-xs text-koi-ink/55">Brand</dt>
+                <dd className="mt-1 flex flex-wrap items-center gap-3 text-koi-ink" data-testid="brand-row">
                   {setup.logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={setup.logo.previewUrl} alt="Your logo" className="h-10 w-10 rounded-xl bg-white object-contain ring-1 ring-gray-200" />
+                    <img src={setup.logo.previewUrl} alt="Your logo" className="h-10 w-10 rounded-xl bg-white object-contain ring-1 ring-koi-ink/10" />
                   ) : (
-                    <span className="text-gray-600">No logo</span>
+                    <span className="text-koi-ink/60">No logo</span>
                   )}
                   {palette ? (
                     <span className="flex items-center gap-2">
                       <span className="flex gap-1" aria-label="Site colours">
                         {(["accent", "accent2", "bg", "surface"] as const).map((k) => (
-                          <span key={k} title={`${k}: ${palette[k]}`} data-color={palette[k]} className="h-6 w-6 rounded-full ring-1 ring-gray-300" style={{ background: palette[k] }} />
+                          <span key={k} title={`${k}: ${palette[k]}`} data-color={palette[k]} className="h-6 w-6 rounded-full ring-1 ring-koi-ink/15" style={{ background: palette[k] }} />
                         ))}
                       </span>
-                      <span className="text-xs text-gray-600">{SOURCE_LABEL[setup.color!.source]}</span>
+                      <span className="text-xs text-koi-ink/60">{SOURCE_LABEL[setup.color!.source]}</span>
                     </span>
                   ) : (
-                    <span className="text-gray-600">Template colours</span>
+                    <span className="text-koi-ink/60">Template colours</span>
                   )}
                   {!created ? (
                     <span className="flex gap-2 text-xs">
-                      <button type="button" disabled={busy} onClick={() => enterStep("logo")} className="text-gray-700 underline underline-offset-2">
+                      <button type="button" disabled={busy} onClick={() => enterStep("logo")} className="text-koi-ink/75 underline underline-offset-2">
                         Change logo
                       </button>
-                      <button type="button" disabled={busy} onClick={() => enterStep("color")} className="text-gray-700 underline underline-offset-2">
+                      <button type="button" disabled={busy} onClick={() => enterStep("color")} className="text-koi-ink/75 underline underline-offset-2">
                         Change colours
                       </button>
                     </span>
@@ -504,10 +504,10 @@ export default function SiteAssistant() {
               </div>
               {strip.length ? (
                 <div className="sm:col-span-2">
-                  <dt className="text-xs text-gray-500">Home gallery</dt>
+                  <dt className="text-xs text-koi-ink/55">Home gallery</dt>
                   <dd className="mt-1 flex gap-2 overflow-x-auto pb-1" data-testid="photo-strip">
                     {strip.map((im, i) => (
-                      <span key={`${im.url}-${i}`} className={"relative h-16 w-20 shrink-0 overflow-hidden rounded-xl " + (im.own ? "ring-2 ring-black" : "ring-1 ring-gray-200")}>
+                      <span key={`${im.url}-${i}`} className={"relative h-16 w-20 shrink-0 overflow-hidden rounded-xl " + (im.own ? "ring-2 ring-koi-ink" : "ring-1 ring-koi-ink/10")}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={im.url} alt={im.alt} className="h-full w-full object-cover" />
                       </span>
@@ -516,13 +516,13 @@ export default function SiteAssistant() {
                 </div>
               ) : null}
               <div className="sm:col-span-2">
-                <dt className="text-xs text-gray-500">Pages (saved as drafts)</dt>
-                <dd className="text-gray-900">Home, About, Contact{result.extraPages.map((p) => `, ${p.label}`).join("")}</dd>
+                <dt className="text-xs text-koi-ink/55">Pages (saved as drafts)</dt>
+                <dd className="text-koi-ink">Home, About, Contact{result.extraPages.map((p) => `, ${p.label}`).join("")}</dd>
               </div>
             </dl>
 
             {result.notes.length ? (
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-gray-600">
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-koi-ink/60">
                 {result.notes.map((n) => (
                   <li key={n}>{n}</li>
                 ))}
@@ -530,14 +530,14 @@ export default function SiteAssistant() {
             ) : null}
 
             <label className="mt-4 block">
-              <span className="text-sm font-medium text-gray-800">Site address</span>
+              <span className="text-sm font-medium text-koi-ink/80">Site address</span>
               <input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 disabled={creating}
-                className="mt-1 w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+                className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
               />
-              <span className="mt-1 block text-xs text-gray-600">
+              <span className="mt-1 block text-xs text-koi-ink/60">
                 Preview URL: <span className="font-mono">https://{slugify(slug) || "your-slug"}.soothecontrols.site</span>. A number is added if it is taken.
               </span>
             </label>
@@ -546,7 +546,7 @@ export default function SiteAssistant() {
               type="button"
               onClick={create}
               disabled={busy || templateChanged || inSetup || !slugify(slug)}
-              className="mt-4 w-full rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
+              className="mt-4 w-full rounded-full bg-koi-ink px-5 py-2.5 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60 sm:w-auto"
             >
               {creating ? "Creating…" : "Create site"}
             </button>
@@ -560,18 +560,18 @@ export default function SiteAssistant() {
         ) : null}
       </div>
 
-      <div className="border-t border-gray-200 p-3">
+      <div className="border-t border-koi-ink/5 p-3 sm:p-4">
         {!result && phase === "review" && !building ? (
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => build()}
               disabled={busy}
-              className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
               Build my site
             </button>
-            <span className="text-xs text-gray-600">Or add more details below first.</span>
+            <span className="text-xs text-koi-ink/60">Or add more details below first.</span>
           </div>
         ) : null}
 
@@ -582,7 +582,7 @@ export default function SiteAssistant() {
                 key={c}
                 type="button"
                 onClick={() => (/^skip/i.test(c) && ready ? (phase === "review" ? build() : undefined) : send(c))}
-                className="rounded-full bg-white px-3 py-1.5 text-sm text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50"
+                className="rounded-full bg-white px-3.5 py-1.5 text-sm text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
               >
                 {c}
               </button>
@@ -612,16 +612,19 @@ export default function SiteAssistant() {
               rows={2}
               maxLength={2000}
               placeholder={inSetup ? "Anything else about the business? (optional)" : "e.g. Kings Bakery in Lagos. We bake bread and custom cakes. Call 0803…"}
-              className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+              className="w-full resize-none rounded-[1.5rem] border border-koi-ink/10 bg-white px-5 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
               disabled={creating || building}
             />
           </label>
           <button
             type="submit"
             disabled={busy || !input.trim()}
-            className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+            aria-label="Send"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-koi-ink text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
-            Send
+            <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
           </button>
         </form>
       </div>

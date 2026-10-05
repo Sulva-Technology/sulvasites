@@ -67,18 +67,18 @@ export function LogoStep(p: StepProps<SiteSetup["logo"]> & { onColors: (c: Color
       }
     >
       {p.value ? (
-        <div className="flex items-center gap-4 rounded-2xl bg-gray-50 p-3">
-          <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200">
+        <div className="flex items-center gap-4 rounded-2xl bg-koi-paper p-3">
+          <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white ring-1 ring-koi-ink/10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.value.previewUrl} alt="Your logo" className="max-h-full max-w-full object-contain" />
           </span>
           <div className="min-w-0 text-sm">
-            <p className="truncate font-medium text-gray-900">{p.value.file.name}</p>
+            <p className="truncate font-medium text-koi-ink">{p.value.file.name}</p>
             <div className="mt-2 flex gap-2">
-              <label htmlFor={inputId} className="cursor-pointer text-gray-700 underline underline-offset-2">
+              <label htmlFor={inputId} className="cursor-pointer text-koi-ink/75 underline underline-offset-2">
                 Replace
               </label>
-              <button type="button" onClick={remove} disabled={p.disabled} className="text-gray-700 underline underline-offset-2">
+              <button type="button" onClick={remove} disabled={p.disabled} className="text-koi-ink/75 underline underline-offset-2">
                 Remove
               </button>
             </div>
@@ -99,11 +99,11 @@ export function LogoStep(p: StepProps<SiteSetup["logo"]> & { onColors: (c: Color
           }}
           className={
             "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 text-center text-sm transition " +
-            (over ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-400")
+            (over ? "border-koi-sea bg-koi-paper" : "border-koi-ink/15 hover:border-koi-sea/50")
           }
         >
-          <span className="font-medium text-gray-900">Drop your logo here or click to choose</span>
-          <span className="mt-1 text-xs text-gray-500">PNG, JPG, WebP, SVG, GIF or AVIF, up to 10 MB</span>
+          <span className="font-medium text-koi-ink">Drop your logo here or click to choose</span>
+          <span className="mt-1 text-xs text-koi-ink/55">PNG, JPG, WebP, SVG, GIF or AVIF, up to 10 MB</span>
         </label>
       )}
       <input

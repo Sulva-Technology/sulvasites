@@ -22,7 +22,7 @@ function OptionPill({ option, checked, onSelect, disabled }: { option: Option; c
       onClick={onSelect}
       className={
         "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition disabled:opacity-50 " +
-        (checked ? "bg-black text-white ring-2 ring-black" : "bg-white text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50")
+        (checked ? "bg-koi-ink text-white ring-2 ring-koi-ink" : "bg-white text-koi-ink ring-1 ring-koi-ink/15 hover:bg-koi-paper")
       }
     >
       <Swatches colors={[option.choice.accent, option.choice.accent2]} size="h-4 w-4" />
@@ -34,7 +34,7 @@ function OptionPill({ option, checked, onSelect, disabled }: { option: Option; c
 function Row({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-medium text-gray-500">{title}</p>
+      <p className="text-xs font-medium text-koi-ink/55">{title}</p>
       <div role="radiogroup" aria-label={title} className="mt-1.5 flex flex-wrap gap-2">
         {children}
       </div>
@@ -107,7 +107,7 @@ export function ColorStep(
             ))}
           </Row>
           <div>
-            <p className="text-xs font-medium text-gray-500">Custom</p>
+            <p className="text-xs font-medium text-koi-ink/55">Custom</p>
             <div className="mt-1.5 flex flex-wrap gap-3">
               {([
                 ["accent", "Main colour"],
@@ -117,7 +117,7 @@ export function ColorStep(
                   key={k}
                   className={
                     "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm ring-1 " +
-                    (p.value?.source === "custom" ? "ring-black" : "ring-gray-300")
+                    (p.value?.source === "custom" ? "ring-koi-ink" : "ring-koi-ink/15")
                   }
                 >
                   <input
@@ -134,7 +134,7 @@ export function ColorStep(
           </div>
         </div>
 
-        <div aria-label="Colour preview" className="overflow-hidden rounded-2xl ring-1 ring-gray-200" style={{ background: preview.bg }}>
+        <div aria-label="Colour preview" className="overflow-hidden rounded-2xl ring-1 ring-koi-ink/10" style={{ background: preview.bg }}>
           <div className="p-4">
             <p className="text-xs" style={{ color: preview.muted }}>
               Preview

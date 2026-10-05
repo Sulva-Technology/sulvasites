@@ -82,11 +82,11 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
       aria-controls={`${inputId}-panel-${key}`}
       onClick={() => setTab(key)}
       className={
-        "rounded-full px-3 py-1.5 text-sm font-medium transition " + (tab === key ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900")
+        "rounded-full px-3 py-1.5 text-sm font-medium transition " + (tab === key ? "bg-white text-koi-ink shadow-sm" : "text-koi-ink/60 hover:text-koi-ink")
       }
     >
       {label}
-      {count ? <span className="ml-1.5 rounded-full bg-black px-1.5 py-0.5 text-xs text-white">{count}</span> : null}
+      {count ? <span className="ml-1.5 rounded-full bg-koi-ink px-1.5 py-0.5 text-xs text-white">{count}</span> : null}
     </button>
   );
 
@@ -107,7 +107,7 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
         </>
       }
     >
-      <div role="tablist" aria-label="Photo source" className="inline-flex gap-1 rounded-full bg-gray-100 p-1">
+      <div role="tablist" aria-label="Photo source" className="inline-flex gap-1 rounded-full bg-koi-ink/5 p-1">
         {tabBtn("own", "Your photos", uploads.length)}
         {tabBtn("demo", "Demo photos", stockIds.length)}
       </div>
@@ -128,11 +128,11 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
             }}
             className={
               "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition " +
-              (over ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-400")
+              (over ? "border-koi-sea bg-koi-paper" : "border-koi-ink/15 hover:border-koi-sea/50")
             }
           >
-            <span className="font-medium text-gray-900">Drop photos here or click to choose</span>
-            <span className="mt-1 text-xs text-gray-500">
+            <span className="font-medium text-koi-ink">Drop photos here or click to choose</span>
+            <span className="mt-1 text-xs text-koi-ink/55">
               Up to {MAX_SETUP_UPLOADS} images, 10 MB each ({uploads.length}/{MAX_SETUP_UPLOADS} added)
             </span>
           </label>
@@ -158,8 +158,8 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
           {uploads.length ? (
             <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {uploads.map((u, i) => (
-                <li key={u.previewUrl} className="overflow-hidden rounded-2xl ring-1 ring-gray-200">
-                  <div className="relative aspect-[4/3] bg-gray-100">
+                <li key={u.previewUrl} className="overflow-hidden rounded-2xl ring-1 ring-koi-ink/10">
+                  <div className="relative aspect-[4/3] bg-koi-ink/5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={u.previewUrl} alt={u.alt} className="h-full w-full object-cover" />
                     <button
@@ -167,7 +167,7 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
                       onClick={() => removeUpload(i)}
                       disabled={p.disabled}
                       aria-label={`Remove ${u.file.name}`}
-                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white hover:bg-black"
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-koi-ink/70 text-xs text-white hover:bg-black"
                     >
                       ✕
                     </button>
@@ -179,7 +179,7 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
                       onChange={(e) => setAlt(i, e.target.value)}
                       disabled={p.disabled}
                       placeholder="Describe the photo"
-                      className="w-full rounded-full border border-gray-200 px-2.5 py-1 text-xs outline-none focus:border-black"
+                      className="w-full rounded-full border border-koi-ink/10 px-2.5 py-1 text-xs outline-none focus:border-koi-sea"
                     />
                   </label>
                 </li>
@@ -190,7 +190,7 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
       ) : (
         <div role="tabpanel" id={`${inputId}-panel-demo`} aria-labelledby={`${inputId}-tab-demo`} className="mt-3">
           <div className="flex items-center justify-between gap-2 text-sm">
-            <span className="text-gray-600">
+            <span className="text-koi-ink/60">
               {stockIds.length}/{MAX_STOCK_PICKS} picked
             </span>
             <button type="button" className={secondaryBtn} onClick={() => setShuffle((n) => n + 1)} disabled={p.disabled}>
@@ -211,13 +211,13 @@ export function PhotoStep(p: StepProps<PhotoChoice> & { category: string; seed: 
                     title={ph.alt}
                     className={
                       "relative block aspect-square w-full overflow-hidden rounded-2xl transition disabled:opacity-40 " +
-                      (on ? "ring-4 ring-black" : "ring-1 ring-gray-200 hover:ring-gray-400")
+                      (on ? "ring-4 ring-koi-ink" : "ring-1 ring-koi-ink/10 hover:ring-koi-sea/50")
                     }
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={photoUrl(ph.id, 400)} alt={ph.alt} loading="lazy" className="h-full w-full object-cover" />
                     {on ? (
-                      <span className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black text-xs text-white" aria-hidden>
+                      <span className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-koi-ink text-xs text-white" aria-hidden>
                         {stockIds.indexOf(ph.id) + 1}
                       </span>
                     ) : null}

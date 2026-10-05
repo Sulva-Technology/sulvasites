@@ -12,16 +12,16 @@ export type StepProps<T> = {
 };
 
 export const primaryBtn =
-  "rounded-full bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-full bg-koi-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:cursor-not-allowed disabled:opacity-50";
 export const secondaryBtn =
-  "rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-900 ring-1 ring-gray-300 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 transition hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:cursor-not-allowed disabled:opacity-50";
 
 export function StepCard(props: { step: number; title: string; hint: string; children: ReactNode; footer: ReactNode; label: string }) {
   return (
-    <section aria-label={props.label} className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Step {props.step} of 3</p>
-      <h3 className="mt-1 text-base font-semibold text-gray-900">{props.title}</h3>
-      <p className="mt-1 text-sm text-gray-600">{props.hint}</p>
+    <section aria-label={props.label} className="rounded-3xl bg-white p-4 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5 sm:p-5">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-koi-orange">Step {props.step} of 3</p>
+      <h3 className="mt-1 text-base font-semibold tracking-tight text-koi-ink">{props.title}</h3>
+      <p className="mt-1 text-sm text-koi-ink/60">{props.hint}</p>
       <div className="mt-4">{props.children}</div>
       <div className="mt-4 flex flex-wrap items-center gap-2">{props.footer}</div>
     </section>
