@@ -12,6 +12,7 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
   const [notAdminUserId, setNotAdminUserId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     const supabase = supabaseBrowser();
@@ -45,7 +46,20 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
 
         if (!adminData) {
           const { data: userData } = await supabase.auth.getUser();
-          setNotAdminUserId(userData.user?.id ?? null);
+          const userId = userData.user?.id ?? null;
+          if (userId) {
+            // Site owners/staff are not admins: send them to their dashboard instead of an error.
+            const { count } = await supabase
+              .from("site_members")
+              .select("site_id", { count: "exact", head: true })
+              .eq("user_id", userId);
+            if ((count ?? 0) > 0) {
+              setIsRedirecting(true);
+              router.replace("/dashboard");
+              return;
+            }
+          }
+          setNotAdminUserId(userId);
           return;
         }
       } catch (e) {
@@ -70,7 +84,7 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
     };
   }, [router]);
 
-  if (isChecking) {
+  if (isChecking || isRedirecting) {
     return <div className="p-6 text-sm text-gray-600">Loading…</div>;
   }
 

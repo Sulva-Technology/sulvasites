@@ -17,7 +17,8 @@ type Status = {
 type Bank = { name: string; code: string };
 
 export default function PaymentSettings(props: ShopAdminProps) {
-  if (props.role === "staff") return <NoAccess />;
+  // Payment and bank APIs are Sulvatech-admin only, so owners and staff do not get this page.
+  if (props.role !== "admin") return <NoAccess />;
   return <Inner {...props} />;
 }
 

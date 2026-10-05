@@ -18,6 +18,7 @@ export default function ExtraPagesSection({
   platformDomain,
   extraPages,
   setExtraPages,
+  editBasePath,
 }: {
   siteId: string;
   siteSlug: string;
@@ -25,6 +26,8 @@ export default function ExtraPagesSection({
   platformDomain: string;
   extraPages: ExtraPageRow[];
   setExtraPages: Dispatch<SetStateAction<ExtraPageRow[]>>;
+  /** Prefix for the Edit links; defaults to the admin editor route. */
+  editBasePath?: string;
 }) {
   const [newExtraKey, setNewExtraKey] = useState("");
   const [extraError, setExtraError] = useState<string | null>(null);
@@ -153,7 +156,7 @@ export default function ExtraPagesSection({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      href={`/admin/sites/${siteId}/extra-pages/${p.key}`}
+                      href={`${editBasePath ?? `/admin/sites/${siteId}/extra-pages`}/${p.key}`}
                       className="text-sm font-medium text-black underline underline-offset-2"
                     >
                       Edit

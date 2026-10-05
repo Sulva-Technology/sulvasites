@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import { templateSupportsShop } from "@/templates/meta";
 import { tabsForRole, type DashboardTab, type SiteRole } from "@/lib/siteAccess";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -30,6 +31,7 @@ const TAB_LABELS: Record<DashboardTab, string> = {
   inbox: "Inbox",
   business: "Business",
   team: "Team",
+  shop: "Shop",
 };
 
 function NotFound() {
@@ -104,7 +106,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   if (!value) return <NotFound />;
 
   const base = `/dashboard/${siteId}`;
-  const tabs = tabsForRole(value.role);
+  const tabs = tabsForRole(value.role, { shop: templateSupportsShop(value.site.template_key) });
 
   return (
     <SiteContext.Provider value={value}>

@@ -57,7 +57,7 @@ const sectionOptions: Array<Section["type"]> = [
   "team",
 ];
 
-export default function PageEditor({ siteId, pageKey: key = "", basePath }: SiteEditorProps) {
+export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }: SiteEditorProps) {
   const pageKey: PageKey | null = isPageKey(key) ? key : null;
 
   const [pageRow, setPageRow] = useState<PagesRow | null>(null);
@@ -380,6 +380,9 @@ export default function PageEditor({ siteId, pageKey: key = "", basePath }: Site
     return <div>Loading...</div>;
   }
 
+  // The AI routes (/api/ai/*) are Sulvatech-admin only, so owners do not see the AI controls.
+  const showAi = mode === "admin";
+
   if (!pageKey) notFound();
 
   return (
@@ -420,7 +423,7 @@ export default function PageEditor({ siteId, pageKey: key = "", basePath }: Site
             href={basePath}
             className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
           >
-            Back to site overview
+            {mode === "owner" ? "Back to content" : "Back to site overview"}
           </Link>
           <button
             type="button"
@@ -481,7 +484,7 @@ export default function PageEditor({ siteId, pageKey: key = "", basePath }: Site
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h2 className="text-lg font-semibold">SEO</h2>
-                  {pageKey ? (
+                  {pageKey && showAi ? (
                     <AiSeoButton
                       label="AI: improve SEO & alt text"
                       appliedNote="Click Save Draft to keep them."
@@ -563,11 +566,13 @@ export default function PageEditor({ siteId, pageKey: key = "", basePath }: Site
                             {idx + 1}. {section.type}
                           </div>
                           <div className="flex items-center gap-2">
-                            <AiRewriteMenu
-                              section={section}
-                              context={[pageDraft.seo.title, pageDraft.seo.description].filter(Boolean).join(" — ")}
-                              onApply={(next) => updateSection(idx, next)}
-                            />
+                            {showAi ? (
+                              <AiRewriteMenu
+                                section={section}
+                                context={[pageDraft.seo.title, pageDraft.seo.description].filter(Boolean).join(" — ")}
+                                onApply={(next) => updateSection(idx, next)}
+                              />
+                            ) : null}
                             <button
                               type="button"
                               onClick={() => moveSection(idx, -1)}

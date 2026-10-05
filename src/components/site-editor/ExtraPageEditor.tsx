@@ -46,7 +46,7 @@ const sectionOptions: Array<Section["type"]> = [
   "team",
 ];
 
-export default function ExtraPageEditor({ siteId, pageKey: key = "", basePath }: SiteEditorProps) {
+export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, basePath }: SiteEditorProps) {
   const [pageRow, setPageRow] = useState<ExtraPageRow | null>(null);
   const [pageDraft, setPageDraft] = useState<PageData | null>(null);
 
@@ -117,6 +117,9 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", basePath }:
   if (!siteId || !key) {
     return <div>Loading...</div>;
   }
+
+  // The AI routes (/api/ai/*) are Sulvatech-admin only, so owners do not see the AI controls.
+  const showAi = mode === "admin";
 
   function updateSection(index: number, next: Section) {
     setPageDraft((prev) => {
@@ -375,10 +378,12 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", basePath }:
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-gray-900">{section.type}</div>
                 <div className="flex items-center gap-3">
-                  <AiRewriteMenu
-                    section={section}
-                    onApply={(next) => updateSection(idx, next)}
-                  />
+                  {showAi ? (
+                    <AiRewriteMenu
+                      section={section}
+                      onApply={(next) => updateSection(idx, next)}
+                    />
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => removeSection(idx)}

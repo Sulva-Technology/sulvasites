@@ -24,7 +24,7 @@ export default function ShopOverview(props: ShopAdminProps) {
 }
 
 function Inner(props: ShopAdminProps) {
-  const { siteId, basePath } = props;
+  const { siteId, basePath, role } = props;
   const [s, setS] = useState<Settings>(DEFAULTS);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,15 +56,19 @@ function Inner(props: ShopAdminProps) {
         db.from("orders").select("id", { count: "exact", head: true }).eq("site_id", siteId).eq("status", "paid"),
       ]);
       setCounts({ products: p.count ?? 0, paid: o.count ?? 0 });
-      const res = await apiFetch<PaymentStatus>(`/api/admin/sites/${encodeURIComponent(siteId)}/shop/payment`);
-      if (res.ok) setPay(res.data);
-      else setPayErr(true);
+      if (role === "admin") {
+        const res = await apiFetch<PaymentStatus>(`/api/admin/sites/${encodeURIComponent(siteId)}/shop/payment`);
+        if (res.ok) setPay(res.data);
+        else setPayErr(true);
+      } else {
+        setPayErr(true);
+      }
     } catch (e) {
       setErr(errMsg(e));
     } finally {
       setLoaded(true);
     }
-  }, [siteId]);
+  }, [siteId, role]);
 
   useEffect(() => {
     void load();
@@ -160,7 +164,11 @@ function Inner(props: ShopAdminProps) {
           <section className={cardCls}>
             <h2 className="mb-3 text-sm font-semibold text-gray-900">Payments</h2>
             {payErr ? (
-              <p className="text-sm text-gray-600">Payment status is not available for your account.</p>
+              <p className="text-sm text-gray-600">
+                {role === "admin"
+                  ? "Payment status is not available for your account."
+                  : "Payment setup is managed by Sulvatech. Contact us to change it."}
+              </p>
             ) : pay ? (
               <div className="space-y-2 text-sm text-gray-800">
                 <div>
@@ -187,11 +195,13 @@ function Inner(props: ShopAdminProps) {
                 ) : null}
               </div>
             ) : null}
-            <div className="mt-3">
-              <Link className="text-sm font-medium text-blue-700 underline" href={`${basePath}/payments`}>
-                Manage payment settings
-              </Link>
-            </div>
+            {role === "admin" ? (
+              <div className="mt-3">
+                <Link className="text-sm font-medium text-blue-700 underline" href={`${basePath}/payments`}>
+                  Manage payment settings
+                </Link>
+              </div>
+            ) : null}
             {counts ? (
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>

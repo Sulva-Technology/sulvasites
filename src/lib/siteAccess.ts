@@ -1,7 +1,7 @@
 // Relative-import-safe pure helpers for site membership rules.
 export type SiteRole = "owner" | "staff";
 export type Membership = { siteId: string; role: SiteRole };
-export type DashboardTab = "overview" | "content" | "inbox" | "business" | "team";
+export type DashboardTab = "overview" | "content" | "inbox" | "business" | "team" | "shop";
 
 export function postLoginRoute(i: { isAdmin: boolean; mustChangePassword: boolean; memberships: Membership[] }): string {
   if (i.mustChangePassword) return "/change-password";
@@ -11,8 +11,12 @@ export function postLoginRoute(i: { isAdmin: boolean; mustChangePassword: boolea
   return "/no-access";
 }
 
-export function tabsForRole(role: SiteRole | "admin"): DashboardTab[] {
-  return role === "staff" ? ["overview", "inbox", "business"] : ["overview", "content", "inbox", "business", "team"];
+/** Tabs for a role. `shop` adds the Shop tab (templates with a shop); staff get it too, limited to orders. */
+export function tabsForRole(role: SiteRole | "admin", opts: { shop?: boolean } = {}): DashboardTab[] {
+  const tabs: DashboardTab[] =
+    role === "staff" ? ["overview", "inbox", "business"] : ["overview", "content", "inbox", "business", "team"];
+  if (opts.shop) tabs.splice(role === "staff" ? 1 : 2, 0, "shop");
+  return tabs;
 }
 
 export function canInvite(actor: SiteRole | "admin", target: SiteRole): boolean {

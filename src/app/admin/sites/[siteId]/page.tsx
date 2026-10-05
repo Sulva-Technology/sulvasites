@@ -12,7 +12,9 @@ import AiSeoAllPages from "@/components/admin/AiSeoAllPages";
 import AiSiteContentGenerator from "@/components/admin/AiSiteContentGenerator";
 import DomainsSection, { type DomainRow } from "@/components/admin/site/DomainsSection";
 import ExtraPagesSection from "@/components/admin/site/ExtraPagesSection";
+import ShopAdminLink from "@/components/admin/site/ShopAdminLink";
 import ProfileEditor from "@/components/site-editor/ProfileEditor";
+import TeamManager from "@/components/team/TeamManager";
 import type { ExtraPageRow } from "@/lib/extraPages";
 
 type SiteRow = {
@@ -258,12 +260,15 @@ export default function SiteOverviewPage({
               Manage profile and page content for this site.
             </p>
           </div>
-          <Link
-            href="/admin/sites"
-            className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-          >
-            Back to sites
-          </Link>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <ShopAdminLink siteId={siteId} templateKey={site.template_key} />
+            <Link
+              href="/admin/sites"
+              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            >
+              Back to sites
+            </Link>
+          </div>
         </div>
 
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -349,6 +354,15 @@ export default function SiteOverviewPage({
         domains={domains}
         setDomains={setDomains}
       />
+
+      {/* A2b) Team */}
+      <section className="rounded-lg bg-white p-6 ring-1 ring-gray-200">
+        <h2 className="text-lg font-semibold">Team</h2>
+        <p className="mt-1 mb-4 text-sm text-gray-600">
+          Owners can edit content and manage staff; staff can view orders, inbox and business details.
+        </p>
+        <TeamManager siteId={siteId} actor="admin" />
+      </section>
 
       {/* A3) Logo + B) Business Profile Editor */}
       <ProfileEditor siteId={siteId} mode="admin" basePath={`/admin/sites/${siteId}`} />

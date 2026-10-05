@@ -16,6 +16,13 @@ test("tabsForRole", () => {
   assert.deepEqual(tabsForRole("staff"), ["overview", "inbox", "business"]);
 });
 
+test("tabsForRole with shop", () => {
+  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "shop", "inbox", "business", "team"]);
+  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "shop", "inbox", "business", "team"]);
+  assert.deepEqual(tabsForRole("staff", { shop: true }), ["overview", "shop", "inbox", "business"]);
+  assert.deepEqual(tabsForRole("staff", { shop: false }), ["overview", "inbox", "business"]);
+});
+
 test("canInvite", () => {
   assert.equal(canInvite("admin", "owner"), true);
   assert.equal(canInvite("owner", "staff"), true);
