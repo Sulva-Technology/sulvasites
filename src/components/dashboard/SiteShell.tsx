@@ -9,6 +9,7 @@ import { useMember } from "@/components/RequireMember";
 import { templateSupportsShop } from "@/templates/meta";
 import { tabsForRole, type DashboardTab, type SiteRole } from "@/lib/siteAccess";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { INBOX_CHANGED_EVENT } from "@/components/inbox/InboxView";
 
 export type SiteContextValue = {
   siteId: string;
@@ -56,6 +57,8 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   const [adminSite, setAdminSite] = useState<SiteContextValue | null>(null);
   const [adminChecked, setAdminChecked] = useState(false);
 
+  const [unread, setUnread] = useState(0);
+
   const needsAdminLookup = isAdmin && !membership && Boolean(siteId);
   useEffect(() => {
     if (!needsAdminLookup) return;
@@ -89,6 +92,27 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       isMounted = false;
     };
   }, [needsAdminLookup, siteId]);
+
+  const hasAccess = Boolean(membership || adminSite);
+  useEffect(() => {
+    if (!hasAccess || !siteId) return;
+    let isMounted = true;
+    const refresh = async () => {
+      const { count } = await supabaseBrowser()
+        .from("inbox_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("site_id", siteId)
+        .eq("status", "new")
+        .eq("is_spam", false);
+      if (isMounted) setUnread(count ?? 0);
+    };
+    void refresh();
+    window.addEventListener(INBOX_CHANGED_EVENT, refresh);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(INBOX_CHANGED_EVENT, refresh);
+    };
+  }, [hasAccess, siteId, pathname]);
 
   let value: SiteContextValue | null = null;
   if (membership) {
@@ -132,6 +156,14 @@ export default function SiteShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 {TAB_LABELS[tab]}
+                {tab === "inbox" && unread > 0 ? (
+                  <span
+                    className="ml-1.5 inline-block min-w-[1.25rem] rounded-full bg-blue-600 px-1.5 text-center text-xs font-medium leading-5 text-white"
+                    aria-label={`${unread} unread`}
+                  >
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

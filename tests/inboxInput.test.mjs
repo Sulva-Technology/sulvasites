@@ -129,3 +129,23 @@ test("reply links", () => {
   assert.equal(none.whatsapp, null);
   assert.deepEqual([...INBOX_STATUSES], ["new", "read", "replied", "archived"]);
 });
+
+import { filterMessages, countUnread } from "../src/lib/inbox/filter.ts";
+
+const row = (o) => ({ id: "1", kind: "enquiry", name: "Ada", email: "a@b.co", phone: null, message: "Hello", extra: {}, status: "new", source_page: null, created_at: "2026-10-05T00:00:00Z", ...o });
+
+test("filterMessages by status, kind, search", () => {
+  const rows = [
+    row({ id: "1" }),
+    row({ id: "2", status: "archived", name: "Bo" }),
+    row({ id: "3", kind: "booking", status: "read", extra: { date: "2026-11-01" }, name: "Cy" }),
+  ];
+  const f = (x) => filterMessages(rows, { status: "all", kind: "all", q: "", ...x }).map((r) => r.id);
+  assert.deepEqual(f({}), ["1", "2", "3"]);
+  assert.deepEqual(f({ status: "open" }), ["1", "3"]);
+  assert.deepEqual(f({ status: "archived" }), ["2"]);
+  assert.deepEqual(f({ kind: "booking" }), ["3"]);
+  assert.deepEqual(f({ q: " 2026-11 " }), ["3"]);
+  assert.deepEqual(f({ q: "BO" }), ["2"]);
+  assert.equal(countUnread(rows), 1);
+});

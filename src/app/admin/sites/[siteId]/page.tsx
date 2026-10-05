@@ -261,6 +261,12 @@ export default function SiteOverviewPage({
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              href={`/admin/sites/${siteId}/inbox`}
+              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            >
+              Inbox
+            </Link>
             <ShopAdminLink siteId={siteId} templateKey={site.template_key} />
             <Link
               href="/admin/sites"
