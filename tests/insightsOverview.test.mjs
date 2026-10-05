@@ -87,8 +87,10 @@ import { niceMax, axisTicks, labelIndexes } from "../src/lib/insights/chart.ts";
 test("chart helpers", () => {
   assert.equal(niceMax(0), 4);
   assert.equal(niceMax(3), 4);
-  assert.equal(niceMax(7), 10);
-  assert.equal(niceMax(23), 50);
+  assert.equal(niceMax(7), 8);
+  assert.equal(niceMax(23), 40);
+  assert.equal(niceMax(45), 80);
+  assert.ok(axisTicks(niceMax(45)).every(Number.isInteger));
   assert.equal(niceMax(120), 200);
   assert.equal(niceMax(1000), 1000);
   assert.deepEqual(axisTicks(40), [0, 10, 20, 30, 40]);
