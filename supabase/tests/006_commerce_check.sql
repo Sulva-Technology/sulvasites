@@ -131,7 +131,7 @@ union all select var_c,     prod_c,     site_c_id, '{"Size":"OS"}'::jsonb, 3   f
 
 insert into public.orders (id, site_id, reference, status, customer_name, customer_email, customer_phone,
   delivery_method, subtotal_kobo, delivery_kobo, total_kobo, payment_mode, paid_at)
-select order_a,     site_id,   'ZZ-A-'    || substr(order_a::text, 1, 8),     'pending',   'Ada', 'ada@example.test', '0800', 'delivery', 3000000, 150000, 3150000, 'platform', null  from _ids
+select order_a,     site_id,   'ZZ-A-'    || substr(order_a::text, 1, 8),     'pending',   'Ada', 'ada@example.test', '0800', 'delivery', 3000000, 150000, 3150000, 'platform', null::timestamptz  from _ids
 union all select order_a_mm,  site_id,   'ZZ-AMM-'  || substr(order_a_mm::text, 1, 8),  'pending',   'Bo',  'bo@example.test',  '0801', 'pickup',    500000,      0,  500000, 'platform', null  from _ids
 union all select order_a_st,  site_id,   'ZZ-AST-'  || substr(order_a_st::text, 1, 8),  'paid',      'Cy',  'cy@example.test',  '0802', 'pickup',    500000,      0,  500000, 'platform', now() from _ids
 union all select order_a_st2, site_id,   'ZZ-AST2-' || substr(order_a_st2::text, 1, 8), 'paid',      'Ed',  'ed@example.test',  '0804', 'pickup',    500000,      0,  500000, 'platform', now() from _ids

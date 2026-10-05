@@ -76,7 +76,8 @@ begin
   if p_days is null or p_days not in (7, 30, 90) then
     raise exception 'Invalid period.' using errcode = '22023';
   end if;
-  if p_site is null or not public.can_edit_site(p_site) then
+  -- can_edit_site() is NULL (not false) for non-members; coalesce so the guard fails closed.
+  if p_site is null or not coalesce(public.can_edit_site(p_site), false) then
     raise exception 'Not allowed.' using errcode = '42501';
   end if;
 

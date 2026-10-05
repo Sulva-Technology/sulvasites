@@ -248,12 +248,12 @@ reset role;
 -- SERVICE ROLE: passes the immutability guard (ops), cap still applies
 -- =============================================================================
 do $$
-declare a uuid := (select site_id from _ids); b uuid := (select site_b_id from _ids);
+declare a uuid := (select site_id from _ids); ib uuid := (select item_b from _ids); c uuid := (select site_c_id from _ids);
 begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     execute 'set local role service_role';
-    perform zz_chk.expect_rows(format($q$update public.business_items set site_id = %L where id = %L$q$, a, (select item_b from _ids)), 1, 'service_role may move an item (ops)');
-    perform zz_chk.expect_fail(format($q$insert into public.business_items (site_id, kind, name) values (%L, 'service', 'cap')$q$, (select site_c_id from _ids)), 'cap applies to service_role', '54000');
+    perform zz_chk.expect_rows(format($q$update public.business_items set site_id = %L where id = %L$q$, a, ib), 1, 'service_role may move an item (ops)');
+    perform zz_chk.expect_fail(format($q$insert into public.business_items (site_id, kind, name) values (%L, 'service', 'cap')$q$, c), 'cap applies to service_role', '54000');
     execute 'reset role';
   else
     raise notice 'SKIPPED: service_role path (role does not exist)';
