@@ -73,12 +73,12 @@
 
 /* Plum night: !important so it wins over the site's saved light palette (inline vars). */
 .template11[data-mode="dark"] {
-  --t11-accent: #b18cff !important;
-  --t11-accent2: #0c0616 !important;
-  --t11-ink: #f6effc !important;
-  --t11-muted: #b9a9cc !important;
-  --t11-bg: #130a22 !important;
-  --t11-surface: #1c1030 !important;
+  --t11-accent: var(--t11-dark-accent, #b18cff) !important;
+  --t11-accent2: var(--t11-dark-accent2, #0c0616) !important;
+  --t11-ink: var(--t11-dark-ink, #f6effc) !important;
+  --t11-muted: var(--t11-dark-muted, #b9a9cc) !important;
+  --t11-bg: var(--t11-dark-bg, #130a22) !important;
+  --t11-surface: var(--t11-dark-surface, #1c1030) !important;
 
   --t11-card: #221338;
   --t11-accent-deep: #9f72ff;

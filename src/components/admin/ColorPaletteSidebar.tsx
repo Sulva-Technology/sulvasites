@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { applyThemeColors, getTemplateThemeConfig, type ThemeSemanticColors } from "@/lib/templateTheme";
+import {
+  applyThemeColors,
+  DARK_PREFIX,
+  effectiveDarkColors,
+  getTemplateThemeConfig,
+  type ThemeSemanticColors,
+} from "@/lib/templateTheme";
 
 interface ColorPaletteSidebarProps {
   isOpen: boolean;
@@ -46,6 +52,16 @@ export default function ColorPaletteSidebar({
     }
   });
 
+  // Templates with a light/dark toggle keep a separate dark palette (`dark_*` keys).
+  const [mode, setMode] = useState<"light" | "dark">("light");
+  const hasDark = !!config.dark;
+
+  const switchMode = (next: "light" | "dark") => {
+    setMode(next);
+    // Show the preview in the mode being edited.
+    getTargetRoot?.()?.setAttribute("data-mode", next);
+  };
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
 
@@ -83,7 +99,7 @@ export default function ColorPaletteSidebar({
   }, [initialColors, templateKey]);
 
   const handleColorChange = (key: string, value: string) => {
-    const newColors = { ...colors, [key]: value };
+    const newColors = { ...colors, [mode === "dark" ? `${DARK_PREFIX}${key}` : key]: value };
     setColors(newColors);
     applyColors(newColors);
     localStorage.setItem(storageKey, JSON.stringify(newColors));
@@ -114,6 +130,9 @@ export default function ColorPaletteSidebar({
       setIsSaving(false);
     }
   };
+
+  const shown: ThemeSemanticColors = mode === "dark" ? effectiveDarkColors(templateKey, colors) : colors;
+  const fieldKeys = Object.keys(mode === "dark" && config.dark ? config.dark.defaults : config.defaults);
 
   // Button gradient follows the palette being edited.
   const getButtonGradient = () =>
@@ -157,8 +176,45 @@ export default function ColorPaletteSidebar({
           </button>
         </div>
 
+        {hasDark ? (
+          <div
+            role="tablist"
+            aria-label="Colour mode"
+            style={{ display: "flex", gap: 4, padding: 4, marginBottom: 20, background: "#F3F4F6", borderRadius: 10 }}
+          >
+            {(["light", "dark"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                onClick={() => switchMode(m)}
+                style={{
+                  flex: 1,
+                  padding: "8px 10px",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background: mode === m ? "#FFFFFF" : "transparent",
+                  color: mode === m ? "#111827" : "#6B7280",
+                  boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
+                }}
+              >
+                {m === "light" ? "Light mode" : "Dark mode"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {mode === "dark" ? (
+          <p style={{ margin: "-8px 0 20px", fontSize: 12, color: "#6B7280" }}>
+            Colours visitors see with dark mode on. Your light accent carries over when it stays readable.
+          </p>
+        ) : null}
+
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {Object.entries(config.defaults).map(([key]) => (
+          {fieldKeys.map((key) => (
             <div key={key}>
               <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "600", color: "#1F2937" }}>
                 {config.labels[key] || key}
@@ -166,13 +222,13 @@ export default function ColorPaletteSidebar({
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <input
                   type="color"
-                  value={colors[key]}
+                  value={shown[key]}
                   onChange={(e) => handleColorChange(key, e.target.value)}
                   style={{ width: "60px", height: "40px", border: "1px solid #E5E7EB", borderRadius: "8px", cursor: "pointer" }}
                 />
                 <input
                   type="text"
-                  value={colors[key]}
+                  value={shown[key]}
                   onChange={(e) => handleColorChange(key, e.target.value)}
                   style={{ flex: 1, padding: "8px", border: "1px solid #E5E7EB", borderRadius: "8px", fontSize: "14px" }}
                 />

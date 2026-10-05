@@ -36,11 +36,11 @@
 
 /* Dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template6[data-mode="dark"] {
-  --t6-accent2: #1d1d1b !important;
-  --t6-ink: #f1f0eb !important;
-  --t6-muted: #a3a29c !important;
-  --t6-bg: #0f0f0e !important;
-  --t6-surface: #1a1a18 !important;
+  --t6-accent2: var(--t6-dark-accent2, #1d1d1b) !important;
+  --t6-ink: var(--t6-dark-ink, #f1f0eb) !important;
+  --t6-muted: var(--t6-dark-muted, #a3a29c) !important;
+  --t6-bg: var(--t6-dark-bg, #0f0f0e) !important;
+  --t6-surface: var(--t6-dark-surface, #1a1a18) !important;
   color-scheme: dark;
 }
 

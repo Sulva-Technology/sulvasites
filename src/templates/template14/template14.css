@@ -59,12 +59,12 @@
 
 /* Night: !important so it wins over the site's saved light palette (inline vars). */
 .template14[data-mode="dark"] {
-  --t14-accent: #5b9cff !important;
-  --t14-accent2: #070d18 !important;
-  --t14-ink: #eaf0fa !important;
-  --t14-muted: #9aa6bb !important;
-  --t14-bg: #0b1220 !important;
-  --t14-surface: #131c2e !important;
+  --t14-accent: var(--t14-dark-accent, #5b9cff) !important;
+  --t14-accent2: var(--t14-dark-accent2, #070d18) !important;
+  --t14-ink: var(--t14-dark-ink, #eaf0fa) !important;
+  --t14-muted: var(--t14-dark-muted, #9aa6bb) !important;
+  --t14-bg: var(--t14-dark-bg, #0b1220) !important;
+  --t14-surface: var(--t14-dark-surface, #131c2e) !important;
 
   --t14-line: color-mix(in srgb, var(--t14-ink) 14%, transparent);
   --t14-line-strong: color-mix(in srgb, var(--t14-ink) 32%, transparent);

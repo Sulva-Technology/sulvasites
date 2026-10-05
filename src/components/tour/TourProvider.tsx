@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { needsNavigation, nextVisibleIndex } from "@/lib/tour/steps";
+import { mergeTourContext } from "@/lib/tour/context";
+import { hasUnsavedWorkRisk, needsNavigation, nextVisibleIndex, stepPosition } from "@/lib/tour/steps";
 import { isTourDone, markTourDone } from "@/lib/tour/storage";
 import type { TourContext, TourDef } from "@/lib/tour/types";
 
@@ -55,7 +56,7 @@ export function TourProvider({
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const [extra, setExtra] = useState<TourContext>({});
-  const ctx = useMemo<TourContext>(() => ({ ...baseContext, ...extra }), [baseContext, extra]);
+  const ctx = useMemo<TourContext>(() => mergeTourContext(baseContext, extra), [baseContext, extra]);
   const ctxRef = useRef(ctx);
   useEffect(() => {
     ctxRef.current = ctx;
@@ -66,6 +67,12 @@ export function TourProvider({
   const expectedPathRef = useRef<string | null>(null);
   const lastPathRef = useRef(pathname);
   const autoStartedRef = useRef(false);
+  const autoRunRef = useRef(false);
+  const confirmedRef = useRef(false);
+  const indexRef = useRef(-1);
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
 
   const setContext = useCallback((patch: Partial<TourContext>) => {
     setExtra((prev) => ({ ...prev, ...patch }));
@@ -99,7 +106,21 @@ export function TourProvider({
       const route = step.route?.(ctxRef.current) ?? null;
       const current = window.location.pathname + window.location.search;
       if (route && needsNavigation(route, current, step.routePrefix)) {
-        expectedPathRef.current = route.split("?")[0];
+        const targetPath = route.split("?")[0];
+        const pathChanges = targetPath !== window.location.pathname;
+        if (!confirmedRef.current) {
+          confirmedRef.current = true;
+          if (
+            pathChanges &&
+            hasUnsavedWorkRisk(window.location.pathname) &&
+            !window.confirm("The tour will open other pages. Unsaved changes here will be lost. Continue?")
+          ) {
+            // Closed without marking done so the user can retry later.
+            setIndex(-1);
+            return;
+          }
+        }
+        if (pathChanges) expectedPathRef.current = targetPath;
         router.push(route);
       }
       setIndex(i);
@@ -107,10 +128,17 @@ export function TourProvider({
     [end, router, tour.steps],
   );
 
-  const start = useCallback(() => {
-    dirRef.current = 1;
-    goTo(nextVisibleIndex(tour.steps, -1, 1, ctxRef.current));
-  }, [goTo, tour.steps]);
+  const startRun = useCallback(
+    (auto: boolean) => {
+      dirRef.current = 1;
+      autoRunRef.current = auto;
+      confirmedRef.current = false;
+      goTo(nextVisibleIndex(tour.steps, -1, 1, ctxRef.current));
+    },
+    [goTo, tour.steps],
+  );
+
+  const start = useCallback(() => startRun(false), [startRun]);
 
   const next = useCallback(() => {
     dirRef.current = 1;
@@ -133,11 +161,13 @@ export function TourProvider({
     if (autoStartedRef.current || index >= 0) return;
     if (!tour.autoStart(pathname) || isTourDone(tour.id)) return;
     const t = window.setTimeout(() => {
+      // Only centered steps would show (e.g. admin with no memberships): not worth auto-starting.
+      if (stepPosition(tour.steps, tour.steps.length - 1, ctxRef.current).total <= 2) return;
       autoStartedRef.current = true;
-      start();
+      startRun(true);
     }, AUTO_START_DELAY_MS);
     return () => window.clearTimeout(t);
-  }, [pathname, index, start, tour]);
+  }, [pathname, index, startRun, tour, ctx]);
 
   // Leaving the page yourself mid-tour ends it.
   useEffect(() => {
@@ -148,10 +178,22 @@ export function TourProvider({
       return;
     }
     if (index < 0) return;
+    // An auto-started run still on its first step was likely interrupted by a redirect (e.g. single-site owner
+    // bounced to their site): close quietly and allow auto-start again on the new path.
+    const interruptedAuto =
+      autoRunRef.current && index === nextVisibleIndex(tour.steps, -1, 1, ctxRef.current);
     // Deferred so the state update does not happen synchronously in the effect body.
     // Not cleared on dep change: lastPathRef is already updated, so a cancelled timer would never re-fire.
-    window.setTimeout(() => endRef.current(), 0);
-  }, [pathname, index]);
+    window.setTimeout(() => {
+      if (interruptedAuto && indexRef.current === index) {
+        autoRunRef.current = false;
+        autoStartedRef.current = false;
+        setIndex(-1);
+      } else {
+        endRef.current();
+      }
+    }, 0);
+  }, [pathname, index, tour.steps]);
 
   const api = useMemo<TourApi>(() => ({ start, active: index >= 0, setContext }), [start, index, setContext]);
 

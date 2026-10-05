@@ -29,3 +29,11 @@ export function needsNavigation(route: string, current: string, prefix = false):
   if (!prefix) return true;
   return !(current.startsWith(`${route}/`) || current.startsWith(`${route}?`));
 }
+
+/** Pages where soft-navigating away can lose in-progress work (assistant chat, uploads, page editors). */
+export function hasUnsavedWorkRisk(pathname: string): boolean {
+  const path = pathname.split("?")[0];
+  if (path === "/admin/sites/new" || path.startsWith("/admin/sites/new/")) return true;
+  const segs = path.split("/");
+  return segs.includes("pages") || segs.includes("extra-pages");
+}

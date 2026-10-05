@@ -63,12 +63,12 @@
 
 /* Navy dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template10[data-mode="dark"] {
-  --t10-accent: #8ea3ff !important;
-  --t10-accent2: #090f29 !important;
-  --t10-ink: #f4f2ea !important;
-  --t10-muted: #aab2d0 !important;
-  --t10-bg: #0e1533 !important;
-  --t10-surface: #131c40 !important;
+  --t10-accent: var(--t10-dark-accent, #8ea3ff) !important;
+  --t10-accent2: var(--t10-dark-accent2, #090f29) !important;
+  --t10-ink: var(--t10-dark-ink, #f4f2ea) !important;
+  --t10-muted: var(--t10-dark-muted, #aab2d0) !important;
+  --t10-bg: var(--t10-dark-bg, #0e1533) !important;
+  --t10-surface: var(--t10-dark-surface, #131c40) !important;
 
   --t10-sun: #ffcd45;
   --t10-sun-soft: color-mix(in srgb, var(--t10-sun) 14%, var(--t10-bg));

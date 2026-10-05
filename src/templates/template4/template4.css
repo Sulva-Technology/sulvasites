@@ -40,11 +40,11 @@
 
 /* Dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template4[data-mode="dark"] {
-  --t4-accent2: #12152a !important;
-  --t4-ink: #eef0fb !important;
-  --t4-muted: #9aa0ba !important;
-  --t4-bg: #05060c !important;
-  --t4-surface: #0e1120 !important;
+  --t4-accent2: var(--t4-dark-accent2, #12152a) !important;
+  --t4-ink: var(--t4-dark-ink, #eef0fb) !important;
+  --t4-muted: var(--t4-dark-muted, #9aa0ba) !important;
+  --t4-bg: var(--t4-dark-bg, #05060c) !important;
+  --t4-surface: var(--t4-dark-surface, #0e1120) !important;
   --t4-beam: color-mix(in srgb, var(--t4-accent) 30%, transparent);
   --t4-beam-core: color-mix(in srgb, var(--t4-accent) 45%, #fff);
   --t4-star: color-mix(in srgb, #fff 55%, transparent);

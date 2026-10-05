@@ -33,11 +33,11 @@
 
 /* Dark mode: !important so it wins over the site's saved light palette (inline vars). */
 .template5[data-mode="dark"] {
-  --t5-accent2: #2a1f26 !important;
-  --t5-ink: #f6eef2 !important;
-  --t5-muted: #b4a7b0 !important;
-  --t5-bg: #120d10 !important;
-  --t5-surface: #1c1519 !important;
+  --t5-accent2: var(--t5-dark-accent2, #2a1f26) !important;
+  --t5-ink: var(--t5-dark-ink, #f6eef2) !important;
+  --t5-muted: var(--t5-dark-muted, #b4a7b0) !important;
+  --t5-bg: var(--t5-dark-bg, #120d10) !important;
+  --t5-surface: var(--t5-dark-surface, #1c1519) !important;
   --t5-on-dark: #f6eef2;
   color-scheme: dark;
 }

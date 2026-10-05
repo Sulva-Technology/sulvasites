@@ -41,3 +41,12 @@ test("bypass paths untouched on any host", () => {
     assert.equal(rewritePathForHost("client.com", path, P), null, path);
   }
 });
+
+test("owner back-office paths work on the site's own link (subdomain and custom domain)", () => {
+  const paths = ["/dashboard", "/dashboard/abc-123/content", "/change-password", "/no-access"];
+  for (const host of ["store.soothecontrols.site", "www.client.com"]) {
+    for (const path of paths) {
+      assert.equal(rewritePathForHost(host, path, P), null, `${host}${path}`);
+    }
+  }
+});
