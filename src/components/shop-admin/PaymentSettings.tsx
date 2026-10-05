@@ -17,8 +17,8 @@ type Status = {
 type Bank = { name: string; code: string };
 
 export default function PaymentSettings(props: ShopAdminProps) {
-  // Payment and bank APIs are Sulvatech-admin only, so owners and staff do not get this page.
-  if (props.role !== "admin") return <NoAccess />;
+  // Sulvatech admins and shop owners only; staff never.
+  if (props.role !== "admin" && props.role !== "owner") return <NoAccess />;
   return <Inner {...props} />;
 }
 
@@ -39,6 +39,8 @@ function Inner(props: ShopAdminProps) {
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [feePct, setFeePct] = useState("0");
+  const [password, setPassword] = useState("");
+  const needsPassword = role === "owner";
 
   const load = useCallback(async () => {
     try {
@@ -76,11 +78,14 @@ function Inner(props: ShopAdminProps) {
     setErr(null);
     setOk(null);
     try {
-      const res = await apiFetch<Status>(api, method === "POST" ? { method, body: JSON.stringify(body) } : { method });
+      // Owners re-confirm their password for bank/key changes (the server enforces this too).
+      const payload = needsPassword && (body.mode || method === "DELETE") ? { ...body, password } : body;
+      const res = await apiFetch<Status>(api, { method, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(res.data.error ?? "Request failed.");
       setStatus(res.data);
       setFeePct(String(res.data.platformFeeBps / 100));
       setOk(success);
+      setPassword("");
       return true;
     } catch (e) {
       setErr(errMsg(e));
@@ -91,11 +96,19 @@ function Inner(props: ShopAdminProps) {
   }
 
   async function savePlatform() {
+    if (needsPassword && !password) {
+      setErr("Enter your password to confirm this change.");
+      return;
+    }
     const done = await submit({ mode: "platform", bankCode, accountNumber, businessName }, "Payout account saved. Payments will settle to this account.");
     if (done) setAccountNumber("");
   }
 
   async function saveOwnKeys() {
+    if (needsPassword && !password) {
+      setErr("Enter your password to confirm this change.");
+      return;
+    }
     const done = await submit({ mode: "own_keys", publicKey, secretKey }, "Paystack keys saved.");
     if (done) {
       setSecretKey("");
@@ -104,6 +117,10 @@ function Inner(props: ShopAdminProps) {
   }
 
   async function removeKeys() {
+    if (needsPassword && !password) {
+      setErr("Enter your password to confirm this change.");
+      return;
+    }
     if (!window.confirm("Remove the saved Paystack keys? Customers will not be able to pay with them, and unpaid orders placed with them can no longer be verified.")) return;
     await submit({}, "Keys removed.", "DELETE");
   }
@@ -146,6 +163,20 @@ function Inner(props: ShopAdminProps) {
                   : "Payments are not set up yet. Choose an option below."}
             </p>
           </section>
+
+          {needsPassword ? (
+            <section className={cardCls}>
+              <Notice kind="warn">
+                Changing the payout bank account or Paystack keys redirects where your customers&apos; money goes. Only change
+                these if you are sure. You must enter your account password to confirm, and we email you and the shop&apos;s
+                contact address every time they change.
+              </Notice>
+              <label className="mt-3 block text-sm font-medium text-gray-800">
+                Your account password
+                <input className={inputCls} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </label>
+            </section>
+          ) : null}
 
           <div role="tablist" aria-label="Payment mode" className="flex gap-2">
             <button type="button" role="tab" aria-selected={tab === "platform"} className={tab === "platform" ? btnCls : btnGhostCls} onClick={() => setTab("platform")}>
@@ -230,7 +261,14 @@ function Inner(props: ShopAdminProps) {
             </section>
           )}
 
-          {role === "admin" ? (
+          {role !== "admin" ? (
+            <section className={cardCls}>
+              <h2 className="mb-2 text-sm font-semibold text-gray-900">Platform fee</h2>
+              <p className="text-sm text-gray-800">
+                Fee: <b>{status.platformFeeBps / 100}%</b> of each sale. Set by Sulvatech; contact us to change it.
+              </p>
+            </section>
+          ) : (
             <section className={cardCls}>
               <h2 className="mb-2 text-sm font-semibold text-gray-900">Platform fee (Sulvatech only)</h2>
               <div className="flex flex-wrap items-end gap-3">
@@ -243,7 +281,7 @@ function Inner(props: ShopAdminProps) {
                 </button>
               </div>
             </section>
-          ) : null}
+          )}
         </div>
       )}
     </div>

@@ -56,7 +56,7 @@ function Inner(props: ShopAdminProps) {
         db.from("orders").select("id", { count: "exact", head: true }).eq("site_id", siteId).eq("status", "paid"),
       ]);
       setCounts({ products: p.count ?? 0, paid: o.count ?? 0 });
-      if (role === "admin") {
+      if (role === "admin" || role === "owner") {
         const res = await apiFetch<PaymentStatus>(`/api/admin/sites/${encodeURIComponent(siteId)}/shop/payment`);
         if (res.ok) setPay(res.data);
         else setPayErr(true);
@@ -165,9 +165,9 @@ function Inner(props: ShopAdminProps) {
             <h2 className="mb-3 text-sm font-semibold text-gray-900">Payments</h2>
             {payErr ? (
               <p className="text-sm text-gray-600">
-                {role === "admin"
-                  ? "Payment status is not available for your account."
-                  : "Payment setup is managed by Sulvatech. Contact us to change it."}
+                {role === "staff"
+                  ? "Payment setup is managed by the shop owner."
+                  : "Payment status is not available right now."}
               </p>
             ) : pay ? (
               <div className="space-y-2 text-sm text-gray-800">
@@ -195,7 +195,7 @@ function Inner(props: ShopAdminProps) {
                 ) : null}
               </div>
             ) : null}
-            {role === "admin" ? (
+            {role === "admin" || role === "owner" ? (
               <div className="mt-3">
                 <Link className="text-sm font-medium text-blue-700 underline" href={`${basePath}/payments`}>
                   Manage payment settings

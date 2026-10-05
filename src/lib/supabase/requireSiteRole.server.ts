@@ -7,7 +7,7 @@ import { defaultNewUserPassword, supabaseService } from "./admin.server";
 export type ActorRole = "owner" | "staff" | "admin";
 
 type SiteRoleCheck =
-  | { ok: true; userId: string; role: ActorRole }
+  | { ok: true; userId: string; role: ActorRole; email: string | null }
   | { ok: false; response: NextResponse };
 
 function fail(error: string, status: number): { ok: false; response: NextResponse } {
@@ -68,7 +68,45 @@ export async function requireSiteRole(
   }
 
   if (!role || !roles.includes(role)) return fail("You do not have access to this site.", 403);
-  return { ok: true, userId: userData.user.id, role };
+  return { ok: true, userId: userData.user.id, role, email: userData.user.email ?? null };
+}
+
+/**
+ * For site-less owner tools (e.g. the Paystack bank list): the caller must be a Sulvatech admin or
+ * an owner of at least one site. Staff and non-members get 403.
+ */
+export async function requireOwnerOrAdmin(
+  req: Request,
+): Promise<{ ok: true; userId: string } | { ok: false; response: NextResponse }> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return fail("Supabase is not configured on the server.", 500);
+
+  const header = req.headers.get("authorization") ?? "";
+  const token = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+  if (!token) return fail("Not signed in.", 401);
+
+  const supabase = createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !userData.user) return fail("Session invalid or expired. Please log in again.", 401);
+  if (userData.user.app_metadata?.must_change_password) return fail("Change your temporary password first.", 403);
+
+  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
+  if (adminError) return fail("Could not verify access.", 500);
+  if (isAdmin) return { ok: true, userId: userData.user.id };
+
+  const { data: owned, error: ownedError } = await supabaseService()
+    .from("site_members")
+    .select("site_id")
+    .eq("user_id", userData.user.id)
+    .eq("role", "owner")
+    .limit(1);
+  if (ownedError) return fail("Could not verify access.", 500);
+  if (!owned || owned.length === 0) return fail("You do not have access.", 403);
+  return { ok: true, userId: userData.user.id };
 }
 
 export type FoundUser = { userId: string; email: string; mustChangePassword: boolean };

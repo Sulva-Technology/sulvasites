@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requireAdmin } from "@/lib/supabase/requireAdmin.server";
+import { rateLimit } from "@/lib/supabase/requireAdmin.server";
+import { requireOwnerOrAdmin } from "@/lib/supabase/requireSiteRole.server";
 import { paystackRequestWithMeta, PaystackError } from "@/lib/shop/paystack.server";
 import { SHOP_NOT_CONFIGURED } from "@/lib/shop/serviceClient.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Used by the admin payments UI only. Auth: Sulvatech admins (owners arrive with the dashboard).
+// Used by the payments UI. Auth: Sulvatech admins and shop owners (any site); staff never. Per-user rate limited.
 
 type Bank = { name: string; code: string };
 type PaystackBank = { name?: unknown; code?: unknown; active?: unknown; is_deleted?: unknown };
@@ -48,7 +49,7 @@ function failure() {
 }
 
 export async function GET(req: Request) {
-  const auth = await requireAdmin(req);
+  const auth = await requireOwnerOrAdmin(req);
   if (!auth.ok) return auth.response;
   const perUser = rateLimit(`shop-banks:${auth.userId}`, { limit: 30, windowMs: 60_000 });
   if (perUser) return perUser;

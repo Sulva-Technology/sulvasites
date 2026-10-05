@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { requireAdmin, rateLimit } from "@/lib/supabase/requireAdmin.server";
+import { rateLimit } from "@/lib/supabase/requireAdmin.server";
+import { requireSiteRole } from "@/lib/supabase/requireSiteRole.server";
 import { paystackRequest, PaystackError } from "@/lib/shop/paystack.server";
 import { requireServiceClient, SHOP_NOT_CONFIGURED } from "@/lib/shop/serviceClient.server";
 import { encryptSecret } from "@/lib/shop/secretBox";
@@ -10,11 +11,20 @@ import {
   parsePaymentSettingsBody,
   type PaymentSettingsInput,
 } from "@/lib/shop/paymentInput";
+import { authorizePaymentChange, readPassword, type PaymentActor, type PaymentChange } from "@/lib/shop/paymentAuth";
+import {
+  notifyPaymentChange,
+  verifyUserPassword,
+  writeAuditLog,
+  type AuditEntry,
+} from "@/lib/shop/paymentSecurity.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Auth: Sulvatech admins only for now; shop owners get access with the owner dashboard.
+// Auth: Sulvatech admins and shop owners of the site (requireSiteRole); staff never.
+// Owners cannot change the platform fee, and must re-confirm their password for any bank-account or
+// key change (payout-takeover vector). Every bank/key change is audited and emailed (soft-fail).
 
 type Ctx = { params: Promise<{ siteId: string }> };
 
@@ -45,16 +55,24 @@ function dbFailure(what: string, error: { code?: string } | null) {
 
 type Loaded =
   | { ok: false; response: NextResponse }
-  | { ok: true; db: SupabaseClient; siteId: string; settings: SettingsRow | null; secrets: SecretsRow | null };
+  | {
+      ok: true;
+      db: SupabaseClient;
+      siteId: string;
+      settings: SettingsRow | null;
+      secrets: SecretsRow | null;
+      actor: { userId: string; role: PaymentActor; email: string | null };
+    };
 
 async function loadSite(req: Request, ctx: Ctx, limit: number): Promise<Loaded> {
-  const auth = await requireAdmin(req);
+  const requested = canonicalSiteId((await ctx.params).siteId);
+  if (!requested) return { ok: false, response: json({ error: "Site not found." }, 404) };
+
+  const auth = await requireSiteRole(req, requested, ["owner", "admin"]);
   if (!auth.ok) return { ok: false, response: auth.response };
   const limited = rateLimit(`shop-payment:${auth.userId}`, { limit, windowMs: 60_000 });
   if (limited) return { ok: false, response: limited };
-
-  const requested = canonicalSiteId((await ctx.params).siteId);
-  if (!requested) return { ok: false, response: json({ error: "Site not found." }, 404) };
+  const role: PaymentActor = auth.role === "admin" ? "admin" : "owner";
 
   const db = requireServiceClient();
   if (!db) return { ok: false, response: notConfigured() };
@@ -81,7 +99,65 @@ async function loadSite(req: Request, ctx: Ctx, limit: number): Promise<Loaded> 
   if (settings.error) return { ok: false, response: dbFailure("settings lookup", settings.error) };
   if (secrets.error) return { ok: false, response: dbFailure("secrets lookup", secrets.error) };
 
-  return { ok: true, db, siteId, settings: settings.data, secrets: secrets.data };
+  return {
+    ok: true,
+    db,
+    siteId,
+    settings: settings.data,
+    secrets: secrets.data,
+    actor: { userId: auth.userId, role, email: auth.email },
+  };
+}
+
+const PASSWORD_WINDOW_MS = 15 * 60_000;
+
+/**
+ * Owners re-confirm their password for bank/key changes. Rate-limited per user (every attempt counts)
+ * so a hijacked session cannot guess the password. The password is never logged.
+ */
+async function confirmOwnerPassword(actor: { userId: string; email: string | null }, raw: unknown): Promise<NextResponse | null> {
+  const limited = rateLimit(`shop-payment-pw:${actor.userId}`, { limit: 5, windowMs: PASSWORD_WINDOW_MS });
+  if (limited) return limited;
+  const password = readPassword(raw);
+  if (!password) return json({ error: "Enter your password to confirm this change." }, 400);
+  if (!actor.email) return json({ error: "Could not verify your password." }, 500);
+  const check = await verifyUserPassword(actor.email, password);
+  if (check === "wrong") return json({ error: "Password is incorrect." }, 403);
+  if (check === "error") return json({ error: "Could not verify your password. Try again." }, 503);
+  return null;
+}
+
+/** Audit row + notification email after a successful bank/key change. Both soft-fail. */
+async function recordChange(
+  loaded: Extract<Loaded, { ok: true }>,
+  entry: Pick<AuditEntry, "action" | "detail">,
+  notice: { bank: string | null; accountLast4: string | null } | null,
+) {
+  const { db, siteId, actor } = loaded;
+  await writeAuditLog(db, { siteId, actorId: actor.userId, actorRole: actor.role, ...entry });
+  if (!notice || entry.action === "fee_changed") return;
+  let siteName = siteId;
+  let contactEmail: string | null = null;
+  try {
+    const { data } = await db
+      .from("business_profiles")
+      .select("business_name, email")
+      .eq("site_id", siteId)
+      .maybeSingle<{ business_name: string | null; email: string | null }>();
+    if (data?.business_name) siteName = data.business_name;
+    contactEmail = data?.email ?? null;
+  } catch {
+    // soft-fail: notify the owners only
+  }
+  await notifyPaymentChange(siteId, contactEmail, {
+    siteName,
+    kind: entry.action,
+    actorLabel: actor.role === "admin" ? "Sulvatech" : "A shop owner",
+    actorEmail: actor.role === "owner" ? actor.email : null,
+    bank: notice.bank,
+    accountLast4: notice.accountLast4,
+    whenIso: new Date().toISOString(),
+  });
 }
 
 function maskedStatus(settings: SettingsRow | null, secrets: SecretsRow | null) {
@@ -168,6 +244,14 @@ export async function POST(req: Request, ctx: Ctx) {
   if (!parsed.ok) return json({ error: parsed.error }, 400);
   const input = parsed.value;
 
+  const change: PaymentChange = { kind: "update", input };
+  const authz = authorizePaymentChange(loaded.actor.role, change);
+  if (!authz.ok) return json({ error: authz.error }, authz.status);
+  if (authz.needsPassword) {
+    const denied = await confirmOwnerPassword(loaded.actor, raw);
+    if (denied) return denied;
+  }
+
   let settingsPatch: Record<string, unknown> = {};
   let secretsPatch: Record<string, unknown> | null = null;
 
@@ -222,6 +306,30 @@ export async function POST(req: Request, ctx: Ctx) {
     .upsert({ site_id: siteId, ...settingsPatch }, { onConflict: "site_id" });
   if (settingsError) return dbFailure("settings upsert", settingsError);
 
+  if (input.platform && secretsPatch) {
+    await recordChange(
+      loaded,
+      {
+        action: "bank_changed",
+        detail: {
+          bank: secretsPatch.settlement_bank,
+          account_last4: secretsPatch.account_last4,
+          previous_account_last4: loaded.secrets?.account_last4 ?? null,
+        },
+      },
+      { bank: String(secretsPatch.settlement_bank ?? ""), accountLast4: String(secretsPatch.account_last4 ?? "") },
+    );
+  } else if (input.ownKeys) {
+    await recordChange(loaded, { action: "keys_set", detail: { environment: input.ownKeys.environment } }, { bank: null, accountLast4: null });
+  }
+  if (input.platformFeeBps !== undefined) {
+    await recordChange(
+      loaded,
+      { action: "fee_changed", detail: { from_bps: loaded.settings?.platform_fee_bps ?? 0, to_bps: input.platformFeeBps } },
+      null,
+    );
+  }
+
   const [settings, secrets] = await Promise.all([
     db
       .from("shop_settings")
@@ -249,6 +357,20 @@ export async function DELETE(req: Request, ctx: Ctx) {
   if (!loaded.ok) return loaded.response;
   const { db, siteId } = loaded;
 
+  // Body is optional (admins send none); owners must include their password.
+  let raw: unknown = null;
+  try {
+    raw = await req.json();
+  } catch {
+    raw = null;
+  }
+  const authz = authorizePaymentChange(loaded.actor.role, { kind: "remove_keys" });
+  if (!authz.ok) return json({ error: authz.error }, authz.status);
+  if (authz.needsPassword) {
+    const denied = await confirmOwnerPassword(loaded.actor, raw);
+    if (denied) return denied;
+  }
+
   // Stop taking own-key payments first, then drop the secret.
   const patch: Record<string, unknown> = { paystack_public_key: null };
   if (loaded.settings?.payment_mode === "own_keys") patch.payment_mode = null;
@@ -263,6 +385,7 @@ export async function DELETE(req: Request, ctx: Ctx) {
       .eq("site_id", siteId);
     if (error) return dbFailure("secrets clear", error);
   }
+  await recordChange(loaded, { action: "keys_removed", detail: {} }, { bank: null, accountLast4: null });
 
   const [settings, secrets] = await Promise.all([
     db

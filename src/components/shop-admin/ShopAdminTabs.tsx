@@ -11,7 +11,7 @@ const TABS: Array<{ key: ShopTabKey; label: string; path: string; roles: string[
   { key: "products", label: "Products", path: "/products", roles: ["admin", "owner"] },
   { key: "categories", label: "Categories", path: "/categories", roles: ["admin", "owner"] },
   { key: "orders", label: "Orders", path: "/orders", roles: ["admin", "owner", "staff"] },
-  { key: "payments", label: "Payments", path: "/payments", roles: ["admin"] },
+  { key: "payments", label: "Payments", path: "/payments", roles: ["admin", "owner"] },
 ];
 
 export default function ShopAdminTabs({ basePath, role, active }: ShopAdminProps & { active: ShopTabKey }) {
