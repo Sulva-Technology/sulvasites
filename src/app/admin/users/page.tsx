@@ -1,10 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
+import { useShellHero } from "@/components/ui/AppShell";
+import { PillButton } from "@/components/ui/Button";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { TextField } from "@/components/ui/Field";
+import { PageHero } from "@/components/ui/PageHero";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 type AdminUserRow = {
   user_id: string;
@@ -197,178 +202,162 @@ export default function AdminUsersPage() {
     }
   }
 
+  useShellHero(
+    <PageHero
+      status={
+        <StatusPill tone="live" onDark>
+          {isLoading ? "Loading team…" : `${adminUsers.length} ${adminUsers.length === 1 ? "admin" : "admins"}`}
+        </StatusPill>
+      }
+      title="Team & owners"
+      accent="who runs what"
+      subtitle="Manage who has admin access to this system."
+      actions={
+        <PillButton href="/admin/sites" variant="glass" arrow={false}>
+          Back to sites
+        </PillButton>
+      }
+    />,
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Admin Users</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Manage who has admin access to this system.
-          </p>
-        </div>
-        <Link
-          href="/admin/sites"
-          className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
-        >
-          Back to Sites
-        </Link>
-      </div>
+      {/* Admin Users List */}
+      <Card>
+        <CardHeader title="Admins" description="Everyone listed here can manage every site." />
 
-      {/* Create User Form */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold">Create User</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Enter an email. The user is created with the default password and admin
-          access, and must set their own password on first sign-in.
-        </p>
+        {error ? (
+          <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
 
-        <form onSubmit={onCreateUser} className="mt-4 space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-gray-800">Email</span>
-            <input
+        {isLoading ? (
+          <p className="text-sm text-koi-ink/60">Loading…</p>
+        ) : adminUsers.length === 0 ? (
+          <p className="text-sm text-koi-ink/60">No admin users found.</p>
+        ) : (
+          <ul className="space-y-2">
+            {adminUsers.map((admin) => (
+              <li
+                key={admin.user_id}
+                className="flex flex-col gap-2 rounded-2xl bg-koi-paper px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-koi-ink px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-white">
+                      Admin
+                    </span>
+                    {admin.user_id === currentUserId ? (
+                      <span className="rounded-full bg-koi-sea/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-koi-deep">
+                        You
+                      </span>
+                    ) : null}
+                    <code className="min-w-0 break-all font-mono text-xs text-koi-ink/80">{admin.user_id}</code>
+                  </div>
+                  <p className="mt-1 text-xs text-koi-ink/50">Added {new Date(admin.created_at).toLocaleString()}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemoveAdmin(admin.user_id)}
+                  disabled={removingId === admin.user_id}
+                  className="self-start rounded-full px-3 py-1.5 text-sm font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60 sm:self-auto"
+                >
+                  {removingId === admin.user_id ? "Removing..." : "Remove"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Create User Form */}
+        <Card>
+          <CardHeader
+            title="Create user"
+            description="Enter an email. The user is created with the default password and admin access, and must set their own password on first sign-in."
+          />
+
+          <form onSubmit={onCreateUser} className="space-y-4">
+            <TextField
+              label="Email"
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="teammate@company.com"
               autoComplete="off"
               required
-              className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
             />
-          </label>
 
-          {createError ? (
-            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {createError}
+            {createError ? (
+              <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {createError}
+              </div>
+            ) : null}
+
+            {createdEmail ? (
+              <div className="rounded-2xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                Created {createdEmail}. Share the default password with them; they&apos;ll be
+                asked to change it when they sign in.
+              </div>
+            ) : null}
+
+            <PillButton type="submit" loading={isCreating} disabled={!newEmail.trim()}>
+              {isCreating ? "Creating..." : "Create user"}
+            </PillButton>
+          </form>
+        </Card>
+
+        {/* Add Admin Form */}
+        <Card>
+          <CardHeader title="Add admin user" description="Enter the user's UUID from Supabase Auth to grant admin access." />
+          {currentUserId ? (
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-koi-sea/10 px-3 py-2 text-sm text-koi-deep">
+              <strong>Your user ID:</strong>
+              <code className="break-all font-mono text-xs">{currentUserId}</code>
+              <PillButton
+                variant="quiet"
+                size="sm"
+                onClick={() => {
+                  setUserId(currentUserId);
+                  onAddByUuid({ preventDefault: () => {} } as React.FormEvent);
+                }}
+              >
+                Add myself as admin
+              </PillButton>
             </div>
           ) : null}
 
-          {createdEmail ? (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-              Created {createdEmail}. Share the default password with them; they&apos;ll be
-              asked to change it when they sign in.
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isCreating || !newEmail.trim()}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {isCreating ? "Creating..." : "Create User"}
-          </button>
-        </form>
-      </div>
-
-      {/* Add Admin Form */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold">Add Admin User</h2>
-        {currentUserId ? (
-          <div className="mt-2 rounded bg-blue-50 border border-blue-200 px-3 py-2 text-sm text-blue-800">
-            <strong>Your User ID:</strong>{" "}
-            <code className="font-mono text-xs">{currentUserId}</code>
-            <button
-              onClick={() => {
-                setUserId(currentUserId);
-                onAddByUuid({ preventDefault: () => {} } as React.FormEvent);
-              }}
-              className="ml-3 rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
-            >
-              Add Myself as Admin
-            </button>
-          </div>
-        ) : null}
-        <p className="mt-1 text-sm text-gray-600">
-          Enter the user&apos;s UUID from Supabase Auth to grant admin access.
-        </p>
-
-        <form onSubmit={onAddByUuid} className="mt-4 space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-gray-800">User UUID</span>
-            <input
+          <form onSubmit={onAddByUuid} className="space-y-4">
+            <TextField
+              label="User UUID"
               type="text"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="123e4567-e89b-12d3-a456-426614174000"
-              className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+              className="font-mono"
+              hint="Find UUID in Supabase Dashboard → Authentication → Users"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Find UUID in Supabase Dashboard → Authentication → Users
-            </p>
-          </label>
 
-          {addError ? (
-            <div className="whitespace-pre-line rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {addError}
-            </div>
-          ) : null}
+            {addError ? (
+              <div role="alert" className="whitespace-pre-line rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {addError}
+              </div>
+            ) : null}
 
-          {addSuccess ? (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-              Admin user added successfully!
-            </div>
-          ) : null}
+            {addSuccess ? (
+              <div className="rounded-2xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                Admin user added successfully!
+              </div>
+            ) : null}
 
-          <button
-            type="submit"
-            disabled={isAdding || !userId.trim()}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {isAdding ? "Adding..." : "Add Admin"}
-          </button>
-        </form>
+            <PillButton type="submit" loading={isAdding} disabled={!userId.trim()}>
+              {isAdding ? "Adding..." : "Add admin"}
+            </PillButton>
+          </form>
+        </Card>
       </div>
-
-      {/* Admin Users List */}
-      {error ? (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="text-sm text-gray-600">Loading…</div>
-      ) : (
-        <div className="overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-4 py-3">User ID</th>
-                <th className="px-4 py-3">Added</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {adminUsers.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-gray-600" colSpan={3}>
-                    No admin users found.
-                  </td>
-                </tr>
-              ) : (
-                adminUsers.map((admin) => (
-                  <tr key={admin.user_id} className="bg-white">
-                    <td className="px-4 py-3 font-mono text-xs">
-                      {admin.user_id}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {new Date(admin.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => onRemoveAdmin(admin.user_id)}
-                        disabled={removingId === admin.user_id}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-60"
-                      >
-                        {removingId === admin.user_id ? "Removing..." : "Remove"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
