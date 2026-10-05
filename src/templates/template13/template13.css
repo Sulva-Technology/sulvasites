@@ -517,6 +517,11 @@ button:hover > .t13-roll .t13-roll-row > span { transform: translateY(-100%); }
   transition: border-color .25s var(--t13-ease); }
 .t13-hero-link:hover { border-color: #fff; }
 
+/* Paper mode: the film fades into paper only in the last 72px, below the copy, so the white copy always sits on the
+   graded night photo (white on <= #1a2c4d is >= 12:1; placeholder white/.62 and micro white/.55 stay >= 4.5:1). */
+.template13:not([data-mode="dark"]) .t13-hero-media::after { height: 72px; }
+.template13:not([data-mode="dark"]) .t13-hero-copy { padding-bottom: clamp(104px, 14vh, 152px); }
+
 /* Blue-graded photo frame (about, extra pages) — same grade as the home hero at ~40% strength */
 .t13-graded { position: relative; overflow: hidden; isolation: isolate; background: var(--t13-card); }
 .t13-graded img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.9) contrast(1.03); }
