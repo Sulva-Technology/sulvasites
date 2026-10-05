@@ -68,7 +68,8 @@ select u.id, 'zz-' || u.tag || '-' || substr(u.id::text, 1, 8) || '@example.test
 from _ids i, lateral (values
   (i.owner_id, 'owner'), (i.staff_id, 'staff'), (i.outsider_id, 'outsider'),
   (i.admin_id, 'admin'), (i.owner_b_id, 'ownerb'), (i.temp_pw_id, 'temppw')) as u(id, tag);
-insert into public.admin_users (user_id) select admin_id from _ids;
+-- Super admin (012): the admin path here covers sites created as postgres (created_by is null).
+insert into public.admin_users (user_id, is_super) select admin_id, true from _ids;
 
 insert into public.sites (id, slug, template_key, status)
 select site_id,   'zz-biz-a-' || substr(gen_random_uuid()::text, 1, 8), 't7', 'published'::public.site_status from _ids

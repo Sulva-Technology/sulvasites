@@ -3,6 +3,8 @@
 import { templateLabel } from "@/templates/meta";
 import { useEffect, useMemo, useState } from "react";
 
+import { useIsSuperAdmin } from "@/components/admin/useIsSuperAdmin";
+import { isSuperAdmin } from "@/lib/supabase/adminScope";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { useShellHero } from "@/components/ui/AppShell";
@@ -55,6 +57,7 @@ function KoiIcon() {
 }
 
 export default function AdminSitesPage() {
+  const isSuper = useIsSuperAdmin();
   const [sites, setSites] = useState<SiteRow[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
@@ -79,19 +82,33 @@ export default function AdminSitesPage() {
         return;
       }
 
+      // Admins list only the sites they created; super admins list every site. (Published sites are
+      // publicly readable, so RLS alone would also show other admins' live sites here.)
+      let ownerId: string | null = null;
+      try {
+        if (!(await isSuperAdmin(authenticatedSupabase))) {
+          const { data: userData } = await authenticatedSupabase.auth.getUser();
+          ownerId = userData.user?.id ?? null;
+          if (!ownerId) throw new Error("Session error. Please log in again.");
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setIsLoading(false);
+        setError(formatSupabaseError(err));
+        return;
+      }
+      const listSites = (columns: string) => {
+        const query = authenticatedSupabase.from("sites").select(columns);
+        return (ownerId ? query.eq("created_by", ownerId) : query).order("created_at", { ascending: false });
+      };
+
       // Same list query as before, with the business name embedded (1:1 FK).
-      const withName = await authenticatedSupabase
-        .from("sites")
-        .select("id, slug, template_key, status, created_at, updated_at, business_profiles(business_name)")
-        .order("created_at", { ascending: false });
+      const withName = await listSites(
+        "id, slug, template_key, status, created_at, updated_at, business_profiles(business_name)",
+      );
 
       // Fall back to the plain list if the embed is unavailable.
-      const result = withName.error
-        ? await authenticatedSupabase
-            .from("sites")
-            .select("id, slug, template_key, status, created_at")
-            .order("created_at", { ascending: false })
-        : withName;
+      const result = withName.error ? await listSites("id, slug, template_key, status, created_at") : withName;
 
       if (!isMounted) return;
 
@@ -148,9 +165,11 @@ export default function AdminSitesPage() {
       actions={
         <>
           <PillButton href="/admin/sites/new">New site</PillButton>
-          <PillButton href="/admin/users" variant="glass">
-            Users
-          </PillButton>
+          {isSuper ? (
+            <PillButton href="/admin/users" variant="glass">
+              Users
+            </PillButton>
+          ) : null}
         </>
       }
     />,

@@ -5,10 +5,12 @@ import type { ReactNode } from "react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import { kindsForTemplate } from "@/lib/businessData/kinds";
+import { canAdminSite } from "@/lib/supabase/adminScope";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { templateLabel, templateSupportsShop } from "@/templates/meta";
 import { useShellHero } from "@/components/ui/AppShell";
 import { PillButton } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { PageHero } from "@/components/ui/PageHero";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Tabs } from "@/components/ui/Tabs";
@@ -45,6 +47,8 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
   const [site, setSite] = useState<ChromeSite | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
   const [domain, setDomain] = useState<string | null>(null);
+  // Admins may open only sites they created (super admins: any). null while checking.
+  const [allowed, setAllowed] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!siteId || bare) return;
@@ -52,6 +56,10 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const supabase = await getAuthenticatedClient();
+        const mayAdmin = await canAdminSite(supabase, siteId);
+        if (!isMounted) return;
+        setAllowed(mayAdmin);
+        if (!mayAdmin) return;
         const [siteRes, profileRes, domainRes] = await Promise.all([
           supabase.from("sites").select("id, slug, template_key, status").eq("id", siteId).maybeSingle(),
           supabase.from("business_profiles").select("business_name").eq("site_id", siteId).maybeSingle(),
@@ -63,7 +71,9 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
         const active = (domainRes.data ?? [])[0] as { hostname?: string } | undefined;
         setDomain(active?.hostname ?? null);
       } catch {
-        // Chrome is decorative; the page itself reports load errors.
+        // Chrome is decorative; the page itself reports load errors. If the access check itself
+        // failed, fail closed.
+        if (isMounted) setAllowed((prev) => prev ?? false);
       }
     })();
     return () => {
@@ -72,6 +82,26 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
   }, [siteId, bare]);
 
   if (bare) return <>{children}</>;
+
+  if (allowed === false) {
+    return (
+      <>
+        <DeniedHero />
+        <Card>
+          <h2 className="text-base font-semibold tracking-tight text-koi-ink">You don&apos;t have access to this site</h2>
+          <p className="mt-1 text-sm text-koi-ink/60">
+            Admins can open only the sites they created. Ask a super admin if you need access.
+          </p>
+          <div className="mt-4">
+            <PillButton href="/admin/sites" variant="quiet">
+              Back to your sites
+            </PillButton>
+          </div>
+        </Card>
+      </>
+    );
+  }
+  if (allowed === null) return <div className="text-sm text-koi-ink/60">Loading…</div>;
 
   const tk = site?.template_key ?? "";
   const tabs: Array<{ id: string; label: string; href: string }> = [
@@ -144,5 +174,10 @@ function ChromeHero({
       }
     />,
   );
+  return null;
+}
+
+function DeniedHero() {
+  useShellHero(<PageHero title="No access" accent="This site belongs to another admin" />);
   return null;
 }

@@ -1,8 +1,9 @@
 -- fix_storage_rls.sql
 -- Policies for the site-assets bucket:
 --   * anyone can read (logos/images are shown on public sites)
---   * only admins (public.is_admin()) can upload, update, or delete
--- Requires public.is_admin() from supabase/schema.sql.
+--   * writes go through the per-site "Owners manage own site-assets" policy (migration 005), which
+--     allows a site's owners and its admin (migration 012: the admin who created it, or a super admin)
+-- Run after the migrations.
 -- Run this in Supabase SQL Editor.
 
 -- Drop older / permissive policies for site-assets (if they exist)
@@ -14,13 +15,7 @@ DROP POLICY IF EXISTS "Authenticated Access" ON storage.objects;
 
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
--- Admin-only writes
-CREATE POLICY "Admins manage site-assets"
-ON storage.objects
-FOR ALL
-TO authenticated
-USING (bucket_id = 'site-assets' AND public.is_admin())
-WITH CHECK (bucket_id = 'site-assets' AND public.is_admin());
+-- No blanket admin write policy: it would let any admin change any site's files (see migration 012).
 
 -- Public read
 CREATE POLICY "Allow public read access to site-assets"

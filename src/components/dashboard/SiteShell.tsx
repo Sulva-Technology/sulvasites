@@ -17,6 +17,7 @@ import { useShellHero } from "@/components/ui/AppShell";
 import { PageHero } from "@/components/ui/PageHero";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Tabs } from "@/components/ui/Tabs";
+import { canAdminSite } from "@/lib/supabase/adminScope";
 
 export type SiteContextValue = {
   siteId: string;
@@ -73,6 +74,12 @@ export default function SiteShell({ children }: { children: ReactNode }) {
     let isMounted = true;
     const supabase = supabaseBrowser();
     (async () => {
+      // Published sites are publicly readable, so check ownership before treating this admin as one.
+      const mayAdmin = await canAdminSite(supabase, siteId).catch(() => false);
+      if (!mayAdmin) {
+        if (isMounted) setAdminChecked(true);
+        return;
+      }
       const { data: site } = await supabase
         .from("sites")
         .select("id, slug, template_key, status")

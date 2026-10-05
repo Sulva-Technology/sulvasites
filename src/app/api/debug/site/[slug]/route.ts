@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/supabase/requireAdmin.server";
 
-// Admin-only: exposes draft state and raw DB errors.
+// Super-admin only: reads any site with the service role and exposes draft state and raw DB errors.
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const auth = await requireAdmin(req);
+  const auth = await requireAdmin(req, { superOnly: true });
   if (!auth.ok) return auth.response;
 
   const { slug } = await params;

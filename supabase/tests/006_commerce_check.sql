@@ -87,7 +87,8 @@ from _ids i, lateral (values
   (i.admin_id, 'admin'), (i.owner_b_id, 'ownerb')) as u(id, tag);
 
 -- Temp admin so the admin path is always exercised (rolled back with everything else).
-insert into public.admin_users (user_id) select admin_id from _ids;
+-- Super admin (012): the admin path here covers sites created as postgres (created_by is null).
+insert into public.admin_users (user_id, is_super) select admin_id, true from _ids;
 
 insert into public.sites (id, slug, template_key, status)
 select site_id,   'zz-shop-check-a-' || substr(gen_random_uuid()::text, 1, 8), 't1', 'published'::public.site_status from _ids

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
 import { useShellHero } from "@/components/ui/AppShell";
+import { useIsSuperAdmin } from "@/components/admin/useIsSuperAdmin";
 import { PillButton } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/Field";
@@ -21,6 +22,7 @@ type AdminUserWithEmail = AdminUserRow & {
 };
 
 export default function AdminUsersPage() {
+  const isSuper = useIsSuperAdmin();
   const [adminUsers, setAdminUsers] = useState<AdminUserWithEmail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +41,10 @@ export default function AdminUsersPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isSuper) return;
     loadCurrentUser();
     loadAdmins();
-  }, []);
+  }, [isSuper]);
 
   async function loadCurrentUser() {
     const supabase = supabaseBrowser();
@@ -205,9 +208,11 @@ export default function AdminUsersPage() {
   useShellHero(
     <PageHero
       status={
-        <StatusPill tone="live" onDark>
-          {isLoading ? "Loading team…" : `${adminUsers.length} ${adminUsers.length === 1 ? "admin" : "admins"}`}
-        </StatusPill>
+        isSuper ? (
+          <StatusPill tone="live" onDark>
+            {isLoading ? "Loading team…" : `${adminUsers.length} ${adminUsers.length === 1 ? "admin" : "admins"}`}
+          </StatusPill>
+        ) : undefined
       }
       title="Team & owners"
       accent="who runs what"
@@ -220,11 +225,26 @@ export default function AdminUsersPage() {
     />,
   );
 
+  if (isSuper === null) return <p className="text-sm text-koi-ink/60">Loading…</p>;
+  if (!isSuper) {
+    return (
+      <Card>
+        <CardHeader
+          title="Super admins only"
+          description="Only a super admin can add or remove admins. Ask a super admin if someone needs access."
+        />
+        <PillButton href="/admin/sites" variant="quiet">
+          Back to your sites
+        </PillButton>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Admin Users List */}
       <Card>
-        <CardHeader title="Admins" description="Everyone listed here can manage every site." />
+        <CardHeader title="Admins" description="Each admin manages only the sites they create. Super admins manage every site and this list." />
 
         {error ? (
           <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

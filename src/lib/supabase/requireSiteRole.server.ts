@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { isEmailExistsError, isUuid } from "../siteAccess";
 import { defaultNewUserPassword, supabaseService } from "./admin.server";
+import { canAdminSite } from "./adminScope";
 
 export type ActorRole = "owner" | "staff" | "admin";
 
@@ -49,8 +50,19 @@ export async function requireSiteRole(
   const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
   if (adminError) return fail("Could not verify access.", 500);
 
-  let role: ActorRole | null = null;
+  // Admins act as "admin" only on sites they created (super admins: every site). Otherwise they
+  // fall through to their membership role like anyone else.
+  let siteAdmin = false;
   if (isAdmin) {
+    try {
+      siteAdmin = await canAdminSite(supabase, siteId);
+    } catch {
+      return fail("Could not verify access.", 500);
+    }
+  }
+
+  let role: ActorRole | null = null;
+  if (siteAdmin) {
     role = "admin";
     const { data: site, error: siteError } = await supabaseService()
       .from("sites")

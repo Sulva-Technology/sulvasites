@@ -64,7 +64,8 @@ from _ids i, lateral (values
   (i.admin_id, 'admin'), (i.owner_b_id, 'ownerb')) as u(id, tag);
 
 -- Temp admin so the admin path is always exercised (rolled back with everything else).
-insert into public.admin_users (user_id) select admin_id from _ids;
+-- Super admin (012): the admin path here covers sites created as postgres (created_by is null).
+insert into public.admin_users (user_id, is_super) select admin_id, true from _ids;
 
 -- handle_new_site trigger auto-creates business_profiles + home/about/contact pages.
 insert into public.sites (id, slug, template_key)

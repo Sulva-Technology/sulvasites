@@ -21,9 +21,10 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 
 3. In the Supabase SQL editor run, in order:
    - `supabase/schema.sql`
-   - `supabase/migrations/*.sql` (numbered order)
-   - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
+   - `supabase/migrations/*.sql` (numbered order) up to `011`
    - `supabase/admin/add_current_user_as_admin.sql` (after creating your user)
+   - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
+   - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
 > ⚠️ `supabase/dev-only/` scripts disable RLS. Never run them on production — see its README.
@@ -92,6 +93,10 @@ drafts; existing sites can add them from the site's *Extra pages* panel. Publish
 - AI routes (`/api/ai/*`) and `/api/debug/*` require a signed-in admin (`Authorization: Bearer <supabase token>`),
   checked by `src/lib/supabase/requireAdmin.server.ts`. AI routes are rate-limited per user.
 - Admin-only writes are enforced by RLS (`public.is_admin()`), not just the client-side `RequireAdmin` guard.
+- Admins manage only the sites they created (`sites.created_by`, `public.is_site_admin(site)`); super admins
+  (`admin_users.is_super`) manage every site and are the only ones who can add or remove admins. Sites created before
+  migration 012 have no creator and are visible to super admins only until one is reassigned
+  (`update public.sites set created_by = '<admin uuid>' where slug = '<slug>'`).
 
 ## Docs
 

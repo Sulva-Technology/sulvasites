@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { isSuperAdmin } from "./adminScope";
+
 type AdminCheck =
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse };
@@ -10,8 +12,12 @@ type AdminCheck =
  *
  * Expects `Authorization: Bearer <supabase access token>`. The token is checked
  * with Supabase and `is_admin()` is evaluated as that user, so RLS rules apply.
+ * `superOnly` additionally requires a super admin (managing admins, cross-site tools).
  */
-export async function requireAdmin(req: Request): Promise<AdminCheck> {
+export async function requireAdmin(
+  req: Request,
+  { superOnly = false }: { superOnly?: boolean } = {},
+): Promise<AdminCheck> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
@@ -74,6 +80,22 @@ export async function requireAdmin(req: Request): Promise<AdminCheck> {
         { status: 403 },
       ),
     };
+  }
+
+  if (superOnly) {
+    const isSuper = await isSuperAdmin(supabase).catch(() => null);
+    if (isSuper === null) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Could not verify access." }, { status: 500 }),
+      };
+    }
+    if (!isSuper) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Super admin access required." }, { status: 403 }),
+      };
+    }
   }
 
   return { ok: true, userId: userData.user.id };

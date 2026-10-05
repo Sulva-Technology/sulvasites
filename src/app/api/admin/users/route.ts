@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * first login, and grants admin access (this app is team-only).
  */
 export async function POST(req: Request) {
-  const auth = await requireAdmin(req);
+  const auth = await requireAdmin(req, { superOnly: true });
   if (!auth.ok) return auth.response;
 
   const limited = rateLimit(`create-user:${auth.userId}`, {
