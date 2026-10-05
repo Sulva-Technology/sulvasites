@@ -30,3 +30,18 @@ export function canRemove(
   if (target.role === "owner" && ctx.ownerCount <= 1) return { ok: false, reason: "A site needs at least one owner." };
   return { ok: true };
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isUuid(v: unknown): v is string {
+  return typeof v === "string" && UUID_RE.test(v);
+}
+
+/** Supabase auth admin createUser error meaning the email is already registered. */
+export function isEmailExistsError(e: { code?: string; status?: number; message?: string } | null | undefined): boolean {
+  if (!e) return false;
+  if (e.code === "email_exists" || e.code === "user_already_exists") return true;
+  return /already (been )?registered|already exists/i.test(e.message ?? "");
+}
+
+/** Postgres SQLSTATE raised by the site_members last-owner trigger (migration 007). */
+export const LAST_OWNER_SQLSTATE = "SM001";

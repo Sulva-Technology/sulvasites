@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { isEmailExistsError, isUuid } from "../siteAccess";
 import { defaultNewUserPassword, supabaseService } from "./admin.server";
 
 export type ActorRole = "owner" | "staff" | "admin";
@@ -23,6 +24,7 @@ export async function requireSiteRole(
   siteId: string,
   roles: ActorRole[],
 ): Promise<SiteRoleCheck> {
+  if (!isUuid(siteId)) return fail("Site not found.", 404);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return fail("Supabase is not configured on the server.", 500);
@@ -69,31 +71,57 @@ export async function requireSiteRole(
   return { ok: true, userId: userData.user.id, role };
 }
 
-/**
- * Finds an auth user by email, or creates one with the shared default password
- * (flagged must_change_password). Existing users are left untouched.
- */
-export async function findOrCreateUser(
-  rawEmail: string,
-): Promise<{ userId: string; email: string; created: boolean }> {
+export type FoundUser = { userId: string; email: string; mustChangePassword: boolean };
+
+/** Looks up an existing auth user by email. Never creates. Null when none. */
+export async function findUserByEmail(rawEmail: string): Promise<FoundUser | null> {
   const email = rawEmail.trim().toLowerCase();
   const service = supabaseService();
 
+  // Indexed lookup (migration 007). Falls back to a bounded paged scan if it is not installed yet.
+  const rpc = await service.rpc("find_user_id_by_email", { p_email: email });
+  if (!rpc.error) {
+    const row = (rpc.data as { user_id: string; must_change_password: boolean }[] | null)?.[0];
+    return row ? { userId: row.user_id, email, mustChangePassword: Boolean(row.must_change_password) } : null;
+  }
+  console.error("find_user_id_by_email failed, using paged fallback:", rpc.error.message);
+
   const perPage = 200;
-  for (let page = 1; page <= 50; page++) {
+  for (let page = 1; page <= 25; page++) {
     const { data, error } = await service.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error(error.message);
     const found = data.users.find((u) => (u.email ?? "").toLowerCase() === email);
-    if (found) return { userId: found.id, email, created: false };
+    if (found) {
+      return {
+        userId: found.id,
+        email,
+        mustChangePassword: Boolean(found.app_metadata?.must_change_password),
+      };
+    }
     if (data.users.length < perPage) break;
   }
+  return null;
+}
 
-  const { data, error } = await service.auth.admin.createUser({
+/**
+ * ADMIN ROUTE ONLY. Creates the user with the shared default password (flagged
+ * must_change_password); if the email is already registered, returns the existing user instead.
+ * Never call this from an owner-facing route (pre-hijack risk: the temp password is shared).
+ */
+export async function findOrCreateUser(rawEmail: string): Promise<FoundUser & { created: boolean }> {
+  const email = rawEmail.trim().toLowerCase();
+  const { data, error } = await supabaseService().auth.admin.createUser({
     email,
     password: defaultNewUserPassword(),
     email_confirm: true,
     app_metadata: { must_change_password: true },
   });
-  if (error || !data.user) throw new Error(error?.message ?? "Could not create user.");
-  return { userId: data.user.id, email, created: true };
+  if (!error && data.user) {
+    return { userId: data.user.id, email, mustChangePassword: true, created: true };
+  }
+  if (isEmailExistsError(error)) {
+    const existing = await findUserByEmail(email);
+    if (existing) return { ...existing, created: false };
+  }
+  throw new Error(error?.message ?? "Could not create user.");
 }

@@ -58,11 +58,18 @@ export default function RequireMember({ children }: { children: ReactNode }) {
           router.replace("/login");
           return;
         }
-        const user = sessionData.session.user;
+        let user = sessionData.session.user;
 
         if (user.app_metadata?.must_change_password) {
-          router.replace("/change-password");
-          return;
+          // The flag lives in the JWT and may be stale right after change-password.
+          // Refresh once to pick up current app_metadata before bouncing to /change-password.
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          const fresh = refreshed.session?.user;
+          if (!fresh || fresh.app_metadata?.must_change_password) {
+            router.replace("/change-password");
+            return;
+          }
+          user = fresh;
         }
 
         const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");

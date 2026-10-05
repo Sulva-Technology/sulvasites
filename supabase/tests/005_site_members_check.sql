@@ -249,6 +249,66 @@ begin
   end if;
 end $$;
 
+-- =============================================================================
+-- MUST_CHANGE_PASSWORD GATE (migration 007): flag true in the JWT blocks member access
+-- =============================================================================
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select owner_id from _ids), 'role', 'authenticated',
+                    'app_metadata', json_build_object('must_change_password', true))::text, true);
+do $$
+declare a uuid := (select site_id from _ids);
+begin
+  perform zz_chk.expect_count(format('select count(*) from public.sites where id = %L', a), 0, 'flagged owner cannot read site');
+  perform zz_chk.expect_count(format('select count(*) from public.pages where site_id = %L', a), 0, 'flagged owner cannot read pages');
+  perform zz_chk.expect_count(format('select count(*) from public.site_members where site_id = %L', a), 0, 'flagged owner cannot read members');
+  perform zz_chk.expect_rows(format($q$update public.pages set data = '{"zz":5}'::jsonb where site_id = %L and key = 'home'$q$, a), 0, 'flagged owner page update (0 rows)');
+  perform zz_chk.expect_fail(format($q$insert into public.extra_pages (site_id, key) values (%L, 'zz-flag')$q$, a), 'flagged owner inserts extra_page', '42501');
+  perform zz_chk.expect_count(format('select count(*) from (select public.site_role(%L) as r) x where r is not null', a), 0, 'flagged owner site_role is null');
+end $$;
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select owner_id from _ids), 'role', 'authenticated',
+                    'app_metadata', json_build_object('must_change_password', false))::text, true);
+do $$
+declare a uuid := (select site_id from _ids);
+begin
+  perform zz_chk.expect_count(format('select count(*) from public.sites where id = %L', a), 1, 'unflagged (false) owner reads site');
+  perform zz_chk.expect_rows(format($q$update public.pages set data = '{"zz":6}'::jsonb where site_id = %L and key = 'home'$q$, a), 1, 'unflagged (false) owner page update');
+end $$;
+-- flagged admin is unaffected
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select admin_id from _ids), 'role', 'authenticated',
+                    'app_metadata', json_build_object('must_change_password', true))::text, true);
+do $$
+begin
+  perform zz_chk.expect_count(format('select count(*) from public.sites where id = %L', (select site_id from _ids)), 1, 'flagged admin still reads site (is_admin path)');
+end $$;
+reset role;
+
+-- =============================================================================
+-- LAST-OWNER GUARD (migration 007), as postgres and service_role
+-- =============================================================================
+do $$
+declare
+  a uuid := (select site_id from _ids);
+  own uuid := (select owner_id from _ids);
+begin
+  perform zz_chk.expect_fail(format('delete from public.site_members where site_id = %L and user_id = %L', a, own), 'postgres deletes last owner', 'SM001');
+  perform zz_chk.expect_fail(format($q$update public.site_members set role = 'staff' where site_id = %L and user_id = %L$q$, a, own), 'postgres demotes last owner', 'SM001');
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'set local role service_role';
+    perform zz_chk.expect_fail(format('delete from public.site_members where site_id = %L and user_id = %L', a, own), 'service_role deletes last owner', 'SM001');
+    execute 'reset role';
+  end if;
+  -- with a second owner, removal works
+  insert into public.site_members (site_id, user_id, role) values (a, (select outsider_id from _ids), 'owner');
+  perform zz_chk.expect_rows(format('delete from public.site_members where site_id = %L and user_id = %L', a, own), 1, 'delete owner when another owner exists');
+  -- staff removal always fine
+  perform zz_chk.expect_rows(format('delete from public.site_members where site_id = %L and user_id = %L', a, (select staff_id from _ids)), 1, 'delete staff');
+  -- site deletion cascades past the guard
+  perform zz_chk.expect_rows(format('delete from public.sites where id = %L', a), 1, 'site delete cascades through last-owner guard');
+end $$;
+
 select 'ALL CHECKS PASSED' as result;
 
 rollback;

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { canInvite, canRemove, type SiteRole } from "./siteAccess";
+import { canInvite, canRemove, LAST_OWNER_SQLSTATE, type SiteRole } from "./siteAccess";
 import { supabaseService } from "./supabase/admin.server";
-import { findOrCreateUser, type ActorRole } from "./supabase/requireSiteRole.server";
+import { findOrCreateUser, findUserByEmail, type ActorRole } from "./supabase/requireSiteRole.server";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -24,7 +24,10 @@ export async function listMembers(siteId: string) {
       .select("user_id, role, created_at")
       .eq("site_id", siteId)
       .order("created_at", { ascending: true });
-    if (error) return json({ error: "Could not load team." }, 500);
+    if (error) {
+      console.error("listMembers query failed:", error.message);
+      return json({ error: "Could not load team." }, 500);
+    }
 
     const members = await Promise.all(
       (data ?? []).map(async (m) => {
@@ -39,7 +42,8 @@ export async function listMembers(siteId: string) {
     );
     return json({ members });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Could not load team." }, 500);
+    console.error("listMembers failed:", e);
+    return json({ error: "Could not load team." }, 500);
   }
 }
 
@@ -65,7 +69,17 @@ export async function addMember(
 
   try {
     const service = supabaseService();
-    const user = await findOrCreateUser(email);
+    // Only Sulvatech admins may create accounts. Owners can only add an account that already exists.
+    let user: { userId: string; email: string; mustChangePassword: boolean; created?: boolean };
+    if (actor.role === "admin") {
+      user = await findOrCreateUser(email);
+    } else {
+      const found = await findUserByEmail(email);
+      if (!found) {
+        return json({ error: "No account found for that email. Ask Sulvatech to create it." }, 404);
+      }
+      user = found;
+    }
 
     const { data: existing } = await service
       .from("site_members")
@@ -87,11 +101,22 @@ export async function addMember(
       if (error.code === "23505") {
         return json({ error: "That person is already a member of this site." }, 409);
       }
+      console.error("addMember insert failed:", error.message);
       return json({ error: "Could not add member." }, 500);
     }
-    return json({ userId: user.userId, email: user.email, role, created: user.created });
+    if (actor.role === "admin") {
+      return json({
+        userId: user.userId,
+        email: user.email,
+        role,
+        created: user.created ?? false,
+        mustChangePassword: user.mustChangePassword,
+      });
+    }
+    return json({ userId: user.userId, email: user.email, role });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Could not add member." }, 500);
+    console.error("addMember failed:", e);
+    return json({ error: "Could not add member." }, 500);
   }
 }
 
@@ -115,7 +140,10 @@ export async function removeMember(
       .from("site_members")
       .select("user_id, role")
       .eq("site_id", siteId);
-    if (error) return json({ error: "Could not load team." }, 500);
+    if (error) {
+      console.error("removeMember load failed:", error.message);
+      return json({ error: "Could not load team." }, 500);
+    }
 
     const target = (rows ?? []).find((r) => r.user_id === userId);
     if (!target) return json({ error: "Member not found." }, 404);
@@ -137,9 +165,16 @@ export async function removeMember(
       .delete()
       .eq("site_id", siteId)
       .eq("user_id", userId);
-    if (delError) return json({ error: "Could not remove member." }, 500);
+    if (delError) {
+      if (delError.code === LAST_OWNER_SQLSTATE) {
+        return json({ error: "A site needs at least one owner." }, 400);
+      }
+      console.error("removeMember delete failed:", delError.message);
+      return json({ error: "Could not remove member." }, 500);
+    }
     return json({ ok: true });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Could not remove member." }, 500);
+    console.error("removeMember failed:", e);
+    return json({ error: "Could not remove member." }, 500);
   }
 }
