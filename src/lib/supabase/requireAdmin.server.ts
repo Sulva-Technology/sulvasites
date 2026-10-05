@@ -55,6 +55,16 @@ export async function requireAdmin(req: Request): Promise<AdminCheck> {
     };
   }
 
+  if (userData.user.app_metadata?.must_change_password) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "Change your temporary password first." },
+        { status: 403 },
+      ),
+    };
+  }
+
   const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
   if (adminError || !isAdmin) {
     return {

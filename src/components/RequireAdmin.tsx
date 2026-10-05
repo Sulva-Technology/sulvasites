@@ -30,6 +30,11 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
           return;
         }
 
+        if (sessionData.session.user.app_metadata?.must_change_password) {
+          router.replace("/change-password");
+          return;
+        }
+
         const { data: adminData, error: adminError } = await supabase.rpc(
           "is_admin",
         );

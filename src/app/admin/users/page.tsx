@@ -20,6 +20,11 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [newEmail, setNewEmail] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null);
+
   const [userId, setUserId] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -83,6 +88,42 @@ export default function AdminUsersPage() {
       setError(formatSupabaseError(err));
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function onCreateUser(e: React.FormEvent) {
+    e.preventDefault();
+    setCreateError(null);
+    setCreatedEmail(null);
+
+    const trimmed = newEmail.trim();
+    if (!trimmed) return;
+
+    setIsCreating(true);
+    try {
+      const supabase = await getAuthenticatedClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setCreateError(body.error ?? "Could not create user.");
+        return;
+      }
+
+      setCreatedEmail(trimmed);
+      setNewEmail("");
+      loadAdmins();
+    } catch (err) {
+      setCreateError(formatSupabaseError(err));
+    } finally {
+      setIsCreating(false);
     }
   }
 
@@ -171,6 +212,51 @@ export default function AdminUsersPage() {
         >
           Back to Sites
         </Link>
+      </div>
+
+      {/* Create User Form */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="text-lg font-semibold">Create User</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Enter an email. The user is created with the default password and admin
+          access, and must set their own password on first sign-in.
+        </p>
+
+        <form onSubmit={onCreateUser} className="mt-4 space-y-4">
+          <label className="block">
+            <span className="text-sm font-medium text-gray-800">Email</span>
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="teammate@company.com"
+              autoComplete="off"
+              required
+              className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-black"
+            />
+          </label>
+
+          {createError ? (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {createError}
+            </div>
+          ) : null}
+
+          {createdEmail ? (
+            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+              Created {createdEmail}. Share the default password with them; they&apos;ll be
+              asked to change it when they sign in.
+            </div>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isCreating || !newEmail.trim()}
+            className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {isCreating ? "Creating..." : "Create User"}
+          </button>
+        </form>
       </div>
 
       {/* Add Admin Form */}
