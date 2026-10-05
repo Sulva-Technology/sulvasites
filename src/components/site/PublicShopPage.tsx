@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 
+import InsightsBeacon from "@/components/site/InsightsBeacon";
 import { serializeJsonLd } from "@/lib/jsonLd";
 import { loadNavPages } from "@/lib/publicSite.server";
 import { buildProductJsonLd, type ShopPageContext } from "@/lib/shop/shopPage.server";
@@ -25,6 +26,7 @@ export default async function PublicShopPage(page: ShopPageContext) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       ) : null}
+      <InsightsBeacon siteId={siteData.site.id} />
       {createElement(Template, {
         site: siteData.site,
         profile: siteData.profile,

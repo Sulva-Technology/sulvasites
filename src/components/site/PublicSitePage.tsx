@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 
+import InsightsBeacon from "@/components/site/InsightsBeacon";
 import { loadBusinessItems } from "@/lib/businessData/load.server";
 import { mergeBusinessData } from "@/lib/businessData/merge";
 import { serializeJsonLd } from "@/lib/jsonLd";
@@ -58,6 +59,7 @@ export default async function PublicSitePage({
           __html: serializeJsonLd(buildStructuredData(ctx, page)),
         }}
       />
+      <InsightsBeacon siteId={siteData.site.id} />
       {/* createElement: the template is picked from a static registry, not created per render. */}
       <InboxSiteProvider siteId={siteData.site.id}>
       {createElement(Template, {
