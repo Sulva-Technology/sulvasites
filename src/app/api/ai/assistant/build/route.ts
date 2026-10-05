@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { aiErrorResponse } from "@/lib/ai/http.server";
+import { MAX_SETUP_UPLOADS, MAX_STOCK_PICKS, isAllowedStockUrl } from "@/lib/ai/setupPhotos";
 import {
   buildSite,
   finishSite,
@@ -67,7 +68,8 @@ function toResult(raw: unknown): PageResult | null {
  *  plan    { messages?, state?, templateOverride? }  -> { plan }
  *  profile { plan }                                   -> { profile }
  *  page    { plan, key, avoid? }                      -> { result }
- *  finish  { plan, profile, results[] }               -> BuildResult
+ *  finish  { plan, profile, results[], uploadSlots?, preferredImages? } -> BuildResult
+ *          (uploadSlots: 0-8 "upload:N" gallery placeholders; preferredImages: <= 12 Unsplash photo urls)
  *  all     { messages?, state?, templateOverride? }   -> BuildResult (may exceed 60s on slow models; the UI uses stages)
  */
 export async function POST(req: Request) {
@@ -116,7 +118,15 @@ export async function POST(req: Request) {
           results.push(v);
         }
         const profile = isRecord(body.profile) ? toProfile(body.profile, plan.brief.businessName) : profileFromBrief(plan.brief, "", "");
-        return NextResponse.json(finishSite(plan, profile, results));
+        const uploadSlots = Math.max(0, Math.min(MAX_SETUP_UPLOADS, Math.floor(Number(body.uploadSlots) || 0)));
+        const preferred = Array.isArray(body.preferredImages)
+          ? body.preferredImages
+              .filter(isRecord)
+              .map((x) => ({ url: str(x.url, 300), alt: str(x.alt, 120) }))
+              .filter((x) => isAllowedStockUrl(x.url))
+              .slice(0, MAX_STOCK_PICKS)
+          : [];
+        return NextResponse.json(finishSite(plan, profile, results, { uploadSlots, preferred }));
       }
       case "all": {
         const result = await buildSite({ messages: body.messages, state: body.state, templateOverride: str(body.templateOverride, 8) || null });

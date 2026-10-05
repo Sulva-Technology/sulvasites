@@ -5,7 +5,7 @@ import { GroqError } from "../src/lib/ai/groq.server.ts";
 import { runAssistantTurn, decideReady, countQuestions, readyReply } from "../src/lib/ai/assistant.ts";
 import { extractContactFromText, normalizeBrief, verifyContact, emptyBrief, mergeBrief, briefToText } from "../src/lib/ai/brief.ts";
 import { buildChatPrompt } from "../src/lib/ai/prompts/builders.ts";
-import { MAX_REPAIR_ROUNDS, buildSite, patientChat, planSite, rehydratePlan, writePage, writeProfile } from "../src/lib/ai/siteBuilder.ts";
+import { MAX_REPAIR_ROUNDS, buildSite, finishSite, patientChat, planSite, profileFromBrief, rehydratePlan, writePage, writeProfile } from "../src/lib/ai/siteBuilder.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
 import { getPagePresets } from "../src/templates/pagePresets.ts";
 
@@ -319,4 +319,27 @@ test("chat prompt leaves design to the app but captures stated colours", () => {
   assert.match(system, /"colors": string/);
   assert.match(system, /copy them into colors/);
   assert.ok(!system.includes("the builder chooses"));
+});
+
+test("finishSite puts upload slots then preferred stock before random stock", async () => {
+  const plan = rehydratePlan({ templateKey: "t7", brief, photoCategory: "food" });
+  const profile = profileFromBrief(plan.brief, "Fresh bread", "Bakery");
+  const results = [await writePage(plan, "home", { chat: stub().chat })];
+  const r = finishSite(plan, profile, results, {
+    uploadSlots: 2,
+    preferred: [
+      { url: "https://images.unsplash.com/photo-abc?w=1600", alt: "Pick" },
+      { url: "https://evil.example/x.jpg", alt: "Nope" },
+    ],
+  });
+  const g = r.pages.home.sections.find((s) => s.type === "gallery");
+  assert.deepEqual(g.images.slice(0, 3).map((i) => i.url), ["upload:0", "upload:1", "https://images.unsplash.com/photo-abc?w=1600"]);
+  assert.ok(g.images.length >= 6);
+  assert.ok(!JSON.stringify(r.pages).includes("evil.example"));
+  assert.ok(!r.notes.some((n) => n.startsWith("Photos are stock images")));
+  assert.ok(r.notes.some((n) => n.startsWith("Your photos and picks are used first")));
+
+  const plain = finishSite(plan, profile, results);
+  assert.ok(plain.notes.some((n) => n.startsWith("Photos are stock images")));
+  assert.ok(!JSON.stringify(plain.pages).includes("upload:"));
 });

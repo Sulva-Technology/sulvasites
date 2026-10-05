@@ -27,6 +27,14 @@ import {
 import { getIndustry } from "./prompts/industries.ts";
 import { BUDGETS as B, SAMPLING } from "./prompts/rules.ts";
 import { applyQualityGate, fitSentence, lintPage } from "./quality.ts";
+import {
+  MAX_SETUP_UPLOADS,
+  MAX_STOCK_PICKS,
+  UPLOAD_TOKEN,
+  isAllowedStockUrl,
+  placeOwnerImages,
+  type ImageRef,
+} from "./setupPhotos.ts";
 import { isTemplateKey, resolveTemplateChoice, type TemplateChoice } from "./templateChoice.ts";
 
 export const MAX_REPAIR_ROUNDS = 2;
@@ -244,7 +252,14 @@ async function generatePage(job: PageJob, plan: SitePlan, chat: ChatFn, avoid: s
 
 // ---------- stage 4: finish (images, quality gate, notes) ----------
 
-export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageResult[]): BuildResult {
+export type FinishOptions = {
+  /** Stock photos the owner picked; only isAllowedStockUrl() urls are used. */
+  preferred?: ImageRef[];
+  /** Number of owner uploads; each becomes an "upload:N" gallery placeholder. */
+  uploadSlots?: number;
+};
+
+export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageResult[], opts: FinishOptions = {}): BuildResult {
   const jobs = getPageJobs(plan.templateKey);
   const labels = Object.fromEntries(jobs.map((j) => [j.key, j.label]));
   const extraKeys = jobs.filter((j) => j.kind === "extra").map((j) => j.key);
@@ -256,7 +271,11 @@ export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageRe
 
   const gated = applyQualityGate(stripAiImageUrls(byKey), { brief: plan.brief, templateKey: plan.templateKey, extraKeys, labels });
   const hints = hintWords(plan.brief.whatTheyDo, plan.brief.services.join(" "));
-  const withImages = fillSiteImages(gated.pages, plan.photoCategory, plan.brief.businessName, hints);
+  const slots = Math.max(0, Math.min(MAX_SETUP_UPLOADS, Math.floor(Number(opts.uploadSlots) || 0)));
+  const owner: ImageRef[] = [...Array(slots).keys()]
+    .map((i) => ({ url: `${UPLOAD_TOKEN}${i}`, alt: `${plan.brief.businessName} photo ${i + 1}` }))
+    .concat((opts.preferred ?? []).filter((p) => isAllowedStockUrl(p?.url)).slice(0, MAX_STOCK_PICKS).map((p) => ({ url: p.url, alt: p.alt || plan.brief.businessName })));
+  const withImages = fillSiteImages(placeOwnerImages(gated.pages, owner), plan.photoCategory, plan.brief.businessName, hints);
 
   const notes: string[] = [];
   const meta = TEMPLATE_META.find((t) => t.key === plan.templateKey);
@@ -271,7 +290,11 @@ export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageRe
     notes.push("Team entries use job titles instead of names. Replace them with your real team and photos.");
   }
   notes.push("Testimonials and partner logos were not generated, so nothing is made up. Add real ones later.");
-  notes.push("Photos are stock images matched to your business. Swap in your own when you have them.");
+  notes.push(
+    owner.length
+      ? "Your photos and picks are used first; remaining slots use matching stock photos."
+      : "Photos are stock images matched to your business. Swap in your own when you have them.",
+  );
   const failed = results.filter((r) => r.aiFailed).map((r) => labels[r.key] ?? r.key);
   if (failed.length) notes.push(`The AI was unavailable for: ${failed.join(", ")}. Those pages use simple placeholder copy; run "AI content" on the site to improve them.`);
   const fb = results.filter((r) => !r.aiFailed && r.fallbackTypes.length);

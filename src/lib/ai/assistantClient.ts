@@ -3,6 +3,7 @@
 import { ensureSession } from "@/lib/supabase/browser";
 import type { Brief, ChatMessage } from "@/lib/ai/brief";
 import type { BuildResult, PageResult, SitePlan, SiteProfile } from "@/lib/ai/siteBuilder";
+import type { ImageRef } from "@/lib/ai/setupPhotos";
 
 export type { Brief, ChatMessage, BuildResult, SitePlan };
 
@@ -52,7 +53,14 @@ const BUILD_URL = "/api/ai/assistant/build";
  * Pass `plan` to reuse an earlier plan (for example after the user picked another template).
  */
 export async function runStagedBuild(
-  input: { messages?: ChatMessage[]; state?: Brief | null; templateOverride?: string | null; plan?: SitePlan },
+  input: {
+    messages?: ChatMessage[];
+    state?: Brief | null;
+    templateOverride?: string | null;
+    plan?: SitePlan;
+    /** Owner photo choices: uploads become "upload:N" slots, preferred stock goes next. */
+    images?: { preferred: ImageRef[]; uploadSlots: number };
+  },
   onProgress: (p: BuildProgress) => void,
 ): Promise<{ plan: SitePlan; result: BuildResult }> {
   const steps = input.plan ? 0 : 1;
@@ -91,6 +99,17 @@ export async function runStagedBuild(
   }
 
   report("finish", "Adding photos and polishing…");
-  const built = await post<BuildResult>(BUILD_URL, { stage: "finish", plan, profile, results }, onWait);
+  const built = await post<BuildResult>(
+    BUILD_URL,
+    {
+      stage: "finish",
+      plan,
+      profile,
+      results,
+      uploadSlots: input.images?.uploadSlots ?? 0,
+      preferredImages: input.images?.preferred ?? [],
+    },
+    onWait,
+  );
   return { plan, result: built };
 }
