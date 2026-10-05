@@ -2065,3 +2065,38 @@ textarea.t13-cf-input { resize: vertical; min-height: 120px; }
   .t13-faq-q { grid-template-columns: 36px minmax(0, 1fr) 24px; padding: 0 14px; }
   .t13-faq-a > div { padding-inline: 14px; padding-left: 50px; }
 }
+
+/* ---------- Floating search composer ---------- */
+.t13-composer { position: fixed; z-index: 35; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); width: min(600px, calc(100% - 24px));
+  transform: translate(-50%, 24px); opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .4s var(--t13-ease), transform .5s var(--t13-ease), visibility 0s .5s; }
+.t13-composer[data-show="true"] { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+.t13-composer-hint { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 10px; font-size: 13px; color: var(--t13-muted); }
+.t13-composer-faces { display: inline-flex; padding-inline-start: 8px; }
+.t13-composer-faces img { width: 26px; height: 26px; border-radius: 999px; object-fit: cover; border: 2px solid var(--t13-bg); margin-inline-start: -8px; }
+.t13-composer-bar { position: relative; display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--t13-card-2) 88%, transparent); border: 1px solid var(--t13-line-strong);
+  backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); box-shadow: 0 24px 60px -24px rgb(0 0 0 / .6); }
+.t13-composer-bar input { flex: 1; min-width: 0; padding-inline: 4px; border: 0; outline: 0; background: none; color: var(--t13-ink); font: 400 14px var(--t13-font); }
+.t13-composer-bar input::placeholder { color: var(--t13-muted); }
+.t13-composer-plus { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 999px; border: 0; background: transparent; color: var(--t13-ink); cursor: pointer; transition: background .2s var(--t13-ease), transform .3s var(--t13-ease); }
+.t13-composer-plus:hover { background: var(--t13-line); }
+.t13-composer-plus[data-open="true"] { transform: rotate(45deg); }
+.t13-composer-send { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 999px; border: 0; background: var(--t13-ink); color: var(--t13-bg); cursor: pointer; transition: transform .2s var(--t13-ease); }
+.t13-composer-send:active { transform: scale(.94); }
+.t13-composer :is(button, a):focus-visible { outline: 2px solid var(--t13-ink); outline-offset: 2px; }
+.t13-composer-menu, .t13-composer-results { position: absolute; bottom: calc(100% + 10px); left: 0; right: 0; list-style: none; margin: 0; padding: 8px;
+  background: var(--t13-card); border: 1px solid var(--t13-line); border-radius: 18px; box-shadow: 0 30px 80px -30px rgb(0 0 0 / .6); }
+.t13-composer-menu a, .t13-composer-results a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; color: var(--t13-ink); text-decoration: none; font-size: 14px; transition: background .2s var(--t13-ease); }
+.t13-composer-menu a:hover, .t13-composer-results a:hover, .t13-composer-menu a:focus-visible, .t13-composer-results a:focus-visible { background: var(--t13-card-2); }
+.t13-composer-results img, .t13-composer-noimg { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; background: var(--t13-card-2); }
+.t13-composer-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t13-composer-price { font-family: var(--t13-mono); font-size: 12px; color: var(--t13-muted); }   /* muted on card */
+.t13-composer-none { padding: 12px; font-size: 14px; color: var(--t13-muted); }
+.template13[data-composer="true"] #t13-main { padding-bottom: 120px; }
+
+/* ---------- Shop list search banner ---------- */
+.t13-qbanner { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 24px; padding: 10px 10px 10px 20px;
+  border-radius: 999px; background: var(--t13-card); border: 1px solid var(--t13-line); font-size: 14px; }
+.t13-qbanner p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.t13-qbanner .t13-pill { flex: none; height: 36px; padding: 0 16px; color: var(--t13-ink); }

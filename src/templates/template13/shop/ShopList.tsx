@@ -1,23 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { shopHref, useT13 } from "../ctx";
-import { SORTS, sortProducts, type SortId } from "./helpers";
+import { matchesQuery } from "../lib";
+import { categoryName, SORTS, sortProducts, type SortId } from "./helpers";
 import ProductCard from "./ProductCard";
 
 /** All products, or one category: category links, a sort control and the product grid. */
 export default function ShopList({ categorySlug }: { categorySlug?: string }) {
   const { shop, baseUrl, profile } = useT13();
   const [sort, setSort] = useState<SortId>("featured");
+  const [q, setQ] = useState("");
+
+  // Links such as /shop?q=coat (home search, composer) pre-set the search.
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get("q");
+    // Applied after the effect body so the first paint matches the server render.
+    queueMicrotask(() => {
+      if (param) setQ(param);
+    });
+  }, []);
+
+  const clearQuery = () => {
+    setQ("");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("q");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  };
 
   const category = shop?.categories.find((c) => c.slug === categorySlug) ?? null;
   const products = useMemo(() => {
     if (!shop) return [];
     const base = category ? shop.products.filter((p) => p.categoryId === category.id) : shop.products;
-    return sortProducts(base, sort);
-  }, [shop, category, sort]);
+    const found = q.trim() ? base.filter((p) => matchesQuery(p, categoryName(shop, p), q)) : base;
+    return sortProducts(found, sort);
+  }, [shop, category, sort, q]);
 
   if (!shop) return null;
   const cats = [...shop.categories].sort((a, b) => a.position - b.position);
@@ -74,6 +93,15 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
           </div>
         </div>
 
+        {q.trim() ? (
+          <div className="t13-qbanner">
+            <p>Results for “{q.trim()}”</p>
+            <button type="button" className="t13-pill t13-pill-glass" onClick={clearQuery}>
+              Clear
+            </button>
+          </div>
+        ) : null}
+
         {products.length > 0 ? (
           <ul className="t13-grid" data-cols="3">
             {products.map((p, i) => (
@@ -84,9 +112,13 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
           </ul>
         ) : (
           <div className="t13-empty">
-            <p className="t13-empty-title">{category ? "Nothing in this category yet" : "The shop is being stocked"}</p>
-            <p className="t13-muted">{category ? "Have a look at everything else." : "Check back soon for new pieces."}</p>
-            {category ? (
+            <p className="t13-empty-title">
+              {q.trim() ? `Nothing matches “${q.trim()}”. Try another word.` : category ? "Nothing in this category yet" : "The shop is being stocked"}
+            </p>
+            {q.trim() ? null : (
+              <p className="t13-muted">{category ? "Have a look at everything else." : "Check back soon for new pieces."}</p>
+            )}
+            {category && !q.trim() ? (
               <Link className="t13-btn" href={shopHref(baseUrl)}>
                 View all products
               </Link>

@@ -11,6 +11,7 @@ import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import T13Composer, { composerEligible } from "./components/T13Composer";
 import T13Footer from "./components/T13Footer";
 import T13Header from "./components/T13Header";
 import { collectHours, findSizeGuideHtml, T13Provider } from "./ctx";
@@ -112,6 +113,7 @@ export default function Template13({
       profile,
       pageKind,
       pageLabel,
+      shopViewKind: shopView?.kind ?? null,
       mode,
       toggleMode,
       shop: shop ?? null,
@@ -132,6 +134,7 @@ export default function Template13({
       profile,
       pageKind,
       pageLabel,
+      shopView?.kind,
       mode,
       toggleMode,
       shop,
@@ -170,7 +173,7 @@ export default function Template13({
 
   return (
     <T13Provider value={ctx}>
-      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} style={themeStyle}>
+      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} data-composer={composerEligible(shop ?? null, pageKind, shopView?.kind ?? null)} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <a className="t13-skip" href="#t13-main">
           Skip to content
@@ -180,6 +183,7 @@ export default function Template13({
           {shop && shopView ? <ShopViews view={shopView} /> : <T13Sections pageData={pageData} />}
         </main>
         <T13Footer logoUrl={logoUrl} />
+        <T13Composer />
         <p className="t13-sr" role="status" aria-live="polite" aria-atomic="true">
           {status}
         </p>
