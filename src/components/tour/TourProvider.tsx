@@ -74,8 +74,16 @@ export function TourProvider({
   const end = useCallback(() => {
     setIndex(-1);
     markTourDone(tour.id);
-    document.querySelector<HTMLElement>('[data-tour="tour-button"]')?.focus();
   }, [tour.id]);
+
+  // Return focus to the tour button only after the overlay (and its focus trap) has unmounted.
+  const prevIndexRef = useRef(-1);
+  useEffect(() => {
+    if (prevIndexRef.current >= 0 && index < 0) {
+      document.querySelector<HTMLElement>('[data-tour="tour-button"]')?.focus();
+    }
+    prevIndexRef.current = index;
+  }, [index]);
   const endRef = useRef(end);
   useEffect(() => {
     endRef.current = end;
