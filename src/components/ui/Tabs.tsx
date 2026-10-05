@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import type { KeyboardEvent } from "react";
 
-export type TabItem = { id: string; label: string; href?: string; count?: number };
+export type TabItem = { id: string; label: string; href?: string; count?: number; tourId?: string };
 
 const base =
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange";
@@ -30,12 +30,14 @@ export function Tabs({
   onChange,
   label,
   className = "",
+  tourId,
 }: {
   items: TabItem[];
   active: string;
   onChange?: (id: string) => void;
   label: string;
   className?: string;
+  tourId?: string;
 }) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const linkMode = items.length > 0 && items.every((i) => i.href);
@@ -44,11 +46,11 @@ export function Tabs({
 
   if (linkMode) {
     return (
-      <nav aria-label={label} className={wrap}>
+      <nav aria-label={label} data-tour={tourId} className={wrap}>
         {items.map((item) => {
           const isOn = item.id === active;
           return (
-            <Link key={item.id} href={item.href!} aria-current={isOn ? "page" : undefined} className={`${base} ${isOn ? on : off}`}>
+            <Link key={item.id} href={item.href!} data-tour={item.tourId} aria-current={isOn ? "page" : undefined} className={`${base} ${isOn ? on : off}`}>
               {item.label}
               <Count n={item.count} active={isOn} />
             </Link>
@@ -71,7 +73,7 @@ export function Tabs({
   }
 
   return (
-    <div role="tablist" aria-label={label} className={wrap}>
+    <div role="tablist" aria-label={label} data-tour={tourId} className={wrap}>
       {items.map((item, index) => {
         const isOn = item.id === active;
         return (
@@ -81,6 +83,7 @@ export function Tabs({
               refs.current[index] = el;
             }}
             type="button"
+            data-tour={item.tourId}
             role="tab"
             aria-selected={isOn}
             tabIndex={isOn ? 0 : -1}

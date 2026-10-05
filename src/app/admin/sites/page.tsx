@@ -13,6 +13,7 @@ import { PageHero } from "@/components/ui/PageHero";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { StatusTone } from "@/components/ui/StatusPill";
 import { Tabs } from "@/components/ui/Tabs";
+import { TourContextSync } from "@/components/tour/TourProvider";
 
 type SiteRow = {
   id: string;
@@ -181,6 +182,8 @@ export default function AdminSitesPage() {
         </label>
       </div>
 
+      <TourContextSync firstSiteId={sites[0]?.id} />
+
       {error ? (
         <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -205,7 +208,7 @@ export default function AdminSitesPage() {
           <p className="text-sm text-koi-ink/60">No sites match this filter.</p>
         </Card>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul data-tour="sites-list" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((s) => (
             <li key={s.id}>
               <Card as="div" className="flex h-full flex-col gap-4">

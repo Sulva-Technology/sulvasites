@@ -47,7 +47,7 @@ export default function DashboardHomePage() {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Your sites</h1>
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul data-tour="site-cards" className="grid gap-4 sm:grid-cols-2">
         {memberships.map((m) => (
           <li key={m.siteId}>
             <Link

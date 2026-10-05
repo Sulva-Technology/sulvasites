@@ -347,9 +347,13 @@ export default function SiteOverviewPage({
         <ProfileEditor siteId={siteId} mode="admin" basePath={`/admin/sites/${siteId}`} />
 
         {/* B2) AI content generator (optional) */}
-        <AiSiteContentGenerator siteId={siteId} templateKey={site.template_key} />
+        <div data-tour="ai-content">
+          <AiSiteContentGenerator siteId={siteId} templateKey={site.template_key} />
+        </div>
 
-        <AiSeoAllPages siteId={siteId} />
+        <div data-tour="ai-seo-all">
+          <AiSeoAllPages siteId={siteId} />
+        </div>
       </div>
     );
   }
