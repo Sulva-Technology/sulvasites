@@ -8,6 +8,7 @@ import { useParams } from "next/navigation";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { publishSite, unpublishSite } from "@/lib/publishing";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
+import AiSeoAllPages from "@/components/admin/AiSeoAllPages";
 import AiSiteContentGenerator from "@/components/admin/AiSiteContentGenerator";
 import DomainsSection, { type DomainRow } from "@/components/admin/site/DomainsSection";
 import ExtraPagesSection from "@/components/admin/site/ExtraPagesSection";
@@ -673,6 +674,8 @@ export default function SiteOverviewPage({
 
       {/* B2) AI content generator (optional) */}
       <AiSiteContentGenerator siteId={siteId} />
+
+      <AiSeoAllPages siteId={siteId} />
 
       {/* B4) Extra pages (per site) */}
       <ExtraPagesSection

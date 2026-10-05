@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import AiRewriteMenu from "@/components/page-editor/AiRewriteMenu";
 import ContactCardEditor from "@/components/page-editor/ContactCardEditor";
 import HeroEditor from "@/components/page-editor/HeroEditor";
 import RichTextEditor from "@/components/page-editor/RichTextEditor";
@@ -377,13 +378,19 @@ export default function ExtraPageEditor() {
             <div key={`${section.type}-${idx}`} className="rounded-lg bg-white p-4 ring-1 ring-gray-200">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-gray-900">{section.type}</div>
-                <button
-                  type="button"
-                  onClick={() => removeSection(idx)}
-                  className="text-sm font-medium text-red-600 hover:text-red-700"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-3">
+                  <AiRewriteMenu
+                    section={section}
+                    onApply={(next) => updateSection(idx, next)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSection(idx)}
+                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
 
               {section.type === "hero" && (

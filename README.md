@@ -15,8 +15,8 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
-   GROQ_API_KEY=...                     # AI generator (default provider)
-   GEMINI_API_KEY=...                   # AI generator (optional)
+   GROQ_API_KEY=...                     # AI (site generator + section rewrite)
+   # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional model overrides
    ```
 
 3. In the Supabase SQL editor run, in order:

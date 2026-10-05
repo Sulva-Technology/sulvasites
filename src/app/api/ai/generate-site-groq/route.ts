@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import type { PageData } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
+import { GroqError, extractJson, groqChat } from "@/lib/ai/groq.server";
+import { aiErrorResponse } from "@/lib/ai/http.server";
 import { rateLimit, requireAdmin } from "@/lib/supabase/requireAdmin.server";
 import { fillSiteImages, normalizeCategory, PHOTO_CATEGORY_PROMPT, stripAiImageUrls } from "@/lib/stockPhotos";
 
@@ -9,31 +11,6 @@ const MAX_BRIEF_CHARS = 8000;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
-}
-
-type GroqChatCompletion = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-  }>;
-};
-
-function extractJson(text: string) {
-  const cleaned = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
-
-  const first = cleaned.indexOf("{");
-  const last = cleaned.lastIndexOf("}");
-  if (first === -1 || last === -1 || last <= first) {
-    throw new Error("Model did not return JSON.");
-  }
-  const slice = cleaned.slice(first, last + 1);
-  return JSON.parse(slice) as unknown;
 }
 
 export async function POST(req: Request) {
@@ -55,19 +32,6 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error:
-            "Groq is not configured. Set GROQ_API_KEY in server environment variables. Get a free key at https://console.groq.com/",
-        },
-        { status: 500 },
-      );
-    }
-
-    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
     const prompt = `
 You are generating content for a small business website builder.
@@ -141,49 +105,12 @@ ${brief}
 `.trim();
 
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.65,
-          // gpt-oss reasoning tokens count against this budget.
-          max_tokens: 16384,
-          response_format: { type: "json_object" },
-        }),
+      const text = await groqChat({
+        user: prompt,
+        json: true,
+        temperature: 0.65,
+        maxTokens: 16384,
       });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        const status = res.status;
-        const detail = txt.slice(0, 2000);
-
-        let errorMessage = `Groq request failed (${status}).`;
-        if (status === 429) {
-          errorMessage = "Groq rate limit exceeded. Free tier has generous limits - try again in a moment.";
-        } else if (status === 401) {
-          errorMessage = "Invalid Groq API key. Get a free key at https://console.groq.com/";
-        }
-
-        return NextResponse.json(
-          {
-            error: errorMessage,
-            detail,
-          },
-          { status: 502 },
-        );
-      }
-
-      const data = (await res.json()) as unknown as GroqChatCompletion;
-      const text = data?.choices?.[0]?.message?.content ?? "";
-
-      if (!text) {
-        return NextResponse.json({ error: "Empty response from Groq." }, { status: 422 });
-      }
 
       const parsed = extractJson(text);
       if (!isRecord(parsed)) {
@@ -230,12 +157,11 @@ ${brief}
         },
         { status: 200 },
       );
-    } catch (fetchErr) {
+    } catch (err) {
+      if (err instanceof GroqError) return aiErrorResponse(err);
       return NextResponse.json(
-        {
-          error: fetchErr instanceof Error ? fetchErr.message : "Network error",
-        },
-        { status: 500 },
+        { error: err instanceof Error ? err.message : "Unknown error" },
+        { status: err instanceof SyntaxError ? 422 : 500 },
       );
     }
   } catch (e) {

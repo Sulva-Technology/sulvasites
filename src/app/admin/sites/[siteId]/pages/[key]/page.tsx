@@ -4,6 +4,9 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import AiRewriteMenu from "@/components/page-editor/AiRewriteMenu";
+import AiSeoButton from "@/components/admin/AiSeoButton";
+import { fetchSeoProfile } from "@/components/admin/seoProfile";
 import ContactCardEditor from "@/components/page-editor/ContactCardEditor";
 import HeroEditor from "@/components/page-editor/HeroEditor";
 import RichTextEditor from "@/components/page-editor/RichTextEditor";
@@ -478,7 +481,25 @@ export default function PageEditorPage() {
             <div className="space-y-6">
               {/* SEO */}
               <div>
-                <h2 className="text-lg font-semibold">SEO</h2>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <h2 className="text-lg font-semibold">SEO</h2>
+                  {pageKey ? (
+                    <AiSeoButton
+                      label="AI: improve SEO & alt text"
+                      appliedNote="Click Save Draft to keep them."
+                      load={async () => ({
+                        pages: [{ key: pageKey, data: pageDraft }],
+                        profile: await fetchSeoProfile(siteId),
+                      })}
+                      onApply={(updated) => {
+                        const next = updated[pageKey];
+                        if (!next) return;
+                        setPageDraft(next);
+                        setRawText(JSON.stringify(next, null, 2));
+                      }}
+                    />
+                  ) : null}
+                </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <span className="text-sm font-medium text-gray-800">
@@ -544,6 +565,11 @@ export default function PageEditorPage() {
                             {idx + 1}. {section.type}
                           </div>
                           <div className="flex items-center gap-2">
+                            <AiRewriteMenu
+                              section={section}
+                              context={[pageDraft.seo.title, pageDraft.seo.description].filter(Boolean).join(" — ")}
+                              onApply={(next) => updateSection(idx, next)}
+                            />
                             <button
                               type="button"
                               onClick={() => moveSection(idx, -1)}
