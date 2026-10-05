@@ -154,6 +154,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#fbfaf7",
     surface: "#f1eee8",
   }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
+  // General store — "Cartly"
+  t14: config("t14", {
+    accent: "#1f6feb",
+    accent2: "#0e1726",
+    ink: "#0f172a",
+    muted: "#5b6475",
+    bg: "#ffffff",
+    surface: "#f3f5f9",
+  }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
 };
 
 export function getTemplateThemeConfig(templateKey: string): TemplateThemeConfig | null {

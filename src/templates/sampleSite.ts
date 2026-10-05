@@ -1585,6 +1585,204 @@ function fashionShop(): ShopData {
   };
 }
 
+const retailPhoto = (group: "retail" | "tech" | "food", i: number) => {
+  const list = STOCK_PHOTOS[group];
+  const p = list[i % list.length]!;
+  return { url: photoUrl(p.id), alt: p.alt };
+};
+
+const storeHome: PageData = {
+  seo: { title: "Cartly Corner Store — everyday essentials, delivered", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Everyday essentials, one easy cart",
+      subtext: "Gadgets, kitchen and home picks at clear prices. Add to cart, pay securely online and choose delivery or pickup.",
+      ctaText: "Shop now",
+      ctaHref: "",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Clear prices", desc: "Every price and discount is shown before you check out." },
+        { title: "Secure payment", desc: "Pay on the Paystack page after you place your order." },
+        { title: "Delivery or pickup", desc: "Options and the delivery fee are shown at checkout." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Before you order",
+      items: [
+        { question: "How does delivery work?", answer: "Delivery and pickup options, with the delivery fee, are shown at checkout." },
+        { question: "Can I pay securely online?", answer: "Yes. Payment is handled on the secure Paystack page after you place your order." },
+        { question: "What if an item sells out?", answer: "Stock is checked when you check out. If something is no longer available, you will be told which item." },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const storeAbout: PageData = {
+  seo: { title: "About Cartly Corner Store", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "A small shop with a simple promise",
+      subtext: "Cartly Corner Store sells everyday products online, with prices, stock and delivery shown up front.",
+      ctaText: "Shop now",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How we work",
+      body: "<p>We keep the catalogue tidy and the details clear.</p><ul><li>Prices and discounts shown on every product</li><li>Stock shown before you add to cart</li><li>Delivery and pickup options at checkout</li></ul>",
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const storeContact: PageData = {
+  seo: { title: "Contact", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Talk to the store",
+      subtext: "Questions about a product, an order or delivery? Send us a message and we will reply as soon as we can.",
+      ctaText: "Send a message",
+      ctaHref: "#contact",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function storeSite(): TemplateProps {
+  const base = sampleSiteBase("t14");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Cartly Corner Store",
+      tagline: "Everyday essentials, delivered.",
+      description: "General store with an online shop.",
+      address: "12 Market Road, Ikeja, Lagos",
+      phone: "+234 803 555 0142",
+      email: "orders@cartlycorner.ng",
+      whatsapp: "+2348035550142",
+      socials: {
+        instagram: "https://instagram.com",
+        hours: "Mon–Sat · 09:00–19:00\nSunday · Closed",
+      },
+    },
+    pages: { home: storeHome, about: storeAbout, contact: storeContact },
+  };
+}
+
+/** Sample storefront: scene photos from the retail, tech and food stock sets stand in for product shots. */
+function storeShop(): ShopData {
+  const cats = [
+    { id: "c-phones", slug: "phones-and-tablets", name: "Phones and tablets", position: 0 },
+    { id: "c-computing", slug: "computing", name: "Computing", position: 1 },
+    { id: "c-kitchen", slug: "kitchen", name: "Kitchen and dining", position: 2 },
+    { id: "c-pantry", slug: "pantry", name: "Pantry", position: 3 },
+    { id: "c-home", slug: "home-and-travel", name: "Home and travel", position: 4 },
+  ];
+  type Opt = Record<string, string>;
+  const variants = (pid: string, opts: Opt[], stocks: Array<number | null>, prices: Array<number | null> = []): SampleProduct["variants"] =>
+    opts.map((options, n) => ({
+      id: `${pid}-v${n + 1}`,
+      options,
+      priceKobo: prices[n] === null || prices[n] === undefined ? null : (prices[n] as number) * 100,
+      stock: stocks[n % stocks.length] ?? null,
+      sku: null,
+      position: n,
+    }));
+  const make = (
+    n: number,
+    slug: string,
+    name: string,
+    category: string,
+    priceNaira: number,
+    compareNaira: number | null,
+    featured: boolean,
+    description: string,
+    photos: Array<["retail" | "tech" | "food", number]>,
+    opts: Opt[] = [],
+    stocks: Array<number | null> = [null],
+    prices: Array<number | null> = [],
+  ): SampleProduct => ({
+    id: `p-${slug}`,
+    slug,
+    name,
+    description,
+    images: photos.map(([g, i]) => retailPhoto(g, i)),
+    priceKobo: priceNaira * 100,
+    compareAtKobo: compareNaira === null ? null : compareNaira * 100,
+    categoryId: category,
+    featured,
+    position: n,
+    variants: variants(`p-${slug}`, opts, stocks, prices),
+  });
+  const storage = (...sizes: string[]) => sizes.map((s) => ({ Storage: s }));
+  const colours = (...c: string[]) => c.map((x) => ({ Colour: x }));
+  const products: SampleProduct[] = [
+    make(0, "smartphone-128gb", "Smartphone 128GB", "c-phones", 185000, 215000, true,
+      "An everyday smartphone with a clear display and all-day battery.\n\nDual SIM\nFast charging",
+      [["tech", 11], ["tech", 9]], storage("128GB", "256GB"), [6, 2], [null, 215000]),
+    make(1, "phone-stand-and-charger", "Phone stand and charger", "c-phones", 12500, null, false,
+      "A compact stand that holds your phone upright while it charges.",
+      [["tech", 10]], [], [null]),
+    make(2, "everyday-laptop-14", "Everyday laptop 14-inch", "c-computing", 420000, 465000, true,
+      "A light 14-inch laptop for work, study and streaming.\n\n8GB memory\nFull HD display",
+      [["tech", 0], ["tech", 3]], storage("256GB", "512GB"), [3, 0], [null, 460000]),
+    make(3, "laptop-sleeve", "Laptop sleeve", "c-computing", 9500, null, false,
+      "A padded sleeve that protects your laptop in a bag.",
+      [["tech", 3]], [{ Size: "13 inch" }, { Size: "14 inch" }, { Size: "15 inch" }], [8, 5, 0]),
+    make(4, "desk-organiser-set", "Desk organiser set", "c-computing", 8200, 10500, false,
+      "A tidy set for pens, cables and notes.",
+      [["tech", 3], ["tech", 1]], colours("Black", "White"), [12, 4]),
+    make(5, "wooden-chopping-board", "Wooden chopping board", "c-kitchen", 7800, null, true,
+      "A sturdy board for everyday chopping and serving.",
+      [["food", 10]], [{ Size: "Medium" }, { Size: "Large" }], [15, 9]),
+    make(6, "dinner-plate-set", "Dinner plate set", "c-kitchen", 18500, 22000, true,
+      "A set of plain dinner plates that suit any table.",
+      [["food", 1], ["food", 4]], [{ Pack: "Set of 4" }, { Pack: "Set of 6" }], [7, 3], [null, 21500]),
+    make(7, "serving-platter", "Serving platter", "c-kitchen", 14200, null, false,
+      "A wide platter for sharing meals.",
+      [["food", 2]], [], [null]),
+    make(8, "canape-spoon-set", "Canape spoon set", "c-kitchen", 6400, 8000, false,
+      "Small tasting spoons for starters and party food.",
+      [["food", 5]], [], [4]),
+    make(9, "cooking-oil-5l", "Cooking oil 5L", "c-pantry", 11800, null, false,
+      "Five litres of cooking oil for the family kitchen.",
+      [["food", 4]], [], [0]),
+    make(10, "grill-seasoning-mix", "Grill seasoning mix", "c-pantry", 2400, null, false,
+      "A spice blend for grilled meat and vegetables.",
+      [["food", 2], ["food", 4]], [{ Pack: "100g" }, { Pack: "250g" }], [30, 18], [null, 5200]),
+    make(11, "weekend-hamper", "Weekend food hamper", "c-pantry", 32000, 38000, true,
+      "A boxed selection of pantry staples for the weekend.",
+      [["food", 0], ["food", 4]], [], [5]),
+    make(12, "reusable-shopping-bag", "Reusable shopping bag", "c-home", 3500, null, false,
+      "A strong, washable bag for market runs.",
+      [["retail", 0], ["retail", 1]], colours("Navy", "Green", "Grey"), [20, 14, 0]),
+    make(13, "travel-tote", "Travel tote", "c-home", 16500, 19500, false,
+      "A roomy tote for day trips and the gym.",
+      [["retail", 5], ["retail", 4]], colours("Black", "Tan"), [6, 2]),
+    make(14, "storage-baskets", "Storage baskets", "c-home", 9800, null, false,
+      "Woven baskets for shelves and cupboards.",
+      [["retail", 3]], [{ Size: "Small" }, { Size: "Large" }], [10, null]),
+    make(15, "gift-wrap-bundle", "Gift wrap bundle", "c-home", 4200, 5000, false,
+      "Paper, ribbon and tags for wrapping gifts.",
+      [["retail", 4], ["retail", 2]], [], [null]),
+  ];
+  return {
+    siteId: "sample",
+    currency: "NGN",
+    settings: { deliveryFeeKobo: 200000, pickupEnabled: true, pickupNote: "Collect from the store, Mon–Sat 09:00–19:00." },
+    categories: cats,
+    products,
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1608,7 +1806,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                       ? tradesSite()
                       : templateKey === "t13"
                         ? fashionSite()
-                        : sampleSiteBase(templateKey);
+                        : templateKey === "t14"
+                          ? storeSite()
+                          : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 
@@ -1661,6 +1861,7 @@ export function sampleExtraPage(templateKey: string, props: TemplateProps, key: 
  */
 export const SHOP_SAMPLES: Record<string, (() => ShopData) | undefined> = {
   t13: fashionShop,
+  t14: storeShop,
 };
 
 /** Generic empty-safe default: no products, so templates must render their empty states. */

@@ -88,6 +88,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "lookbook", label: "Lookbook", headline: "Lookbook", sections: ["hero", "gallery", "contact_card"] },
     { key: "size-guide", label: "Size guide", headline: "Size guide", sections: ["hero", "richtext", "faq"] },
   ],
+  // General store
+  t14: [
+    { key: "shop", label: "Shop", headline: "Shop", sections: ["hero"] },
+    { key: "deals", label: "Deals", headline: "Deals", sections: ["hero", "richtext", "contact_card"] },
+    { key: "help", label: "Help & delivery", headline: "Help & delivery", sections: ["hero", "faq", "contact_card"] },
+  ],
 };
 
 export function getPagePresets(templateKey: string): PagePreset[] {

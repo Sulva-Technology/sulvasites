@@ -15,6 +15,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t11", name: "Soirée", category: "Events", description: "Event planners, venues, caterers and celebrations." },
   { key: "t12", name: "Forge", category: "Trades & construction", description: "Builders, renovators, electricians, plumbers and home services." },
   { key: "t13", name: "Mode", category: "Fashion shop", description: "Fashion boutiques and clothing brands with an online shop, cart and Paystack checkout. Light + dark modes.", shop: true },
+  { key: "t14", name: "Cartly", category: "General store", description: "Online stores and retailers with search, deals, filters, cart and Paystack checkout. Light + dark modes.", shop: true },
 ];
 
 export function templateLabel(key: string) {
