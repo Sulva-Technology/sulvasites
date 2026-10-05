@@ -96,7 +96,7 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
     <AdminSiteContext.Provider value={{ setStatus: (status) => setSite((p) => (p ? { ...p, status } : p)) }}>
       <ChromeHero site={site} businessName={businessName} domain={domain} base={base} />
       <div className="space-y-6">
-        <Tabs label="Site sections" active={active} items={tabs} />
+        <Tabs label="Site sections" tourId="site-tabs" active={active} items={tabs} />
         {children}
       </div>
     </AdminSiteContext.Provider>

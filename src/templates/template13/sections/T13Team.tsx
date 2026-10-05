@@ -5,7 +5,7 @@ import type { TeamSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
 import { IconArrow } from "../icons";
 
-/** "The studio": tall portraits with name and role beneath, in a hairline grid. */
+/** "The studio": graded portrait cards with a serif name and mono role. */
 export default function T13Team({ section, sectionIndex }: { section: TeamSection; sectionIndex?: number }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.members?.some((m) => m.name?.trim())) return null;
@@ -20,7 +20,7 @@ export default function T13Team({ section, sectionIndex }: { section: TeamSectio
   return (
     <section className="t13-section t13-team-section">
       <div className="t13-container">
-        <header className="t13-head t13-head-split t13-reveal">
+        <header className="t13-sec-head t13-reveal">
           <div>
             <p className="t13-label">Team</p>
             <EditableText as="h2" className="t13-h2" value={title} placeholder="The studio" onCommit={(next) => set({ title: next })} />
@@ -28,7 +28,7 @@ export default function T13Team({ section, sectionIndex }: { section: TeamSectio
           {subtitle || enabled ? (
             <EditableText
               as="p"
-              className="t13-head-note"
+              className="t13-sec-note"
               value={subtitle}
               placeholder="Subtitle (optional)"
               multiline

@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import type { ShopView } from "@/lib/shop/types";
 import { useT13 } from "../ctx";
 import CartPage from "./CartPage";
@@ -15,9 +17,17 @@ export default function ShopViews({ view }: { view: ShopView }) {
   if (!shop) return null;
   switch (view.kind) {
     case "list":
-      return <ShopList />;
+      return (
+        <Suspense fallback={null}>
+          <ShopList />
+        </Suspense>
+      );
     case "category":
-      return <ShopList categorySlug={view.slug} />;
+      return (
+        <Suspense fallback={null}>
+          <ShopList categorySlug={view.slug} />
+        </Suspense>
+      );
     case "product": {
       const product = findProductBySlug(shop, view.slug);
       return product ? <ProductPage key={product.id} product={product} /> : null;

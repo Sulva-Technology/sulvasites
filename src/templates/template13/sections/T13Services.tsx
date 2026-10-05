@@ -11,7 +11,7 @@ const HINTS = [
   { title: "Third service", desc: "One or two short sentences." },
 ];
 
-/** Services as an editorial list: a hairline row per service with a numeral, title and description. */
+/** Services as a sticky split: fixed heading on the left, numbered dark cards on the right. */
 export default function T13Services({
   section,
   sectionIndex,
@@ -32,21 +32,23 @@ export default function T13Services({
 
   return (
     <section id={anchor ? "services" : undefined} className="t13-section t13-services-section">
-      <div className="t13-container t13-split">
-        <header className="t13-head t13-reveal">
-          <p className="t13-label">Services</p>
-          <h2 className="t13-h2">How we can help</h2>
-        </header>
-        <ul className="t13-services">
+      <div className="t13-container t13-split-grid">
+        <div>
+          <div className="t13-sticky t13-reveal">
+            <p className="t13-label">Services</p>
+            <h2 className="t13-h2">What we make.</h2>
+          </div>
+        </div>
+        <ol className="t13-svc-list">
           {items.map((it, idx) => (
-            <li key={idx} className="t13-service t13-reveal">
-              <span className="t13-service-no" aria-hidden="true">
+            <li key={idx} className="t13-svc t13-reveal" style={{ ["--d" as string]: idx }}>
+              <span className="t13-svc-no" aria-hidden="true">
                 {pad2(idx + 1)}
               </span>
-              <div>
+              <div className="t13-svc-body">
                 <EditableText
                   as="h3"
-                  className="t13-service-title"
+                  className="t13-svc-title"
                   value={it.title ?? ""}
                   placeholder={HINTS[idx % HINTS.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
@@ -54,7 +56,7 @@ export default function T13Services({
                 {it.desc || enabled ? (
                   <EditableText
                     as="p"
-                    className="t13-muted"
+                    className="t13-svc-desc"
                     value={it.desc ?? ""}
                     placeholder={HINTS[idx % HINTS.length].desc}
                     multiline
@@ -64,7 +66,7 @@ export default function T13Services({
               </div>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
     </section>
   );

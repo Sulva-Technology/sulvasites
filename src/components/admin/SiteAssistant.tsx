@@ -318,7 +318,7 @@ export default function SiteAssistant() {
   }
 
   return (
-    <div className="flex flex-col rounded-3xl bg-white p-0 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+    <div data-tour="assistant-chat" className="flex flex-col rounded-3xl bg-white p-0 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
       <div
         ref={logRef}
         role="log"

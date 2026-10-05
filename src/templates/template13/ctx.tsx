@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
 
 import type { PageData } from "@/lib/pageSchema";
 import type { useCart } from "@/lib/shop/useCart";
-import type { ShopData } from "@/lib/shop/types";
+import type { ShopData, ShopView } from "@/lib/shop/types";
 import type { NavPage, TemplateProps } from "@/templates/registry";
 import type { ColorMode } from "@/templates/shared/colorMode";
 
@@ -18,6 +18,8 @@ export type T13Ctx = {
   profile: TemplateProps["profile"];
   pageKind: "home" | "about" | "contact" | "extra" | "shop";
   pageLabel: string;
+  /** Which storefront view is showing (null on content pages). */
+  shopViewKind: ShopView["kind"] | null;
   mode: ColorMode;
   toggleMode: () => void;
   /** Storefront data, when the shop is live for this site. Without it the bag/shop UI is hidden. */

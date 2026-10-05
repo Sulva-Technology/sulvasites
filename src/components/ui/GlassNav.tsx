@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-export type NavLink = { href: string; label: string };
+export type NavLink = { href: string; label: string; tourId?: string };
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
@@ -57,6 +57,7 @@ export function GlassNav({ brand, links, right }: { brand: ReactNode; links: Nav
               key={l.href}
               href={l.href}
               aria-current={active ? "page" : undefined}
+              data-tour={l.tourId}
               className={`rounded-full px-3 py-1.5 text-sm transition-colors ${focus} ${
                 active ? "bg-white/20 text-white" : "text-white/85 hover:text-white"
               }`}

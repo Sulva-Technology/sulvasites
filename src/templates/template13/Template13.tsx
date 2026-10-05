@@ -11,6 +11,7 @@ import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import T13Composer, { composerEligible } from "./components/T13Composer";
 import T13Footer from "./components/T13Footer";
 import T13Header from "./components/T13Header";
 import { collectHours, findSizeGuideHtml, T13Provider } from "./ctx";
@@ -20,7 +21,7 @@ import ShopViews from "./shop/ShopViews";
 import "./template13.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Italiana&family=Manrope:wght@400;500;600;700;800&display=swap";
+  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap";
 
 function galleryPhotos(pages: Array<PageData | undefined>) {
   const seen = new Set<string>();
@@ -79,7 +80,7 @@ export default function Template13({
     () => findSizeGuideHtml([pageData, pages.about, pages.home, pages.contact]),
     [pageData, pages],
   );
-  const [mode, toggleMode] = useColorMode();
+  const [mode, toggleMode] = useColorMode("dark");
 
   const siteId = shop?.siteId ?? site.id;
   const cart = useCart(siteId);
@@ -112,6 +113,7 @@ export default function Template13({
       profile,
       pageKind,
       pageLabel,
+      shopViewKind: shopView?.kind ?? null,
       mode,
       toggleMode,
       shop: shop ?? null,
@@ -132,6 +134,7 @@ export default function Template13({
       profile,
       pageKind,
       pageLabel,
+      shopView?.kind,
       mode,
       toggleMode,
       shop,
@@ -170,16 +173,17 @@ export default function Template13({
 
   return (
     <T13Provider value={ctx}>
-      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} style={themeStyle}>
+      <div ref={rootRef} className="template13" data-mode={mode} data-page={pageKind} data-composer={!editor?.enabled && composerEligible(shop ?? null, pageKind, shopView?.kind ?? null)} style={themeStyle}>
         <TemplateFonts href={FONTS} />
         <a className="t13-skip" href="#t13-main">
           Skip to content
         </a>
-        <T13Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
+        <T13Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} overHero={pageData?.sections?.[0]?.type === "hero"} />
         <main id="t13-main" tabIndex={-1}>
           {shop && shopView ? <ShopViews view={shopView} /> : <T13Sections pageData={pageData} />}
         </main>
         <T13Footer logoUrl={logoUrl} />
+        <T13Composer />
         <p className="t13-sr" role="status" aria-live="polite" aria-atomic="true">
           {status}
         </p>

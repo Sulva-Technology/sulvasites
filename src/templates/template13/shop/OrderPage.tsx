@@ -8,7 +8,39 @@ import type { OrderStatus } from "@/lib/shop/types";
 import { pollOrder, type VerifyResult } from "@/lib/shop/verifyClient";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { shopHref, useT13 } from "../ctx";
-import { IconAlert, IconCheck, IconClock } from "../icons";
+import { IconAlert, IconClock } from "../icons";
+
+/** Timeline steps the API can actually report (payment state + order status); nothing else is invented. */
+const STEPS: Array<{ key: string; label: string }> = [
+  { key: "paid", label: "Paid" },
+  { key: "fulfilled", label: "Fulfilled" },
+];
+
+function Timeline({ order }: { order: OrderStatus }) {
+  if (order.payment !== "paid") return null;
+  const at = STEPS.findIndex((x) => x.key === order.status);
+  // "paid" while the order awaits fulfilment; any other status is shown as plain text.
+  const known = at >= 0;
+  const current = known ? at : 0;
+  return (
+    <div className="t13-tl-wrap">
+      <ol className="t13-tl" aria-label="Order progress">
+        {STEPS.map((st, i) => (
+          <li
+            key={st.key}
+            className="t13-tl-step t13-mono"
+            data-state={known ? (i < current ? "done" : i === current ? "current" : "todo") : i === 0 ? "done" : "todo"}
+            aria-current={known && i === current ? "step" : undefined}
+          >
+            <span className="t13-tl-dot" aria-hidden="true" />
+            {st.label}
+          </li>
+        ))}
+      </ol>
+      {!known && order.status !== "pending" ? <p className="t13-mono t13-tl-note">Status: {order.status}</p> : null}
+    </div>
+  );
+}
 
 const COPY: Record<OrderStatus["payment"], { title: string; icon: "ok" | "wait" | "bad" }> = {
   paid: { title: "Thank you, your payment is confirmed", icon: "ok" },
@@ -86,11 +118,10 @@ export default function OrderPage({ reference }: { reference: string }) {
   );
 
   return (
-    <section className="t13-section t13-shop-page">
+    <section className="t13-section t13-order-page">
       <div className="t13-container t13-order">
-        <p className="t13-label">Order</p>
-        <p className="t13-order-ref">
-          Reference <b>{reference}</b>
+        <p className="t13-order-ref t13-mono">
+          <span>Reference</span> <b>{reference}</b>
         </p>
 
         <div className="t13-order-card" role="status" aria-live="polite" aria-atomic="true" data-state={order?.payment ?? (notFound ? "failed" : "pending")}>
@@ -99,19 +130,21 @@ export default function OrderPage({ reference }: { reference: string }) {
               <span className="t13-order-ico" data-kind="bad">
                 <IconAlert size={30} />
               </span>
-              <h1 className="t13-h2">We could not find this order</h1>
+              <h1 className="t13-order-title">We could not find this order</h1>
               <p className="t13-muted">Check the link or reference. If you have paid, contact us with your reference.</p>
               {contacts}
             </>
           ) : state && order ? (
             <>
-              <span className="t13-order-ico" data-kind={state.icon}>
-                {state.icon === "ok" ? <IconCheck size={30} /> : state.icon === "wait" ? <IconClock size={30} /> : <IconAlert size={30} />}
-              </span>
-              <h1 className="t13-h2">{state.title}</h1>
+              {order.payment === "paid" ? null : (
+                <span className="t13-order-ico" data-kind={state.icon}>
+                  {state.icon === "wait" ? <IconClock size={30} /> : <IconAlert size={30} />}
+                </span>
+              )}
+              <h1 className="t13-order-title">{order.payment === "paid" ? `Thank you${order.firstName ? `, ${order.firstName}` : ""}.` : state.title}</h1>
               {order.payment === "paid" ? (
                 <p className="t13-muted">
-                  {order.firstName ? `${order.firstName}, your` : "Your"} order is confirmed.
+                  Your payment is confirmed and your order is placed.
                   {order.deliveryMethod === "pickup" ? " You chose to pick it up." : ""} Paystack sends your payment receipt.
                 </p>
               ) : order.payment === "pending" ? (
@@ -131,29 +164,31 @@ export default function OrderPage({ reference }: { reference: string }) {
                 </p>
               )}
 
+              <Timeline order={order} />
+
               {order.items.length > 0 ? (
                 <>
-                  <ul className="t13-order-items" aria-label="Items in this order">
+                  <ul className="t13-order-items t13-mono" aria-label="Items in this order">
                     {order.items.map((it, i) => (
                       <li key={i}>
                         <span>
                           {it.name}
                           {it.variantLabel ? <small> {it.variantLabel}</small> : null}
-                          <small> × {it.quantity}</small>
+                          <small> x {it.quantity}</small>
                         </span>
                         <b>{formatNaira(it.lineTotalKobo)}</b>
                       </li>
                     ))}
                   </ul>
-                  <p className="t13-sum-row">
+                  <p className="t13-sum-row t13-mono">
                     <span>Subtotal</span>
                     <b>{formatNaira(order.subtotalKobo)}</b>
                   </p>
-                  <p className="t13-sum-row">
+                  <p className="t13-sum-row t13-mono">
                     <span>{order.deliveryMethod === "pickup" ? "Pickup" : "Delivery"}</span>
                     <b>{order.deliveryKobo > 0 ? formatNaira(order.deliveryKobo) : "Free"}</b>
                   </p>
-                  <p className="t13-sum-row t13-sum-total">
+                  <p className="t13-sum-row t13-sum-total t13-mono">
                     <span>Total</span>
                     <b>{formatNaira(order.totalKobo)}</b>
                   </p>
@@ -162,16 +197,16 @@ export default function OrderPage({ reference }: { reference: string }) {
 
               <div className="t13-actions t13-actions-center">
                 {order.payment === "pending" && !polling ? (
-                  <button type="button" className="t13-btn" onClick={recheck}>
+                  <button type="button" className="t13-pill t13-pill-solid" onClick={recheck}>
                     Check again
                   </button>
                 ) : null}
                 {order.payment === "failed" ? (
-                  <Link className="t13-btn" href={`${shopHref(baseUrl)}/checkout`}>
+                  <Link className="t13-pill t13-pill-solid" href={`${shopHref(baseUrl)}/checkout`}>
                     Try again
                   </Link>
                 ) : null}
-                <Link className={order.payment === "paid" ? "t13-btn" : "t13-btn t13-btn-ghost"} href={shopHref(baseUrl)}>
+                <Link className={order.payment === "paid" ? "t13-pill t13-pill-solid" : "t13-pill t13-pill-glass"} href={shopHref(baseUrl)}>
                   Continue shopping
                 </Link>
               </div>
@@ -182,10 +217,10 @@ export default function OrderPage({ reference }: { reference: string }) {
               <span className="t13-order-ico" data-kind="bad">
                 <IconAlert size={30} />
               </span>
-              <h1 className="t13-h2">We could not check this order</h1>
+              <h1 className="t13-order-title">We could not check this order</h1>
               <p className="t13-muted">{errorText}</p>
               <div className="t13-actions t13-actions-center">
-                <button type="button" className="t13-btn" onClick={recheck} disabled={polling}>
+                <button type="button" className="t13-pill t13-pill-solid" onClick={recheck} disabled={polling}>
                   {polling ? "Checking" : "Try again"}
                 </button>
               </div>
@@ -195,7 +230,7 @@ export default function OrderPage({ reference }: { reference: string }) {
               <span className="t13-order-ico" data-kind="wait">
                 <IconClock size={30} />
               </span>
-              <h1 className="t13-h2">Confirming your payment</h1>
+              <h1 className="t13-order-title">Confirming your payment</h1>
               <p className="t13-muted">Checking with Paystack. This usually takes a few seconds.</p>
             </>
           )}

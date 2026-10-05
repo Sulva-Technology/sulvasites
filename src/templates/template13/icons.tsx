@@ -126,3 +126,22 @@ export const IconAlert = ({ size = 22 }: P) => (
     <path d="M12 7.5v5.5M12 16.2v.1" />
   </svg>
 );
+
+export const IconSearch = ({ size = 20 }: P) => (
+  <svg {...base(size)} strokeWidth={1.6}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4 4" />
+  </svg>
+);
+
+export const IconArrowUp = ({ size = 20 }: P) => (
+  <svg {...base(size)} strokeWidth={1.6}>
+    <path d="M12 19V5M6 11l6-6 6 6" />
+  </svg>
+);
+
+export const IconSpark = ({ size = 20 }: P) => (
+  <svg {...base(size)} strokeWidth={1.6}>
+    <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14 3.5 12l6.6-2L12 3.5Z" />
+  </svg>
+);

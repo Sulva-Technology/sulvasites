@@ -121,9 +121,9 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <section className="t13-section t13-shop-page">
+      <section className="t13-section t13-sp">
         <div className="t13-container">
-          <h1 className="t13-h1">Checkout</h1>
+          <h1 className="t13-sp-title">Checkout</h1>
           <p className="t13-muted" role="status">
             Loading your bag
           </p>
@@ -134,15 +134,15 @@ export default function CheckoutPage() {
 
   if (rows.length === 0) {
     return (
-      <section className="t13-section t13-shop-page">
+      <section className="t13-section t13-sp">
         <div className="t13-container">
-          <h1 className="t13-h1">Checkout</h1>
+          <h1 className="t13-sp-title">Checkout</h1>
           <div className="t13-empty">
             <span className="t13-empty-ico" aria-hidden="true">
               <IconBag size={38} />
             </span>
             <p className="t13-empty-title">Your bag is empty</p>
-            <Link className="t13-btn t13-btn-lg" href={shopHref(baseUrl)}>
+            <Link className="t13-pill t13-pill-solid t13-pill-lg" href={shopHref(baseUrl)}>
               Continue shopping
             </Link>
           </div>
@@ -154,9 +154,9 @@ export default function CheckoutPage() {
   const desc = (f: Field) => (errors[f] ? `t13-err-${f}` : undefined);
 
   return (
-    <section className="t13-section t13-shop-page">
+    <section className="t13-section t13-sp">
       <div className="t13-container">
-        <header className="t13-shop-head">
+        <header className="t13-sp-head">
           <nav className="t13-crumbs" aria-label="Breadcrumb">
             <Link href={shopHref(baseUrl)}>Shop</Link>
             <span aria-hidden="true">/</span>
@@ -164,13 +164,15 @@ export default function CheckoutPage() {
             <span aria-hidden="true">/</span>
             <span aria-current="page">Checkout</span>
           </nav>
-          <h1 className="t13-h1">Checkout</h1>
+          <h1 className="t13-sp-title">Checkout</h1>
         </header>
 
-        <div className="t13-bag-layout">
-          <form ref={formRef} className="t13-checkout" onSubmit={onSubmit} noValidate aria-label="Checkout">
+        <div className="t13-bag-layout t13-co-layout">
+          <form id="t13-checkout-form" ref={formRef} className="t13-checkout" onSubmit={onSubmit} noValidate aria-label="Checkout">
             <fieldset className="t13-fieldset">
-              <legend>Contact</legend>
+              <legend>
+                <span className="t13-mono t13-fs-n">01</span> Contact
+              </legend>
               <label className="t13-field">
                 <span>Full name</span>
                 <input
@@ -217,7 +219,9 @@ export default function CheckoutPage() {
             </fieldset>
 
             <fieldset className="t13-fieldset">
-              <legend>{pickup ? "Delivery or pickup" : "Delivery"}</legend>
+              <legend>
+                <span className="t13-mono t13-fs-n">02</span> {pickup ? "Delivery or pickup" : "Delivery"}
+              </legend>
               {pickup ? (
                 <div className="t13-choice-row">
                   <label className="t13-choice" data-checked={effective === "delivery"}>
@@ -280,31 +284,36 @@ export default function CheckoutPage() {
               </div>
             ) : null}
 
-            <button type="submit" className="t13-btn t13-btn-block t13-btn-lg" disabled={busy}>
-              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : `Pay ${formatNaira(total)}`}
-              {!busy ? <IconArrow size={18} /> : null}
-            </button>
-            <p className="t13-fine t13-center" role="status">
-              {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
-            </p>
+            <div className="t13-fieldset">
+              <h2 className="t13-fs-h">
+                <span className="t13-mono t13-fs-n">03</span> Payment
+              </h2>
+              <p className="t13-fine" role="status">
+                {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
+              </p>
+            </div>
           </form>
 
           <aside className="t13-summary" aria-label="Order summary">
-            <h2 className="t13-card-title">Your order</h2>
+            <h2 className="t13-sum-title">Your order</h2>
             <CartLines rows={rows} serverProblems={problems} readOnly />
-            <p className="t13-sum-row">
+            <p className="t13-sum-row t13-mono">
               <span>Subtotal</span>
               <b>{formatNaira(subtotal)}</b>
             </p>
-            <p className="t13-sum-row">
+            <p className="t13-sum-row t13-mono">
               <span>{effective === "pickup" ? "Pickup" : "Delivery"}</span>
               <b>{fee > 0 ? formatNaira(fee) : "Free"}</b>
             </p>
-            <p className="t13-sum-row t13-sum-total">
+            <p className="t13-sum-row t13-sum-total t13-mono">
               <span>Total</span>
               <b>{formatNaira(total)}</b>
             </p>
-            <Link className="t13-textlink t13-center" href={`${shopHref(baseUrl)}/cart`}>
+            <button type="submit" form="t13-checkout-form" className="t13-pill t13-pill-lg t13-add" disabled={busy}>
+              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : "Pay with Paystack"}
+              {!busy ? <IconArrow size={18} /> : null}
+            </button>
+            <Link className="t13-text-btn t13-center" href={`${shopHref(baseUrl)}/cart`}>
               Edit bag
             </Link>
           </aside>

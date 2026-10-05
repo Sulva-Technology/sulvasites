@@ -178,6 +178,7 @@ function NewSite() {
     <div className="max-w-3xl space-y-6">
       <Tabs
         label="Setup mode"
+        tourId="assistant-mode"
         active={mode}
         onChange={(id) => setMode(id as "assistant" | "manual")}
         items={[

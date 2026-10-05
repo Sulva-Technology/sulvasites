@@ -14,15 +14,15 @@ export default function CartPage() {
   const { rows, subtotal, blocked, ready } = useBag();
 
   return (
-    <section className="t13-section t13-shop-page">
+    <section className="t13-section t13-sp">
       <div className="t13-container">
-        <header className="t13-shop-head">
+        <header className="t13-sp-head">
           <nav className="t13-crumbs" aria-label="Breadcrumb">
             <Link href={shopHref(baseUrl)}>Shop</Link>
             <span aria-hidden="true">/</span>
             <span aria-current="page">Bag</span>
           </nav>
-          <h1 className="t13-h1">Your bag</h1>
+          <h1 className="t13-sp-title">Your bag</h1>
         </header>
 
         {!ready ? (
@@ -36,7 +36,7 @@ export default function CartPage() {
             </span>
             <p className="t13-empty-title">Your bag is empty</p>
             <p className="t13-muted">Add something you love and it will wait for you here.</p>
-            <Link className="t13-btn t13-btn-lg" href={shopHref(baseUrl)}>
+            <Link className="t13-pill t13-pill-solid t13-pill-lg" href={shopHref(baseUrl)}>
               Continue shopping
             </Link>
           </div>
@@ -46,8 +46,8 @@ export default function CartPage() {
               <CartLines rows={rows} />
             </div>
             <aside className="t13-summary" aria-label="Order summary">
-              <h2 className="t13-card-title">Summary</h2>
-              <p className="t13-sum-row">
+              <h2 className="t13-sum-title">Summary</h2>
+              <p className="t13-sum-row t13-mono">
                 <span>Subtotal</span>
                 <b>{formatNaira(subtotal)}</b>
               </p>
@@ -57,10 +57,10 @@ export default function CartPage() {
                   Remove the unavailable items above to continue.
                 </p>
               ) : null}
-              <Link className="t13-btn t13-btn-block t13-btn-lg" href={`${shopHref(baseUrl)}/checkout`}>
+              <Link className="t13-pill t13-pill-lg t13-add" href={`${shopHref(baseUrl)}/checkout`}>
                 Checkout <IconArrow size={18} />
               </Link>
-              <Link className="t13-textlink t13-center" href={shopHref(baseUrl)}>
+              <Link className="t13-text-btn t13-center" href={shopHref(baseUrl)}>
                 Continue shopping
               </Link>
             </aside>

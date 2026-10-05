@@ -176,3 +176,17 @@ export function sortProducts(products: ShopProduct[], sort: SortId): ShopProduct
 export function findProductBySlug(shop: ShopData, slug: string): ShopProduct | null {
   return shop.products.find((p) => p.slug === slug) ?? null;
 }
+
+/**
+ * The variant a one-tap "Add to bag" can use without asking the shopper to choose:
+ * none needed (no variants), or exactly one variant. "choose" when options need picking
+ * (callers then link to the product page), "out" when nothing can be bought.
+ */
+export function quickAddTarget(product: ShopProduct): { variantId: string | null } | "choose" | "out" {
+  if (product.variants.length === 0) return { variantId: null };
+  if (product.variants.length === 1) {
+    const only = product.variants[0]!;
+    return variantInStock(only) ? { variantId: only.id } : "out";
+  }
+  return productSoldOut(product) ? "out" : "choose";
+}

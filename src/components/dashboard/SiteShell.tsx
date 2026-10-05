@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import { TourContextSync } from "@/components/tour/TourProvider";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
 import { templateLabel, templateSupportsShop } from "@/templates/meta";
 import { tabsForRole, type DashboardTab, type SiteRole } from "@/lib/siteAccess";
@@ -146,13 +147,16 @@ export default function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <SiteContext.Provider value={value}>
+      <TourContextSync siteId={siteId} tabs={tabs} />
       <SiteHero value={value} />
       <div className="space-y-6">
         <Tabs
           label="Site sections"
+          tourId="site-tabs"
           active={activeTab}
           items={tabs.map((tab) => ({
             id: tab,
+            tourId: `tab-${tab}`,
             label: TAB_LABELS[tab],
             href: tab === "overview" ? base : `${base}/${tab}`,
             count: tab === "inbox" && unread > 0 ? Math.min(unread, 99) : undefined,
@@ -169,10 +173,12 @@ function SiteHero({ value }: { value: SiteContextValue }) {
   useShellHero(
     <PageHero
       status={
-        <StatusPill tone={published ? "live" : "draft"} onDark>
-          {published ? "Published" : "Draft"} ·{" "}
-          {value.role === "admin" ? "Sulvatech admin" : value.role === "owner" ? "Owner" : "Staff"}
-        </StatusPill>
+        <span data-tour="site-status" className="inline-flex">
+          <StatusPill tone={published ? "live" : "draft"} onDark>
+            {published ? "Published" : "Draft"} ·{" "}
+            {value.role === "admin" ? "Sulvatech admin" : value.role === "owner" ? "Owner" : "Staff"}
+          </StatusPill>
+        </span>
       }
       title={value.businessName}
       accent={templateLabel(value.site.template_key)}

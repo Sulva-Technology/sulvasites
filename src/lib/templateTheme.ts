@@ -154,15 +154,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f6f5f2",
     surface: "#ffffff",
   }, { accent2: "Charcoal bands & footer", surface: "Cards / panels" }),
-  // Fashion boutique shop — "Mode"
+  // Fashion shop — "Mode" (cinematic, dark-first; these are the paper-mode values)
   t13: config("t13", {
-    accent: "#b4532a",
-    accent2: "#121212",
-    ink: "#121212",
-    muted: "#6e6a66",
-    bg: "#fbfaf7",
-    surface: "#f1eee8",
-  }, { accent2: "Black bands & footer", surface: "Cards / panels" }),
+    accent: "#6d5efc",
+    accent2: "#0a0a0b",
+    ink: "#111113",
+    muted: "#5d6069",
+    bg: "#f6f5f2",
+    surface: "#ecebe7",
+  }, { accent2: "Night bands & footer", surface: "Cards / panels" }),
   // General store — "Cartly"
   t14: config("t14", {
     accent: "#1f6feb",
@@ -185,7 +185,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t10: { accent: "#8ea3ff", accent2: "#090f29", ink: "#f4f2ea", muted: "#aab2d0", bg: "#0e1533", surface: "#131c40" },
   t11: { accent: "#b18cff", accent2: "#0c0616", ink: "#f6effc", muted: "#b9a9cc", bg: "#130a22", surface: "#1c1030" },
   t12: { accent: "#ff8a3d", accent2: "#0e1011", ink: "#eef0f1", muted: "#a3abb1", bg: "#16191b", surface: "#1f2326" },
-  t13: { accent: "#e48a5c", accent2: "#0a0908", ink: "#f2eee7", muted: "#aaa49b", bg: "#131110", surface: "#1d1a18" },
+  t13: { ink: "#f4f4f5", muted: "#9ea3ad", bg: "#0a0a0b", surface: "#111113" },
   t14: { accent: "#5b9cff", accent2: "#070d18", ink: "#eaf0fa", muted: "#9aa6bb", bg: "#0b1220", surface: "#131c2e" },
 };
 
