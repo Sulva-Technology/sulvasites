@@ -80,7 +80,7 @@ export async function handlePaystackWebhook(req: Request, scope: WebhookScope): 
   try {
     const { data: order, error } = await db
       .from("orders")
-      .select("id, site_id, reference, payment_mode")
+      .select("id, site_id, reference, payment_mode, paystack_key_ref")
       .eq("reference", reference)
       .maybeSingle();
     if (error) return status(500, "Webhook unavailable");

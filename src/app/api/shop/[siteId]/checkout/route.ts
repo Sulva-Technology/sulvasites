@@ -8,6 +8,8 @@ import { parseCheckoutBody } from "@/lib/shop/checkoutInput";
 import { priceCart } from "@/lib/shop/pricing";
 import { platformFeeKobo } from "@/lib/shop/money";
 import { newOrderReference } from "@/lib/shop/reference";
+import { keyRefFor } from "@/lib/shop/keyIdentity";
+import { buildCreateOrderArgs } from "@/lib/shop/createOrderArgs";
 import { resolveCallbackUrl } from "@/lib/shop/callbackUrl";
 import { clientIp } from "@/lib/shop/requestIp";
 import { loadActiveHostnames, loadCheckoutContext, loadPricingData } from "@/lib/shop/loadShop.server";
@@ -86,54 +88,34 @@ export async function POST(req: Request, ctx: Ctx) {
     const platformDomain = (process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "soothecontrols.site").trim().toLowerCase();
     const customHosts = await loadActiveHostnames(db, siteId);
 
-    // Create the order (retry on the rare reference collision).
+    // Create the order and its items atomically (create_order, migration 010). Retry on the rare
+    // reference collision (unique_violation). The key ref snapshots which Paystack account the order
+    // will be paid through, so a later key rotation can't make us verify against a different account.
+    const keyRef = keyRefFor(payment.mode, payment.mode === "own_keys" ? payment.secret : null);
     let order: { id: string; reference: string } | null = null;
     for (let attempt = 0; attempt < 3 && !order; attempt++) {
       const reference = newOrderReference();
-      const { data, error } = await db
-        .from("orders")
-        .insert({
-          site_id: siteId,
+      const { data, error } = await db.rpc(
+        "create_order",
+        buildCreateOrderArgs({
+          siteId,
           reference,
-          status: "pending",
-          customer_name: input.customer.name,
-          customer_email: input.customer.email,
-          customer_phone: input.customer.phone,
-          delivery_method: input.deliveryMethod,
-          delivery_address: input.address,
+          customer: input.customer,
+          deliveryMethod: input.deliveryMethod,
+          address: input.address,
           notes: input.notes,
-          subtotal_kobo: priced.subtotalKobo,
-          delivery_kobo: priced.deliveryKobo,
-          total_kobo: priced.totalKobo,
-          payment_mode: payment.mode,
-        })
-        .select("id, reference")
-        .single();
-      if (!error && data) {
-        order = { id: data.id as string, reference: data.reference as string };
+          priced,
+          paymentMode: payment.mode,
+          keyRef,
+        }),
+      );
+      if (!error && typeof data === "string") {
+        order = { id: data, reference };
       } else if (error?.code !== "23505") {
         throw new Error("Could not create order");
       }
     }
     if (!order) throw new Error("Could not create order");
-
-    const { error: itemsError } = await db.from("order_items").insert(
-      priced.items.map((it) => ({
-        order_id: order!.id,
-        site_id: siteId,
-        product_id: it.productId,
-        variant_id: it.variantId,
-        name: it.name,
-        variant_label: it.variantLabel,
-        unit_price_kobo: it.unitKobo,
-        quantity: it.quantity,
-        line_total_kobo: it.lineTotalKobo,
-      })),
-    );
-    if (itemsError) {
-      await db.from("orders").delete().eq("id", order.id); // no payment attempted yet
-      throw new Error("Could not create order items");
-    }
 
     const callbackUrl = resolveCallbackUrl({
       returnUrl: input.returnUrl,

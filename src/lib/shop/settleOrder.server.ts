@@ -2,12 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { paystackRequest, PaystackError } from "./paystack.server";
 import { getShopPaymentConfig, ShopPaymentsNotConfiguredError } from "./shopSecrets.server";
 import { isBlockedTestPayment } from "./testMode";
+import { keyRefFor, keyRefMatches } from "./keyIdentity";
 
 export type SettleableOrder = {
   id: string;
   site_id: string;
   reference: string;
   payment_mode: string | null;
+  /** Key identity snapshot from checkout (migration 010); absent/null for older orders. */
+  paystack_key_ref?: string | null;
 };
 
 export type SettleResult =
@@ -17,6 +20,7 @@ export type SettleResult =
   | { kind: "not_started" } // Paystack has no such transaction yet
   | { kind: "flagged"; reason: "amount_mismatch" | "paid_after_cancel" | "reference_mismatch" | "not_pending" | "not_found" | "verify_mismatch" }
   | { kind: "test_mode" } // Paystack test-mode payment in production: never marked paid
+  | { kind: "key_rotated" } // shop changed its own Paystack key after checkout: not verified against the new account
   | { kind: "unconfigured" }; // order's payment mode has no usable config
 
 type VerifyData = {
@@ -48,6 +52,14 @@ export async function settleOrder(db: SupabaseClient, order: SettleableOrder): P
   } else {
     const cfg = await getShopPaymentConfig(order.site_id, "own_keys");
     if (!cfg || cfg.mode !== "own_keys") return { kind: "unconfigured" };
+    if (!keyRefMatches(order.paystack_key_ref, keyRefFor("own_keys", cfg.secret))) {
+      // Never verify against a different Paystack account than the one the order was created for.
+      console.warn("[shop] order skipped: shop Paystack key changed since checkout", {
+        order: order.id,
+        reference: order.reference,
+      });
+      return { kind: "key_rotated" };
+    }
     secret = cfg.secret;
   }
 

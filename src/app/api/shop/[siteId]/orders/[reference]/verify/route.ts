@@ -24,6 +24,7 @@ type OrderRow = {
   reference: string;
   status: string;
   payment_mode: string | null;
+  paystack_key_ref?: string | null;
   customer_name: string;
   delivery_method: string;
   subtotal_kobo: number;
@@ -34,7 +35,7 @@ type OrderRow = {
 };
 
 const ORDER_COLUMNS =
-  "id, site_id, reference, status, payment_mode, customer_name, delivery_method, subtotal_kobo, delivery_kobo, total_kobo, paid_at, created_at";
+  "id, site_id, reference, status, payment_mode, paystack_key_ref, customer_name, delivery_method, subtotal_kobo, delivery_kobo, total_kobo, paid_at, created_at";
 
 /** Maps settlement to a shopper-facing payment state. */
 function paymentState(order: OrderRow, settle: SettleResult | null): "paid" | "pending" | "failed" | "cancelled" | "refund_pending" {
