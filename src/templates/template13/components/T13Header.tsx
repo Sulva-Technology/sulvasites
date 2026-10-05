@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
@@ -9,8 +9,9 @@ import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink } from "@/templates/shared/links";
 import { shopHref, useT13 } from "../ctx";
-import { IconArrow, IconBag, IconClose, IconMenu, IconPhone } from "../icons";
+import { IconArrow, IconClose, IconMenu, IconPhone } from "../icons";
 import { useFocusTrap } from "../shop/useFocusTrap";
+import RollText from "./RollText";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -35,12 +36,12 @@ function MobileMenu({ items, onClose, logo }: { items: NavItem[]; onClose: () =>
       </nav>
       <div className="t13-menu-foot t13-container">
         {shop ? (
-          <Link className="t13-btn t13-btn-block" href={shopHref(baseUrl)} onClick={onClose}>
+          <Link className="t13-pill t13-pill-white t13-pill-lg t13-menu-cta" href={shopHref(baseUrl)} onClick={onClose}>
             Shop now <IconArrow size={16} />
           </Link>
         ) : null}
         {profile.phone ? (
-          <a className="t13-btn t13-btn-ghost t13-btn-block" href={buildTelLink(profile.phone)}>
+          <a className="t13-pill t13-pill-glass t13-pill-lg t13-menu-cta" href={buildTelLink(profile.phone)}>
             <IconPhone size={16} /> {profile.phone}
           </a>
         ) : null}
@@ -50,8 +51,9 @@ function MobileMenu({ items, onClose, logo }: { items: NavItem[]; onClose: () =>
 }
 
 /**
- * Editorial header: nav left, the business name set large in Italiana in the centre, and the
- * mode toggle and shopping bag right. The bag opens the cart drawer; phones get a full-screen menu.
+ * Glass header (after offloop.org): logo mark and name left, nav with rolling-letter hover right, then the
+ * mode toggle and a white "Bag" pill. Transparent and white over the home hero, frosted once scrolled.
+ * The bag opens the cart drawer; phones get a full-screen menu.
  */
 export default function T13Header({
   logoUrl,
@@ -67,15 +69,25 @@ export default function T13Header({
   const [open, setOpen] = useState(false);
   const closeMenu = useCallback(() => setOpen(false), []);
   const [scrolled, setScrolled] = useState(false);
+  const frame = useRef(0);
 
   const socials = (profile.socials || {}) as Record<string, unknown>;
   const navLabels = (socials.nav_labels as Record<string, string>) || {};
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
+    const read = () => {
+      frame.current = 0;
+      setScrolled(window.scrollY > 40);
+    };
+    const onScroll = () => {
+      if (!frame.current) frame.current = requestAnimationFrame(read);
+    };
+    read();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame.current) cancelAnimationFrame(frame.current);
+    };
   }, []);
 
   const onShop = pageKind === "shop";
@@ -101,23 +113,63 @@ export default function T13Header({
     // eslint-disable-next-line @next/next/no-img-element
     <img src={logoUrl} alt={profile.business_name} />
   ) : (
-    <span className="t13-brand-name">
-      <EditableText
-        value={profile.business_name}
-        onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
-        style={{ display: "inline" }}
-      />
-    </span>
+    <>
+      <span className="t13-brand-mark" aria-hidden="true" />
+      <span className="t13-brand-name">
+        <EditableText
+          value={profile.business_name}
+          onCommit={(next) => editor?.updateProfileField?.("business_name", next)}
+          style={{ display: "inline" }}
+        />
+      </span>
+    </>
   );
 
   return (
     <>
-      <header className="t13-header" data-scrolled={scrolled}>
-        <div className="t13-container t13-header-bar">
-          <div className="t13-header-start">
+      <header className="t13-header" data-over-hero={pageKind === "home"} data-solid={scrolled}>
+        <div className="t13-container t13-header-row">
+          <Link href={`${baseUrl}/`} className="t13-brand" aria-label={`${profile.business_name} home`}>
+            {logo}
+          </Link>
+
+          <nav className="t13-nav" aria-label="Main">
+            {items.map((it) => (
+              <Link
+                key={it.id}
+                href={it.href}
+                className="t13-nav-link"
+                data-active={it.active}
+                aria-current={it.active ? "page" : undefined}
+              >
+                {it.coreKey && editor?.enabled ? (
+                  <EditableText value={it.label} onCommit={(next) => saveNavLabel(it.coreKey!, next)} style={{ display: "inline" }} />
+                ) : (
+                  <RollText text={it.label} />
+                )}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="t13-header-actions">
+            <ModeToggle mode={mode} onToggle={toggleMode} className="t13-icon-btn" />
+            {shop ? (
+              <button
+                type="button"
+                className="t13-pill t13-pill-white t13-bag"
+                aria-haspopup="dialog"
+                aria-label={`Open bag${cart.ready ? `, ${cart.count} ${cart.count === 1 ? "item" : "items"}` : ""}`}
+                onClick={openCart}
+              >
+                Bag{" "}
+                <span className="t13-mono" aria-hidden="true">
+                  {cart.ready ? (cart.count > 99 ? "99+" : cart.count) : 0}
+                </span>
+              </button>
+            ) : null}
             <button
               type="button"
-              className="t13-icon-btn t13-burger"
+              className="t13-icon-btn t13-menu-btn"
               aria-label="Open menu"
               aria-haspopup="dialog"
               aria-expanded={open}
@@ -125,41 +177,6 @@ export default function T13Header({
             >
               <IconMenu />
             </button>
-            <nav className="t13-nav" aria-label="Main">
-              {items.map((it) => (
-                <Link key={it.id} href={it.href} data-active={it.active} aria-current={it.active ? "page" : undefined}>
-                  {it.coreKey ? (
-                    <EditableText value={it.label} onCommit={(next) => saveNavLabel(it.coreKey!, next)} style={{ display: "inline" }} />
-                  ) : (
-                    it.label
-                  )}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          <Link href={`${baseUrl}/`} className="t13-brand" aria-label={`${profile.business_name} home`}>
-            {logo}
-          </Link>
-
-          <div className="t13-header-end">
-            <ModeToggle mode={mode} onToggle={toggleMode} className="t13-icon-btn" />
-            {shop ? (
-              <button
-                type="button"
-                className="t13-icon-btn t13-bag-btn"
-                aria-haspopup="dialog"
-                aria-label={`Open bag${cart.ready ? `, ${cart.count} ${cart.count === 1 ? "item" : "items"}` : ""}`}
-                onClick={openCart}
-              >
-                <IconBag />
-                {cart.ready && cart.count > 0 ? (
-                  <span className="t13-bag-count" aria-hidden="true">
-                    {cart.count > 99 ? "99+" : cart.count}
-                  </span>
-                ) : null}
-              </button>
-            ) : null}
           </div>
         </div>
       </header>
