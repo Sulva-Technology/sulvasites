@@ -59,10 +59,13 @@ export default function T13Header({
   logoUrl,
   currentPage,
   currentExtraKey,
+  overHero = false,
 }: {
   logoUrl: string | null;
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
+  /** True only when the home page's first section is a hero (white nav sits on the photo). */
+  overHero?: boolean;
 }) {
   const { baseUrl, navPages, profile, mode, toggleMode, shop, cart, openCart, pageKind } = useT13();
   const editor = useInlineEditor();
@@ -127,7 +130,7 @@ export default function T13Header({
 
   return (
     <>
-      <header className="t13-header" data-over-hero={pageKind === "home"} data-solid={scrolled}>
+      <header className="t13-header" data-over-hero={pageKind === "home" && overHero} data-solid={scrolled}>
         <div className="t13-container t13-header-row">
           <Link href={`${baseUrl}/`} className="t13-brand" aria-label={`${profile.business_name} home`}>
             {logo}

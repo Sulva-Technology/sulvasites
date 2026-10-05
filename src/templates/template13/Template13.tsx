@@ -175,7 +175,7 @@ export default function Template13({
         <a className="t13-skip" href="#t13-main">
           Skip to content
         </a>
-        <T13Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
+        <T13Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} overHero={pageData?.sections?.[0]?.type === "hero"} />
         <main id="t13-main" tabIndex={-1}>
           {shop && shopView ? <ShopViews view={shopView} /> : <T13Sections pageData={pageData} />}
         </main>

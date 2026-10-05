@@ -5,8 +5,8 @@ import Link from "next/link";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildEmailLink, buildWhatsAppLink } from "@/templates/shared/links";
-import { shopHref, useT13 } from "../ctx";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { directionsHref, shopHref, useT13 } from "../ctx";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -14,6 +14,8 @@ const SOCIALS: Array<[key: string, label: string]> = [
   ["twitter", "X"],
   ["x", "X"],
   ["facebook", "Facebook"],
+  ["youtube", "YouTube"],
+  ["linkedin", "LinkedIn"],
 ];
 
 /** Dark footer: giant serif wordmark with tagline, four link columns, hairline and copyright. */
@@ -68,7 +70,9 @@ export default function T13Footer({ logoUrl }: { logoUrl: string | null }) {
         <nav aria-label="Company">
           <h3>Company</h3>
           <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
-          {navPages.map((p) => (
+          {navPages
+            .filter((p) => !(hasSizeGuidePage && p.key === "size-guide"))
+            .map((p) => (
             <Link key={p.key} href={p.key === "shop" && shop ? shopHref(baseUrl) : `${baseUrl}/p/${p.key}`}>
               {p.label}
             </Link>
@@ -80,10 +84,28 @@ export default function T13Footer({ logoUrl }: { logoUrl: string | null }) {
           <h3>Help</h3>
           {hasSizeGuidePage ? <Link href={`${baseUrl}/p/size-guide`}>Size guide</Link> : null}
           <Link href={`${baseUrl}/contact`}>{navLabels.contact || "Contact"}</Link>
+          {profile.phone ? <a href={buildTelLink(profile.phone)}>{profile.phone}</a> : null}
           {profile.whatsapp ? (
             <a href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
               WhatsApp
             </a>
+          ) : null}
+          {profile.address || editor?.enabled ? (
+            <>
+              <EditableText
+                as="p"
+                className="t13-footer-address"
+                value={profile.address || ""}
+                placeholder="Address (optional)"
+                multiline
+                onCommit={(next) => editor?.updateProfileField?.("address", next)}
+              />
+              {profile.address ? (
+                <a href={directionsHref(profile.address)} target="_blank" rel="noreferrer">
+                  Get directions
+                </a>
+              ) : null}
+            </>
           ) : null}
         </nav>
 
