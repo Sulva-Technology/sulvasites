@@ -85,3 +85,18 @@ test("extractJson strips fences and surrounding text", () => {
   assert.deepEqual(extractJson('Sure! {"a":{"b":2}} done'), { a: { b: 2 } });
   assert.throws(() => extractJson("no json here"), SyntaxError);
 });
+
+test("reads the wait from a Groq 429 body when there is no retry-after header", async () => {
+  const body = '{"error":{"message":"Rate limit reached. Please try again in 16.26s."}}';
+  const h = harness([status(429, body), ok("fine")]);
+  assert.equal(await groqChat({ user: "hi" }, h.deps), "fine");
+  assert.deepEqual(h.sleeps, [16511]);
+});
+
+test("a missing fallback model does not hide a rate limit on the primary", async () => {
+  const h = harness(
+    [status(429), status(429), status(404, '{"error":{"message":"The model `b` does not exist"}}'), status(404, "model not found")],
+    { GROQ_API_KEY: "k", GROQ_MODEL: "a", GROQ_FALLBACK_MODEL: "b" },
+  );
+  await assert.rejects(groqChat({ user: "hi" }, h.deps), (e) => e.code === "rate_limited");
+});

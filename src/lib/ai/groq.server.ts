@@ -2,7 +2,8 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-120b";
 const DEFAULT_FALLBACK_MODEL = "llama-3.3-70b-versatile";
 const ATTEMPTS_PER_MODEL = 2;
-const MAX_BACKOFF_MS = 5000;
+// Free-tier token-per-minute limits ask for waits of 10-20s; honour them.
+const MAX_BACKOFF_MS = 20000;
 
 export type GroqErrorCode = "not_configured" | "bad_key" | "rate_limited" | "upstream" | "empty";
 
@@ -95,7 +96,14 @@ async function callOnce(
       };
     }
     const retryHeader = Number(res.headers?.get?.("retry-after"));
-    const retryAfterMs = Number.isFinite(retryHeader) && retryHeader > 0 ? retryHeader * 1000 : undefined;
+    // Groq also states the wait in the body: "Please try again in 16.26s".
+    const bodyWait = Number(detail.match(/try again in ([\d.]+)s/i)?.[1]);
+    const retryAfterMs =
+      Number.isFinite(retryHeader) && retryHeader > 0
+        ? retryHeader * 1000
+        : Number.isFinite(bodyWait) && bodyWait > 0
+          ? Math.ceil(bodyWait * 1000) + 250
+          : undefined;
     if (status === 429) {
       return {
         ok: false,
@@ -140,11 +148,13 @@ export async function groqChat(opts: GroqChatOptions, deps: GroqDeps = {}): Prom
   const models = fallback && fallback !== primary ? [primary, fallback] : [primary];
 
   let lastError: GroqError | null = null;
+  let rateLimited: GroqError | null = null;
   for (const model of models) {
     for (let attempt = 0; attempt < ATTEMPTS_PER_MODEL; attempt++) {
       const result = await callOnce(fetchImpl, apiKey, model, opts);
       if (result.ok) return result.text;
       lastError = result.error;
+      if (result.error.code === "rate_limited") rateLimited = result.error;
       if (!result.retryable) throw result.error;
       if (attempt < ATTEMPTS_PER_MODEL - 1) {
         const backoff = Math.min(result.retryAfterMs ?? 500 * 2 ** attempt, MAX_BACKOFF_MS);
@@ -152,6 +162,8 @@ export async function groqChat(opts: GroqChatOptions, deps: GroqDeps = {}): Prom
       }
     }
   }
+  // A missing fallback model (404) must not hide the real problem, e.g. a rate limit on the primary.
+  if (rateLimited && lastError?.status === 404) throw rateLimited;
   throw lastError ?? new GroqError("upstream", "Groq request failed.");
 }
 

@@ -78,7 +78,9 @@ export type BuildResult = {
   notes: string[];
 };
 
-const HARD_ERRORS: GroqError["code"][] = ["not_configured", "bad_key"];
+// Errors the pipeline must surface instead of papering over with fallback copy.
+// rate_limited is retried by the caller (the browser for staged builds, patientChat for buildSite).
+const HARD_ERRORS: GroqError["code"][] = ["not_configured", "bad_key", "rate_limited"];
 
 function isHardError(e: unknown): e is GroqError {
   return e instanceof GroqError && HARD_ERRORS.includes(e.code);
@@ -292,11 +294,31 @@ export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageRe
 
 // ---------- all stages ----------
 
+function waitFromError(e: GroqError): number {
+  const secs = Number(e.detail?.match(/try again in ([\d.]+)s/i)?.[1]);
+  return Math.min(Number.isFinite(secs) && secs > 0 ? Math.ceil(secs * 1000) + 500 : 15000, 40000);
+}
+
+/** For one-shot builds: wait out token-per-minute limits instead of failing. */
+export function patientChat(chat: ChatFn, sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)), tries = 4): ChatFn {
+  return async (opts) => {
+    for (let i = 1; ; i++) {
+      try {
+        return await chat(opts);
+      } catch (e) {
+        if (!(e instanceof GroqError) || e.code !== "rate_limited" || i >= tries) throw e;
+        await sleep(waitFromError(e));
+      }
+    }
+  };
+}
+
 export async function buildSite(
   input: { messages?: unknown; state?: unknown; templateOverride?: string | null },
   deps: BuilderDeps = {},
 ): Promise<BuildResult> {
   const progress = deps.onProgress ?? (() => {});
+  deps = { ...deps, chat: patientChat(deps.chat ?? groqChat) };
   progress("plan");
   const plan = await planSite(input, deps);
   progress("profile");

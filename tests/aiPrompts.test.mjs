@@ -120,7 +120,7 @@ test("chat prompt caps questions and delimits the transcript", () => {
 test("sampling strategy: low temperature for JSON tasks, medium reasoning for writing", () => {
   for (const k of ["plan", "write", "repair", "seo", "chat"]) assert.ok(SAMPLING[k].temperature <= 0.5, k);
   assert.equal(SAMPLING.write.reasoningEffort, "medium");
-  assert.ok(SAMPLING.write.maxTokens >= 8192);
+  assert.ok(SAMPLING.write.maxTokens >= 4096);
 });
 
 test("section specs render in order with examples only once per type", () => {

@@ -52,7 +52,7 @@ export function buildChatPrompt(args: { messages: ChatMessage[]; state: Brief; q
     "EXTRACTION RULES",
     "- Copy only what the owner stated. Never guess a name, address, phone number, email or social handle. Leave unknown fields as empty strings, empty lists, or null.",
     "- whatTheyDo: one plain sentence in the owner's own terms. services: the products or services they named, short noun phrases.",
-    "- shopIntent: true only if the owner wants to sell products online or take online orders with payment; false if they clearly only want an information site or bookings; otherwise null.",
+    "- shopIntent: true ONLY if the owner explicitly says they want an online shop, online store, e-commerce, or to sell products online with a cart and payment. Delivery, pick-up, taking orders by WhatsApp or phone, or a food or services business do NOT make it true. false if they clearly only want an information or booking site; otherwise null.",
     "- tone: only if the owner described one (friendly, premium, formal...). languages: only if stated (default none).",
     "- contact fields: only values the owner literally typed.",
     "",

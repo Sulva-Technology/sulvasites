@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { GroqError } from "../src/lib/ai/groq.server.ts";
 import { runAssistantTurn, decideReady, countQuestions } from "../src/lib/ai/assistant.ts";
 import { extractContactFromText, normalizeBrief, verifyContact, emptyBrief } from "../src/lib/ai/brief.ts";
-import { MAX_REPAIR_ROUNDS, buildSite, planSite, rehydratePlan, writePage, writeProfile } from "../src/lib/ai/siteBuilder.ts";
+import { MAX_REPAIR_ROUNDS, buildSite, patientChat, planSite, rehydratePlan, writePage, writeProfile } from "../src/lib/ai/siteBuilder.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
 import { getPagePresets } from "../src/templates/pagePresets.ts";
 
@@ -276,4 +276,21 @@ test("assistant falls back to a fixed question when the model returns junk", asy
   const turn = await runAssistantTurn({ messages: [{ role: "user", content: "hi" }] }, { chat: async () => "lol no json" });
   assert.equal(turn.ready, false);
   assert.match(turn.reply, /business name/);
+});
+
+test("rate limits are surfaced by stages (so the browser can wait) and waited out by one-shot builds", async () => {
+  const limited = new GroqError("rate_limited", "slow down", 429, "Please try again in 2s.");
+  const plan = rehydratePlan({ templateKey: "t7", brief });
+  await assert.rejects(writePage(plan, "home", { chat: async () => { throw limited; } }), (e) => e.code === "rate_limited");
+
+  const waits = [];
+  let n = 0;
+  const inner = async (opts) => {
+    if (n++ < 2) throw limited;
+    return "ok";
+  };
+  const chat = patientChat(inner, async (ms) => void waits.push(ms));
+  assert.equal(await chat({ user: "x" }), "ok");
+  assert.deepEqual(waits, [2500, 2500]);
+  await assert.rejects(patientChat(async () => { throw limited; }, async () => {}, 2)({ user: "x" }), (e) => e.code === "rate_limited");
 });

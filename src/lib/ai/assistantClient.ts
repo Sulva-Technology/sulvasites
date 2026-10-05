@@ -14,18 +14,29 @@ export type ChatTurn = {
   suggestedTemplate?: { templateKey: string; reason: string };
 };
 
-async function post<T>(url: string, body: unknown): Promise<T> {
-  const session = await ensureSession();
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json", Authorization: `Bearer ${session.access_token}` },
-    body: JSON.stringify(body),
-  });
-  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!res.ok) {
+const MAX_AUTO_WAIT_SECONDS = 40;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** POST with the admin session. Retries rate-limit (429) answers after the advertised wait. */
+async function post<T>(url: string, body: unknown, onWait?: (seconds: number) => void): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const session = await ensureSession();
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+    if (res.ok) return json as T;
+    const wait = Number(res.headers.get("retry-after"));
+    if (res.status === 429 && attempt < 5 && Number.isFinite(wait) && wait > 0 && wait <= MAX_AUTO_WAIT_SECONDS) {
+      onWait?.(wait);
+      await sleep(wait * 1000 + 500);
+      continue;
+    }
     throw new Error(json && typeof json.error === "string" ? json.error : `Request failed (${res.status}).`);
   }
-  return json as T;
 }
 
 export function sendChat(messages: ChatMessage[], state: Brief | null): Promise<ChatTurn> {
@@ -48,32 +59,38 @@ export async function runStagedBuild(
   let plan = input.plan;
   let total = steps + 3;
   let step = 0;
-  const report = (stage: string, label: string) => onProgress({ stage, label, step: ++step, total });
+  let current = { stage: "start", label: "Starting…" };
+  const report = (stage: string, label: string) => {
+    current = { stage, label };
+    onProgress({ stage, label, step: ++step, total });
+  };
+  const onWait = (s: number) =>
+    onProgress({ stage: current.stage, label: `The AI is busy, retrying in ${Math.ceil(s)}s…`, step, total });
 
   if (!plan) {
     report("plan", "Choosing the best template…");
-    plan = (await post<{ plan: SitePlan }>(BUILD_URL, { stage: "plan", messages: input.messages, state: input.state, templateOverride: input.templateOverride })).plan;
+    plan = (await post<{ plan: SitePlan }>(BUILD_URL, { stage: "plan", messages: input.messages, state: input.state, templateOverride: input.templateOverride }, onWait)).plan;
   } else if (input.templateOverride && input.templateOverride !== plan.templateKey) {
     plan = { ...plan, templateKey: input.templateOverride, source: "user", reason: "Template chosen by you." };
     // page list depends on the template; the server recomputes it from the key
-    plan = (await post<{ plan: SitePlan }>(BUILD_URL, { stage: "plan", state: plan.brief, templateOverride: input.templateOverride })).plan;
+    plan = (await post<{ plan: SitePlan }>(BUILD_URL, { stage: "plan", state: plan.brief, templateOverride: input.templateOverride }, onWait)).plan;
   }
   total = steps + 1 + plan.pages.length + 1;
 
   report("profile", "Writing your business profile…");
-  const { profile } = await post<{ profile: SiteProfile }>(BUILD_URL, { stage: "profile", plan });
+  const { profile } = await post<{ profile: SiteProfile }>(BUILD_URL, { stage: "profile", plan }, onWait);
 
   const results: PageResult[] = [];
   const avoid: string[] = [];
   for (const p of plan.pages) {
     report(`page:${p.key}`, `Writing ${p.label.toLowerCase()}…`);
-    const { result } = await post<{ result: PageResult }>(BUILD_URL, { stage: "page", plan, key: p.key, avoid });
+    const { result } = await post<{ result: PageResult }>(BUILD_URL, { stage: "page", plan, key: p.key, avoid }, onWait);
     results.push(result);
     const hero = result.data.sections.find((s) => s.type === "hero");
     if (hero && hero.type === "hero" && p.kind === "core") avoid.push(hero.headline);
   }
 
   report("finish", "Adding photos and polishing…");
-  const built = await post<BuildResult>(BUILD_URL, { stage: "finish", plan, profile, results });
+  const built = await post<BuildResult>(BUILD_URL, { stage: "finish", plan, profile, results }, onWait);
   return { plan, result: built };
 }

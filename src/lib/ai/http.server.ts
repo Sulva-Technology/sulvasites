@@ -12,9 +12,11 @@ const STATUS: Record<GroqError["code"], number> = {
 
 export function aiErrorResponse(err: unknown) {
   if (err instanceof GroqError) {
+    const wait = Number(err.detail?.match(/try again in ([\d.]+)s/i)?.[1]);
+    const retryAfter = err.code === "rate_limited" ? String(Math.ceil(Number.isFinite(wait) && wait > 0 ? wait : 15)) : null;
     return NextResponse.json(
       { error: err.message, ...(err.detail ? { detail: err.detail } : {}) },
-      { status: STATUS[err.code] },
+      { status: STATUS[err.code], ...(retryAfter ? { headers: { "Retry-After": retryAfter } } : {}) },
     );
   }
   return NextResponse.json(

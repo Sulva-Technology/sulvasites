@@ -32,7 +32,7 @@ export default function SiteAssistant() {
   const [chips, setChips] = useState<string[]>(STARTERS);
   const [thinking, setThinking] = useState(false);
   const [progress, setProgress] = useState<BuildProgress | null>(null);
-  const [doneStages, setDoneStages] = useState<string[]>([]);
+  const [doneStages, setDoneStages] = useState<Array<{ stage: string; label: string }>>([]);
   const [plan, setPlan] = useState<SitePlan | null>(null);
   const [result, setResult] = useState<BuildResult | null>(null);
   const [templateKey, setTemplateKey] = useState("");
@@ -93,7 +93,7 @@ export default function SiteAssistant() {
         },
         (p) => {
           setProgress(p);
-          setDoneStages((d) => [...d, p.label]);
+          setDoneStages((d) => (d.some((x) => x.stage === p.stage) ? d : [...d, { stage: p.stage, label: p.label }]));
         },
       );
       setPlan(out.plan);
@@ -171,9 +171,11 @@ export default function SiteAssistant() {
               <div className="h-full bg-black transition-all" style={{ width: `${Math.round(((progress?.step ?? 0) / (progress?.total || 1)) * 100)}%` }} />
             </div>
             <ul className="mt-2 space-y-0.5 text-xs text-gray-600">
-              {doneStages.slice(0, -1).map((l, i) => (
-                <li key={i}>Done: {l.replace(/…$/, "")}</li>
-              ))}
+              {doneStages
+                .filter((x) => x.stage !== progress?.stage)
+                .map((x) => (
+                  <li key={x.stage}>Done: {x.label.replace(/…$/, "")}</li>
+                ))}
             </ul>
           </div>
         ) : null}
