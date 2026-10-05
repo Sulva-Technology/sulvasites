@@ -37,7 +37,7 @@ function Timeline({ order }: { order: OrderStatus }) {
           </li>
         ))}
       </ol>
-      {!known ? <p className="t13-mono t13-tl-note">Status: {order.status}</p> : null}
+      {!known && order.status !== "pending" ? <p className="t13-mono t13-tl-note">Status: {order.status}</p> : null}
     </div>
   );
 }
