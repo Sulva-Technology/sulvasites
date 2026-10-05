@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { Section } from "@/lib/pageSchema";
 import { extractJson, groqChat } from "@/lib/ai/groq.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
+import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
   MAX_CONTEXT_CHARS,
   MAX_OPTION_CHARS,
@@ -56,9 +57,7 @@ export async function POST(req: Request) {
       system,
       user,
       json: true,
-      temperature: action === "translate" ? 0.2 : 0.6,
-      maxTokens: 8192,
-      reasoningEffort: "low",
+      ...(action === "translate" ? SAMPLING.translate : SAMPLING.rewrite),
     });
 
     let parsed: unknown;

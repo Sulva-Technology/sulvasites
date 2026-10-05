@@ -1,4 +1,5 @@
 import type { Section } from "../pageSchema.ts";
+import { buildSystemPrompt, delimitUserData, detectLocale } from "./prompts/rules.ts";
 
 export const REWRITE_ACTIONS = ["rewrite", "shorten", "expand", "tone", "translate"] as const;
 export type RewriteAction = (typeof REWRITE_ACTIONS)[number];
@@ -20,10 +21,13 @@ const LOCKED_KEYS = new Set([
 ]);
 
 const ACTION_TEXT: Record<RewriteAction, string> = {
-  rewrite: "Rewrite all text so it is clearer, more professional and more engaging. Keep the same meaning and facts.",
-  shorten: "Shorten all text. Keep the key message, cut filler. Aim for roughly half the length.",
-  expand: "Expand all text with more helpful detail and benefits, roughly 1.5x to 2x the length. Do not invent specific facts, prices, names or numbers.",
-  tone: "Rewrite all text in the requested tone. Keep the same meaning and facts.",
+  rewrite:
+    "Rewrite all text so it is clearer, more concrete and more engaging. Lead with the benefit, use specific verbs, cut filler and cliches (no 'welcome to', 'world-class', 'passionate about'). Keep the same meaning and facts.",
+  shorten:
+    "Shorten all text. Keep the key message and every fact, cut filler and repeated ideas. Aim for roughly half the length; headlines stay under 60 characters.",
+  expand:
+    "Expand all text with more helpful detail and customer benefits, roughly 1.5x to 2x the length, in short sentences. Do not invent specific facts, prices, names or numbers.",
+  tone: "Rewrite all text in the requested tone, changing word choice and rhythm (not the facts). Keep the same meaning and facts.",
   translate: "Translate all text into the requested language. Keep names, brands and proper nouns as they are.",
 };
 
@@ -38,23 +42,27 @@ export function buildRewritePrompt(args: {
   context?: string;
 }): { system: string; user: string } {
   const { section, action, option, context } = args;
-  const system = [
-    "You edit website copy for a small business website builder.",
-    "You receive one page section as JSON and must return the SAME JSON structure with edited text.",
-    "Rules:",
-    "- Output valid JSON only, no markdown, no commentary.",
-    "- Keep every key, the same number of items, and the same order.",
-    "- Never change the values of: type, url, photoUrl, linkedinUrl, linkHref, ctaHref, mapLink, showForm.",
-    "- Fields containing HTML (e.g. richtext body) must stay valid HTML using the same kinds of tags.",
-    "- Do not add facts that are not in the input or context. No lorem ipsum.",
-  ].join("\n");
+  const system = buildSystemPrompt({
+    task: "Edit the text of one page section of a small business website. You receive the section as JSON and return the SAME JSON structure with edited text.",
+    locale: action === "translate" ? undefined : detectLocale(context),
+    preserveLinks: true,
+    outputNote: "Return the section object itself, not wrapped in another object.",
+    extraRules: [
+      "Keep every key, the same number of items, and the same order.",
+      `Never change the values of: ${[...LOCKED_KEYS].join(", ")}.`,
+      "Fields containing HTML (richtext body) stay valid HTML and use only p, ul, li, strong, em, h3.",
+      "Do not add facts, numbers, names, prices or claims that are not in the input or the page context.",
+      "Keep each field inside its character budget (headline 60, hero subtext 160, item titles 40, item descriptions 140 to 180, FAQ answers 300) unless the task is to expand, and then stay within 1.5x of the budget.",
+      "When translating, keep proper nouns and brand names, keep the same tone and the same short sentences, and use natural everyday wording in the target language rather than word-for-word output.",
+    ],
+  });
 
   const lines = [`Task: ${ACTION_TEXT[action]}`];
   if (option && (action === "tone" || action === "translate")) {
     lines.push(action === "tone" ? `Tone: ${option}` : `Language: ${option}`);
   }
-  if (context) lines.push(`Page context: ${context}`);
-  lines.push("", "Section JSON:", JSON.stringify(section));
+  if (context) lines.push("Page context:", delimitUserData("page context", context, 1500));
+  lines.push("", "Section JSON (edit the text values only):", delimitUserData("section", JSON.stringify(section), 20000));
   return { system, user: lines.join("\n") };
 }
 

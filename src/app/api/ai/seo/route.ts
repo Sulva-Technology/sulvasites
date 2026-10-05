@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { extractJson, groqChat } from "@/lib/ai/groq.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
+import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
   MAX_PAGE_CHARS,
   MAX_SEO_PAGES,
@@ -75,9 +76,7 @@ export async function POST(req: Request) {
       system,
       user,
       json: true,
-      temperature: 0.4,
-      maxTokens: 8192,
-      reasoningEffort: "low",
+      ...SAMPLING.seo,
     });
 
     let parsed: unknown;

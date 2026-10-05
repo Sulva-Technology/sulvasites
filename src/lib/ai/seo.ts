@@ -1,4 +1,5 @@
 import type { PageData } from "../pageSchema.ts";
+import { buildSystemPrompt, delimitUserData, detectLocale } from "./prompts/rules.ts";
 
 export const TITLE_MAX = 65;
 export const DESCRIPTION_MAX = 160;
@@ -58,17 +59,19 @@ export function summarizePage(data: PageData): string {
 }
 
 export function buildSeoPrompt(pages: SeoPageInput[], profile?: SeoProfile): { system: string; user: string } {
-  const system = [
-    "You are an SEO copywriter for small business websites.",
-    "Output valid JSON only, no markdown, no commentary.",
-    "Rules:",
-    `- Title: ${TITLE_MAX - 10}-${TITLE_MAX} characters, includes the business name and the main service or topic, unique per page.`,
-    `- Meta description: ${DESCRIPTION_MAX - 20}-${DESCRIPTION_MAX} characters, natural sentence, benefit-led, ends with a soft call to action. No quotes, no emoji.`,
-    `- Alt text: up to ${ALT_MAX} characters, describes what the image shows in the context of the business and gallery. Do not start with "image of". Do not invent names, prices or claims. If unsure what is pictured, describe the setting generally.`,
-    "- Use only facts present in the business details and page copy.",
-    'Shape: { "pages": { "<key>": { "title": string, "description": string, "alts": [ { "section": number, "image": number, "alt": string } ] } } }',
-    "Return an entry for every page key given. Use an empty alts array when a page has no gallery images.",
-  ].join("\n");
+  const system = buildSystemPrompt({
+    task: "Write SEO titles, meta descriptions and image alt text for pages of a small business website.",
+    locale: detectLocale(profile?.business_name, profile?.description, ...pages.map((p) => summarizePage(p.data))),
+    preserveLinks: true,
+    extraRules: [
+      `Title: ${TITLE_MAX - 10}-${TITLE_MAX} characters, includes the business name and the main service or topic, unique per page. Put the service first and the business name last ("Wedding cakes in Lagos | Kings Bakery"). No keyword stuffing, no "Home |" prefix.`,
+      `Meta description: ${DESCRIPTION_MAX - 20}-${DESCRIPTION_MAX} characters, natural sentence, benefit-led, names the location only if the page copy does, ends with a soft call to action starting with a verb. No quotes, no emoji, no exclamation marks.`,
+      `Alt text: up to ${ALT_MAX} characters (about 6 to 14 words), describes what the image shows in the context of the business and gallery. Do not start with "image of" or "photo of". Do not invent names, prices or claims. If unsure what is pictured, describe the setting generally.`,
+      "Use only facts present in the business details and page copy. Titles and descriptions must differ between pages.",
+      'Shape: { "pages": { "<key>": { "title": string, "description": string, "alts": [ { "section": number, "image": number, "alt": string } ] } } }',
+      "Return an entry for every page key given. Use an empty alts array when a page has no gallery images.",
+    ],
+  });
 
   const lines: string[] = [];
   if (profile) {
@@ -82,7 +85,7 @@ export function buildSeoPrompt(pages: SeoPageInput[], profile?: SeoProfile): { s
   for (const p of pages) {
     lines.push(`=== Page "${p.key}" ===`, summarizePage(p.data), "");
   }
-  return { system, user: lines.join("\n").trim() };
+  return { system, user: delimitUserData("business and pages", lines.join("\n").trim(), 14000) };
 }
 
 function clean(s: unknown) {
