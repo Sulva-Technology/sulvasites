@@ -104,8 +104,9 @@ export async function planSite(
   }
   if (!brief.businessName) brief.businessName = "My Business";
 
+  // Even with an override the model is asked once, because it also picks the photo category.
   let raw: unknown = null;
-  if (!isTemplateKey(input.templateOverride)) {
+  {
     try {
       const { system, user } = buildPlanPrompt(brief);
       raw = extractJson(await chat({ system, user, json: true, ...SAMPLING.plan }));

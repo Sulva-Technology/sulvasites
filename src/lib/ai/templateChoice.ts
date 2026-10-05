@@ -98,16 +98,17 @@ function clip(s: unknown, max: number): string {
  */
 export function resolveTemplateChoice(raw: unknown, brief: Brief, override?: string | null): TemplateChoice {
   const fallback = chooseTemplateFallback(brief);
+  const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   if (isTemplateKey(override)) {
+    const pc = normalizeCategory(r.photoCategory);
     return {
       templateKey: override,
       reason: "Template chosen by you.",
       alternatives: [],
-      photoCategory: getIndustry(override).photoCategory,
+      photoCategory: r.photoCategory !== undefined && pc !== "general" ? pc : getIndustry(override).photoCategory,
       source: "user",
     };
   }
-  const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const scores = scoreTemplates(brief);
   const modelKey = r.templateKey;
   const valid =

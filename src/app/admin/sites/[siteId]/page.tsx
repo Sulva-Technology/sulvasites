@@ -267,6 +267,12 @@ export default function SiteOverviewPage({
             >
               Inbox
             </Link>
+            <Link
+              href={`/admin/sites/${siteId}/business`}
+              className="rounded bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+            >
+              Business data
+            </Link>
             <ShopAdminLink siteId={siteId} templateKey={site.template_key} />
             <Link
               href="/admin/sites"
@@ -374,7 +380,7 @@ export default function SiteOverviewPage({
       <ProfileEditor siteId={siteId} mode="admin" basePath={`/admin/sites/${siteId}`} />
 
       {/* B2) AI content generator (optional) */}
-      <AiSiteContentGenerator siteId={siteId} />
+      <AiSiteContentGenerator siteId={siteId} templateKey={site.template_key} />
 
       <AiSeoAllPages siteId={siteId} />
 

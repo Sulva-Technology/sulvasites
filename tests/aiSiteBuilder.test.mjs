@@ -62,11 +62,13 @@ test("plan stage: model choice is validated; invalid model output uses the keywo
   assert.equal(wrong.source, "fallback");
 });
 
-test("plan stage honours an override without calling the model", async () => {
+test("plan stage honours an override but still takes the photo category from the model", async () => {
   const s = stub();
   const plan = await planSite({ state: brief, templateOverride: "t3" }, { chat: s.chat });
   assert.equal(plan.templateKey, "t3");
-  assert.equal(s.calls.length, 0);
+  assert.equal(plan.source, "user");
+  assert.equal(plan.photoCategory, "food");
+  assert.equal(s.calls.length, 1);
 });
 
 test("plan stage rethrows configuration errors", async () => {

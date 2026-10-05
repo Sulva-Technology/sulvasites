@@ -3,44 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { ensureSession, supabaseBrowser } from "@/lib/supabase/browser";
+import { runStagedBuild, type BuildProgress, type BuildResult } from "@/lib/ai/assistantClient";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
-import { validatePageData, type PageData } from "@/lib/pageSchema";
+import { validatePageData } from "@/lib/pageSchema";
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return !!v && typeof v === "object" && !Array.isArray(v);
-}
-
-type Generated = {
-  profile: {
-    business_name?: string;
-    tagline?: string | null;
-    description?: string | null;
-    address?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    whatsapp?: string | null;
-    socials?: {
-      instagram?: string | null;
-      facebook?: string | null;
-      twitter?: string | null;
-      tiktok?: string | null;
-    } | null;
-  } | null;
-  pages: {
-    home: PageData;
-    about: PageData;
-    contact: PageData;
-  };
-};
-
-export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
+export default function AiSiteContentGenerator({ siteId, templateKey }: { siteId: string; templateKey?: string }) {
   const [brief, setBrief] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [generated, setGenerated] = useState<Generated | null>(null);
+  const [progress, setProgress] = useState<BuildProgress | null>(null);
+  const [generated, setGenerated] = useState<BuildResult | null>(null);
 
   const canGenerate = useMemo(() => brief.trim().length > 30, [brief]);
 
@@ -55,44 +30,22 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
 
     setIsGenerating(true);
     try {
-      const endpoint = "/api/ai/generate-site-groq";
-
-      const session = await ensureSession();
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ brief }),
-      });
-      const json = (await res.json()) as unknown;
-      if (!res.ok) {
-        const msg =
-          isRecord(json) && typeof json.error === "string"
-            ? json.error
-            : "AI generation failed.";
-        throw new Error(msg);
+      // The site already has a template, so it is kept; the pipeline writes copy that fits it.
+      const { result } = await runStagedBuild(
+        { messages: [{ role: "user", content: brief.trim().slice(0, 8000) }], templateOverride: templateKey },
+        setProgress,
+      );
+      for (const key of ["home", "about", "contact"] as const) {
+        const ok = validatePageData(result.pages[key]);
+        if (!ok.ok) throw new Error(ok.error || `Invalid ${key} page output.`);
       }
-
-      if (!isRecord(json) || !isRecord(json.pages)) {
-        throw new Error("Invalid AI response.");
-      }
-
-      const pages = json.pages as Record<string, unknown>;
-      const homeOk = validatePageData(pages.home);
-      const aboutOk = validatePageData(pages.about);
-      const contactOk = validatePageData(pages.contact);
-      if (!homeOk.ok) throw new Error(homeOk.error || "Invalid home page output.");
-      if (!aboutOk.ok) throw new Error(aboutOk.error || "Invalid about page output.");
-      if (!contactOk.ok) throw new Error(contactOk.error || "Invalid contact page output.");
-
-      setGenerated(json as unknown as Generated);
+      setGenerated(result);
       setSuccess("Generated. Review and click Apply to save drafts.");
     } catch (e) {
       setError(formatSupabaseError(e));
     } finally {
       setIsGenerating(false);
+      setProgress(null);
     }
   }
 
@@ -104,30 +57,17 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
     try {
       const supabase = supabaseBrowser();
 
-      if (generated.profile) {
-        const p = generated.profile;
-        const payload = {
-          business_name: (p.business_name ?? "").trim() || null,
-          tagline: (p.tagline ?? null) ? String(p.tagline).trim() || null : null,
-          description: (p.description ?? null) ? String(p.description).trim() || null : null,
-          address: (p.address ?? null) ? String(p.address).trim() || null : null,
-          phone: (p.phone ?? null) ? String(p.phone).trim() || null : null,
-          email: (p.email ?? null) ? String(p.email).trim() || null : null,
-          whatsapp: (p.whatsapp ?? null) ? String(p.whatsapp).trim() || null : null,
-          socials: {
-            instagram: p.socials?.instagram ?? null,
-            facebook: p.socials?.facebook ?? null,
-            twitter: p.socials?.twitter ?? null,
-            tiktok: p.socials?.tiktok ?? null,
-          },
-        };
-
-        const { error: profileErr } = await supabase
-          .from("business_profiles")
-          .update(payload)
-          .eq("site_id", siteId);
-        if (profileErr) throw profileErr;
+      // Only overwrite fields the generation produced, so existing contact details are never wiped.
+      const p = generated.profile;
+      const payload: Record<string, unknown> = { business_name: p.business_name };
+      for (const k of ["tagline", "description", "address", "phone", "email", "whatsapp"] as const) {
+        if (p[k]) payload[k] = p[k];
       }
+      const socials = Object.fromEntries(Object.entries(p.socials).filter(([, v]) => !!v));
+      if (Object.keys(socials).length) payload.socials = { instagram: null, facebook: null, twitter: null, tiktok: null, ...socials };
+
+      const { error: profileErr } = await supabase.from("business_profiles").update(payload).eq("site_id", siteId);
+      if (profileErr) throw profileErr;
 
       const updates: Array<Promise<void>> = [];
       for (const key of ["home", "about", "contact"] as const) {
@@ -198,10 +138,12 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
             {isApplying ? "Applying…" : "Apply to drafts"}
           </button>
 
-          {generated ? (
-            <span className="text-xs text-gray-600">
-              Generated pages: Home/About/Contact.
+          {isGenerating && progress ? (
+            <span role="status" className="text-xs text-gray-600">
+              {progress.label} ({Math.min(progress.step, progress.total)}/{progress.total})
             </span>
+          ) : generated ? (
+            <span className="text-xs text-gray-600">Generated pages: Home/About/Contact.</span>
           ) : null}
         </div>
 
@@ -215,6 +157,13 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
             {success}
           </div>
         ) : null}
+        {generated && generated.notes.length ? (
+          <ul className="list-disc space-y-1 pl-5 text-xs text-gray-600">
+            {generated.notes.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        ) : null}
 
         {generated ? (
           <details className="rounded border border-gray-200 bg-gray-50 px-4 py-3">
@@ -222,7 +171,7 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
               Show generated JSON (preview)
             </summary>
             <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-gray-800">
-              {JSON.stringify(generated, null, 2)}
+              {JSON.stringify({ profile: generated.profile, pages: generated.pages, photoCategory: generated.photoCategory }, null, 2)}
             </pre>
           </details>
         ) : null}
@@ -230,4 +179,3 @@ export default function AiSiteContentGenerator({ siteId }: { siteId: string }) {
     </section>
   );
 }
-

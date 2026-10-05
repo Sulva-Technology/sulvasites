@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import SiteAssistant from "@/components/admin/SiteAssistant";
 import { createPresetPages } from "@/lib/extraPages";
 import { TEMPLATE_META, templateLabel } from "@/templates/meta";
 import { slugify } from "@/lib/slugify";
@@ -11,7 +12,7 @@ import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser"
 
 const templateOptions = TEMPLATE_META.map((t) => t.key);
 
-export default function NewSitePage() {
+function ManualSetup() {
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState("");
@@ -75,14 +76,7 @@ export default function NewSitePage() {
   }
 
   return (
-    <div className="max-w-xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Create site</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Create a new SME site. Pages + profile will be auto-created by the DB.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       <form onSubmit={onSubmit} className="space-y-4 rounded-lg bg-white p-6 ring-1 ring-gray-200">
         <label className="block">
           <span className="text-sm font-medium text-gray-800">Business name</span>
@@ -157,3 +151,44 @@ export default function NewSitePage() {
   );
 }
 
+export default function NewSitePage() {
+  const [mode, setMode] = useState<"assistant" | "manual">("assistant");
+  const tab = (id: "assistant" | "manual", label: string) => (
+    <button
+      type="button"
+      role="tab"
+      id={`tab-${id}`}
+      aria-selected={mode === id}
+      aria-controls={`panel-${id}`}
+      onClick={() => setMode(id)}
+      className={
+        "rounded px-3 py-1.5 text-sm font-medium " +
+        (mode === id ? "bg-black text-white" : "bg-white text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50")
+      }
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">Create site</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          {mode === "assistant"
+            ? "Describe the business and the assistant picks a template, writes the pages and adds photos."
+            : "Create a new SME site. Pages + profile will be auto-created by the DB."}
+        </p>
+      </div>
+
+      <div role="tablist" aria-label="Setup mode" className="flex gap-2">
+        {tab("assistant", "Assistant")}
+        {tab("manual", "Manual setup")}
+      </div>
+
+      <div role="tabpanel" id={`panel-${mode}`} aria-labelledby={`tab-${mode}`}>
+        {mode === "assistant" ? <SiteAssistant /> : <div className="max-w-xl"><ManualSetup /></div>}
+      </div>
+    </div>
+  );
+}
