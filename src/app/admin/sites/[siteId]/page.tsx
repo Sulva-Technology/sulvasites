@@ -362,7 +362,7 @@ export default function SiteOverviewPage({
     <div className="space-y-6">
       {publishCard}
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         {/* C) Pages quick links */}
         <Card>
           <CardHeader

@@ -77,12 +77,12 @@ export function AppShell({
   return (
     <ShellHeroContext.Provider value={setPageHero}>
       <div className="koi-app min-h-screen">
-        <header className="relative flex min-h-[340px] flex-col justify-end sm:min-h-[420px]">
+        <header className="relative flex min-h-[300px] flex-col justify-end sm:min-h-[420px]">
           <WaterBackdrop koi />
           <GlassNav brand={<Brand label={brand} href={brandHref} />} links={links} right={right} />
-          <div className="relative mx-auto w-full max-w-6xl px-4 pb-32 pt-28 sm:px-6">{shown}</div>
+          <div className="relative mx-auto w-full max-w-6xl px-4 pb-24 pt-24 sm:px-6 sm:pb-32 sm:pt-28">{shown}</div>
         </header>
-        <main className="relative mx-auto -mt-24 max-w-6xl px-4 pb-16 sm:px-6">{children}</main>
+        <main className="relative mx-auto -mt-12 max-w-6xl px-4 pb-16 sm:-mt-24 sm:px-6">{children}</main>
       </div>
     </ShellHeroContext.Provider>
   );

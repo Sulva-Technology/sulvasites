@@ -77,7 +77,7 @@ export default function ExtraPagesSection({
   }
 
   return (
-    <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+    <section className="rounded-3xl bg-white p-4 sm:p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
       <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Extra pages</h2>
       <p className="mt-1 text-sm text-koi-ink/60">
         Create additional pages for this specific site (not template-wide). URLs will be:
@@ -133,10 +133,10 @@ export default function ExtraPagesSection({
         <table className="w-full table-auto">
           <thead className="bg-koi-paper text-left text-xs font-semibold text-koi-ink/75">
             <tr>
-              <th className="px-4 py-3">Key</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Updated</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-3 py-3 sm:px-4">Key</th>
+              <th className="px-3 py-3 sm:px-4">Status</th>
+              <th className="hidden px-3 py-3 sm:px-4 sm:table-cell">Updated</th>
+              <th className="px-3 py-3 sm:px-4"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-koi-ink/5 text-sm">
@@ -149,12 +149,12 @@ export default function ExtraPagesSection({
             ) : (
               extraPages.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-3 font-mono">{p.key}</td>
-                  <td className="px-4 py-3">{p.status}</td>
-                  <td className="px-4 py-3 text-koi-ink/75">
+                  <td className="break-all px-3 py-3 font-mono sm:px-4">{p.key}</td>
+                  <td className="px-3 py-3 sm:px-4">{p.status}</td>
+                  <td className="hidden px-3 py-3 sm:px-4 text-koi-ink/75 sm:table-cell">
                     {new Date(p.updated_at).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-3 sm:px-4 text-right">
                     <Link
                       href={`${editBasePath ?? `/admin/sites/${siteId}/extra-pages`}/${p.key}`}
                       className="text-sm font-medium text-black underline underline-offset-2"

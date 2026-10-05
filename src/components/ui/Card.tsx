@@ -14,7 +14,7 @@ export function Card({
   as?: "section" | "div";
 }) {
   const Tag = as;
-  const pad = /(^|\s)p-\S+/.test(className) ? "" : "p-6";
+  const pad = /(^|\s)p-\S+/.test(className) ? "" : "p-4 sm:p-6";
   return <Tag className={`${cardClass} ${pad} ${className}`}>{children}</Tag>;
 }
 

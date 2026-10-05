@@ -68,7 +68,7 @@ function Content() {
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{err}</div>
       ) : null}
 
-      <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <section className="rounded-3xl bg-white p-4 sm:p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
         <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Pages</h2>
         <p className="mt-1 text-sm text-koi-ink/60">Edit and publish the text and images on your site.</p>
         <ul className="mt-4 divide-y divide-koi-ink/5 rounded-lg ring-1 ring-koi-ink/10">
@@ -87,7 +87,7 @@ function Content() {
         </ul>
       </section>
 
-      <section className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+      <section className="rounded-3xl bg-white p-4 sm:p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
         <h2 className="text-lg font-semibold tracking-tight text-koi-ink">Business profile</h2>
         <p className="mt-1 text-sm text-koi-ink/60">Name, contact details, socials and logo.</p>
         <Link

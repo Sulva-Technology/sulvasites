@@ -492,6 +492,7 @@
 
 .t1-hero-copy {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 28px;
   justify-items: start;
   max-width: min(720px, 56%);

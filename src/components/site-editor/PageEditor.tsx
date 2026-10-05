@@ -388,18 +388,18 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
   return (
     <SiteImageProvider siteId={siteId}>
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-koi-ink">
             Edit page: <span className="font-mono">{pageKey}</span>
           </h1>
           <div className="mt-2 text-sm text-koi-ink/75">
-            <div>
+            <div className="hidden sm:block">
               <span className="font-medium">Site:</span>{" "}
-              <span className="font-mono">{siteId}</span>
+              <span className="break-all font-mono">{siteId}</span>
             </div>
             {pageRow && headerMeta ? (
-              <div className="mt-1 space-y-0.5">
+              <div className="space-y-0.5 sm:mt-1">
                 <div>
                   <span className="font-medium">Status:</span> {pageRow.status}
                 </div>
@@ -418,7 +418,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
           <Link
             href={basePath}
             className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
@@ -477,7 +477,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
 
       {/* Content */}
       {pageDraft ? (
-        <div className="rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
+        <div className="rounded-3xl bg-white p-4 sm:p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5">
           {tab === "form" ? (
             <div className="space-y-6">
               {/* SEO */}
@@ -559,7 +559,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
                     {pageDraft.sections.map((section, idx) => (
                       <div
                         key={`${section.type}-${idx}`}
-                        className="rounded border border-koi-ink/10 bg-koi-paper p-4"
+                        className="rounded-2xl border border-koi-ink/10 bg-koi-paper p-3 sm:p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="text-sm font-semibold text-koi-ink">
@@ -685,9 +685,9 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
         </div>
       ) : null}
 
-      {/* Save */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
+      {/* Save (sticky on phones so Save/Publish stay reachable while scrolling a long page) */}
+      <div className="sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-koi-ink/10 bg-koi-paper/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="space-y-2 empty:hidden">
           {saveError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {saveError}
@@ -710,7 +710,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 *:flex-1 *:whitespace-nowrap *:px-3 sm:flex-wrap sm:*:flex-none sm:*:px-4">
           {pageRow?.status === "published" ? (
             <button
               type="button"
@@ -718,7 +718,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
               disabled={isSaving}
               className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
             >
-              {isSaving ? "Working…" : "Unpublish Page"}
+              {isSaving ? "Working…" : <>Unpublish<span className="hidden sm:inline"> Page</span></>}
             </button>
           ) : null}
 
@@ -728,7 +728,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
             disabled={isSaving || !!rawError || !pageDraft}
             className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
-            {isSaving ? "Saving…" : "Save Draft"}
+            {isSaving ? "Saving…" : <>Save<span className="hidden sm:inline"> Draft</span></>}
           </button>
 
           <button
@@ -737,7 +737,7 @@ export default function PageEditor({ siteId, pageKey: key = "", mode, basePath }
             disabled={isSaving || !!rawError || !pageDraft}
             className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange disabled:opacity-60"
           >
-            {isSaving ? "Publishing…" : "Publish Page"}
+            {isSaving ? "Publishing…" : <>Publish<span className="hidden sm:inline"> Page</span></>}
           </button>
         </div>
       </div>

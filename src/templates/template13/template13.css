@@ -359,7 +359,7 @@ button:hover > .t13-roll .t13-roll-row > span { transform: translateY(-100%); }
 
 /* ---------- Heroes ---------- */
 
-.t13-hero-home { position: relative; min-height: max(560px, 100svh); display: grid; align-items: end; color: #fff; isolation: isolate; background: var(--t13-night); }
+.t13-hero-home { position: relative; min-height: max(560px, 100svh); display: grid; grid-template-columns: minmax(0, 1fr); align-items: end; color: #fff; isolation: isolate; background: var(--t13-night); }
 .t13-hero-media { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
 .t13-hero-media img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.78) contrast(1.06) brightness(.82); transform: scale(1.06);
   animation: t13-drift 24s var(--t13-ease) infinite alternate; }
@@ -383,7 +383,7 @@ button:hover > .t13-roll .t13-roll-row > span { transform: translateY(-100%); }
 @keyframes t13-beam { from { opacity: .25; translate: -2% 0; } to { opacity: .6; translate: 2% 0; } }
 @keyframes t13-drift { to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); } }
 
-.t13-hero-copy { padding-bottom: clamp(56px, 11vh, 120px); padding-top: 140px; text-align: center; display: grid; justify-items: center; }
+.t13-hero-copy { padding-bottom: clamp(56px, 11vh, 120px); padding-top: 140px; text-align: center; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; }
 .t13-hero-kicker { color: rgb(255 255 255 / .62); margin: 0 0 18px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
 .t13-hero-title { font: 400 clamp(40px, 5.2vw, 76px)/1.02 var(--t13-serif); letter-spacing: -0.02em; margin: 0; max-width: 18ch; text-wrap: balance;
   text-shadow: 0 2px 30px rgb(0 10 30 / .35); }
@@ -795,7 +795,7 @@ button:hover > .t13-roll .t13-roll-row > span { transform: translateY(-100%); }
 .t13-win-ask:hover { background: #f3f4f6; }
 @media (max-width: 900px) {
   .t13-studio { padding-block: 64px; }
-  .t13-win { grid-template-columns: 1fr; }
+  .t13-win { grid-template-columns: minmax(0, 1fr); }
   .t13-win-side { border-inline-end: 0; border-bottom: 1px solid rgb(0 0 0 / .06); padding: 12px; }
   .t13-win-h { display: none; }
   .t13-win-side ul { display: flex; gap: 6px; overflow-x: auto; }

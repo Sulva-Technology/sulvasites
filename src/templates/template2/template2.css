@@ -623,6 +623,7 @@
 
 .t2-letters {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   text-align: center;
   gap: 24px;
@@ -635,7 +636,7 @@
 
 .t2-letters-lines {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   width: 100%;
   max-width: 920px;
   margin: 24px 0 0;

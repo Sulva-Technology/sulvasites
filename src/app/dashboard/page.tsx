@@ -52,7 +52,7 @@ export default function DashboardHomePage() {
           <li key={m.siteId}>
             <Link
               href={`/dashboard/${m.siteId}`}
-              className="block rounded-3xl bg-white p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5 transition hover:ring-koi-sea/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
+              className="block rounded-3xl bg-white p-4 sm:p-6 shadow-[0_1px_0_rgba(10,15,31,.04),0_12px_40px_-20px_rgba(10,63,196,.25)] ring-1 ring-koi-ink/5 transition hover:ring-koi-sea/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
             >
               <div className="text-base font-semibold tracking-tight text-koi-ink">{m.businessName}</div>
               <div className="mt-1 text-xs text-koi-ink/55">

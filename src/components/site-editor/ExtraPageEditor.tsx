@@ -231,7 +231,7 @@ export default function ExtraPageEditor({ siteId, pageKey: key = "", mode, baseP
             Status: <span className="font-medium text-koi-ink">{pageRow.status}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href={basePath}
             className="rounded-full bg-white px-4 py-2 text-sm font-medium text-koi-ink ring-1 ring-koi-ink/10 hover:bg-koi-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
