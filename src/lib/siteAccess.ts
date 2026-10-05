@@ -12,11 +12,21 @@ export function postLoginRoute(i: { isAdmin: boolean; mustChangePassword: boolea
 }
 
 /** Tabs for a role. `shop` adds the Shop tab (templates with a shop); staff get it too, limited to orders. */
-export function tabsForRole(role: SiteRole | "admin", opts: { shop?: boolean } = {}): DashboardTab[] {
-  const tabs: DashboardTab[] =
+export function tabsForRole(
+  role: SiteRole | "admin",
+  opts: { shop?: boolean; business?: boolean } = {},
+): DashboardTab[] {
+  let tabs: DashboardTab[] =
     role === "staff" ? ["overview", "inbox", "business"] : ["overview", "content", "inbox", "business", "team"];
+  // Templates without business managers (shop templates) have nothing to show under Business.
+  if (opts.business === false) tabs = tabs.filter((t) => t !== "business");
   if (opts.shop) tabs.splice(role === "staff" ? 1 : 2, 0, "shop");
   return tabs;
+}
+
+/** Business data managers (menu, timetable...): owners, staff and Sulvatech admins may read and write. */
+export function canManageBusinessData(role: SiteRole | "admin" | null | undefined): boolean {
+  return role === "owner" || role === "staff" || role === "admin";
 }
 
 export function canInvite(actor: SiteRole | "admin", target: SiteRole): boolean {

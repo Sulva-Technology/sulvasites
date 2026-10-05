@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canInvite, canRemove, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
+import { canInvite, canRemove, canManageBusinessData, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
 
 test("postLoginRoute", () => {
   assert.equal(postLoginRoute({ isAdmin: true, mustChangePassword: true, memberships: [] }), "/change-password");
@@ -21,6 +21,20 @@ test("tabsForRole with shop", () => {
   assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "shop", "inbox", "business", "team"]);
   assert.deepEqual(tabsForRole("staff", { shop: true }), ["overview", "shop", "inbox", "business"]);
   assert.deepEqual(tabsForRole("staff", { shop: false }), ["overview", "inbox", "business"]);
+});
+
+test("tabsForRole hides Business for templates without managers", () => {
+  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "shop", "inbox", "team"]);
+  assert.deepEqual(tabsForRole("staff", { shop: true, business: false }), ["overview", "shop", "inbox"]);
+  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "inbox", "business", "team"]);
+});
+
+test("canManageBusinessData", () => {
+  assert.equal(canManageBusinessData("owner"), true);
+  assert.equal(canManageBusinessData("staff"), true);
+  assert.equal(canManageBusinessData("admin"), true);
+  assert.equal(canManageBusinessData(null), false);
+  assert.equal(canManageBusinessData(undefined), false);
 });
 
 test("canInvite", () => {
