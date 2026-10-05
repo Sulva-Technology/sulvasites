@@ -32,6 +32,7 @@ const TAB_LABELS: Record<DashboardTab, string> = {
   content: "Content",
   inbox: "Inbox",
   business: "Business",
+  insights: "Insights",
   team: "Team",
   shop: "Shop",
 };
