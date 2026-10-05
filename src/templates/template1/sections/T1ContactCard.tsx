@@ -4,11 +4,13 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT1 } from "../ctx";
 import { IconArrow } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 /** Office details + map on a grey side panel; consultation request form on the right. */
 export default function T1ContactCard({ section }: { section: ContactCardSection }) {
   const { profile, serviceNames } = useT1();
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -67,11 +69,9 @@ export default function T1ContactCard({ section }: { section: ContactCardSection
           {section.showForm ? (
             <form
               className="t1-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Form submission is not configured yet. Please call or email us directly.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t1-form-row">
                 <label className="t1-field">
                   <span>Full name</span>
@@ -115,10 +115,11 @@ export default function T1ContactCard({ section }: { section: ContactCardSection
                 <span>I agree to be contacted about my enquiry.</span>
               </label>
               <div>
-                <button type="submit" className="t1-btn">
+                <button type="submit" disabled={inbox.sending} className="t1-btn">
                   Send request <IconArrow />
                 </button>
               </div>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : null}
         </div>

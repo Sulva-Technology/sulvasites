@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T12Hours from "../components/T12Hours";
 import { directionsHref, useT12 } from "../ctx";
 import { Hazard, IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 /**
  * "Request a quote": a charcoal panel with contact rows and working hours beside a square quote
@@ -83,6 +84,7 @@ export default function T12ContactCard({
     }
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -160,11 +162,9 @@ export default function T12ContactCard({
             <form
               ref={formRef}
               className="t12-form t12-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online quote requests are not set up yet. Please call, WhatsApp or email us about your job.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t12-form-title">
                 <h3>Job details</h3>
                 <small>* required</small>
@@ -210,9 +210,10 @@ export default function T12ContactCard({
                   placeholder="What needs doing, where the property is, and when you'd like it done…"
                 />
               </label>
-              <button type="submit" className="t12-btn t12-btn-block t12-btn-lg">
+              <button type="submit" disabled={inbox.sending} className="t12-btn t12-btn-block t12-btn-lg">
                 Send request <IconArrow size={18} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t12-map t12-reveal">

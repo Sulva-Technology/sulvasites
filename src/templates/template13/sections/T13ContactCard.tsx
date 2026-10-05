@@ -5,6 +5,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T13Hours from "../components/T13Hours";
 import { directionsHref, useT13 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 /** "Get in touch": contact lines and opening hours beside a message form (or a map when the form is off). */
 export default function T13ContactCard({
@@ -17,6 +18,7 @@ export default function T13ContactCard({
 }) {
   const { profile, hours, pageKind } = useT13();
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -90,11 +92,9 @@ export default function T13ContactCard({
           {section.showForm ? (
             <form
               className="t13-form t13-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online messages are not set up yet. Please call, WhatsApp or email us.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t13-form-row">
                 <label className="t13-field">
                   <span>Your name *</span>
@@ -113,9 +113,10 @@ export default function T13ContactCard({
                 <span>Message</span>
                 <textarea className="t13-input" name="message" rows={4} placeholder="How can we help?" />
               </label>
-              <button type="submit" className="t13-btn t13-btn-block t13-btn-lg">
+              <button type="submit" disabled={inbox.sending} className="t13-btn t13-btn-block t13-btn-lg">
                 Send message <IconArrow size={18} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t13-map t13-reveal">

@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T10Hours from "../components/T10Hours";
 import { directionsHref, useT10 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const INTENTS: Array<{ value: string; label: string; key: string }> = [
   { key: "apply", value: "Apply / enrol", label: "Apply / enrol" },
@@ -46,6 +47,7 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
     if (message && !message.value) message.value = `I'm interested in: ${service}.`;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -130,11 +132,9 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
             <form
               ref={formRef}
               className="t10-form t10-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online enquiries are not set up yet. Please call, WhatsApp or email us to apply or book a visit.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t10-form-title">
                 <h3>Send an enquiry</h3>
                 <small>* required</small>
@@ -197,9 +197,10 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
                 <span>Message</span>
                 <textarea className="t10-input" name="message" rows={3} placeholder="Age or year group, preferred start date, any questions…" />
               </label>
-              <button type="submit" className="t10-btn t10-btn-block t10-btn-lg">
+              <button type="submit" disabled={inbox.sending} className="t10-btn t10-btn-block t10-btn-lg">
                 Send enquiry <IconArrow size={18} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t10-map t10-reveal">

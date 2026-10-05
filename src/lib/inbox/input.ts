@@ -21,7 +21,6 @@ export type InboxInput = {
 const TOP_KEYS = new Set(["kind", "fields", "website", "sourcePage"]);
 const FIELD_KEY_RE = /^[a-z][a-z0-9_]{0,23}$/;
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
-// eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 const MESSAGE_KEYS = ["message", "notes", "details"];
 const IGNORED_KEYS = new Set(["consent", "website"]);

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT5 } from "../ctx";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const TIMES = ["Morning", "Afternoon", "Evening"];
 
@@ -24,6 +25,7 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
     select.value = service;
   }, []);
 
+  const inbox = useInboxForm();
   return (
     <section id="book" className="t5-section">
       <div className="t5-container">
@@ -78,11 +80,9 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
             <form
               ref={formRef}
               className="t5-booking-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online booking is not configured yet. Please WhatsApp, call or email us to confirm your appointment.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <label className="t5-field">
                 <span>Service</span>
                 <select className="t5-input" name="service" defaultValue="">
@@ -128,10 +128,11 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
                 <span>Notes</span>
                 <textarea className="t5-input" name="notes" rows={3} placeholder="Occasion, location, inspiration…" />
               </label>
-              <button type="submit" className="t5-btn t5-btn-rose">
+              <button type="submit" disabled={inbox.sending} className="t5-btn t5-btn-rose">
                 Request booking
               </button>
               <p className="t5-fineprint">Your appointment is confirmed once we reply. A booking fee may apply.</p>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : null}
         </div>

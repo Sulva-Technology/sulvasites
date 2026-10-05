@@ -4,10 +4,12 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT4 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 export default function T4ContactCard({ section }: { section: ContactCardSection }) {
   const { profile } = useT4();
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -63,11 +65,9 @@ export default function T4ContactCard({ section }: { section: ContactCardSection
           {section.showForm ? (
             <form
               className="t4-form t4-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Form submission is not configured yet. Please email us directly.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t4-form-row">
                 <label className="t4-field">
                   <span>Name</span>
@@ -86,9 +86,10 @@ export default function T4ContactCard({ section }: { section: ContactCardSection
                 <span>How can we help?</span>
                 <textarea className="t4-input" name="message" rows={5} placeholder="Tell us a little about what you need…" required />
               </label>
-              <button type="submit" className="t4-btn t4-btn-accent">
+              <button type="submit" disabled={inbox.sending} className="t4-btn t4-btn-accent">
                 Send message <IconArrow />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : null}
         </div>

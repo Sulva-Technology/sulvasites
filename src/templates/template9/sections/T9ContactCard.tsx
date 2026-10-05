@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T9Hours from "../components/T9Hours";
 import { directionsHref, useT9 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const GOALS = ["Get stronger", "Lose weight", "Get fitter", "Move better"];
 const LEVELS = ["New to training", "Some experience", "Train regularly"];
@@ -34,6 +35,7 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
     if (message && !message.value) message.value = `I'm interested in: ${service}.`;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -118,11 +120,9 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
             <form
               ref={formRef}
               className="t9-form t9-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online sign-up is not configured yet. Please call, WhatsApp or email us to start your free trial.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t9-form-title">
                 <h3>Claim your trial</h3>
                 <small>* required</small>
@@ -185,9 +185,10 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
                 <span>Message</span>
                 <textarea className="t9-input" name="message" rows={3} placeholder="Injuries, schedule, anything we should know?" />
               </label>
-              <button type="submit" className="t9-btn t9-btn-block t9-btn-lg">
+              <button type="submit" disabled={inbox.sending} className="t9-btn t9-btn-block t9-btn-lg">
                 Request free trial <IconArrow size={18} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t9-map t9-reveal">

@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T8Hours from "../components/T8Hours";
 import { directionsHref, useT8 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const PATIENT = ["New patient", "Returning patient"];
 const TIMES = ["Morning", "Afternoon", "Evening"];
@@ -34,6 +35,7 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
     if (message && !message.value) message.value = `I'd like to book: ${service}.`;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -106,11 +108,9 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
             <form
               ref={formRef}
               className="t8-form t8-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online booking is not configured yet. Please call, WhatsApp or email us to book your appointment.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t8-form-title">
                 <h3 className="t8-h3">Appointment request</h3>
                 <small>Fields marked * are required</small>
@@ -181,10 +181,11 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
                 <span>Message</span>
                 <textarea className="t8-input" name="message" rows={3} placeholder="Anything we should know before your visit?" />
               </label>
-              <button type="submit" className="t8-btn t8-btn-block">
+              <button type="submit" disabled={inbox.sending} className="t8-btn t8-btn-block">
                 Request appointment <IconArrow size={16} />
               </button>
               <p className="t8-fineprint">Please don&apos;t include detailed medical information in this form.</p>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t8-map t8-reveal">

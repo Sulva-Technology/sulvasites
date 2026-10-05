@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T11Hours from "../components/T11Hours";
 import { directionsHref, useT11 } from "../ctx";
 import { Confetti, IconArrow, IconChat, IconMail, IconPhone, IconPin, Mesh } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 /**
  * "Let's plan your event": a plum invitation card with contact rows and opening hours beside an
@@ -31,6 +32,7 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
     if (message && !message.value) message.value = `I'm interested in: ${service}.`;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -117,11 +119,9 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
             <form
               ref={formRef}
               className="t11-form t11-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online enquiries are not set up yet. Please call, WhatsApp or email us to plan your event.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t11-form-title">
                 <h3>Event enquiry</h3>
                 <small>* required</small>
@@ -170,9 +170,10 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
                 <span>Tell us about it</span>
                 <textarea className="t11-input" name="message" rows={3} placeholder="The occasion, the venue (if you have one), the vibe…" />
               </label>
-              <button type="submit" className="t11-btn t11-btn-block t11-btn-lg">
+              <button type="submit" disabled={inbox.sending} className="t11-btn t11-btn-block t11-btn-lg">
                 Send enquiry <IconArrow size={18} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t11-map t11-reveal">

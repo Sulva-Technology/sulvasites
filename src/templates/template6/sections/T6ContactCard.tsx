@@ -6,6 +6,7 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT6 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const INTERESTS = ["Buy", "Rent", "Sell", "Invest"];
 
@@ -31,6 +32,7 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
     if (bits && message && !message.value) message.value = `I'm looking for: ${bits}.`;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -93,11 +95,9 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
             <form
               ref={formRef}
               className="t6-form t6-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Form submission is not configured yet. Please call, WhatsApp or email us directly.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t6-field">
                 <span>I&apos;m interested in</span>
                 <div className="t6-chips" role="radiogroup">
@@ -138,9 +138,10 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
                   placeholder="Location, budget, number of bedrooms…"
                 />
               </label>
-              <button type="submit" className="t6-btn" style={{ width: "100%" }}>
+              <button type="submit" disabled={inbox.sending} className="t6-btn" style={{ width: "100%" }}>
                 Request a viewing <IconArrow />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : null}
         </div>

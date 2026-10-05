@@ -3,11 +3,13 @@
 import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT2 } from "../ctx";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 /** "Say hello": big email + details on the left, boxed form with hard shadow on the right. */
 export default function T2ContactCard({ section }: { section: ContactCardSection }) {
   const { profile } = useT2();
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -58,11 +60,9 @@ export default function T2ContactCard({ section }: { section: ContactCardSection
         {section.showForm ? (
           <form
             className="t2-form t2-reveal"
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Form submission is not configured yet. Please email us directly.");
-            }}
+            onSubmit={inbox.onSubmit}
           >
+            <InboxHoneypot />
             <span className="t2-kicker">Pitch us</span>
             <div className="t2-form-row">
               <label className="t2-field">
@@ -83,10 +83,11 @@ export default function T2ContactCard({ section }: { section: ContactCardSection
               <textarea className="t2-input" name="message" rows={6} required />
             </label>
             <div>
-              <button type="submit" className="t2-btn">
+              <button type="submit" disabled={inbox.sending} className="t2-btn">
                 Send it
               </button>
             </div>
+            <InboxStatus state={inbox.state} />
           </form>
         ) : null}
       </div>

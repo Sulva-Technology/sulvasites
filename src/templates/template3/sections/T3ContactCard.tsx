@@ -3,6 +3,7 @@
 import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { T3ArrowIcon, T3Index } from "../ui";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 export default function T3ContactCard({
   section,
@@ -19,6 +20,7 @@ export default function T3ContactCard({
     whatsapp: string | null;
   };
 }) {
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -85,11 +87,9 @@ export default function T3ContactCard({
           {section.showForm ? (
             <form
               className="t3-form t3-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Form submission is not configured yet. Please reach out by email or phone.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t3-form-row">
                 <label className="t3-field">
                   <span>Name</span>
@@ -105,13 +105,14 @@ export default function T3ContactCard({
                 <textarea className="t3-input" name="message" rows={4} placeholder="Tell me a little about it…" required />
               </label>
               <div>
-                <button type="submit" className="t3-btn">
+                <button type="submit" disabled={inbox.sending} className="t3-btn">
                   Send message
                   <span className="t3-arrow">
                     <T3ArrowIcon />
                   </span>
                 </button>
               </div>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : (
             <div className="t3-reveal">

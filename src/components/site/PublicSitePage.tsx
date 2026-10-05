@@ -11,6 +11,7 @@ import {
 } from "@/lib/publicSite.server";
 import { loadPublicShop } from "@/lib/shop/loadPublicShop.server";
 import { templateSupportsShop } from "@/templates/meta";
+import { InboxSiteProvider } from "@/templates/shared/inbox";
 import { getTemplate } from "@/templates/registry";
 
 /** Renders a public site page (JSON-LD + the site's template) for any route. */
@@ -45,6 +46,7 @@ export default async function PublicSitePage({
         }}
       />
       {/* createElement: the template is picked from a static registry, not created per render. */}
+      <InboxSiteProvider siteId={siteData.site.id}>
       {createElement(Template, {
         site: siteData.site,
         profile: siteData.profile,
@@ -56,6 +58,7 @@ export default async function PublicSitePage({
         currentExtraKey: page.kind === "extra" ? page.key : null,
         shop: shop ?? undefined,
       })}
+      </InboxSiteProvider>
     </>
   );
 }

@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T7Hours from "../components/T7Hours";
 import { directionsHref, useT7 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin, Ornament } from "../icons";
+import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
 
 const GUESTS = ["1", "2", "3", "4", "5", "6", "7", "8", "9+"];
 const OCCASIONS = ["Just dinner", "Birthday", "Anniversary", "Business", "Private dining", "Other"];
@@ -26,6 +27,7 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
     select.value = occasion;
   }, []);
 
+  const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
     if (link && link.includes("output=embed")) return link;
@@ -99,11 +101,9 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
             <form
               ref={formRef}
               className="t7-form t7-reveal"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Online reservations are not configured yet. Please call, WhatsApp or email us to book.");
-              }}
+              onSubmit={inbox.onSubmit}
             >
+              <InboxHoneypot />
               <div className="t7-form-title">
                 <span className="t7-h3">Reservation request</span>
                 <small>All fields marked * are required</small>
@@ -154,9 +154,10 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
                 <span>Notes</span>
                 <textarea className="t7-input" name="message" rows={3} placeholder="Allergies, high chair, seating preference…" />
               </label>
-              <button type="submit" className="t7-btn t7-btn-block">
+              <button type="submit" disabled={inbox.sending} className="t7-btn t7-btn-block">
                 Request a table <IconArrow size={16} />
               </button>
+              <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
             <div className="t7-map t7-reveal">
