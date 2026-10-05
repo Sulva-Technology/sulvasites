@@ -3,16 +3,21 @@
 import Link from "next/link";
 
 import { formatNaira } from "@/lib/shop/money";
+import type { ShopProduct } from "@/lib/shop/types";
 import { useT13 } from "../ctx";
 import { IconChevron } from "../icons";
 import { initials, pickMarquee } from "../lib";
 import { categoryName, isOnSale, isSizeOption, optionGroups, priceRange, productHref } from "../shop/helpers";
 
-/** Endless row of mono "ticker" cards, one per product (Offloop's agent marquee). */
-export default function T13Marquee() {
+/**
+ * Endless row of mono "ticker" cards, one per product (Offloop's agent marquee).
+ * Pass `products` to show a subset (e.g. "you may also like"); default is the whole catalogue.
+ */
+export default function T13Marquee({ products, label = "Featured pieces" }: { products?: ShopProduct[]; label?: string } = {}) {
   const { shop, baseUrl } = useT13();
-  if (!shop || shop.products.length === 0) return null;
-  const items = pickMarquee(shop.products, 10);
+  const source = products ?? shop?.products ?? [];
+  if (!shop || source.length === 0) return null;
+  const items = pickMarquee(source, 10);
 
   const row = (copy: 0 | 1) =>
     items.map((p, i) => {
@@ -33,7 +38,7 @@ export default function T13Marquee() {
               </span>
               {p.name}{" "}
               <em className="t13-mono t13-dim">
-                {(i % shop.products.length) + 1}/{shop.products.length}
+                {(i % source.length) + 1}/{source.length}
               </em>
             </span>
             <code>SKU  {p.variants[0]?.sku ?? p.slug.toUpperCase().slice(0, 10)}</code>
@@ -54,7 +59,7 @@ export default function T13Marquee() {
     });
 
   return (
-    <section className="t13-marquee" aria-label="Featured pieces">
+    <section className="t13-marquee" aria-label={label}>
       <div className="t13-marquee-track">
         {row(0)}
         <div style={{ display: "contents" }} aria-hidden="true">

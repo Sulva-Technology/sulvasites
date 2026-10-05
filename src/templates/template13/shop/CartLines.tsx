@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { formatNaira } from "@/lib/shop/money";
 import { useT13 } from "../ctx";
-import { IconMinus, IconPlus, IconTrash } from "../icons";
+import { IconMinus, IconPlus } from "../icons";
 import { productHref, variantLabelOf, type ResolvedLine } from "./helpers";
 
 export type LineProblem = { reason: string; available?: number };
@@ -42,7 +42,7 @@ export default function CartLines({
   const { baseUrl, announce, cart } = useT13();
 
   return (
-    <ul className="t13-lines">
+    <ul className="t13-ln-list">
       {rows.map((r) => {
         const name = r.product?.name ?? "This item";
         const img = r.product?.images[0];
@@ -51,19 +51,19 @@ export default function CartLines({
         const problem: LineProblem | null = server ?? (r.problem ? { reason: r.problem } : null);
         const atMax = r.maxQty !== null && r.line.quantity >= r.maxQty;
         return (
-          <li key={`${r.line.productId}-${r.line.variantId ?? "x"}`} className="t13-line" data-problem={!!problem}>
-            <div className="t13-line-media">
+          <li key={`${r.line.productId}-${r.line.variantId ?? "x"}`} className="t13-ln" data-problem={!!problem}>
+            <div className="t13-ln-media">
               {img && r.product ? (
                 <Link href={productHref(baseUrl, r.product)} onClick={onNavigate} tabIndex={-1} aria-hidden="true">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.url} alt="" loading="lazy" />
                 </Link>
               ) : (
-                <span className="t13-line-noimg" aria-hidden="true" />
+                <span className="t13-ln-noimg" aria-hidden="true" />
               )}
             </div>
-            <div className="t13-line-main">
-              <p className="t13-line-name">
+            <div className="t13-ln-main">
+              <p className="t13-ln-name">
                 {r.product ? (
                   <Link href={productHref(baseUrl, r.product)} onClick={onNavigate}>
                     {name}
@@ -72,17 +72,17 @@ export default function CartLines({
                   name
                 )}
               </p>
-              {label ? <p className="t13-line-variant">{label}</p> : null}
-              {r.problem !== "unavailable" ? <p className="t13-line-unit">{formatNaira(r.unitKobo)}</p> : null}
+              {label ? <p className="t13-ln-variant t13-mono">{label}</p> : null}
+              {r.problem !== "unavailable" ? <p className="t13-ln-unit t13-mono">{formatNaira(r.unitKobo)}</p> : null}
               {problem ? (
-                <p className="t13-line-problem" role="alert">
+                <p className="t13-ln-problem" role="alert">
                   {problemText(problem)}
                 </p>
               ) : null}
               {!readOnly ? (
-                <div className="t13-line-actions">
+                <div className="t13-ln-actions">
                   {r.problem !== "unavailable" && r.problem !== "sold_out" ? (
-                    <div className="t13-stepper" role="group" aria-label={`Quantity of ${name}`}>
+                    <div className="t13-step" role="group" aria-label={`Quantity of ${name}`}>
                       <button
                         type="button"
                         aria-label={`Decrease quantity of ${name}`}
@@ -93,7 +93,7 @@ export default function CartLines({
                       >
                         <IconMinus size={14} />
                       </button>
-                      <span className="t13-stepper-n" aria-live="polite" aria-atomic="true">
+                      <span className="t13-step-n t13-mono" aria-live="polite" aria-atomic="true">
                         {r.line.quantity}
                       </span>
                       <button
@@ -111,21 +111,21 @@ export default function CartLines({
                   ) : null}
                   <button
                     type="button"
-                    className="t13-link-btn"
+                    className="t13-text-btn"
                     aria-label={`Remove ${name} from bag`}
                     onClick={() => {
                       cart.remove(r.index);
                       announce(`${name} removed from your bag`);
                     }}
                   >
-                    <IconTrash size={15} /> Remove
+                    Remove
                   </button>
                 </div>
               ) : (
-                <p className="t13-line-qty">Qty {r.line.quantity}</p>
+                <p className="t13-ln-unit t13-mono">Qty {r.line.quantity}</p>
               )}
             </div>
-            <p className="t13-line-total">{r.problem === "unavailable" ? "" : formatNaira(r.totalKobo)}</p>
+            <p className="t13-ln-total t13-mono">{r.problem === "unavailable" ? "" : formatNaira(r.totalKobo)}</p>
           </li>
         );
       })}

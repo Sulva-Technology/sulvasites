@@ -43,7 +43,7 @@ export default function SizeGuide({ onClose }: { onClose: () => void }) {
                 Sizes can vary between styles, so check the product details too. Measure yourself, then compare with the
                 size notes on the product.
               </p>
-              <table className="t13-table">
+              <table className="t13-sg-table t13-mono">
                 <caption className="t13-sr">How to measure</caption>
                 <thead>
                   <tr>
@@ -65,16 +65,16 @@ export default function SizeGuide({ onClose }: { onClose: () => void }) {
           <p className="t13-fine">Between sizes or unsure? Ask us before you order.</p>
           <div className="t13-actions">
             {hasSizeGuidePage ? (
-              <Link className="t13-btn t13-btn-ghost" href={`${baseUrl}/p/size-guide`} onClick={onClose}>
+              <Link className="t13-pill t13-pill-glass" href={`${baseUrl}/p/size-guide`} onClick={onClose}>
                 Full size guide page
               </Link>
             ) : null}
             {profile.whatsapp ? (
-              <a className="t13-btn t13-btn-ghost" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
+              <a className="t13-pill t13-pill-glass" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
                 WhatsApp us
               </a>
             ) : profile.phone ? (
-              <a className="t13-btn t13-btn-ghost" href={buildTelLink(profile.phone)}>
+              <a className="t13-pill t13-pill-glass" href={buildTelLink(profile.phone)}>
                 Call {profile.phone}
               </a>
             ) : null}
