@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { resolvePostLoginRoute } from "@/lib/loginRouting";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
@@ -32,7 +33,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/admin/sites");
+      router.replace(await resolvePostLoginRoute(supabase));
     } catch (err) {
       setIsLoading(false);
       setError(err instanceof Error ? err.message : "Sign in failed.");
@@ -43,7 +44,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <h1 className="text-xl font-semibold">Sign in</h1>
-        <p className="mt-1 text-sm text-gray-600">Team-only admin access.</p>
+        <p className="mt-1 text-sm text-gray-600">Sign in to manage your site.</p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block">
