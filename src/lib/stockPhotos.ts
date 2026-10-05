@@ -49,14 +49,35 @@ function shuffled<T>(items: T[], seed: string): T[] {
   return out;
 }
 
+const HINT_STOP = new Set(["with", "and", "the", "for", "our", "that", "this", "from", "your", "into", "services", "service", "business", "company", "shop", "store"]);
+
+/** Lowercase keyword stems (>= 4 letters, trailing s dropped) from free text. */
+export function hintWords(...texts: Array<string | undefined | null>): string[] {
+  const words = texts.join(" ").toLowerCase().match(/[a-z]{4,}/g) ?? [];
+  return [...new Set(words.filter((w) => !HINT_STOP.has(w)).map((w) => w.replace(/s$/, "")))];
+}
+
+/** Stable re-rank: photos whose alt text mentions a hint word come first. */
+function rankByHints(list: StockPhoto[], hints: string[]): StockPhoto[] {
+  if (hints.length === 0) return list;
+  const score = (p: StockPhoto) => {
+    const alt = p.alt.toLowerCase();
+    return hints.reduce((n, h) => n + (alt.includes(h) ? 1 : 0), 0);
+  };
+  return list
+    .map((p, i) => ({ p, i, sc: score(p) }))
+    .sort((a, b) => b.sc - a.sc || a.i - b.i)
+    .map((x) => x.p);
+}
+
 /** Ordered, de-duplicated pool: category photos first, then the rest of the library. */
-function pool(category: PhotoCategory, seed: string): StockPhoto[] {
+function pool(category: PhotoCategory, seed: string, hints: string[] = []): StockPhoto[] {
   const seen = new Set<string>();
   const out: StockPhoto[] = [];
   const add = (list: StockPhoto[]) => {
     for (const p of list) if (!seen.has(p.id)) { seen.add(p.id); out.push(p); }
   };
-  add(shuffled(STOCK_PHOTOS[category], seed));
+  add(rankByHints(shuffled(STOCK_PHOTOS[category], seed), hints));
   if (category !== "general") add(shuffled(STOCK_PHOTOS.general, seed));
   add(shuffled(PHOTO_CATEGORIES.flatMap((c) => STOCK_PHOTOS[c]), seed));
   return out;
@@ -81,8 +102,9 @@ export function fillSiteImages<T extends Record<string, PageData>>(
   pages: T,
   category: PhotoCategory,
   seed: string,
+  hints: string[] = [],
 ): T {
-  const next = picker(pool(category, seed));
+  const next = picker(pool(category, seed, hints));
   const nextPerson = picker(shuffled(PEOPLE_PHOTOS, seed));
   const toImage = (p: StockPhoto) => ({ url: photoUrl(p.id), alt: p.alt });
 
