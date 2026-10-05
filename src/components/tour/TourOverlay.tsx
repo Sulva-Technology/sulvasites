@@ -96,13 +96,29 @@ export function TourOverlay({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onSkip();
-      else if (e.key === "ArrowRight") onNext();
+      if (e.repeat) return;
+      if (e.key === "Escape") {
+        onSkip();
+        return;
+      }
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (e.key === "ArrowRight") onNext();
       else if (e.key === "ArrowLeft") onBack();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onNext, onBack, onSkip]);
+
+  // Keep focus inside the dialog while the overlay is mounted.
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const el = dialogRef.current;
+      if (el && e.target instanceof Node && !el.contains(e.target)) el.focus();
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, []);
 
   function trapFocus(e: ReactKeyboardEvent<HTMLDivElement>) {
     if (e.key !== "Tab") return;
@@ -110,10 +126,12 @@ export function TourOverlay({
     if (!items || items.length === 0) return;
     const first = items[0];
     const last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
+    const active = document.activeElement;
+    const onContainer = active === dialogRef.current;
+    if (e.shiftKey && (active === first || onContainer)) {
       e.preventDefault();
       last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
+    } else if (!e.shiftKey && (active === last || onContainer)) {
       e.preventDefault();
       first.focus();
     }

@@ -76,6 +76,10 @@ export function TourProvider({
     markTourDone(tour.id);
     document.querySelector<HTMLElement>('[data-tour="tour-button"]')?.focus();
   }, [tour.id]);
+  const endRef = useRef(end);
+  useEffect(() => {
+    endRef.current = end;
+  }, [end]);
 
   const goTo = useCallback(
     (i: number) => {
@@ -137,9 +141,9 @@ export function TourProvider({
     }
     if (index < 0) return;
     // Deferred so the state update does not happen synchronously in the effect body.
-    const t = window.setTimeout(end, 0);
-    return () => window.clearTimeout(t);
-  }, [pathname, index, end]);
+    // Not cleared on dep change: lastPathRef is already updated, so a cancelled timer would never re-fire.
+    window.setTimeout(() => endRef.current(), 0);
+  }, [pathname, index]);
 
   const api = useMemo<TourApi>(() => ({ start, active: index >= 0, setContext }), [start, index, setContext]);
 
