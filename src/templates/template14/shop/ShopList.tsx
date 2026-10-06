@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { formatNaira } from "@/lib/shop/money";
 import { shopHref, useT14 } from "../ctx";
-import { IconClose, IconFilter } from "../icons";
+import { IconClose, IconFilter, IconSearch } from "../icons";
 import DealsStrip from "./DealsStrip";
 import {
   dealProducts,
@@ -24,8 +25,8 @@ const toKobo = (raw: string): number | null => {
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <li>
-      <button type="button" onClick={onRemove}>
-        {label} <IconClose size={14} />
+      <button type="button" className="t14-chip t14-sl-x" onClick={onRemove}>
+        {label} <IconClose size={12} />
         <span className="t14-sr"> (remove filter)</span>
       </button>
     </li>
@@ -33,11 +34,11 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
 }
 
 /**
- * All products, or one category. A filter rail (category, price range, in stock, on sale), search
- * (the header box) and sorting all run in the browser over the loaded catalogue.
+ * All products, or one category. A sticky toolbar (search, category chips, a filters popover and
+ * sorting) runs over the loaded catalogue in the browser. Search shares its text with the header box.
  */
 export default function ShopList({ categorySlug }: { categorySlug?: string }) {
-  const { shop, baseUrl, profile, query, setQuery } = useT14();
+  const { shop, baseUrl, query, setQuery } = useT14();
   const [sort, setSort] = useState<SortId>("featured");
   const [catId, setCatId] = useState<string | null>(null);
   const [minRaw, setMinRaw] = useState("");
@@ -45,6 +46,8 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null);
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
 
   // Links such as /shop?q=cable or /shop?sale=1 (header search, "See all deals") pre-set the filters.
   useEffect(() => {
@@ -57,6 +60,26 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
       if (sale) setOnSaleOnly(true);
     });
   }, [setQuery]);
+
+  // The filters popover closes on Escape (focus returns to its button) and on a click outside the bar.
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setFiltersOpen(false);
+        filterBtnRef.current?.focus();
+      }
+    };
+    const onDown = (e: PointerEvent) => {
+      if (barRef.current && !barRef.current.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+    };
+  }, [filtersOpen]);
 
   const category = shop?.categories.find((c) => c.slug === categorySlug) ?? null;
 
@@ -77,10 +100,11 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
 
   if (!shop) return null;
   const cats = [...shop.categories].sort((a, b) => a.position - b.position);
-  const title = category ? category.name : "All products";
+  const title = category ? category.name : "Shop";
 
   const priceActive = !!minRaw.trim() || !!maxRaw.trim();
   const active = !!query.trim() || (!category && !!catId) || priceActive || inStockOnly || onSaleOnly;
+  const popCount = Number(priceActive) + Number(inStockOnly) + Number(onSaleOnly);
   const clear = () => {
     setQuery("");
     setCatId(null);
@@ -89,13 +113,15 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
     setInStockOnly(false);
     setOnSaleOnly(false);
   };
+  const fee = shop.settings.deliveryFeeKobo;
+  const deliveryText = fee > 0 ? `, delivery from ${formatNaira(fee)}` : ", free delivery";
   const countText = `${products.length} ${products.length === 1 ? "product" : "products"}`;
   const priceLabel = `Price ${minRaw.trim() ? `from ₦${minRaw.trim()}` : ""} ${maxRaw.trim() ? `to ₦${maxRaw.trim()}` : ""}`.replace(/\s+/g, " ").trim();
 
   return (
-    <section className="t14-section t14-shop-page">
+    <section className="t14-sl t14-shop-page">
       <div className="t14-container">
-        <header className="t14-shop-head">
+        <header className="t14-sl-head">
           <nav className="t14-crumbs" aria-label="Breadcrumb">
             <Link href={`${baseUrl}/`}>Home</Link>
             <span aria-hidden="true">/</span>
@@ -107,146 +133,156 @@ export default function ShopList({ categorySlug }: { categorySlug?: string }) {
               </>
             ) : null}
           </nav>
-          <h1 className="t14-h1">{title}</h1>
-          {!category && profile.tagline ? <p className="t14-lead">{profile.tagline}</p> : null}
+          <h1 className="t14-h1">{title}.</h1>
+          <p className="t14-lead" role="status" aria-live="polite">
+            {countText}
+            {query.trim() ? <> for &ldquo;{query.trim()}&rdquo;</> : null}
+            {deliveryText}.
+          </p>
         </header>
 
         {!category && !active && deals.length > 0 ? <DealsStrip products={deals} id="t14-list-deals" showAll={false} /> : null}
 
-        <div className="t14-listing">
-          <aside className="t14-filters" aria-label="Filters" data-open={filtersOpen}>
-            <div className="t14-filters-head">
-              <h2 className="t14-filters-title">Filters</h2>
-              {active ? (
-                <button type="button" className="t14-link-btn" onClick={clear}>
-                  Clear all
-                </button>
-              ) : null}
-            </div>
+        <div className="t14-sl-barwrap">
+          <div className="t14-sl-bar" ref={barRef}>
+            <label className="t14-sl-search">
+              <IconSearch size={16} />
+              <span className="t14-sr">Search products</span>
+              <input
+                type="search"
+                value={query}
+                placeholder="Search products"
+                autoComplete="off"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
 
             {!category && cats.length > 0 ? (
-              <fieldset className="t14-filter">
-                <legend>Category</legend>
-                <label className="t14-check">
-                  <input type="radio" name="t14-cat" checked={catId === null} onChange={() => setCatId(null)} />
-                  <span>All categories</span>
-                </label>
+              <div className="t14-sl-cats" role="group" aria-label="Category">
+                <button type="button" aria-pressed={catId === null} onClick={() => setCatId(null)}>
+                  All
+                </button>
                 {cats.map((c) => (
-                  <label key={c.id} className="t14-check">
-                    <input type="radio" name="t14-cat" checked={catId === c.id} onChange={() => setCatId(c.id)} />
-                    <span>{c.name}</span>
-                  </label>
-                ))}
-              </fieldset>
-            ) : null}
-
-            <fieldset className="t14-filter">
-              <legend>Price (₦)</legend>
-              <div className="t14-price-inputs">
-                <label>
-                  <span className="t14-sr">Minimum price in naira</span>
-                  <input className="t14-input" inputMode="numeric" placeholder="Min" value={minRaw} onChange={(e) => setMinRaw(e.target.value)} />
-                </label>
-                <span aria-hidden="true">–</span>
-                <label>
-                  <span className="t14-sr">Maximum price in naira</span>
-                  <input
-                    className="t14-input"
-                    inputMode="numeric"
-                    placeholder="Max"
-                    value={maxRaw}
-                    onChange={(e) => setMaxRaw(e.target.value)}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset className="t14-filter">
-              <legend>Availability</legend>
-              <label className="t14-check">
-                <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} />
-                <span>In stock only</span>
-              </label>
-              <label className="t14-check">
-                <input type="checkbox" checked={onSaleOnly} onChange={(e) => setOnSaleOnly(e.target.checked)} />
-                <span>On sale</span>
-              </label>
-            </fieldset>
-          </aside>
-
-          <div className="t14-results">
-            <div className="t14-toolbar">
-              <button
-                type="button"
-                className="t14-btn t14-btn-ghost t14-btn-sm t14-filters-toggle"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((o) => !o)}
-              >
-                <IconFilter size={16} /> Filters
-              </button>
-              <p className="t14-count" role="status" aria-live="polite">
-                {countText}
-                {query.trim() ? <> for &ldquo;{query.trim()}&rdquo;</> : null}
-              </p>
-              <label className="t14-sort">
-                <span>Sort by</span>
-                <select className="t14-input" value={sort} onChange={(e) => setSort(e.target.value as SortId)}>
-                  {SORTS.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {active ? (
-              <ul className="t14-chips" aria-label="Active filters">
-                {query.trim() ? <Chip label={`Search: ${query.trim()}`} onRemove={() => setQuery("")} /> : null}
-                {!category && catId ? <Chip label={cats.find((c) => c.id === catId)?.name ?? "Category"} onRemove={() => setCatId(null)} /> : null}
-                {priceActive ? (
-                  <Chip
-                    label={priceLabel}
-                    onRemove={() => {
-                      setMinRaw("");
-                      setMaxRaw("");
-                    }}
-                  />
-                ) : null}
-                {inStockOnly ? <Chip label="In stock" onRemove={() => setInStockOnly(false)} /> : null}
-                {onSaleOnly ? <Chip label="On sale" onRemove={() => setOnSaleOnly(false)} /> : null}
-              </ul>
-            ) : null}
-
-            {products.length > 0 ? (
-              <ul className="t14-grid">
-                {products.map((p, i) => (
-                  <li key={p.id}>
-                    <ProductCard product={p} priority={i < 4} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="t14-empty">
-                <p className="t14-empty-title">
-                  {active ? "No products match" : category ? "Nothing in this category yet" : "The shop is being stocked"}
-                </p>
-                <p className="t14-muted">
-                  {active ? "Try a different search or clear the filters." : category ? "Have a look at everything else." : "Check back soon."}
-                </p>
-                {active ? (
-                  <button type="button" className="t14-btn" onClick={clear}>
-                    Clear filters
+                  <button key={c.id} type="button" aria-pressed={catId === c.id} onClick={() => setCatId(c.id)}>
+                    {c.name}
                   </button>
-                ) : category ? (
-                  <Link className="t14-btn" href={shopHref(baseUrl)}>
-                    View all products
-                  </Link>
-                ) : null}
+                ))}
               </div>
-            )}
+            ) : null}
+
+            <button
+              ref={filterBtnRef}
+              type="button"
+              className="t14-pill t14-pill-soft t14-sl-filterbtn"
+              aria-expanded={filtersOpen}
+              aria-controls="t14-sl-pop"
+              onClick={() => setFiltersOpen((o) => !o)}
+            >
+              <IconFilter size={16} /> Filters
+              {popCount > 0 ? <span className="t14-sl-badge">{popCount}</span> : null}
+            </button>
+
+            <label className="t14-sl-sort">
+              <span className="t14-sr">Sort by</span>
+              <select className="t14-pill t14-pill-soft" value={sort} onChange={(e) => setSort(e.target.value as SortId)}>
+                {SORTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {filtersOpen ? (
+              <div id="t14-sl-pop" className="t14-sl-pop" role="group" aria-label="Filters">
+                <fieldset className="t14-sl-fs">
+                  <legend>Price (₦)</legend>
+                  <div className="t14-sl-price">
+                    <label>
+                      <span className="t14-sr">Minimum price in naira</span>
+                      <input inputMode="numeric" placeholder="Min" value={minRaw} onChange={(e) => setMinRaw(e.target.value)} />
+                    </label>
+                    <span aria-hidden="true">–</span>
+                    <label>
+                      <span className="t14-sr">Maximum price in naira</span>
+                      <input inputMode="numeric" placeholder="Max" value={maxRaw} onChange={(e) => setMaxRaw(e.target.value)} />
+                    </label>
+                  </div>
+                </fieldset>
+                <fieldset className="t14-sl-fs">
+                  <legend>Availability</legend>
+                  <label className="t14-sl-switch">
+                    <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} />
+                    <span>In stock only</span>
+                    <i aria-hidden="true" />
+                  </label>
+                  <label className="t14-sl-switch">
+                    <input type="checkbox" checked={onSaleOnly} onChange={(e) => setOnSaleOnly(e.target.checked)} />
+                    <span>On sale</span>
+                    <i aria-hidden="true" />
+                  </label>
+                </fieldset>
+                <div className="t14-sl-popfoot">
+                  <button type="button" className="t14-sl-clear" onClick={clear} disabled={!active}>
+                    Clear all
+                  </button>
+                  <button type="button" className="t14-pill t14-pill-black" onClick={() => setFiltersOpen(false)}>
+                    Show {countText}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
+
+        {active ? (
+          <ul className="t14-sl-chips" aria-label="Active filters">
+            {query.trim() ? <Chip label={`Search: ${query.trim()}`} onRemove={() => setQuery("")} /> : null}
+            {!category && catId ? <Chip label={cats.find((c) => c.id === catId)?.name ?? "Category"} onRemove={() => setCatId(null)} /> : null}
+            {priceActive ? (
+              <Chip
+                label={priceLabel}
+                onRemove={() => {
+                  setMinRaw("");
+                  setMaxRaw("");
+                }}
+              />
+            ) : null}
+            {inStockOnly ? <Chip label="In stock" onRemove={() => setInStockOnly(false)} /> : null}
+            {onSaleOnly ? <Chip label="On sale" onRemove={() => setOnSaleOnly(false)} /> : null}
+            <li>
+              <button type="button" className="t14-sl-clear" onClick={clear}>
+                Clear all
+              </button>
+            </li>
+          </ul>
+        ) : null}
+
+        {products.length > 0 ? (
+          <ul className="t14-sl-grid">
+            {products.map((p, i) => (
+              <li key={p.id}>
+                <ProductCard product={p} priority={i < 4} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="t14-sl-empty">
+            <p className="t14-sl-empty-title">
+              {active ? "No products match" : category ? "Nothing in this category yet" : "The shop is being stocked"}
+            </p>
+            <p>{active ? "Try a different search or clear the filters." : category ? "Have a look at everything else." : "Check back soon."}</p>
+            {active ? (
+              <button type="button" className="t14-pill t14-pill-black" onClick={clear}>
+                Clear filters
+              </button>
+            ) : category ? (
+              <Link className="t14-pill t14-pill-black" href={shopHref(baseUrl)}>
+                View all products
+              </Link>
+            ) : null}
+          </div>
+        )}
       </div>
     </section>
   );

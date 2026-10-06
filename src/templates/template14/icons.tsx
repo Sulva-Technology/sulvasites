@@ -154,3 +154,45 @@ export const IconAlert = ({ size = 22 }: P) => (
     <path d="M12 7.5v5.5M12 16.2v.1" />
   </svg>
 );
+
+export const IconHome = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 11 12 4l8 7M6 10v9h12v-9" />
+  </svg>
+);
+
+export const IconInfo = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 8h.01" />
+  </svg>
+);
+
+export const IconDoc = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5" />
+  </svg>
+);
+
+export const IconPercent = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M18 6 6 18" />
+    <circle cx="7.5" cy="7.5" r="2" />
+    <circle cx="16.5" cy="16.5" r="2" />
+  </svg>
+);
+
+export const IconLock = ({ size = 16 }: P) => (
+  <svg {...base(size)}>
+    <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
+
+export const IconTruck = ({ size = 16 }: P) => (
+  <svg {...base(size)}>
+    <path d="M3 6.5h11v9H3zM14 10h4l3 3v2.5h-7" />
+    <circle cx="7.5" cy="17.5" r="1.8" />
+    <circle cx="17" cy="17.5" r="1.8" />
+  </svg>
+);

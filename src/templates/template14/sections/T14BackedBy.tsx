@@ -8,19 +8,20 @@ function isImageUrl(url: string | null | undefined): url is string {
   return !!url && /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(url);
 }
 
-/** Press and stockist names set in the display font on a hairline band (logos are shown greyscale). */
-export default function T14BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
+/** Press and stockist names as a quiet centred row under a small muted title (logos are shown greyscale). */
+/** `inStrip`: on a live-shop home the category strip shows these logos instead, so this band steps aside (not in the editor). */
+export default function T14BackedBy({ section, sectionIndex, inStrip = false }: { section: BackedBySection; sectionIndex?: number; inStrip?: boolean }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const real = (section.logos ?? []).filter((l) => l.name?.trim() || isImageUrl(l.url));
-  if (!enabled && real.length === 0) return null;
+  if (!enabled && (real.length === 0 || inStrip)) return null;
   const title = section.title || (enabled ? "" : "As seen in");
   const logos = enabled ? (section.logos?.length ? section.logos : [{ name: "", url: null }]) : real;
 
   return (
-    <section className="t14-press-band">
-      <div className="t14-container t14-press-inner t14-reveal">
-        <EditableText as="h2" className="t14-label t14-press-title" value={title} placeholder="As seen in" onCommit={(next) => set({ title: next })} />
-        <ul className="t14-press">
+    <section className="t14-bb">
+      <div className="t14-container t14-reveal">
+        <EditableText as="h2" className="t14-bb-title" value={title} placeholder="As seen in" onCommit={(next) => set({ title: next })} />
+        <ul className="t14-bb-row">
           {logos.map((l, idx) => (
             <li key={idx}>
               {isImageUrl(l.url) ? (

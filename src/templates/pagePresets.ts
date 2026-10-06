@@ -12,6 +12,8 @@ export type PagePreset = {
   sections: Section["type"][];
   /** Optional hero headline to seed, so the page isn't blank. */
   headline?: string;
+  /** One-line, plain-English explanation shown in the "Add a page" picker. */
+  description?: string;
 };
 
 const PRESETS: Record<string, PagePreset[]> = {
@@ -96,6 +98,82 @@ const PRESETS: Record<string, PagePreset[]> = {
   ],
 };
 
+/**
+ * General-purpose page starters any template can use. Shown in the "Add a page"
+ * picker next to the template's own recommendations so owners pick a ready-made
+ * layout instead of starting from a blank key.
+ */
+export const PAGE_STARTERS: PagePreset[] = [
+  { key: "services", label: "Services", headline: "What we offer", description: "List what you offer, with answers to common questions.", sections: ["hero", "services", "faq", "contact_card"] },
+  { key: "pricing", label: "Pricing", headline: "Simple, clear pricing", description: "Show your packages or prices and why people choose you.", sections: ["hero", "services", "values", "faq", "contact_card"] },
+  { key: "gallery", label: "Gallery", headline: "Our work", description: "A photo gallery of your work, products or space.", sections: ["hero", "gallery", "testimonials", "contact_card"] },
+  { key: "team", label: "Team", headline: "Meet the team", description: "Introduce the people behind the business.", sections: ["hero", "team", "values", "contact_card"] },
+  { key: "reviews", label: "Reviews", headline: "What our customers say", description: "Customer reviews and the brands you've worked with.", sections: ["hero", "testimonials", "backed_by", "contact_card"] },
+  { key: "faq", label: "FAQ", headline: "Questions & answers", description: "Answer the questions customers ask most.", sections: ["hero", "faq", "contact_card"] },
+  { key: "page", label: "Blank page", description: "A simple page with a title, some text and your contact details.", sections: ["hero", "richtext", "contact_card"] },
+];
+
+/** The starter used when someone names their own page without picking a layout. */
+export const BLANK_STARTER = PAGE_STARTERS[PAGE_STARTERS.length - 1]!;
+
+/** Keys a page can never use: the built-in pages and the /p/ prefix. */
+export const RESERVED_PAGE_KEYS = ["home", "about", "contact", "p"];
+
+/** Plain-English names for each section type, shown so owners know what a page contains. */
+export const SECTION_LABELS: Record<Section["type"], string> = {
+  hero: "Banner",
+  services: "Services",
+  richtext: "Text",
+  values: "Why us",
+  contact_card: "Contact details",
+  backed_by: "Logos",
+  use_cases: "Projects",
+  gallery: "Photos",
+  testimonials: "Reviews",
+  faq: "FAQs",
+  team: "Team",
+};
+
+/** "Banner · Services · FAQs" — what a page will contain, without repeats. */
+export function describeSections(sections: Section["type"][]): string {
+  return [...new Set(sections)].map((t) => SECTION_LABELS[t]).join(" · ");
+}
+
+/** A free page key based on `base`: "pricing", then "pricing-2", "pricing-3"… */
+export function uniquePageKey(base: string, existingKeys: string[]): string {
+  const taken = new Set([...existingKeys, ...RESERVED_PAGE_KEYS]);
+  if (base && !taken.has(base)) return base;
+  const stem = base || "page";
+  for (let i = 2; ; i++) {
+    const key = `${stem}-${i}`;
+    if (!taken.has(key)) return key;
+  }
+}
+
+export type PageIdea = PagePreset & { recommended: boolean };
+
+/**
+ * Pages the site could add, in the order to show them: the template's own
+ * recommendations first, then general starters. Pages the site already has are
+ * left out, and a starter is dropped if a recommendation already covers its key.
+ */
+export function getPageIdeas(templateKey: string, existingKeys: string[]): PageIdea[] {
+  const existing = new Set(existingKeys);
+  const ideas: PageIdea[] = [];
+  const seen = new Set<string>();
+  for (const p of getPagePresets(templateKey)) {
+    seen.add(p.key);
+    if (!existing.has(p.key)) ideas.push({ ...p, recommended: true });
+  }
+  for (const p of PAGE_STARTERS) {
+    if (seen.has(p.key)) continue;
+    // The blank page can always be added again under a fresh key.
+    if (p === BLANK_STARTER) ideas.push({ ...p, key: uniquePageKey(p.key, existingKeys), recommended: false });
+    else if (!existing.has(p.key)) ideas.push({ ...p, recommended: false });
+  }
+  return ideas;
+}
+
 export function getPagePresets(templateKey: string): PagePreset[] {
   return PRESETS[templateKey] ?? [];
 }
@@ -105,7 +183,7 @@ export function buildPresetPageData(preset: PagePreset): PageData {
     seo: { title: preset.label, description: "" },
     sections: preset.sections.map((type) => {
       const s = defaultSection(type);
-      if (s.type === "hero" && preset.headline) return { ...s, headline: preset.headline };
+      if (s.type === "hero" && preset.headline !== undefined) return { ...s, headline: preset.headline };
       return s;
     }),
   };

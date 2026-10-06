@@ -73,3 +73,12 @@ test("tabsForRole: insights for owner and admin only, never staff", () => {
   assert.ok(canViewInsights("owner") && canViewInsights("admin"));
   assert.ok(!canViewInsights("staff") && !canViewInsights(null));
 });
+
+test("postLoginRoute on a site's own address", () => {
+  const base = { mustChangePassword: false, hostSiteId: "s1" };
+  assert.equal(postLoginRoute({ ...base, isAdmin: true, memberships: [] }), "/admin/sites/s1");
+  assert.equal(postLoginRoute({ ...base, isAdmin: false, memberships: [{ siteId: "s1", role: "owner" }, { siteId: "s2", role: "staff" }] }), "/dashboard/s1");
+  // not a member of this site: normal routing
+  assert.equal(postLoginRoute({ ...base, isAdmin: false, memberships: [{ siteId: "s2", role: "staff" }] }), "/dashboard/s2");
+  assert.equal(postLoginRoute({ ...base, isAdmin: true, mustChangePassword: true, memberships: [] }), "/change-password");
+});

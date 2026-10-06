@@ -5,8 +5,9 @@ import Link from "next/link";
 import { formatNaira } from "@/lib/shop/money";
 import type { ShopProduct } from "@/lib/shop/types";
 import { useT14 } from "../ctx";
-import { IconBag, IconPlus } from "../icons";
-import { categoryName, discountPercent, isOnSale, priceRange, productHref, productSoldOut, quickAddTarget } from "./helpers";
+import { IconCheck, IconPlus } from "../icons";
+import { savingKobo } from "../lib";
+import { isOnSale, priceRange, productHref, productSoldOut, quickAddTarget } from "./helpers";
 
 export function PriceText({ product, className }: { product: ShopProduct; className?: string }) {
   const { min, max } = priceRange(product);
@@ -25,14 +26,15 @@ export function PriceText({ product, className }: { product: ShopProduct; classN
   );
 }
 
-/** Dense product tile: square photo, name, price and a one-tap "Add to cart" (or "Choose options"). */
+/** Product tile: paper photo (second photo fades in on hover), name, price and a round quick-add. */
 export default function ProductCard({ product, priority = false }: { product: ShopProduct; priority?: boolean }) {
-  const { baseUrl, shop, cart, announce } = useT14();
+  const { baseUrl, cart, announce } = useT14();
   const first = product.images[0];
+  const second = product.images[1];
   const sold = productSoldOut(product);
-  const pct = discountPercent(product);
-  const cat = shop ? categoryName(shop, product) : null;
+  const saving = savingKobo(product.priceKobo, product.compareAtKobo);
   const target = quickAddTarget(product);
+  const href = productHref(baseUrl, product);
 
   const inCart =
     typeof target === "object"
@@ -46,58 +48,49 @@ export default function ProductCard({ product, priority = false }: { product: Sh
   const quickAdd = () => {
     if (typeof target !== "object" || atMax) return;
     cart.add({ productId: product.id, variantId: target.variantId, quantity: 1 });
-    announce(`${product.name} added to your cart`);
+    announce(`${product.name} added to your bag`);
   };
 
   return (
-    <article className="t14-card" data-sold={sold}>
-      <Link href={productHref(baseUrl, product)} className="t14-card-link">
-        <span className="t14-card-media">
+    <article className="t14-pc" data-sold={sold}>
+      <Link href={href} className="t14-pc-link">
+        <span className="t14-pc-media">
           {first ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img className="t14-card-img" src={first.url} alt={first.alt || ""} loading={priority ? "eager" : "lazy"} />
+            <img className="t14-pc-img" src={first.url} alt={first.alt || ""} loading={priority ? "eager" : "lazy"} />
           ) : (
-            <span className="t14-card-noimg" aria-hidden="true">
+            <span className="t14-pc-noimg" aria-hidden="true">
               {product.name.slice(0, 1)}
             </span>
           )}
-          {sold ? (
-            <span className="t14-badge t14-badge-dark">Sold out</span>
-          ) : pct > 0 ? (
-            <span className="t14-badge">
-              -{pct}%<span className="t14-sr"> off</span>
-            </span>
+          {second ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="t14-pc-img t14-pc-img2" src={second.url} alt="" loading="lazy" />
+          ) : null}
+          {sold || target === "out" ? (
+            <span className="t14-pc-chip t14-pc-chip-dark">Sold out</span>
+          ) : saving > 0 ? (
+            <span className="t14-pc-chip">Save {formatNaira(saving)}</span>
           ) : null}
         </span>
-        {cat ? <span className="t14-card-cat">{cat}</span> : null}
-        <span className="t14-card-name">{product.name}</span>
-        <PriceText product={product} />
+        <span className="t14-pc-text">
+          <span className="t14-pc-name">{product.name}</span>
+          <PriceText product={product} className="t14-pc-price" />
+        </span>
       </Link>
-      {sold || target === "out" ? (
-        <p className="t14-card-note" data-state="out">
-          Sold out
-        </p>
-      ) : target === "choose" ? (
-        <Link className="t14-btn t14-btn-sm t14-btn-ghost t14-card-add" href={productHref(baseUrl, product)}>
-          Choose options
+      {sold || target === "out" ? null : target === "choose" ? (
+        <Link className="t14-pc-add" href={href} aria-label={`Choose options: ${product.name}`}>
+          <IconPlus size={18} />
         </Link>
       ) : (
         <button
           type="button"
-          className="t14-btn t14-btn-sm t14-card-add"
+          className="t14-pc-add"
           onClick={quickAdd}
           aria-disabled={atMax}
-          aria-label={`${atMax ? "All available stock is in your cart:" : "Add to cart:"} ${product.name}`}
+          aria-label={`${atMax ? "All available stock is in your bag:" : "Add to bag:"} ${product.name}`}
         >
-          {atMax ? (
-            <>
-              <IconBag size={16} /> In cart
-            </>
-          ) : (
-            <>
-              <IconPlus size={16} /> Add to cart
-            </>
-          )}
+          {atMax ? <IconCheck size={17} /> : <IconPlus size={18} />}
         </button>
       )}
     </article>

@@ -53,6 +53,8 @@ export function buildChatPrompt(args: { messages: ChatMessage[]; state: Brief; q
     "EXTRACTION RULES",
     "- Copy only what the owner stated. Never guess a name, address, phone number, email or social handle. Leave unknown fields as empty strings, empty lists, or null.",
     "- whatTheyDo: one plain sentence in the owner's own terms. services: the products or services they named, short noun phrases.",
+    "- A person counts as the business: for a personal brand, portfolio, freelancer, founder or creator site, businessName is the person's name as written (keep a nickname if given) and whatTheyDo is their role or what they offer. Products or companies they run are services.",
+    "- The owner may paste a bio, company profile or document, often in the third person. Treat it as the owner's own words and extract from all of it.",
     "- shopIntent: true ONLY if the owner explicitly says they want an online shop, online store, e-commerce, or to sell products online with a cart and payment. Delivery, pick-up, taking orders by WhatsApp or phone, or a food or services business do NOT make it true. false if they clearly only want an information or booking site; otherwise null.",
     "- tone: only if the owner described one (friendly, premium, formal...). languages: only if stated (default none).",
     "- contact fields: only values the owner literally typed.",
@@ -80,7 +82,8 @@ export function buildChatPrompt(args: { messages: ChatMessage[]; state: Brief; q
     delimitUserData("known brief", briefToText(state), 2500),
     "",
     "Chat so far:",
-    delimitTranscript(messages),
+    // A pasted brief or bio arrives as one long message: let all of it through.
+    delimitTranscript(messages, 12000, 8000),
     "",
     "Return the JSON now.",
   ].join("\n");

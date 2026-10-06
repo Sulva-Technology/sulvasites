@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { startCheckout } from "@/lib/shop/checkoutClient";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/lib/shop/checkoutInput";
 import { formatNaira } from "@/lib/shop/money";
 import { shopHref, useT14 } from "../ctx";
-import { IconArrow, IconBag } from "../icons";
+import { IconArrow, IconBag, IconCheck, IconLock } from "../icons";
 import CartLines, { type LineProblem } from "./CartLines";
 import { useBag } from "./useBag";
 
@@ -26,7 +26,7 @@ const TEXT_CONTROL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
-    <span id={id} className="t14-field-error" role="alert">
+    <span id={id} className="t14-co-err" role="alert">
       {message}
     </span>
   ) : null;
@@ -121,11 +121,11 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <section className="t14-section t14-shop-page">
+      <section className="t14-co t14-shop-page">
         <div className="t14-container">
-          <h1 className="t14-h1">Checkout</h1>
-          <p className="t14-muted" role="status">
-            Loading your cart
+          <h1 className="t14-h1">Checkout.</h1>
+          <p className="t14-cp-note" role="status">
+            Loading your bag
           </p>
         </div>
       </section>
@@ -134,15 +134,15 @@ export default function CheckoutPage() {
 
   if (rows.length === 0) {
     return (
-      <section className="t14-section t14-shop-page">
+      <section className="t14-co t14-shop-page">
         <div className="t14-container">
-          <h1 className="t14-h1">Checkout</h1>
-          <div className="t14-empty">
-            <span className="t14-empty-ico" aria-hidden="true">
-              <IconBag size={38} />
+          <h1 className="t14-h1">Checkout.</h1>
+          <div className="t14-cp-empty">
+            <span className="t14-bag-empty-ico" aria-hidden="true">
+              <IconBag size={30} />
             </span>
-            <p className="t14-empty-title">Your cart is empty</p>
-            <Link className="t14-btn t14-btn-lg" href={shopHref(baseUrl)}>
+            <p className="t14-bag-empty-t">Your bag is empty</p>
+            <Link className="t14-pill t14-pill-black t14-pill-lg" href={shopHref(baseUrl)}>
               Continue shopping
             </Link>
           </div>
@@ -153,28 +153,70 @@ export default function CheckoutPage() {
 
   const desc = (f: Field) => (errors[f] ? `t14-err-${f}` : undefined);
 
+  // Radio cards: arrows move between delivery and pickup.
+  const onMethodKey = (e: ReactKeyboardEvent<HTMLElement>) => {
+    const next = e.key === "ArrowRight" || e.key === "ArrowDown";
+    const prev = e.key === "ArrowLeft" || e.key === "ArrowUp";
+    if (!next && !prev) return;
+    e.preventDefault();
+    const to = effective === "delivery" ? "pickup" : "delivery";
+    setMethod(to);
+    e.currentTarget.parentElement?.querySelector<HTMLElement>(`[data-method="${to}"]`)?.focus();
+  };
+
+  const methodCard = (m: "delivery" | "pickup", name: string, sub: string, price: string) => {
+    const checked = effective === m;
+    return (
+      <button
+        key={m}
+        type="button"
+        role="radio"
+        className="t14-opt"
+        aria-checked={checked}
+        data-method={m}
+        tabIndex={checked ? 0 : -1}
+        onClick={() => setMethod(m)}
+        onKeyDown={onMethodKey}
+      >
+        <span>
+          <span className="t14-opt-name">{name}</span>
+          <span className="t14-opt-sub">{sub}</span>
+        </span>
+        <span className="t14-opt-price">{price}</span>
+        <span className="t14-opt-check" aria-hidden="true">
+          {checked ? <IconCheck size={13} /> : null}
+        </span>
+      </button>
+    );
+  };
+
   return (
-    <section className="t14-section t14-shop-page">
+    <section className="t14-co t14-shop-page">
       <div className="t14-container">
-        <header className="t14-shop-head">
+        <header className="t14-cp-head">
           <nav className="t14-crumbs" aria-label="Breadcrumb">
             <Link href={shopHref(baseUrl)}>Shop</Link>
             <span aria-hidden="true">/</span>
-            <Link href={`${shopHref(baseUrl)}/cart`}>Cart</Link>
+            <Link href={`${shopHref(baseUrl)}/cart`}>Bag</Link>
             <span aria-hidden="true">/</span>
             <span aria-current="page">Checkout</span>
           </nav>
-          <h1 className="t14-h1">Checkout</h1>
+          <h1 className="t14-h1">Checkout.</h1>
         </header>
 
-        <div className="t14-bag-layout">
-          <form ref={formRef} className="t14-checkout" onSubmit={onSubmit} noValidate aria-label="Checkout">
-            <fieldset className="t14-fieldset">
-              <legend>Contact</legend>
-              <label className="t14-field">
+        <div className="t14-co-layout">
+          <form id="t14-checkout-form" ref={formRef} className="t14-co-form" onSubmit={onSubmit} noValidate aria-label="Checkout">
+            <fieldset className="t14-co-card">
+              <legend>
+                <span className="t14-co-n" aria-hidden="true">
+                  1
+                </span>
+                Contact
+              </legend>
+              <label className="t14-co-field">
                 <span>Full name</span>
                 <input
-                  className="t14-input"
+                  className="t14-co-input"
                   name="name"
                   autoComplete="name"
                   required
@@ -184,11 +226,11 @@ export default function CheckoutPage() {
                 />
                 <FieldError id="t14-err-name" message={errors.name} />
               </label>
-              <div className="t14-form-row">
-                <label className="t14-field">
+              <div className="t14-co-row">
+                <label className="t14-co-field">
                   <span>Email</span>
                   <input
-                    className="t14-input"
+                    className="t14-co-input"
                     name="email"
                     type="email"
                     autoComplete="email"
@@ -199,10 +241,10 @@ export default function CheckoutPage() {
                   />
                   <FieldError id="t14-err-email" message={errors.email} />
                 </label>
-                <label className="t14-field">
+                <label className="t14-co-field">
                   <span>Phone</span>
                   <input
-                    className="t14-input"
+                    className="t14-co-input"
                     name="phone"
                     type="tel"
                     autoComplete="tel"
@@ -216,31 +258,24 @@ export default function CheckoutPage() {
               </div>
             </fieldset>
 
-            <fieldset className="t14-fieldset">
-              <legend>{pickup ? "Delivery or pickup" : "Delivery"}</legend>
+            <fieldset className="t14-co-card">
+              <legend>
+                <span className="t14-co-n" aria-hidden="true">
+                  2
+                </span>
+                {pickup ? "Delivery or pickup" : "Delivery"}
+              </legend>
               {pickup ? (
-                <div className="t14-choice-row">
-                  <label className="t14-choice" data-checked={effective === "delivery"}>
-                    <input type="radio" name="method" value="delivery" checked={effective === "delivery"} onChange={() => setMethod("delivery")} />
-                    <span>
-                      <b>Delivery</b>
-                      <small>{shop.settings.deliveryFeeKobo > 0 ? formatNaira(shop.settings.deliveryFeeKobo) : "Free"}</small>
-                    </span>
-                  </label>
-                  <label className="t14-choice" data-checked={effective === "pickup"}>
-                    <input type="radio" name="method" value="pickup" checked={effective === "pickup"} onChange={() => setMethod("pickup")} />
-                    <span>
-                      <b>Pickup</b>
-                      <small>Free</small>
-                    </span>
-                  </label>
+                <div className="t14-co-opts" role="radiogroup" aria-label="Delivery method">
+                  {methodCard("delivery", "Delivery", "To your address", shop.settings.deliveryFeeKobo > 0 ? formatNaira(shop.settings.deliveryFeeKobo) : "Free")}
+                  {methodCard("pickup", "Pickup", "Collect your order", "Free")}
                 </div>
               ) : null}
               {effective === "delivery" ? (
-                <label className="t14-field">
+                <label className="t14-co-field">
                   <span>Delivery address</span>
                   <textarea
-                    className="t14-input"
+                    className="t14-co-input"
                     name="address"
                     rows={3}
                     maxLength={ADDRESS_MAX}
@@ -253,12 +288,12 @@ export default function CheckoutPage() {
                   <FieldError id="t14-err-address" message={errors.address} />
                 </label>
               ) : shop.settings.pickupNote ? (
-                <p className="t14-note">{shop.settings.pickupNote}</p>
+                <p className="t14-co-note">{shop.settings.pickupNote}</p>
               ) : null}
-              <label className="t14-field">
+              <label className="t14-co-field">
                 <span>Notes (optional)</span>
                 <textarea
-                  className="t14-input"
+                  className="t14-co-input"
                   name="notes"
                   rows={2}
                   maxLength={NOTES_MAX}
@@ -269,43 +304,55 @@ export default function CheckoutPage() {
               </label>
             </fieldset>
 
+            <div className="t14-co-card" role="group" aria-labelledby="t14-co-pay-h">
+              <p id="t14-co-pay-h" className="t14-co-legend">
+                <span className="t14-co-n" aria-hidden="true">
+                  3
+                </span>
+                Payment
+              </p>
+              <p className="t14-co-note" role="status">
+                {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
+              </p>
+            </div>
+          </form>
+
+          <aside className="t14-co-card t14-co-sum" aria-label="Order summary">
+            <h2 className="t14-co-legend">Your order</h2>
+            <CartLines rows={rows} serverProblems={problems} readOnly />
+            <p className="t14-bsum-row">
+              <span>Subtotal</span>
+              <span>{formatNaira(subtotal)}</span>
+            </p>
+            <p className="t14-bsum-row">
+              <span>{effective === "pickup" ? "Pickup" : "Delivery"}</span>
+              <span>{fee > 0 ? formatNaira(fee) : "Free"}</span>
+            </p>
+            <p className="t14-bsum-total t14-bsum-total-lg">
+              <span>Total</span>
+              <b>{formatNaira(total)}</b>
+            </p>
+
             {formError ? (
-              <div className="t14-form-error" role="alert">
+              <div className="t14-co-formerr" role="alert">
                 <p>{formError}</p>
                 {Object.keys(problems).length ? (
                   <p>
-                    <Link href={`${shopHref(baseUrl)}/cart`}>Review your cart</Link>
+                    <Link href={`${shopHref(baseUrl)}/cart`}>Review your bag</Link>
                   </p>
                 ) : null}
               </div>
             ) : null}
 
-            <button type="submit" className="t14-btn t14-btn-block t14-btn-lg" disabled={busy}>
-              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : `Pay ${formatNaira(total)}`}
+            <button type="submit" form="t14-checkout-form" className="t14-pill t14-pill-black t14-pill-xl t14-pill-block" disabled={busy}>
+              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : "Pay with Paystack"}
               {!busy ? <IconArrow size={18} /> : null}
             </button>
-            <p className="t14-fine t14-center" role="status">
-              {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
+            <p className="t14-co-secure">
+              <IconLock size={13} /> Secured by Paystack
             </p>
-          </form>
-
-          <aside className="t14-summary" aria-label="Order summary">
-            <h2 className="t14-card-title">Your order</h2>
-            <CartLines rows={rows} serverProblems={problems} readOnly />
-            <p className="t14-sum-row">
-              <span>Subtotal</span>
-              <b>{formatNaira(subtotal)}</b>
-            </p>
-            <p className="t14-sum-row">
-              <span>{effective === "pickup" ? "Pickup" : "Delivery"}</span>
-              <b>{fee > 0 ? formatNaira(fee) : "Free"}</b>
-            </p>
-            <p className="t14-sum-row t14-sum-total">
-              <span>Total</span>
-              <b>{formatNaira(total)}</b>
-            </p>
-            <Link className="t14-textlink t14-center" href={`${shopHref(baseUrl)}/cart`}>
-              Edit cart
+            <Link className="t14-co-edit" href={`${shopHref(baseUrl)}/cart`}>
+              Edit bag
             </Link>
           </aside>
         </div>

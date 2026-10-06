@@ -11,6 +11,7 @@ import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
 import { sanitizeThemeStyle } from "@/templates/shared/theme";
+import T14FloatPill from "./components/T14FloatPill";
 import T14Footer from "./components/T14Footer";
 import T14Header from "./components/T14Header";
 import { collectHours, T14Provider } from "./ctx";
@@ -21,7 +22,7 @@ import ShopViews from "./shop/ShopViews";
 import "./template14.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500;600&display=swap";
 
 function galleryPhotos(pages: Array<PageData | undefined>) {
   const seen = new Set<string>();
@@ -100,6 +101,7 @@ export default function Template14({
         : "home";
   const pageLabel = navPages.find((p) => p.key === currentExtraKey)?.label || pageData?.seo?.title || "";
   const shopViewKind = shopView?.kind ?? null;
+  const overHero = pageKind === "home" && pageData?.sections?.[0]?.type === "hero";
 
   const ctx = useMemo(
     () => ({
@@ -174,14 +176,15 @@ export default function Template14({
         <a className="t14-skip" href="#t14-main">
           Skip to content
         </a>
-        <T14Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
-        <main id="t14-main" tabIndex={-1}>
+        <T14Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} overHero={overHero} />
+        <main id="t14-main" tabIndex={-1} data-clear={!(overHero && photos.length > 0)}>
           {shop && shopView ? <ShopViews view={shopView} /> : <T14Sections pageData={pageData} />}
         </main>
         <T14Footer logoUrl={logoUrl} />
         <p className="t14-sr" role="status" aria-live="polite" aria-atomic="true">
           {status}
         </p>
+        <T14FloatPill />
         {shop && !cartOpen ? <StickyCartBar /> : null}
         {shop && cartOpen ? <CartDrawer /> : null}
       </div>

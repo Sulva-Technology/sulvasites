@@ -103,11 +103,11 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   // Restaurant — "Tavola"
   t7: config("t7", {
     accent: "#b5452b",
-    accent2: "#2a1712",
-    ink: "#231815",
-    muted: "#75655c",
-    bg: "#fbf6ee",
-    surface: "#f2e8d9",
+    accent2: "#0b0b0b",
+    ink: "#0b0b0b",
+    muted: "#6b6a66",
+    bg: "#f5f4f1",
+    surface: "#ebe9e4",
   }, { accent2: "Dark bands & footer", surface: "Menu cards / panels" }),
   // Clinic / health — "Vital"
   t8: config("t8", {
@@ -163,15 +163,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f6f5f2",
     surface: "#ecebe7",
   }, { accent2: "Night bands & footer", surface: "Cards / panels" }),
-  // General store — "Cartly"
+  // General store — "Cartly" (quiet, product-first)
   t14: config("t14", {
-    accent: "#1f6feb",
-    accent2: "#0e1726",
-    ink: "#0f172a",
-    muted: "#5b6475",
+    accent: "#2563eb",
+    accent2: "#0a0a0a",
+    ink: "#0a0a0a",
+    muted: "#6b6b6b",
     bg: "#ffffff",
-    surface: "#f3f5f9",
-  }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
+    surface: "#f5f5f5",
+  }, { accent2: "Buttons & dark bands", surface: "Paper cards / panels" }),
 };
 
 // Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
@@ -179,14 +179,14 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t4: { accent2: "#12152a", ink: "#eef0fb", muted: "#9aa0ba", bg: "#05060c", surface: "#0e1120" },
   t5: { accent2: "#2a1f26", ink: "#f6eef2", muted: "#b4a7b0", bg: "#120d10", surface: "#1c1519" },
   t6: { accent2: "#1d1d1b", ink: "#f1f0eb", muted: "#a3a29c", bg: "#0f0f0e", surface: "#1a1a18" },
-  t7: { accent: "#e0784f", accent2: "#24150f", ink: "#f3e7d6", muted: "#b8a595", bg: "#140d0a", surface: "#1e140f" },
+  t7: { accent: "#e0784f", accent2: "#101010", ink: "#f5f3ee", muted: "#a6a39c", bg: "#050505", surface: "#101010" },
   t8: { accent: "#4fd1b5", accent2: "#061a20", ink: "#e3f1ee", muted: "#9bb4b6", bg: "#0b2129", surface: "#0f2c35" },
   t9: { accent: "#ff3b35", accent2: "#0f0f10", ink: "#f4f4f5", muted: "#a1a1a9", bg: "#000000", surface: "#0d0d0e" },
   t10: { accent: "#8ea3ff", accent2: "#090f29", ink: "#f4f2ea", muted: "#aab2d0", bg: "#0e1533", surface: "#131c40" },
   t11: { accent: "#b18cff", accent2: "#0c0616", ink: "#f6effc", muted: "#b9a9cc", bg: "#130a22", surface: "#1c1030" },
   t12: { accent: "#ff8a3d", accent2: "#0e1011", ink: "#eef0f1", muted: "#a3abb1", bg: "#16191b", surface: "#1f2326" },
   t13: { ink: "#f4f4f5", muted: "#9ea3ad", bg: "#0a0a0b", surface: "#111113" },
-  t14: { accent: "#5b9cff", accent2: "#070d18", ink: "#eaf0fa", muted: "#9aa6bb", bg: "#0b1220", surface: "#131c2e" },
+  t14: { ink: "#f5f5f5", muted: "#a1a1a1", bg: "#0a0a0a", surface: "#141414" },
 };
 
 for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {

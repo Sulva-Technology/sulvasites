@@ -179,6 +179,18 @@ function cleanSeoText(s: string, ctx: CleanCtx) {
   return cleanText(s, ctx);
 }
 
+/** Fact set for cleaning one-off edits (the site assistant) outside the full gate. */
+export type CopyFacts = CleanCtx;
+
+export function copyFacts(brief: Brief): CopyFacts {
+  return { facts: factDigitSet(brief), factText: briefFactText(brief), stats: { fixes: 0 } };
+}
+
+/** Swaps cliches, drops sentences with banned phrases or invented numbers/emails. `key` "body" = HTML. */
+export function cleanCopyField(value: string, key: string, facts: CopyFacts): string {
+  return cleanField(value, key, facts) as string;
+}
+
 // ---------- lint (used by the repair loop) ----------
 
 function collect(v: unknown, path: string, out: Array<{ path: string; text: string }>, key = "") {
@@ -214,7 +226,7 @@ export function lintPage(page: PageData, brief: Brief): LintIssue[] {
 
 // ---------- gate ----------
 
-function clampSection(s: Section): Section {
+export function clampSection(s: Section): Section {
   switch (s.type) {
     case "hero":
       return {
@@ -276,7 +288,7 @@ function dedupeItems<T extends { [k: string]: unknown }>(items: T[], keyOf: (i: 
   return out;
 }
 
-function dedupeSection(s: Section): Section {
+export function dedupeSection(s: Section): Section {
   switch (s.type) {
     case "services":
       return { ...s, items: dedupeItems(s.items, (i) => i.title) };

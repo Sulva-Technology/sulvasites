@@ -8,12 +8,12 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink } from "@/templates/shared/links";
-import { cityOf, directionsHref, reserveHref, useT7 } from "../ctx";
-import { IconArrow, IconClose, IconCutlery, IconMenu, IconPhone, IconPin } from "../icons";
+import { reserveHref, useT7 } from "../ctx";
+import { IconArrow, IconClose, IconCutlery, IconMenu, IconPhone } from "../icons";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
-/** Two-tier masthead: contact line · centred wordmark · reserve, then a centred nav rule. */
+/** Single-row masthead: wordmark left, nav, reserve. Floats over the home hero until scrolled. */
 export default function T7Header({
   logoUrl,
   currentPage,
@@ -31,7 +31,6 @@ export default function T7Header({
 
   const socials = (profile.socials || {}) as Record<string, unknown>;
   const navLabels = (socials.nav_labels as Record<string, string>) || {};
-  const city = cityOf(profile.address);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -65,28 +64,13 @@ export default function T7Header({
     <>
       <header className="t7-header" data-scrolled={scrolled}>
         <div className="t7-container t7-mast">
-          <div className="t7-mast-side">
-            {profile.address ? (
-              <a className="t7-mast-meta" href={directionsHref(profile.address)} target="_blank" rel="noreferrer">
-                <IconPin size={15} />
-                <span>{city || profile.address}</span>
-              </a>
-            ) : null}
-            {profile.phone ? (
-              <a className="t7-mast-meta t7-hide-md" href={buildTelLink(profile.phone)}>
-                <IconPhone size={15} />
-                <span>{profile.phone}</span>
-              </a>
-            ) : null}
-          </div>
-
           <Link href={`${baseUrl}/`} className="t7-brand" aria-label={profile.business_name}>
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt={profile.business_name} />
             ) : (
               <span className="t7-brand-mark" aria-hidden="true">
-                <IconCutlery size={18} />
+                <IconCutlery size={16} />
               </span>
             )}
             <span className="t7-brand-name">
@@ -98,25 +82,7 @@ export default function T7Header({
             </span>
           </Link>
 
-          <div className="t7-mast-side t7-mast-end">
-            <ModeToggle mode={mode} onToggle={toggleMode} className="t7-round" />
-            <a href={reserveHref(ctx)} className="t7-btn t7-btn-sm t7-hide-sm">
-              Reserve
-            </a>
-            <button
-              type="button"
-              className="t7-round t7-burger"
-              aria-label="Open menu"
-              aria-expanded={open}
-              onClick={() => setOpen(true)}
-            >
-              <IconMenu />
-            </button>
-          </div>
-        </div>
-
-        <nav className="t7-nav" aria-label="Main">
-          <div className="t7-container t7-nav-inner">
+          <nav className="t7-nav" aria-label="Main">
             {items.map((it) => (
               <Link key={it.id} href={it.href} data-active={it.active} aria-current={it.active ? "page" : undefined}>
                 {it.coreKey ? (
@@ -130,8 +96,24 @@ export default function T7Header({
                 )}
               </Link>
             ))}
+          </nav>
+
+          <div className="t7-mast-end">
+            <ModeToggle mode={mode} onToggle={toggleMode} className="t7-round" />
+            <a href={reserveHref(ctx)} className="t7-btn t7-btn-sm t7-hide-sm">
+              Reserve a table
+            </a>
+            <button
+              type="button"
+              className="t7-round t7-burger"
+              aria-label="Open menu"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <IconMenu />
+            </button>
           </div>
-        </nav>
+        </div>
       </header>
 
       {open ? (

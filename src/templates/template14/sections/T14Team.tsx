@@ -5,7 +5,7 @@ import type { TeamSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
 import { IconArrow } from "../icons";
 
-/** "The studio": tall portraits with name and role beneath, in a hairline grid. */
+/** "The studio": paper cards with a square photo, name and role. */
 export default function T14Team({ section, sectionIndex }: { section: TeamSection; sectionIndex?: number }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.members?.some((m) => m.name?.trim())) return null;
@@ -18,17 +18,14 @@ export default function T14Team({ section, sectionIndex }: { section: TeamSectio
     : section.members.filter((m) => m.name?.trim());
 
   return (
-    <section className="t14-section t14-team-section">
+    <section className="t14-section t14-tm">
       <div className="t14-container">
-        <header className="t14-head t14-head-split t14-reveal">
-          <div>
-            <p className="t14-label">Team</p>
-            <EditableText as="h2" className="t14-h2" value={title} placeholder="The studio" onCommit={(next) => set({ title: next })} />
-          </div>
+        <header className="t14-sec-head t14-reveal">
+          <EditableText as="h2" className="t14-h2" value={title} placeholder="The studio" onCommit={(next) => set({ title: next })} />
           {subtitle || enabled ? (
             <EditableText
               as="p"
-              className="t14-head-note"
+              className="t14-sec-note"
               value={subtitle}
               placeholder="Subtitle (optional)"
               multiline
@@ -37,22 +34,22 @@ export default function T14Team({ section, sectionIndex }: { section: TeamSectio
           ) : null}
         </header>
 
-        <ul className="t14-team" data-count={members.length}>
+        <ul className="t14-tm-grid" data-count={members.length}>
           {members.map((m, idx) => (
-            <li key={idx} className="t14-member t14-reveal">
-              <div className="t14-member-photo">
+            <li key={idx} className="t14-tm-card t14-paper t14-reveal" style={{ ["--d" as string]: idx % 4 }}>
+              <div className="t14-tm-photo">
                 {m.photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.photoUrl} alt={m.name || "Team member"} loading="lazy" />
                 ) : (
-                  <span className="t14-member-initials" aria-hidden="true">
+                  <span className="t14-tm-initials" aria-hidden="true">
                     {initials(m.name ?? "")}
                   </span>
                 )}
               </div>
               <EditableText
                 as="h3"
-                className="t14-member-name"
+                className="t14-tm-name"
                 value={m.name ?? ""}
                 placeholder="Name"
                 onCommit={(next) => setItem("members", members, idx, { name: next })}
@@ -60,7 +57,7 @@ export default function T14Team({ section, sectionIndex }: { section: TeamSectio
               {m.role || enabled ? (
                 <EditableText
                   as="p"
-                  className="t14-member-role"
+                  className="t14-tm-role"
                   value={m.role ?? ""}
                   placeholder="Role"
                   onCommit={(next) => setItem("members", members, idx, { role: next })}
@@ -69,7 +66,7 @@ export default function T14Team({ section, sectionIndex }: { section: TeamSectio
               {m.bio || enabled ? (
                 <EditableText
                   as="p"
-                  className="t14-muted"
+                  className="t14-tm-bio"
                   value={m.bio ?? ""}
                   placeholder="Short bio"
                   multiline
@@ -77,7 +74,7 @@ export default function T14Team({ section, sectionIndex }: { section: TeamSectio
                 />
               ) : null}
               {m.linkedinUrl && m.linkedinUrl !== "#" ? (
-                <a className="t14-textlink" href={m.linkedinUrl} target="_blank" rel="noreferrer">
+                <a className="t14-tm-link" href={m.linkedinUrl} target="_blank" rel="noreferrer">
                   Profile <IconArrow size={14} />
                 </a>
               ) : null}

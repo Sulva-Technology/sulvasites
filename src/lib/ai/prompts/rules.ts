@@ -100,14 +100,17 @@ export type Sampling = { temperature: number; reasoningEffort: "low" | "medium" 
  * The fallback model (llama-3.3-70b) ignores reasoningEffort, so the prompts never rely on it.
  */
 export const SAMPLING = {
-  chat: { temperature: 0.3, reasoningEffort: "low", maxTokens: 2048 },
-  plan: { temperature: 0.2, reasoningEffort: "medium", maxTokens: 3072 },
-  profile: { temperature: 0.4, reasoningEffort: "medium", maxTokens: 3072 },
+  // Reasoning models (Nemotron, gpt-oss) spend part of maxTokens thinking; too small a budget
+  // leaves an empty or cut-off JSON answer.
+  chat: { temperature: 0.3, reasoningEffort: "low", maxTokens: 4096 },
+  plan: { temperature: 0.2, reasoningEffort: "medium", maxTokens: 4096 },
+  profile: { temperature: 0.4, reasoningEffort: "medium", maxTokens: 4096 },
   write: { temperature: 0.45, reasoningEffort: "medium", maxTokens: 4096 },
   repair: { temperature: 0.2, reasoningEffort: "medium", maxTokens: 4096 },
   rewrite: { temperature: 0.5, reasoningEffort: "medium", maxTokens: 8192 },
   translate: { temperature: 0.2, reasoningEffort: "low", maxTokens: 8192 },
   seo: { temperature: 0.3, reasoningEffort: "medium", maxTokens: 8192 },
+  assistant: { temperature: 0.4, reasoningEffort: "medium", maxTokens: 8192 },
 } as const satisfies Record<string, Sampling>;
 
 /** Silent checklist appended to every writing prompt. */
@@ -170,9 +173,9 @@ export function delimitUserData(label: string, text: string, maxChars = 6000): s
 }
 
 /** Chat transcript as delimited, JSON-escaped lines so fake "assistant:" lines cannot be forged. */
-export function delimitTranscript(messages: Array<{ role: string; content: string }>, maxChars = 6000): string {
+export function delimitTranscript(messages: Array<{ role: string; content: string }>, maxChars = 6000, perMessage = 1500): string {
   const lines = messages.map(
-    (m, i) => `${i + 1}. ${m.role === "assistant" ? "assistant" : "owner"}: ${JSON.stringify(scrub(m.content).slice(0, 1500))}`,
+    (m, i) => `${i + 1}. ${m.role === "assistant" ? "assistant" : "owner"}: ${JSON.stringify(scrub(m.content).slice(0, perMessage))}`,
   );
   let text = lines.join("\n");
   if (text.length > maxChars) text = "…" + text.slice(text.length - maxChars);

@@ -2,13 +2,13 @@
 
 import EditableText from "@/components/inline-editor/EditableText";
 import type { UseCasesSection } from "@/lib/pageSchema";
-import { pad2, useSectionEditor } from "@/templates/shared/edit";
+import { useSectionEditor } from "@/templates/shared/edit";
 import { shopHref, useT14 } from "../ctx";
 import { IconArrow, IconStore } from "../icons";
 
 /**
- * Use cases as "Highlights": tall image cards with a cover borrowed from the site's gallery
- * (else a tinted panel), a numeral, title, description and a link (defaults to the shop).
+ * Use cases as "Highlights": a two-column bento of paper cards with a cover borrowed from the
+ * site's gallery (else a white tile), title, description and an arrow pill link (defaults to the shop).
  */
 export default function T14UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
   const { photos, shop, baseUrl } = useT14();
@@ -23,17 +23,14 @@ export default function T14UseCases({ section, sectionIndex }: { section: UseCas
     : section.items.filter((it) => it.title?.trim());
 
   return (
-    <section className="t14-section t14-collections-section">
+    <section className="t14-section t14-uc">
       <div className="t14-container">
-        <header className="t14-head t14-head-split t14-reveal">
-          <div>
-            <p className="t14-label">Highlights</p>
-            <EditableText as="h2" className="t14-h2" value={title} placeholder="Highlights" onCommit={(next) => set({ title: next })} />
-          </div>
+        <header className="t14-sec-head t14-reveal">
+          <EditableText as="h2" className="t14-h2" value={title} placeholder="Highlights" onCommit={(next) => set({ title: next })} />
           {description || enabled ? (
             <EditableText
               as="p"
-              className="t14-head-note"
+              className="t14-sec-note"
               value={description}
               placeholder="Short intro (optional)"
               multiline
@@ -42,31 +39,17 @@ export default function T14UseCases({ section, sectionIndex }: { section: UseCas
           ) : null}
         </header>
 
-        <ul className="t14-collections" data-count={items.length}>
+        <ul className="t14-uc-grid" data-count={items.length}>
           {items.map((it, idx) => {
             const cover = photos.length ? photos[(idx + 3) % photos.length] : null;
             const href = it.linkHref || (shop ? shopHref(baseUrl) : "");
             const linkText = it.linkText || (enabled ? "" : shop ? "Shop now" : "");
             return (
-              <li key={idx} className="t14-collection t14-reveal">
-                <div className="t14-collection-cover" data-photo={!!cover}>
-                  {cover ? (
-                    // The title below names the card; the borrowed cover is decorative.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cover.url} alt="" loading="lazy" />
-                  ) : (
-                    <span aria-hidden="true">
-                      <IconStore size={44} />
-                    </span>
-                  )}
-                  <span className="t14-collection-no" aria-hidden="true">
-                    {pad2(idx + 1)}
-                  </span>
-                </div>
-                <div className="t14-collection-body">
+              <li key={idx} className="t14-uc-card t14-paper t14-reveal" style={{ ["--d" as string]: idx % 2 }}>
+                <div className="t14-uc-body">
                   <EditableText
                     as="h3"
-                    className="t14-collection-title"
+                    className="t14-uc-title"
                     value={it.title ?? ""}
                     placeholder="Highlight name"
                     onCommit={(next) => setItem("items", items, idx, { title: next })}
@@ -74,7 +57,7 @@ export default function T14UseCases({ section, sectionIndex }: { section: UseCas
                   {it.description || enabled ? (
                     <EditableText
                       as="p"
-                      className="t14-muted"
+                      className="t14-uc-desc"
                       value={it.description ?? ""}
                       placeholder="What is in it, and the mood"
                       multiline
@@ -82,7 +65,7 @@ export default function T14UseCases({ section, sectionIndex }: { section: UseCas
                     />
                   ) : null}
                   {href && (linkText || enabled) ? (
-                    <a className="t14-textlink" href={href}>
+                    <a className="t14-pill t14-pill-white t14-uc-link" href={href}>
                       <EditableText
                         as="span"
                         value={linkText}
@@ -92,6 +75,15 @@ export default function T14UseCases({ section, sectionIndex }: { section: UseCas
                       <IconArrow size={16} />
                     </a>
                   ) : null}
+                </div>
+                <div className="t14-uc-tile" data-photo={!!cover} aria-hidden="true">
+                  {cover ? (
+                    // The title names the card; the borrowed cover is decorative.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={cover.url} alt="" loading="lazy" />
+                  ) : (
+                    <IconStore size={40} />
+                  )}
                 </div>
               </li>
             );

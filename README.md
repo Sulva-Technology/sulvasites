@@ -15,15 +15,22 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
-   GROQ_API_KEY=...                     # AI (site generator + section rewrite)
-   # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional model overrides
+   OPENROUTER_API_KEY=...               # AI for every feature (site builder, setup chat, rewrite, SEO, "Ask AI")
+   # OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b   # default; paid endpoint, routed only to providers that don't store data
+   # OPENROUTER_TIMEOUT_MS=25000          # per-call limit before falling back to Groq
+   GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
+   # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
+   # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
    ```
 
 3. In the Supabase SQL editor run, in order:
    - `supabase/schema.sql`
    - `supabase/migrations/*.sql` (numbered order) up to `011`
    - `supabase/admin/add_current_user_as_admin.sql` (after creating your user)
+   - Locked out of `/admin` or a site later? Run `supabase/admin/restore_admin_access.sql` with your email
    - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
+   - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
+   - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
@@ -38,6 +45,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Unit tests (Node built-in runner, `tests/`) |
+| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live model (`OPENROUTER_API_KEY` and/or `GROQ_API_KEY`; one model call each; `-- --groq` for Groq only). Run it before launch and after any model change; it fails below 85%. |
 
 ## How routing works
 

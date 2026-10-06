@@ -13,14 +13,14 @@ export default function T14RichText({ section, sectionIndex }: { section: RichTe
   if (!enabled && !title.trim() && !body.replace(/<[^>]+>/g, "").trim()) return null;
 
   return (
-    <section className="t14-section t14-prose-section">
+    <section className="t14-section t14-rt">
       <div className="t14-container">
-        <article className="t14-sheet t14-reveal">
+        <article className="t14-rt-sheet t14-reveal">
           {title || enabled ? (
-            <EditableText as="h2" className="t14-h2 t14-sheet-title" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
+            <EditableText as="h2" className="t14-h2 t14-rt-title" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
           ) : null}
           {/* Empty-body hint is CSS-only (data-hint), so it is never saved as content. */}
-          <div className="t14-prose" data-hint={enabled ? "Share your story, delivery details or returns information." : undefined}>
+          <div className="t14-rt-body" data-hint={enabled ? "Share your story, delivery details or returns information." : undefined}>
             <EditableHtml html={body} onCommit={(nextHtml) => set({ body: nextHtml })} />
           </div>
         </article>

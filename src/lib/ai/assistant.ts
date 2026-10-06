@@ -1,6 +1,7 @@
 // Chat turn logic for the site assistant. Pure helpers plus one model call. Relative imports only.
 import {
   extractContactFromText,
+  guessBriefFromText,
   hasEnoughToBuild,
   mergeBrief,
   normalizeBrief,
@@ -10,7 +11,8 @@ import {
   type Brief,
   type ChatMessage,
 } from "./brief.ts";
-import { extractJson, groqChat, type GroqChatOptions } from "./groq.server.ts";
+import { extractJson, type GroqChatOptions } from "./groq.server.ts";
+import { aiChat } from "./llm.server.ts";
 import { MAX_CHAT_QUESTIONS, buildChatPrompt } from "./prompts/builders.ts";
 import { SAMPLING } from "./prompts/rules.ts";
 import { chooseTemplateFallback } from "./templateChoice.ts";
@@ -46,7 +48,10 @@ export function decideReady(state: Brief, messages: ChatMessage[], modelReady: b
   if (!hasEnoughToBuild(state)) return false;
   const userTurns = messages.filter((m) => m.role === "user").length;
   const questions = countQuestions(messages);
+  // A long pasted brief, bio or profile is a full brief: build instead of asking more.
+  const longBrief = messages.some((m) => m.role === "user" && m.content.length >= 400);
   const extra =
+    longBrief ||
     !!state.location || state.services.length > 0 || !!(state.contact.phone || state.contact.whatsapp || state.contact.email);
   return modelReady || extra || userTurns >= 2 || questions >= MAX_CHAT_QUESTIONS || wantsToProceed(messages);
 }
@@ -108,7 +113,7 @@ export async function runAssistantTurn(
   args: { messages: unknown; state?: unknown },
   deps: { chat?: ChatFn } = {},
 ): Promise<AssistantTurn> {
-  const chat = deps.chat ?? groqChat;
+  const chat = deps.chat ?? aiChat;
   const messages = normalizeMessages(args.messages);
   const prior = normalizeBrief(args.state);
   const questions = countQuestions(messages);
@@ -124,6 +129,15 @@ export async function runAssistantTurn(
   }
 
   const state = mergeState(prior, normalizeBrief(parsed?.state), messages);
+  // The model returned nothing usable (bad JSON, cut-off answer, over-cautious extraction): fall
+  // back to the obvious reading of a pasted profile so the owner isn't asked what they already said.
+  if (!hasEnoughToBuild(state)) {
+    const guess = guessBriefFromText(ownerText(messages));
+    if (guess.businessName && guess.whatTheyDo) {
+      state.businessName ||= guess.businessName;
+      state.whatTheyDo ||= guess.whatTheyDo;
+    }
+  }
   const ready = decideReady(state, messages, parsed?.ready === true);
   const suggestedTemplate = state.whatTheyDo || state.services.length
     ? (() => {
