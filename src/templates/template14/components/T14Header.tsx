@@ -299,7 +299,7 @@ export default function T14Header({
             ))}
           </nav>
 
-          <div className="t14-island t14-actions">
+          <div className="t14-island t14-hactions">
             {shop ? (
               <button
                 ref={searchBtnRef}
