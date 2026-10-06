@@ -2472,3 +2472,184 @@ textarea.t7-input {
     flex: 1 1 auto;
   }
 }
+
+/* ---------- Editorial pass (inspired by Balky Studio) ----------
+   Photo-led, high-contrast: huge uppercase display type, tracked caps labels,
+   numbered entries (01–04), a scroll cue and quiet hover states. Colours still come
+   from the theme variables, so each site's palette keeps working. */
+
+.t7-hero-home {
+  min-height: clamp(620px, 100svh, 980px);
+}
+
+.t7-hero-media::after {
+  background:
+    linear-gradient(180deg, rgba(10, 6, 4, 0.5) 0%, rgba(10, 6, 4, 0.1) 28%, rgba(10, 6, 4, 0.55) 62%, rgba(10, 6, 4, 0.94) 100%),
+    linear-gradient(90deg, rgba(10, 6, 4, 0.5) 0%, rgba(10, 6, 4, 0) 62%);
+}
+
+.t7-hero-name {
+  font-family: var(--t7-sans);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 11.5vw, 10.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  max-width: 12ch;
+}
+
+.t7-hero-content .t7-eyebrow {
+  letter-spacing: 0.28em;
+}
+
+.t7-hero-title {
+  font-family: var(--t7-sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  line-height: 1.5;
+}
+
+.t7-strip-item small {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  letter-spacing: 0.24em;
+}
+
+.t7-strip-item small b {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--t7-cream-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scroll cue */
+.t7-scroll {
+  position: absolute;
+  right: var(--t7-gutter);
+  bottom: 118px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--t7-cream-muted) !important;
+  writing-mode: vertical-rl;
+}
+
+.t7-scroll i {
+  display: block;
+  width: 1px;
+  height: 56px;
+  background: var(--t7-cream-line);
+  position: relative;
+  overflow: hidden;
+}
+
+.t7-scroll i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--t7-cream);
+  animation: t7-scroll-cue 2.2s var(--t7-ease) infinite;
+}
+
+@keyframes t7-scroll-cue {
+  0% { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(100%); }
+}
+
+/* Masthead: tighter, uppercase wordmark and wider-tracked nav */
+.t7-brand-name {
+  font-family: var(--t7-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+}
+
+.t7-header[data-scrolled="true"] .t7-brand-name {
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+}
+
+.t7-nav a {
+  letter-spacing: 0.24em;
+  font-size: 11.5px;
+}
+
+/* Numbered menu entries */
+.t7-menu {
+  counter-reset: t7-dish;
+}
+
+.t7-dish {
+  counter-increment: t7-dish;
+  position: relative;
+  padding-left: 40px;
+  transition: transform 0.35s var(--t7-ease);
+}
+
+.t7-dish::before {
+  content: counter(t7-dish, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 19px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--t7-muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.25s;
+}
+
+.t7-menu:hover .t7-dish {
+  opacity: 0.55;
+  transition: opacity 0.3s, transform 0.35s var(--t7-ease);
+}
+
+.t7-menu .t7-dish:hover {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+.t7-dish:hover::before {
+  color: var(--t7-accent);
+}
+
+/* Gallery: photos rest slightly muted and bloom on hover */
+.t7-shot-frame img {
+  filter: saturate(0.82) brightness(0.96);
+  transition: transform 0.9s var(--t7-ease), filter 0.6s;
+}
+
+.t7-shot:hover img {
+  filter: none;
+}
+
+/* Section labels read as tracked caps throughout */
+.t7-rule-label,
+.t7-eyebrow {
+  letter-spacing: 0.26em;
+}
+
+@media (max-width: 760px) {
+  .t7-scroll {
+    display: none;
+  }
+  .t7-dish {
+    padding-left: 32px;
+  }
+}
+
+@media (hover: none) {
+  .t7-menu:hover .t7-dish {
+    opacity: 1;
+  }
+}
