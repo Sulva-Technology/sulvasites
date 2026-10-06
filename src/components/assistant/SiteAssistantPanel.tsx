@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { applyAssistantAction, undoAssistantAction, type UndoRecord } from "@/lib/ai/assistantApply";
+import { MAX_OWNER_PHOTOS } from "@/lib/ai/shopAssistant";
+import { formatNaira } from "@/lib/shop/money";
 import { diffText, type TextChange } from "@/lib/ai/rewrite";
 import { profileFieldLabel, type AssistantAction } from "@/lib/ai/siteAssistant";
 import { defaultSection } from "@/lib/pageSchema";
@@ -17,18 +19,27 @@ type ApplyState =
   | { done: string; undo: UndoRecord; error?: string }
   | { undone: true }
   | { error: string };
-type ChatEntry = { id: string; role: "user" | "assistant"; content: string; actions?: AssistantAction[]; error?: boolean };
+type ChatEntry = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  actions?: AssistantAction[];
+  error?: boolean;
+  /** How many photos came with this message (the pictures themselves stay in memory only). */
+  photoCount?: number;
+};
 type Usage = { used: number; limit: number | null };
 type Stored = { messages: ChatEntry[]; applied: Record<string, ApplyState>; open: boolean };
 
 const MAX_STORED = 30;
 
 const GENERAL_IDEAS = [
+  "Which page is visited the most?",
+  "Add a new product",
+  "What's selling best, and what needs restocking?",
+  "What should I improve on my site?",
   "Make my homepage headline stronger",
   "Update my opening hours",
-  "Add 3 FAQs about delivery and payment",
-  "Add a pricing page",
-  "What should I improve on my site?",
 ];
 const PAGE_IDEAS = ["Make this page more persuasive", "Write SEO for this page", "Shorten the text on this page"];
 
@@ -55,6 +66,27 @@ function save(siteId: string, value: Stored) {
   } catch {
     // Storage full or blocked: the chat still works, it just won't survive a reload.
   }
+}
+
+/** Shrinks a photo to at most 1024px on its long side as a JPEG data URL, so it is quick to send and to store. */
+async function downsize(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("This browser cannot prepare photos.");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
+  const blob = await (await fetch(dataUrl)).blob();
+  return new File([blob], name, { type: blob.type || "image/jpeg" });
 }
 
 /** Page key the user is editing, from /…/pages/<key> or /…/extra-pages/<key>. */
@@ -89,6 +121,19 @@ function changesFor(action: AssistantAction): TextChange[] {
         before: action.before[f as keyof typeof action.before] ?? "",
         after: action.after[f as keyof typeof action.after] || "(removed)",
       }));
+    case "update_product":
+      return (Object.keys(action.after) as Array<keyof typeof action.after>).map((f) => {
+        const money = (v: unknown) => (typeof v === "number" ? formatNaira(v) : v == null ? "(none)" : String(v));
+        const label = f === "priceKobo" ? "Price" : f === "compareAtKobo" ? "Was price" : f === "active" ? "Visible in shop" : f;
+        const show = (v: unknown) => (typeof v === "boolean" ? (v ? "yes" : "no") : f === "priceKobo" || f === "compareAtKobo" ? money(v) : v == null || v === "" ? "(none)" : String(v));
+        return { path: String(label), before: show(action.before[f]), after: show(action.after[f]) };
+      });
+    case "set_stock":
+      return action.changes.map((c) => ({
+        path: `${action.productName} · ${c.label}`,
+        before: c.before === null ? "not tracked" : String(c.before),
+        after: c.after === null ? "not tracked" : String(c.after),
+      }));
     default:
       return [];
   }
@@ -112,6 +157,8 @@ function noteFor(action: AssistantAction): string | null {
   if (action.type === "add_page") {
     return `Includes: ${describeSections(action.data.sections.map((s) => s.type))}. Added as a hidden draft.`;
   }
+  if (action.type === "add_product" && action.categoryIsNew) return `Creates the “${action.product.category}” category too.`;
+  if (action.type === "update_product" && action.categoryIsNew) return `Creates the “${action.after.category}” category too.`;
   return null;
 }
 
@@ -137,7 +184,14 @@ export default function SiteAssistantPanel({
   const [busy, setBusy] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [attached, setAttached] = useState<string[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Record<string, number | null>>({});
   const listRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  /** Photos sent with each user message, by message id. In memory only: they are too big to store. */
+  const photosRef = useRef<Record<string, string[]>>({});
+  const shopBase = editorBase.endsWith("/content") ? `${editorBase.slice(0, -"/content".length)}/shop` : `${editorBase}/shop`;
 
   // Restore the conversation (it survives the editor reload that follows an applied change).
   useEffect(() => {
@@ -180,12 +234,30 @@ export default function SiteAssistantPanel({
     };
   }, [open, usage, siteId, authHeaders]);
 
+  async function attach(files: FileList | null) {
+    setAttachError(null);
+    if (!files?.length) return;
+    try {
+      const room = MAX_OWNER_PHOTOS - attached.length;
+      const made = await Promise.all(Array.from(files).slice(0, Math.max(0, room)).map(downsize));
+      setAttached((a) => [...a, ...made]);
+      if (files.length > room) setAttachError(`You can attach up to ${MAX_OWNER_PHOTOS} photos at a time.`);
+    } catch {
+      setAttachError("That photo could not be read. Try a JPG or PNG.");
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function send(text: string) {
-    const content = text.trim();
+    const content = text.trim() || (attached.length ? "Add this as a product." : "");
     if (!content || busy) return;
-    const next: ChatEntry[] = [...messages, { id: newId(), role: "user", content }];
+    const photos = attached;
+    const userId = newId();
+    if (photos.length) photosRef.current[userId] = photos;
+    const next: ChatEntry[] = [...messages, { id: userId, role: "user", content, photoCount: photos.length || undefined }];
     setMessages(next);
     setInput("");
+    setAttached([]);
     setBusy(true);
     try {
       const res = await fetch(`/api/sites/${siteId}/assistant`, {
@@ -193,6 +265,7 @@ export default function SiteAssistantPanel({
         headers: await authHeaders(),
         body: JSON.stringify({
           focusPage,
+          photos,
           messages: next.filter((m) => !m.error).map((m) => ({ role: m.role, content: m.content })),
         }),
       });
@@ -217,7 +290,15 @@ export default function SiteAssistantPanel({
     if (action.type === "update_profile") {
       return pathname.endsWith("/profile") || window.location.search.includes("view=settings");
     }
-    return action.type !== "add_page" && action.page === focusPage;
+    if (action.type === "add_page" || action.type === "add_product" || action.type === "update_product" || action.type === "set_stock") return false;
+    return action.page === focusPage;
+  }
+
+  /** The photos that came with the user message this answer replies to. */
+  function photosFor(entryId: string): string[] {
+    const at = messages.findIndex((m) => m.id === entryId);
+    for (let i = at - 1; i >= 0; i--) if (messages[i]!.role === "user") return photosRef.current[messages[i]!.id] ?? [];
+    return [];
   }
 
   /** Saves the new state, then reloads the open editor so a later "Save" there can't write old text back. */
@@ -234,7 +315,12 @@ export default function SiteAssistantPanel({
     const key = actionKey(entryId, action);
     setApplied((a) => ({ ...a, [key]: "applying" }));
     try {
-      const result = await applyAssistantAction(siteId, action);
+      let photoFiles: Record<number, File> | undefined;
+      if (action.type === "add_product" && action.imageOptions.some((c) => c.source === "upload")) {
+        photoFiles = {};
+        await Promise.all(photosFor(entryId).map(async (url, i) => { photoFiles![i + 1] = await dataUrlToFile(url, `product-photo-${i + 1}.jpg`); }));
+      }
+      const result = await applyAssistantAction(siteId, action, { imageIndex: picked[key], photoFiles });
       if (!result.ok) {
         setApplied((a) => ({ ...a, [key]: { error: result.error } }));
         return;
@@ -276,6 +362,7 @@ export default function SiteAssistantPanel({
   function editorHref(action: AssistantAction, appliedKey: string) {
     if (action.type === "update_profile") return profileHref;
     if (action.type === "add_page") return `${editorBase}/extra-pages/${appliedKey}`;
+    if (action.type === "add_product" || action.type === "update_product" || action.type === "set_stock") return `${shopBase}/products/${appliedKey}`;
     return `${editorBase}/${action.pageKind === "core" ? "pages" : "extra-pages"}/${action.page}`;
   }
 
@@ -354,6 +441,15 @@ export default function SiteAssistantPanel({
           m.role === "user" ? (
             <div key={m.id} className="ml-8 whitespace-pre-line rounded-2xl rounded-br-md bg-koi-ink px-3.5 py-2.5 text-sm text-white">
               {m.content}
+              {m.photoCount ? (
+                <div className="mt-2 flex gap-1">
+                  {(photosRef.current[m.id] ?? []).map((src, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={i} src={src} alt="Attached photo" className="h-14 w-14 rounded-lg object-cover" />
+                  ))}
+                  {(photosRef.current[m.id] ?? []).length === 0 ? <span className="text-xs text-white/60">📎 {m.photoCount} photo(s)</span> : null}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div key={m.id} className="mr-4 space-y-2">
@@ -374,18 +470,80 @@ export default function SiteAssistantPanel({
                 const changes = changesFor(action);
                 const note = noteFor(action);
                 const isOpen = expanded[key] ?? false;
+                const isProduct = action.type === "add_product" || action.type === "update_product" || action.type === "set_stock";
                 const heading =
                   action.type === "add_page"
                     ? "New page"
                     : action.type === "update_profile"
                       ? "Business details"
-                      : `${action.pageLabel} page`;
-                const live = action.type !== "add_page" && action.type !== "update_profile" && action.pageLive;
+                      : action.type === "add_product"
+                        ? "New product"
+                        : action.type === "update_product"
+                          ? `Product · ${action.productName}`
+                          : action.type === "set_stock"
+                            ? `Stock · ${action.productName}`
+                            : `${action.pageLabel} page`;
+                const live = !isProduct && action.type !== "add_page" && action.type !== "update_profile" && action.pageLive;
                 return (
                   <div key={key} className="rounded-2xl bg-white p-3 ring-1 ring-koi-ink/10">
                     <div className="text-[11px] font-medium uppercase tracking-wider text-koi-ink/45">{heading}</div>
                     <div className="mt-0.5 text-sm font-medium text-koi-ink">{action.summary}</div>
 
+                    {action.type === "add_product" ? (
+                      <div className="mt-2 space-y-2 text-xs text-koi-ink/70">
+                        <div className="font-semibold text-koi-ink">
+                          {formatNaira(action.product.priceKobo)}
+                          {action.product.compareAtKobo ? <span className="ml-2 font-normal text-koi-ink/45 line-through">{formatNaira(action.product.compareAtKobo)}</span> : null}
+                          {action.product.category ? <span className="ml-2 font-normal text-koi-ink/55">· {action.product.category}</span> : null}
+                        </div>
+                        {action.product.description ? <p>{action.product.description}</p> : null}
+                        {action.product.variants.length ? (
+                          <p>
+                            {action.product.variants
+                              .map((v) => `${Object.values(v.options).join(" / ")}${v.stock !== null ? ` (${v.stock})` : ""}`)
+                              .join(" · ")}
+                          </p>
+                        ) : null}
+                        {action.imageOptions.length > 0 && !done && !undone ? (
+                          <div>
+                            <div className="mb-1 font-medium text-koi-ink/60">Photo — tap to choose</div>
+                            <div className="flex flex-wrap gap-2">
+                              {action.imageOptions.map((c, ci) => {
+                                const on = (picked[key] === undefined ? 0 : picked[key]) === ci;
+                                const src = c.source === "upload" ? photosFor(m.id)[Number(c.url.replace("upload:", "")) - 1] : c.thumb;
+                                return (
+                                  <button
+                                    key={c.url}
+                                    type="button"
+                                    onClick={() => setPicked((x) => ({ ...x, [key]: ci }))}
+                                    aria-pressed={on}
+                                    title={c.why ?? c.alt}
+                                    className={`overflow-hidden rounded-xl ring-2 ${on ? "ring-koi-sea" : "ring-transparent hover:ring-koi-ink/20"}`}
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={src} alt={c.alt} className="h-20 w-20 object-cover" loading="lazy" />
+                                  </button>
+                                );
+                              })}
+                              <button
+                                type="button"
+                                onClick={() => setPicked((x) => ({ ...x, [key]: null }))}
+                                aria-pressed={picked[key] === null}
+                                className={`flex h-20 w-20 items-center justify-center rounded-xl bg-koi-paper px-1 text-center text-[11px] ring-2 ${picked[key] === null ? "ring-koi-sea" : "ring-transparent hover:ring-koi-ink/20"}`}
+                              >
+                                No photo
+                              </button>
+                            </div>
+                            {(() => {
+                              const c = action.imageOptions[picked[key] === undefined ? 0 : (picked[key] ?? -1)];
+                              return c ? <p className="mt-1 text-[11px] text-koi-ink/50">{c.why ? `${c.why} ` : ""}{c.credit ?? ""}</p> : null;
+                            })()}
+                          </div>
+                        ) : !done && !undone ? (
+                          <p className="text-koi-ink/50">No matching photo found. You can add one from the product page after.</p>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {note ? <p className="mt-1 text-xs text-koi-ink/60">{note}</p> : null}
                     {done || undone ? null : live ? (
                       <p className="mt-1 text-xs text-amber-700">This page is live — the change shows on your site right away.</p>
@@ -427,7 +585,7 @@ export default function SiteAssistantPanel({
                           <span className="text-xs font-medium text-emerald-700">✓ Applied</span>
                           {done ? (
                             <Link href={editorHref(action, done)} className="text-xs font-medium text-koi-ink underline underline-offset-2">
-                              {action.type === "add_page" ? "Open page" : "Open in editor"}
+                              {action.type === "add_page" ? "Open page" : isProduct ? "Open product" : "Open in editor"}
                             </Link>
                           ) : null}
                           <button
@@ -473,7 +631,37 @@ export default function SiteAssistantPanel({
             You&apos;ve used this month&apos;s AI requests. They reset on the 1st.
           </p>
         ) : null}
+        {attached.length > 0 ? (
+          <div className="mb-2 flex gap-2">
+            {attached.map((src, i) => (
+              <div key={i} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="Photo to send" className="h-14 w-14 rounded-lg object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setAttached((a) => a.filter((_, j) => j !== i))}
+                  aria-label="Remove photo"
+                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-koi-ink text-xs leading-none text-white"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {attachError ? <p className="mb-2 text-xs text-red-700">{attachError}</p> : null}
         <div className="flex items-end gap-2">
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => void attach(e.target.files)} />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy || outOfRequests || attached.length >= MAX_OWNER_PHOTOS}
+            aria-label="Attach a product photo"
+            title="Attach a product photo"
+            className="h-[44px] rounded-full px-3 text-lg text-koi-ink/60 ring-1 ring-koi-ink/10 hover:bg-koi-paper disabled:opacity-40"
+          >
+            📎
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -485,13 +673,13 @@ export default function SiteAssistantPanel({
             }}
             rows={2}
             maxLength={2000}
-            placeholder={focusPage ? "e.g. Make this page sound more premium" : "e.g. Add a page about our delivery areas"}
+            placeholder={focusPage ? "e.g. Make this page sound more premium" : "e.g. Add Ankara dress, ₦18,500, sizes M and L, 5 each"}
             disabled={outOfRequests}
             className="min-h-[44px] flex-1 resize-none rounded-2xl border border-koi-ink/10 bg-white px-3.5 py-2.5 text-sm text-koi-ink outline-none focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15 disabled:opacity-60"
           />
           <button
             type="submit"
-            disabled={busy || !input.trim() || outOfRequests}
+            disabled={busy || (!input.trim() && attached.length === 0) || outOfRequests}
             className="rounded-full bg-koi-sea px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             Send
