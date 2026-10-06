@@ -1,89 +1,106 @@
 /* Template 14 — "Cartly": general stores and retailers with an online shop.
-   Practical and bright: Inter Tight headlines over Inter, rounded cards, a blue accent on white, a
-   search-first header with a categories mega-menu, a deals strip, a dense product grid with quick-add,
-   a filter rail, product pages with option selects and stock badges, a cart drawer, a sticky mobile
-   cart bar, checkout and an order status page. Dark mode is deep navy. */
+   Quiet and product-first (after nor.ma): Inter Tight two-tone headlines over Inter, white + paper-grey
+   surfaces, black pill buttons, inset 24px-radius photo bands, three floating glass header islands,
+   a tabbed category showcase, glass stat tiles, a product spotlight and a configurator-style product page. */
 
 .template14 {
-  --t14-accent: #1f6feb;
-  --t14-accent2: #0e1726;
-  --t14-ink: #0f172a;
-  --t14-muted: #5b6475;
+  --t14-accent: #2563eb;
+  --t14-accent2: #0a0a0a;
+  --t14-ink: #0a0a0a;
+  --t14-muted: #6b6b6b;      /* 5.3:1 on white, 4.9:1 on paper */
   --t14-bg: #ffffff;
-  --t14-surface: #f3f5f9;
+  --t14-surface: #f5f5f5;
 
-  /* Fixed colours for always-dark surfaces (footer, banners). */
-  --t14-black: #0e1726;
-  --t14-on-dark: #eef2f9;
-  --t14-on-dark-muted: #aab4c6;
-  --t14-on-dark-line: rgb(255 255 255 / 0.16);
-  --t14-on-dark-accent: #7fb0ff;
-
-  --t14-line: color-mix(in srgb, var(--t14-ink) 12%, transparent);
-  --t14-line-strong: color-mix(in srgb, var(--t14-ink) 28%, transparent);
-  --t14-lead: color-mix(in srgb, var(--t14-ink) 82%, var(--t14-bg));
-
-  /* Mode-dependent roles (every colour pairing below is checked in both modes). */
-  --t14-text-accent: #1856bd; /* 6.9:1 on white, 6.1:1 on surface */
-  --t14-btn-bg: #1f6feb;
-  --t14-btn-ink: #ffffff; /* 4.7:1 */
-  --t14-btn-hover: #1856bd;
-  --t14-btn-hover-ink: #ffffff;
-  --t14-focus: #1856bd;
-  --t14-band: var(--t14-accent2);
+  --t14-paper: var(--t14-surface);
   --t14-card: #ffffff;
-  --t14-sale: #c2261b; /* 5.9:1 on white */
-  --t14-shadow: 0 18px 44px -20px rgb(15 23 42 / 0.4);
-  --t14-ok: #0f7a3d;
-  --t14-bad: #b3261e;
-  --t14-radius: 12px;
+  --t14-subtle: #a1a1a1;     /* decorative and dimmed headline line (>=24px) only */
+  --t14-line: color-mix(in srgb, var(--t14-ink) 8%, transparent);
+  --t14-line-strong: color-mix(in srgb, var(--t14-ink) 18%, transparent);
+  --t14-btn: var(--t14-accent2);
+  --t14-btn-ink: #ffffff;
+  --t14-text-accent: color-mix(in oklab, var(--t14-accent) 88%, black);
+  --t14-glass: rgb(255 255 255 / 0.14);
+  --t14-glass-line: rgb(255 255 255 / 0.2);
+  --t14-glass-solid: rgb(255 255 255 / 0.82);
+  --t14-night: #0a0a0a;
+  --t14-on-night: #ffffff;
+  --t14-on-night-2: rgb(255 255 255 / 0.68);  /* 9:1 on night */
+  --t14-ok: #16a34a;
+  --t14-warn: #b45309;
+  --t14-sale: #b91c1c;
 
   --t14-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --t14-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --t14-ease: cubic-bezier(0.2, 0.8, 0.25, 1);
+  --t14-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --t14-max: 1000px;
+  --t14-inset: clamp(12px, 1.2vw, 16px);
+  --t14-r-xl: 24px;
+  --t14-r-lg: 20px;
+  --t14-r-md: 16px;
+
+  /* TEMP aliases — removed in B8 (old names still referenced by legacy rules below). */
+  --t14-radius: var(--t14-r-md);
+  --t14-black: var(--t14-night);
+  --t14-band: var(--t14-night);
+  --t14-btn-bg: var(--t14-btn);
+  --t14-btn-hover: color-mix(in srgb, var(--t14-btn) 82%, var(--t14-accent));
+  --t14-btn-hover-ink: var(--t14-btn-ink);
+  --t14-focus: var(--t14-text-accent);
+  --t14-bad: var(--t14-sale);
+  --t14-lead: color-mix(in srgb, var(--t14-ink) 82%, var(--t14-bg));
+  --t14-on-dark: var(--t14-on-night);
+  --t14-on-dark-muted: var(--t14-on-night-2);
+  --t14-on-dark-line: var(--t14-glass-line);
+  --t14-on-dark-accent: color-mix(in oklab, var(--t14-accent) 60%, white);
+  --t14-shadow: 0 18px 44px -20px rgb(10 10 10 / 0.4);
   --t14-gutter: clamp(14px, 3vw, 40px);
   --t14-section: clamp(40px, 6vw, 80px);
-  --t14-max: 1360px;
 
   position: relative;
   background: var(--t14-bg);
   color: var(--t14-ink);
   font-family: var(--t14-font);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* Night: !important so it wins over the site's saved light palette (inline vars). */
+/* Night: !important so it wins over the site's saved light palette (inline vars).
+   Accent is NOT overridden, so the owner's brand colour still shows. */
 .template14[data-mode="dark"] {
-  --t14-accent: var(--t14-dark-accent, #5b9cff) !important;
-  --t14-accent2: var(--t14-dark-accent2, #070d18) !important;
-  --t14-ink: var(--t14-dark-ink, #eaf0fa) !important;
-  --t14-muted: var(--t14-dark-muted, #9aa6bb) !important;
-  --t14-bg: var(--t14-dark-bg, #0b1220) !important;
-  --t14-surface: var(--t14-dark-surface, #131c2e) !important;
-
-  --t14-line: color-mix(in srgb, var(--t14-ink) 14%, transparent);
-  --t14-line-strong: color-mix(in srgb, var(--t14-ink) 32%, transparent);
-  --t14-lead: color-mix(in srgb, var(--t14-ink) 86%, var(--t14-bg));
-
-  --t14-text-accent: #8db8ff; /* 9:1 on bg */
-  --t14-btn-bg: #5b9cff;
-  --t14-btn-ink: #07101f; /* 7:1 */
-  --t14-btn-hover: #8db8ff;
-  --t14-btn-hover-ink: #07101f;
-  --t14-focus: #8db8ff;
-  --t14-band: #070d18;
-  --t14-card: #131c2e;
-  --t14-sale: #ff8f86;
+  --t14-ink: var(--t14-dark-ink, #f5f5f5) !important;
+  --t14-muted: var(--t14-dark-muted, #a1a1a1) !important;   /* 7.6:1 on bg */
+  --t14-bg: var(--t14-dark-bg, #0a0a0a) !important;
+  --t14-surface: var(--t14-dark-surface, #141414) !important;
+  --t14-card: #1a1a1a;
+  --t14-subtle: #5c5c5c;
+  --t14-line: rgb(255 255 255 / 0.08);
+  --t14-line-strong: rgb(255 255 255 / 0.16);
+  --t14-btn: #ffffff;
+  --t14-btn-ink: #0a0a0a;
+  --t14-text-accent: color-mix(in oklab, var(--t14-accent) 60%, white);
+  --t14-glass-solid: rgb(20 20 20 / 0.78);
+  --t14-sale: #f87171;
   --t14-shadow: 0 18px 44px -18px rgb(0 0 0 / 0.85);
-  --t14-ok: #6fd69a;
-  --t14-bad: #ff9b8f;
   color-scheme: dark;
 }
+
+.t14-band { margin-inline: var(--t14-inset); border-radius: var(--t14-r-xl); overflow: hidden; }
+.t14-paper { background: var(--t14-paper); }
+.t14-dim { color: var(--t14-subtle); }
+.t14-pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px;
+  font: 600 14px/1 var(--t14-font); border: 0; cursor: pointer; text-decoration: none; transition: transform .3s var(--t14-ease), opacity .2s, background-color .2s; }
+.t14-pill:active { transform: scale(.97); }
+.t14-pill-black { background: var(--t14-btn); color: var(--t14-btn-ink); }
+.t14-pill-white { background: #fff; color: #0a0a0a; }
+.t14-pill-glass { background: var(--t14-glass); color: #fff; border: 1px solid var(--t14-glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.t14-pill-soft { background: var(--t14-paper); color: var(--t14-ink); }
+.t14-pill-lg { height: 52px; padding: 0 28px; font-size: 15px; }
+.t14-pill-block { width: 100%; }
+.t14-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 999px; font: 500 12px/1 var(--t14-font); background: var(--t14-paper); color: var(--t14-ink); }
 
 .template14 *,
 .template14 *::before,

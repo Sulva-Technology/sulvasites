@@ -21,7 +21,7 @@ import ShopViews from "./shop/ShopViews";
 import "./template14.css";
 
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500;600&display=swap";
 
 function galleryPhotos(pages: Array<PageData | undefined>) {
   const seen = new Set<string>();

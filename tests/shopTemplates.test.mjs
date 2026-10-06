@@ -26,9 +26,10 @@ test("t14 Cartly is registered as a shop template", () => {
   const meta = TEMPLATE_META.find((t) => t.key === "t14");
   assert.equal(meta?.name, "Cartly");
   assert.equal(meta?.shop, true);
-  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.accent, "#1f6feb");
-  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.accent2, "#0e1726");
-  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.surface, "#f3f5f9");
+  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.accent, "#2563eb");
+  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.accent2, "#0a0a0a");
+  assert.equal(TEMPLATE_THEME_CONFIGS.t14.defaults.surface, "#f5f5f5");
+  assert.match(meta?.description ?? "", /product-first/i);
 });
 
 test("t14 presets: shop, deals, help", () => {

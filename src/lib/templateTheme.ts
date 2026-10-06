@@ -163,15 +163,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f6f5f2",
     surface: "#ecebe7",
   }, { accent2: "Night bands & footer", surface: "Cards / panels" }),
-  // General store — "Cartly"
+  // General store — "Cartly" (quiet, product-first)
   t14: config("t14", {
-    accent: "#1f6feb",
-    accent2: "#0e1726",
-    ink: "#0f172a",
-    muted: "#5b6475",
+    accent: "#2563eb",
+    accent2: "#0a0a0a",
+    ink: "#0a0a0a",
+    muted: "#6b6b6b",
     bg: "#ffffff",
-    surface: "#f3f5f9",
-  }, { accent2: "Navy bands & footer", surface: "Cards / panels" }),
+    surface: "#f5f5f5",
+  }, { accent2: "Buttons & dark bands", surface: "Paper cards / panels" }),
 };
 
 // Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
@@ -186,7 +186,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t11: { accent: "#b18cff", accent2: "#0c0616", ink: "#f6effc", muted: "#b9a9cc", bg: "#130a22", surface: "#1c1030" },
   t12: { accent: "#ff8a3d", accent2: "#0e1011", ink: "#eef0f1", muted: "#a3abb1", bg: "#16191b", surface: "#1f2326" },
   t13: { ink: "#f4f4f5", muted: "#9ea3ad", bg: "#0a0a0b", surface: "#111113" },
-  t14: { accent: "#5b9cff", accent2: "#070d18", ink: "#eaf0fa", muted: "#9aa6bb", bg: "#0b1220", surface: "#131c2e" },
+  t14: { ink: "#f5f5f5", muted: "#a1a1a1", bg: "#0a0a0a", surface: "#141414" },
 };
 
 for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {
