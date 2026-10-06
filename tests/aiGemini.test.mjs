@@ -1,10 +1,13 @@
-import { test } from "node:test";
+import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { DEFAULT_GEMINI_MODEL, geminiBody, geminiChat } from "../src/lib/ai/gemini.server.ts";
 import { GroqError } from "../src/lib/ai/groq.server.ts";
 import { aiChat, aiChatWithInfo, aiVisionChat, visionConfigured } from "../src/lib/ai/llm.server.ts";
 import { pickWithVision } from "../src/lib/ai/productImages.server.ts";
+import { resetProviderHealth } from "../src/lib/ai/providerHealth.ts";
+
+beforeEach(() => resetProviderHealth());
 
 const gemini = (text, extra = {}) =>
   new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "thinking...", thought: true }, { text }] } }], ...extra }), { status: 200 });

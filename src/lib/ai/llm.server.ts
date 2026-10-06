@@ -13,6 +13,7 @@ import {
   openRouterVisionChat,
   openRouterVisionModel,
 } from "./openrouter.server.ts";
+import { isCooling, noteFailure, noteSuccess } from "./providerHealth.ts";
 
 export type AiProvider = "gemini" | "openrouter" | "groq";
 export type AiChatResult = { text: string; provider: AiProvider; model: string };
@@ -61,18 +62,26 @@ function describe(e: unknown) {
  * Tries Gemini, then OpenRouter, sharing one time budget (opts.timeoutMs, else OPENROUTER_TIMEOUT_MS
  * or 25s) so a slow first answer still leaves room for the next; then Groq with whatever is left of
  * the request. Any failure (quota, outage, bad key, timeout) moves on to the next provider; the last
- * provider's error is the one the caller sees.
+ * provider's error is the one the caller sees. A provider that failed in the last few seconds (quota,
+ * timeout, outage) is skipped while another can answer; see providerHealth.ts.
  */
 export async function aiChatWithInfo(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<AiChatResult> {
   const env = deps.env ?? process.env;
-  const steps = timedSteps(env, false);
-  const groq = Boolean(env.GROQ_API_KEY);
-  if (!steps.length && !groq) {
+  const configured = timedSteps(env, false);
+  const groqKey = Boolean(env.GROQ_API_KEY);
+  if (!configured.length && !groqKey) {
     throw new GroqError(
       "not_configured",
       "AI is not configured. Set GEMINI_API_KEY or OPENROUTER_API_KEY in the server environment variables.",
     );
   }
+
+  // A provider that just failed rests for a moment, unless every provider is resting.
+  const now = Date.now();
+  const names: AiProvider[] = [...configured.map((s) => s.provider), ...(groqKey ? (["groq"] as const) : [])];
+  const anyReady = names.some((p) => !isCooling(p, now));
+  const steps = anyReady ? configured.filter((s) => !isCooling(s.provider, now)) : configured;
+  const groq = groqKey && (!anyReady || !isCooling("groq", now));
 
   const budget = opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : Number(env.OPENROUTER_TIMEOUT_MS) > 0 ? Number(env.OPENROUTER_TIMEOUT_MS) : OPENROUTER_TIMEOUT_MS;
   const deadline = Date.now() + budget;
@@ -86,15 +95,24 @@ export async function aiChatWithInfo(opts: GroqChatOptions, deps: GroqDeps = {})
     const timeoutMs = i === 0 ? step.cap(left) : Math.max(step.cap(left), MIN_CALL_MS);
     try {
       const text = await step.run({ ...opts, timeoutMs }, deps);
+      noteSuccess(step.provider);
       return { text, provider: step.provider, model: step.model };
     } catch (e) {
+      noteFailure(step.provider, e);
       if (isLast) throw e;
       lastError = e;
       console.error(`${step.provider} failed (${describe(e)}); trying the next AI provider.`);
     }
   }
   if (!groq) throw lastError ?? new GroqError("upstream", "AI request failed.");
-  return { text: await groqChat(opts, deps), provider: "groq", model: env.GROQ_MODEL || "groq default" };
+  try {
+    const text = await groqChat(opts, deps);
+    noteSuccess("groq");
+    return { text, provider: "groq", model: env.GROQ_MODEL || "groq default" };
+  } catch (e) {
+    noteFailure("groq", e);
+    throw e;
+  }
 }
 
 /** The text of one chat completion. Drop-in replacement for groqChat. */

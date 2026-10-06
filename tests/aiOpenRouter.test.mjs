@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { GroqError } from "../src/lib/ai/groq.server.ts";
@@ -9,6 +9,9 @@ import {
   openRouterBody,
   openRouterChat,
 } from "../src/lib/ai/openrouter.server.ts";
+import { resetProviderHealth } from "../src/lib/ai/providerHealth.ts";
+
+beforeEach(() => resetProviderHealth());
 
 function ok(text) {
   return new Response(JSON.stringify({ choices: [{ message: { content: text } }] }), { status: 200 });
