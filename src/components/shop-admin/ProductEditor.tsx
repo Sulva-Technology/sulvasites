@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import ImageField, { SiteImageProvider } from "@/components/page-editor/ImageField";
+import { ensureShopEnabled } from "@/lib/shop/autoEnable";
 import { slugify } from "@/lib/slugify";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
@@ -212,6 +213,8 @@ function Inner(props: ShopAdminProps & { productId: string }) {
       }
 
       if (isNew) {
+        // A first product is the signal the owner is selling: make sure customers can see it.
+        await ensureShopEnabled(db, siteId, "products");
         router.replace(`${basePath}/products/${id}`);
       } else {
         await load();

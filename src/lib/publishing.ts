@@ -64,6 +64,16 @@ export async function publishSite(siteId: string) {
 
   if (siteError) throw siteError;
 
+  // Extra pages (Services, Menu, Shop pages…) go live with the site; already-live ones keep their
+  // published_at. Best effort: the site is already live, so a failure here only leaves drafts.
+  const { data: extras, error: extrasError } = await supabase
+    .from("extra_pages")
+    .update({ status: "published", published_at: now })
+    .eq("site_id", siteId)
+    .neq("status", "published")
+    .select("id");
+  if (extrasError) console.error("Extra pages were not published:", extrasError.message);
+
   return {
     pages: (pages ?? []) as Array<{
       id: string;
@@ -72,6 +82,8 @@ export async function publishSite(siteId: string) {
       published_at: string | null;
     }>,
     site: site as { status: string; updated_at: string },
+    extraPagesPublished: extras?.length ?? 0,
+    extraPagesError: extrasError?.message ?? null,
   };
 }
 

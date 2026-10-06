@@ -38,7 +38,7 @@ type View = { role: "user" | "assistant"; content: string; ui?: boolean; receipt
 const AFTER_STEP: Record<Step, { done: string; skipped: string }> = {
   logo: { done: "Nice logo. Now pick your colours.", skipped: "No problem. Let's pick your colours." },
   color: { done: "Great colours. Last step: photos.", skipped: "I will choose colours that suit the template. Last step: photos." },
-  photos: { done: 'All set. Tap "Build my site" when you are ready.', skipped: 'I will pick matching photos. Tap "Build my site" when you are ready.' },
+  photos: { done: "All set. Building your site now…", skipped: "I will pick matching photos. Building your site now…" },
 };
 
 const STEP_NAME: Record<Step, string> = { logo: "your logo", color: "colours", photos: "photos" };
@@ -67,6 +67,8 @@ export default function SiteAssistant() {
   const [brief, setBrief] = useState<Brief | null>(null);
   const [phase, setPhase] = useState<Phase>("chat");
   const [doneSteps, setDoneSteps] = useState<Step[]>([]);
+  /** Set when the last setup step is done (or the rest skipped): the build starts on its own. */
+  const [autoBuild, setAutoBuild] = useState(false);
   const [setup, setSetup] = useState<SiteSetup>(emptySetup);
   const [logoColors, setLogoColors] = useState<ColorChoice | null>(null);
   const [suggested, setSuggested] = useState<{ templateKey: string; reason: string } | null>(null);
@@ -184,6 +186,33 @@ export default function SiteAssistant() {
       { role: "assistant", content: line, ui: true },
     ]);
     setPhase(after ?? "review");
+    if (!after && !result) setAutoBuild(true);
+  }
+
+  /** "Skip the rest": template colours, no logo, matching stock photos — and build straight away. */
+  function skipRemainingSteps() {
+    if (busy) return;
+    const left = STEPS.filter((x) => !doneSteps.includes(x));
+    setDoneSteps([...STEPS]);
+    setSetup((s) => {
+      const next = { ...s, skipped: { ...s.skipped } };
+      for (const step of left) next.skipped[step] = true;
+      if (left.includes("logo") && s.logo) {
+        URL.revokeObjectURL(s.logo.previewUrl);
+        next.logo = null;
+      }
+      if (left.includes("color")) next.color = null;
+      if (left.includes("photos")) {
+        for (const u of s.uploads) URL.revokeObjectURL(u.previewUrl);
+        next.uploads = [];
+        next.stockIds = [];
+      }
+      return next;
+    });
+    if (left.includes("logo")) setLogoColors(null);
+    setMessages((m) => [...m, { role: "assistant", content: "No problem — I will choose the colours and photos. Building your site now…", ui: true }]);
+    setPhase("review");
+    if (!result) setAutoBuild(true);
   }
 
   function enterStep(step: Step) {
@@ -197,6 +226,14 @@ export default function SiteAssistant() {
     setSetup((s) => (s.color ? s : { ...s, color: logoColors ?? fromWords ?? null }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the step opens
   }, [phase]);
+
+  // Runs after the state from the last step is committed, so the build sees the final setup.
+  useEffect(() => {
+    if (!autoBuild || phase !== "review" || result || busy) return;
+    setAutoBuild(false);
+    void build();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- build reads the committed state
+  }, [autoBuild, phase, result, busy]);
 
   async function build(override?: string) {
     if (building) return;
@@ -561,6 +598,18 @@ export default function SiteAssistant() {
       </div>
 
       <div className="border-t border-koi-ink/5 p-3 sm:p-4">
+        {!result && (phase === "logo" || phase === "color" || phase === "photos") && !busy ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={skipRemainingSteps}
+              className="rounded-full bg-koi-ink px-5 py-2 text-sm font-medium text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-koi-orange"
+            >
+              Skip setup, build now
+            </button>
+            <span className="text-xs text-koi-ink/60">I will pick colours and photos that suit your business.</span>
+          </div>
+        ) : null}
         {!result && phase === "review" && !building ? (
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
