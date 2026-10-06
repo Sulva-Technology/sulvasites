@@ -45,7 +45,13 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)
    - `supabase/migrations/015_whatsapp_orders.sql` (orders sent on WhatsApp show under Orders; owners mark them completed)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
-4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
+4. Supabase → Authentication:
+   - **SMTP settings:** use Resend (host `smtp.resend.com`, port 465, user `resend`, password = `RESEND_API_KEY`,
+     sender on your verified domain). The built-in mailer only sends a couple of emails an hour, so
+     "Forgot password?" emails would silently stop.
+   - **URL configuration → Redirect URLs:** add `https://<your app domain>/change-password` and
+     `http://localhost:3000/change-password`.
+5. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
 > ⚠️ `supabase/dev-only/` scripts disable RLS. Never run them on production — see its README.
 
