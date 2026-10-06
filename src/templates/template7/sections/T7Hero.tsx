@@ -241,18 +241,22 @@ export default function T7Hero({
           </div>
         </div>
       </div>
+      <a className="t7-scroll" href={menuHref(ctx)} aria-label="Scroll to the menu">
+        <span>Scroll</span>
+        <i aria-hidden="true" />
+      </a>
       {strip.length ? (
         <div className="t7-strip">
           <div className="t7-container t7-strip-inner" data-count={strip.length}>
-            {strip.map((s) =>
+            {strip.map((s, i) =>
               s.href ? (
                 <a key={s.key} className="t7-strip-item" href={s.href} target={s.ext ? "_blank" : undefined} rel={s.ext ? "noreferrer" : undefined}>
-                  <small>{s.label}</small>
+                  <small><b>{String(i + 1).padStart(2, "0")}</b>{s.label}</small>
                   <span>{s.value}</span>
                 </a>
               ) : (
                 <div key={s.key} className="t7-strip-item">
-                  <small>{s.label}</small>
+                  <small><b>{String(i + 1).padStart(2, "0")}</b>{s.label}</small>
                   <span>{s.value}</span>
                 </div>
               ),
