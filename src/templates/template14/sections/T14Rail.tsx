@@ -3,13 +3,24 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { ShopProduct } from "@/lib/shop/types";
 import { shopHref, useT14 } from "../ctx";
 import { IconArrow, IconChevron } from "../icons";
 import { categoryName, dealProducts, productHref } from "../shop/helpers";
 import { PriceText } from "../shop/ProductCard";
 
+type RailProps = {
+  /** A fixed list of products (e.g. "You may also like"). Without it the rail picks deals and featured items. */
+  products?: ShopProduct[];
+  /** Two-line headline: [strong line, dimmed line]. */
+  heading?: [string, string];
+  id?: string;
+  /** True when the rail sits on a paper-grey page: cards turn white. */
+  onPaper?: boolean;
+};
+
 /** Horizontal product rail with round arrow buttons. Leads with deals when there are any. */
-export default function T14Rail() {
+export default function T14Rail({ products, heading, id = "t14-rail-h", onPaper = false }: RailProps = {}) {
   const { shop, baseUrl } = useT14();
   const railRef = useRef<HTMLUListElement>(null);
   const [atStart, setAtStart] = useState(true);
@@ -35,6 +46,7 @@ export default function T14Rail() {
   }, [sync, shop]);
 
   if (!shop || shop.products.length === 0) return null;
+  if (products && products.length === 0) return null;
 
   const deals = dealProducts(shop);
   const onSale = deals.length >= 3;
@@ -42,8 +54,9 @@ export default function T14Rail() {
   const rest = shop.products.filter((p) => !seen.has(p.id));
   const featured = rest.filter((p) => p.featured);
   const others = rest.filter((p) => !p.featured);
-  const items = (onSale ? deals : [...deals, ...featured, ...others]).slice(0, 12);
-  const [line1, line2] = onSale ? ["On sale now.", "While stock lasts."] : ["Popular right now.", "Picked by our customers."];
+  const items = products ? products.slice(0, 12) : (onSale ? deals : [...deals, ...featured, ...others]).slice(0, 12);
+  const [line1, line2] =
+    heading ?? (onSale ? ["On sale now.", "While stock lasts."] : ["Popular right now.", "Picked by our customers."]);
 
   const scrollByCard = (dir: 1 | -1) => {
     const el = railRef.current;
@@ -54,10 +67,10 @@ export default function T14Rail() {
   };
 
   return (
-    <section className="t14-rail t14-reveal" aria-labelledby="t14-rail-h">
+    <section className="t14-rail t14-reveal" aria-labelledby={id} data-on={onPaper ? "paper" : undefined}>
       <div className="t14-container t14-rail-head">
         <div>
-          <h2 id="t14-rail-h" className="t14-h2">
+          <h2 id={id} className="t14-h2">
             {line1}
             <br />
             <span className="t14-dim">{line2}</span>
