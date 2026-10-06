@@ -610,7 +610,7 @@ export default function SiteAssistant() {
                 }
               }}
               rows={2}
-              maxLength={2000}
+              maxLength={8000}
               placeholder={inSetup ? "Anything else about the business? (optional)" : "e.g. Kings Bakery in Lagos. We bake bread and custom cakes. Call 0803…"}
               className="w-full resize-none rounded-[1.5rem] border border-koi-ink/10 bg-white px-5 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
               disabled={creating || building}

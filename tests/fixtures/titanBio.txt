@@ -1,0 +1,30 @@
+Iyiola "Titan" Ogunjobi
+Builder, founder, problem solver
+
+Some people wait to be handed a problem. Iyiola Ogunjobi, known to most as Titan, has a habit of walking straight into them. Not yet twenty, he is a Software Engineering student at Venite University, the founder of Sulva Technology, and the person many of his peers call first when something needs to exist that does not exist yet. His own description of himself is short: a bold, intentional problem solver. Everything he has built so far supports it.
+
+The student who would not wait for graduation
+
+Titan studies in the Computing Department at Venite University, where he balances a heavy course load (database management, software engineering, and core computer science) with work most students postpone until after graduation. He does not treat school and business as competing priorities. He treats them as training grounds for each other. The discipline that gets him through seven exams in one season is the same discipline that ships products.
+
+He also leads. As Interim President of the NACOSS chapter at Venite University, he drafted the chapter constitution, assembled the interim executive team, and prepared the formal recognition documents for university management. He did not inherit a structure. He built one. He also serves as class representative for his cohort, a role that is mostly invisible service: keeping records, relaying information, and making sure nobody falls through the cracks.
+
+Sulva Technology: the parent company
+
+Titan's main work is Sulva Technology, a CAC-registered parent company with three products in development. Each one starts from a real frustration, and a team of developers now builds and maintains each project under his direction.
+
+Meal Direct is the one already proving itself. It is a campus dining delivery platform, live at mealdirectly.com, and it began with a personal moment. Titan once needed food urgently, was alone, and had no way to arrange it ahead of time. He had to call friends to bring him something. That small inconvenience pointed to a larger problem across campus. Cafeterias were not designed for the student volume they serve. Students queued, food ran out before everyone was served, and vendors guessed how much to cook, often wrongly.
+
+Meal Direct fixes the whole chain at once. Students schedule meals in fixed ordering windows, so vendors know exactly how much to prepare and when. Student riders batch up to ten orders per delivery run, earning pay based on distance while collecting deliveries on their way to their hostels. What would cost a student 1,000 to 1,500 naira as a solo delivery drops to about 300 naira. The rider gets paid, the vendor gets a small incentive for having food ready on time, and the platform keeps a margin. Titan also built an in-app wallet system so payment processing fees no longer eat into each order.
+
+Meduman addresses trust, the oldest problem in commerce. Across Nigeria, a huge amount of buying and selling happens through Instagram and WhatsApp, and every transaction carries the same fear: will the buyer pay, and will the seller deliver? Meduman is an escrow platform for social commerce.
+
+VUI LMS is a multi-tenant learning management system for universities, built to give institutions a proper digital home for teaching and coursework.
+
+Faith as the foundation
+
+Behind the ambition is a steady rhythm of faith. Titan's week at Venite is anchored by devotion, Bible study, choir, and services.
+
+What comes next
+
+Titan is expanding his reach beyond code. He is building a personal brand across Instagram, TikTok, and LinkedIn, sharing the realities of building while studying.
