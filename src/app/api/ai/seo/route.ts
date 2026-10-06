@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { extractJson, groqChat } from "@/lib/ai/groq.server";
+import { extractJson } from "@/lib/ai/groq.server";
+import { aiChat } from "@/lib/ai/llm.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
 import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
 
   try {
     const { system, user } = buildSeoPrompt(inputs, profile);
-    const text = await groqChat({
+    const text = await aiChat({
       system,
       user,
       json: true,

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { extractJson, groqChat } from "@/lib/ai/groq.server";
+import { extractJson } from "@/lib/ai/groq.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
+import { aiChat } from "@/lib/ai/llm.server";
 import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
   buildAssistantPrompt,
@@ -150,7 +151,7 @@ export async function POST(req: Request, ctx: Ctx) {
     if (!snapshot) return json({ error: "Site not found." }, 404);
 
     const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage });
-    const text = await groqChat({ system, user, json: true, ...SAMPLING.assistant });
+    const text = await aiChat({ system, user, json: true, ...SAMPLING.assistant });
 
     let raw: unknown;
     try {

@@ -15,8 +15,11 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
-   GROQ_API_KEY=...                     # AI (site generator, section rewrite, "Ask AI" assistant)
-   # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional model overrides
+   OPENROUTER_API_KEY=...               # AI for every feature (site builder, setup chat, rewrite, SEO, "Ask AI")
+   # OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b   # default; paid endpoint, routed only to providers that don't store data
+   # OPENROUTER_TIMEOUT_MS=25000          # per-call limit before falling back to Groq
+   GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
+   # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
    # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
    ```
 
@@ -40,7 +43,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Unit tests (Node built-in runner, `tests/`) |
-| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live model (needs `GROQ_API_KEY`; one model call each). Run it before launch and after any model change; it fails below 85%. |
+| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live model (`OPENROUTER_API_KEY` and/or `GROQ_API_KEY`; one model call each; `-- --groq` for Groq only). Run it before launch and after any model change; it fails below 85%. |
 
 ## How routing works
 
