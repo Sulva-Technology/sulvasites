@@ -33,34 +33,34 @@ export default function T14ContactCard({
         : null;
 
   const rows = (
-    <div className="t14-rows">
+    <div className="t14-cc-rows">
       {profile.phone ? (
-        <a className="t14-row" href={buildTelLink(profile.phone)}>
-          <span className="t14-row-ico"><IconPhone /></span>
+        <a className="t14-cc-row" href={buildTelLink(profile.phone)}>
+          <span className="t14-cc-ico"><IconPhone /></span>
           <span><small>Call</small>{profile.phone}</span>
         </a>
       ) : null}
       {profile.whatsapp ? (
-        <a className="t14-row" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
-          <span className="t14-row-ico"><IconChat /></span>
+        <a className="t14-cc-row" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
+          <span className="t14-cc-ico"><IconChat /></span>
           <span><small>WhatsApp</small>Message us</span>
         </a>
       ) : null}
       {profile.email ? (
-        <a className="t14-row" href={buildEmailLink(profile.email)}>
-          <span className="t14-row-ico"><IconMail /></span>
+        <a className="t14-cc-row" href={buildEmailLink(profile.email)}>
+          <span className="t14-cc-ico"><IconMail /></span>
           <span><small>Email</small>{profile.email}</span>
         </a>
       ) : null}
       {profile.address ? (
         mapHref ? (
-          <a className="t14-row" href={mapHref} target="_blank" rel="noreferrer">
-            <span className="t14-row-ico"><IconPin /></span>
+          <a className="t14-cc-row" href={mapHref} target="_blank" rel="noreferrer">
+            <span className="t14-cc-ico"><IconPin /></span>
             <span><small>Visit</small>{profile.address}</span>
           </a>
         ) : (
-          <div className="t14-row">
-            <span className="t14-row-ico"><IconPin /></span>
+          <div className="t14-cc-row">
+            <span className="t14-cc-ico"><IconPin /></span>
             <span><small>Visit</small>{profile.address}</span>
           </div>
         )
@@ -69,20 +69,24 @@ export default function T14ContactCard({
   );
 
   return (
-    <section id={anchor ? "contact" : undefined} className="t14-section t14-contact-section">
-      <div className="t14-container">
-        <div className="t14-contactcard" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
-          <div className="t14-contact-info t14-reveal">
-            <p className="t14-label">{section.showForm ? "Message us" : "Contact"}</p>
-            <h2 className="t14-h2">{section.showForm ? "Get in touch" : "Talk to the studio"}</h2>
-            <p className="t14-contact-lead">
+    <section id={anchor ? "contact" : undefined} className="t14-cc">
+      <div className="t14-band t14-paper t14-cc-band">
+        <div className="t14-container t14-cc-grid" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
+          <div className="t14-cc-info t14-reveal">
+            <h2 className="t14-h2">{section.showForm ? "Get in touch." : "Talk to us."}</h2>
+            <p className="t14-cc-lead">
               {section.showForm
                 ? "Ask about a product, an order or delivery. We will reply as soon as we can."
                 : "Call, message or email us. We are happy to help with sizing and orders."}
             </p>
             {rows}
+            {mapHref ? (
+              <a className="t14-pill t14-pill-soft t14-cc-map" href={mapHref} target="_blank" rel="noreferrer">
+                <IconPin size={16} /> Get directions
+              </a>
+            ) : null}
             {hours.length > 0 && pageKind !== "contact" ? (
-              <div className="t14-contact-hours">
+              <div className="t14-cc-hours">
                 <small>Opening hours</small>
                 <T14Hours />
               </div>
@@ -91,7 +95,7 @@ export default function T14ContactCard({
 
           {section.showForm ? (
             <form
-              className="t14-form t14-reveal"
+              className="t14-cc-form t14-reveal"
               onSubmit={inbox.onSubmit}
             >
               <InboxHoneypot />
@@ -113,13 +117,13 @@ export default function T14ContactCard({
                 <span>Message</span>
                 <textarea className="t14-input" name="message" rows={4} placeholder="How can we help?" />
               </label>
-              <button type="submit" disabled={inbox.sending} className="t14-btn t14-btn-block t14-btn-lg">
-                Send message <IconArrow size={18} />
+              <button type="submit" disabled={inbox.sending} className="t14-pill t14-pill-black t14-pill-lg t14-pill-block">
+                Send message <IconArrow size={16} />
               </button>
               <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (
-            <div className="t14-map t14-reveal">
+            <div className="t14-cc-mapbox t14-reveal">
               <iframe title="Map" src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
             </div>
           ) : null}
