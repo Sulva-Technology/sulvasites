@@ -49,8 +49,9 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - **SMTP settings:** use Resend (host `smtp.resend.com`, port 465, user `resend`, password = `RESEND_API_KEY`,
      sender on your verified domain). The built-in mailer only sends a couple of emails an hour, so
      "Forgot password?" emails would silently stop.
-   - **URL configuration → Redirect URLs:** add `https://<your app domain>/change-password` and
-     `http://localhost:3000/change-password`.
+   - **URL configuration → Redirect URLs:** add `<NEXT_PUBLIC_SITE_ORIGIN>/change-password` and
+     `http://localhost:3000/change-password`. Reset links always open on that address, even when the
+     request came from a site's own subdomain or custom domain.
 5. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
 > ⚠️ `supabase/dev-only/` scripts disable RLS. Never run them on production — see its README.
