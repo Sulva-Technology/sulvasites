@@ -16,7 +16,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
    OPENROUTER_API_KEY=...               # AI for every feature (site builder, setup chat, rewrite, SEO, "Ask AI")
-   # OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b   # default; paid endpoint, routed only to providers that don't store data
+   # OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free   # default; free endpoint (may be logged, daily caps). Drop ":free" for the paid, no-data-retention endpoint
    # OPENROUTER_TIMEOUT_MS=25000          # per-call limit before falling back to Groq
    GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
    # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
@@ -24,7 +24,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    # Product photos in "Ask AI" (add products by chat). The main model is text-only, so a vision model checks the photos:
    UNSPLASH_ACCESS_KEY=...              # recommended: free "Access Key" from unsplash.com/developers (demo mode: 50 searches/hour)
    # PEXELS_API_KEY=...                 # optional, used first when set (Pexels has paused new keys)
-   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning   # default; looks at candidate and owner-attached photos
+   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free   # default (free); looks at candidate and owner-attached photos
    # AI_VISION=off                      # turn the vision step off (photo search then keeps the provider's order)
    ```
 

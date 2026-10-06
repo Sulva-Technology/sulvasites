@@ -27,17 +27,18 @@ function harness(env, ...answers) {
   };
 }
 
-test("body: default Nemotron Ultra, no-logging providers only, hidden reasoning, JSON mode", () => {
+test("body: default free Nemotron Ultra, hidden reasoning, JSON mode", () => {
   const b = openRouterBody(DEFAULT_OPENROUTER_MODEL, { system: "s", user: "u", json: true, reasoningEffort: "low", maxTokens: 999 });
-  assert.equal(b.model, "nvidia/nemotron-3-ultra-550b-a55b");
-  assert.deepEqual(b.provider, { data_collection: "deny" });
+  assert.equal(b.model, "nvidia/nemotron-3-ultra-550b-a55b:free");
+  assert.equal(b.provider, undefined);
   assert.deepEqual(b.reasoning, { effort: "low", exclude: true });
   assert.deepEqual(b.response_format, { type: "json_object" });
   assert.equal(b.max_tokens, 999);
   assert.deepEqual(b.messages.map((m) => m.role), ["system", "user"]);
 });
 
-test("body: a :free model is not restricted (free endpoints log by design)", () => {
+test("body: a paid model routes to no-logging providers only; :free is not restricted", () => {
+  assert.deepEqual(openRouterBody("nvidia/nemotron-3-ultra-550b-a55b", { user: "u" }).provider, { data_collection: "deny" });
   assert.equal(openRouterBody("nvidia/nemotron-3-ultra-550b-a55b:free", { user: "u" }).provider, undefined);
 });
 

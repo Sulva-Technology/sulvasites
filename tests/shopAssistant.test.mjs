@@ -304,7 +304,7 @@ test("the vision model sees the candidate photos and only its picks survive", as
   assert.deepEqual(out.map((c) => c.url), [cands[1].url]);
   assert.equal(out[0].why, "A red leather handbag on a table");
   const sent = JSON.parse(f.calls[0].init.body);
-  assert.equal(sent.model, "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning");
+  assert.equal(sent.model, "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free");
   const parts = sent.messages.at(-1).content;
   assert.equal(parts[0].type, "text");
   assert.deepEqual(parts.slice(1).map((p) => p.image_url.url), cands.map((c) => c.thumb));
