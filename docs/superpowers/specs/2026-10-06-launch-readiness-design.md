@@ -28,7 +28,8 @@ Self-serve signup and billing are **out of scope here** — they get their own s
 - **Delete is soft by default.** Owners never delete sites. Admins archive; super admins can hard-delete
   an archived site after typing its slug.
 - **Revisions via DB trigger**, not app code, because pages are saved from ~10 client components.
-- **Sentry is optional** — enabled only when `SENTRY_DSN` is set, so local dev and tests are unaffected.
+- **Error tracking without a new vendor:** server and browser errors go to an `app_errors` table (service role
+  only) and show on the admin overview. No new dependency or account; Vercel logs stay as the raw source.
 - **Vercel domain automation is optional** — enabled only when `VERCEL_TOKEN` + `VERCEL_PROJECT_ID` are set;
   without them the current manual flow keeps working.
 
@@ -43,12 +44,10 @@ again on the very next request.
   cooldown from `Retry-After` (default 30s, max 5 min); a 408/5xx sets 10s. `isCooling(p, now)`.
   Instance-local is fine on Vercel — it only saves wasted calls, never blocks correctness.
 - `llm.server.ts`: skip cooling providers unless every provider is cooling (then try the soonest-ready one).
-  Record outcomes into `providerHealth`. One same-provider retry on 429 when the advertised wait is ≤ 3s and
-  budget allows.
+  Record outcomes into `providerHealth`.
 - When all providers fail with 429, throw `rate_limited` carrying the shortest cooldown so the existing
   client auto-retry (`assistantClient.ts`, honours `Retry-After`) waits the right time instead of failing.
-- Gemini timeout default 20s → 30s for `reasoningEffort: "high"` calls (the 408s were thinking runs).
-- Eval runner: `--delay <ms>` between cases (default 4000 when only free keys are set), and print which
+- Eval runner: `--delay=<ms>` between cases (default 4000 when only free keys are set), and print which
   providers were cooling. Exit code unchanged.
 - README: "Production AI" section — which paid key to set, expected cost, how to run the eval.
 
@@ -58,35 +57,37 @@ again on the very next request.
 
 ### 2a. Forgot password
 - `/login`: "Forgot password?" link → `/forgot-password` (email field → `supabase.auth.resetPasswordForEmail`
-  with `redirectTo = <origin>/reset-password`). Always shows the same "If that email has an account…"
+  with `redirectTo = <origin>/change-password`). Always shows the same "If that email has an account…"
   message (no account enumeration).
-- `/reset-password`: waits for the `PASSWORD_RECOVERY` auth event, then a new-password form using
-  `validateNewPassword` from `passwordPolicy.ts`; on success clears `must_change_password` (reuse the
-  existing `/api/account/change-password` route) and routes via `resolvePostLoginRoute`.
+- The recovery link signs the user in (browser client has `detectSessionInUrl: true`) and lands on the
+  existing `/change-password` page, which already validates via `passwordPolicy.ts`, clears
+  `must_change_password` server-side and routes on. No second form to maintain.
+- Add `/forgot-password` to `isBypassPath` so it works on site hosts like `/login` does.
 - **Ops prerequisite:** Supabase Auth → custom SMTP (Resend, already used for inbox mail). Supabase's
-  built-in mailer allows ~2 emails/hour. Redirect URL must be in Supabase's allowed list.
+  built-in mailer allows ~2 emails/hour. `<origin>/change-password` must be in Supabase's allowed redirect URLs.
 
 ### 2b. Archive / delete site
-- Migration `017_site_archive.sql`: add `'archived'` to `site_status`; add `sites.archived_at`.
-  Archived sites are not public (existing policies already require `published`) and are hidden from
-  `/dashboard` for owners.
+- Migration `017_site_archive.sql`: add `sites.archived_at`. Archive = `status 'suspended'` + `archived_at`
+  (no enum change). Archived sites are offline (public policies already require `published`); owners keep
+  dashboard access so nothing is lost.
 - Admin site page: "Archive site" (admin) / "Restore" / "Delete permanently" (super admin, archived only,
   type the slug to confirm). Delete goes through a server route using the service client so storage objects
   under `site-assets/<siteId>/` are removed too; cascade handles rows.
-- `/admin/sites` list: filter tabs Active / Archived.
+- `/admin/sites` list: `suspended` shows as "Archived"; new Archived filter; "All" hides archived.
 
 ### 2c. Page revisions
 - Migration `018_page_revisions.sql`: `page_revisions(id, site_id, page_kind 'core'|'extra', page_key,
   data jsonb, status, created_at, created_by)`. `AFTER UPDATE` trigger on `pages` and `extra_pages` stores
   the **old** row when `data` changed. Keep the last 30 per page (trigger deletes older).
   RLS: select for `can_edit_site(site_id)`; no client insert/update/delete.
-- Page editors (admin + dashboard share `PageEditor`/`ExtraPageEditor`): "History" drawer listing
-  revisions (time, who), preview, "Restore" = save that `data` back (which itself creates a revision, so
-  restore is undoable).
+- Page editors (admin + dashboard share `PageEditor`/`ExtraPageEditor`): "History" panel listing
+  revisions (time); "Load" puts that version into the editor as an unsaved draft. Saving it creates a new
+  revision of the current content, so a restore is itself undoable.
 
 ## 3. SEO: sitemap + robots per site
 
-- `hostRouting.ts` already rewrites host paths. Add route handlers:
+- `hostRouting.ts` currently *bypasses* `/robots.txt` and `/sitemap.xml`; remove those so site hosts rewrite
+  them (the platform host is unaffected — it has no site ref). Add route handlers:
   `src/app/[slug]/sitemap.xml/route.ts`, `src/app/[slug]/robots.txt/route.ts`, and the same under
   `src/app/d/[hostname]/`. Both call one helper in `publicSite.server.ts` that lists published core +
   extra pages (+ shop index and published products when the shop is on) with `lastmod = updated_at`.
@@ -111,8 +112,9 @@ again on the very next request.
 
 - **CI:** `.github/workflows/ci.yml` — on push/PR: `npm ci`, `npm run lint`, `npm run typecheck`,
   `npm test`. Node 22. No secrets needed.
-- **Errors:** `@sentry/nextjs`, initialised only when `SENTRY_DSN` is set; `global-error.tsx` reports; server
-  route errors captured via `onRequestError` in `instrumentation.ts`. Scrub request bodies (payment data).
+- **Errors:** migration `019_app_errors.sql`; `instrumentation.ts` `onRequestError` inserts server errors;
+  `src/app/global-error.tsx` posts browser crashes to `/api/errors` (rate-limited). Store message, digest,
+  path, method, source — never request bodies, headers or query strings (payment data, tokens).
 - **Admin overview** `/admin` (replaces redirect): cards for sites (published / draft / archived), unread
   inbox items, orders awaiting action, AI requests this month, domains pending — each scoped to sites the
   admin manages (super admin: all). One server route aggregating with the service client after
@@ -122,7 +124,7 @@ again on the very next request.
 
 1. AI reliability (unblocks the assistant; smallest)
 2. Forgot password · 3. Sitemap/robots · 4. Archive/delete · 5. Revisions
-6. CI · 7. Sentry · 8. Admin overview · 9. Vercel domains
+6. CI · 7. Error log · 8. Admin overview · 9. Vercel domains
 
 Each step ships on its own with tests, so any can pause without breaking the others.
 
@@ -132,12 +134,11 @@ Each step ships on its own with tests, so any can pause without breaking the oth
   `tests/*.test.mjs` unit tests in the existing Node runner style. Revision trigger + pruning is checked
   by a SQL snippet in the migration's comment header, run once in the Supabase SQL editor.
 - SQL migrations are idempotent like 001–016 and listed in the README setup order.
-- Manual checks per step with the dev server: reset-password email round-trip, sitemap for a slug and a
+- Manual checks per step with the dev server: forgot-password email round-trip, sitemap for a slug and a
   custom host, archive hides the site, restore a revision, Vercel add/verify on a test domain.
 
 ## Needs from the business (not code)
 
 - Paid AI key decision (Gemini paid or OpenRouter credits).
-- Resend SMTP configured in Supabase Auth; `/reset-password` in allowed redirect URLs.
+- Resend SMTP configured in Supabase Auth; `/change-password` in allowed redirect URLs.
 - Vercel API token + project id (+ team id) in env.
-- Sentry project DSN (free tier is enough).
