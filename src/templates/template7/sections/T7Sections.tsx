@@ -1,11 +1,15 @@
 "use client";
 
+import { Fragment } from "react";
+
 import type { PageData } from "@/lib/pageSchema";
+import { useT7 } from "../ctx";
 import T7BackedBy from "./T7BackedBy";
 import T7ContactCard from "./T7ContactCard";
 import T7FAQ from "./T7FAQ";
 import T7Gallery from "./T7Gallery";
 import T7Hero from "./T7Hero";
+import T7Popular from "./T7Popular";
 import T7RichText from "./T7RichText";
 import T7Services from "./T7Services";
 import T7Team from "./T7Team";
@@ -15,6 +19,7 @@ import T7Values from "./T7Values";
 
 /** Renders every section type on any page, so sections added in the editor always show. */
 export default function T7Sections({ pageData }: { pageData: PageData }) {
+  const { pageKind } = useT7();
   const sections = (pageData.sections || []).filter(
     (s): s is NonNullable<typeof s> => s != null && s.type != null,
   );
@@ -25,7 +30,14 @@ export default function T7Sections({ pageData }: { pageData: PageData }) {
         const key = `${section.type}-${i}`;
         switch (section.type) {
           case "hero":
-            return <T7Hero key={key} section={section} sectionIndex={i} primary={i === 0} />;
+            return i === 0 && pageKind === "home" ? (
+              <Fragment key={key}>
+                <T7Hero section={section} sectionIndex={i} primary />
+                <T7Popular />
+              </Fragment>
+            ) : (
+              <T7Hero key={key} section={section} sectionIndex={i} primary={i === 0} />
+            );
           case "services":
             return <T7Services key={key} section={section} sectionIndex={i} />;
           case "richtext":

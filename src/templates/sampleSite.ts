@@ -1855,11 +1855,92 @@ export function sampleExtraPage(templateKey: string, props: TemplateProps, key: 
   return { seo: { title: preset.label, description: "" }, sections };
 }
 
+/** Sample online menu for t7 Tavola: dishes as products, courses as categories. */
+function restaurantShop(): ShopData {
+  const cats = [
+    { id: "c-grill", slug: "from-the-grill", name: "From the grill", position: 0 },
+    { id: "c-mains", slug: "mains", name: "Mains", position: 1 },
+    { id: "c-bowls", slug: "bowls-and-salads", name: "Bowls & salads", position: 2 },
+    { id: "c-sweet", slug: "desserts-and-drinks", name: "Desserts & drinks", position: 3 },
+  ];
+  const dish = (
+    n: number,
+    slug: string,
+    name: string,
+    category: string,
+    priceNaira: number,
+    featured: boolean,
+    description: string,
+    photoId: string,
+    opts: Array<[Record<string, string>, number | null]> = [],
+  ): SampleProduct => ({
+    id: `d-${slug}`,
+    slug,
+    name,
+    description,
+    images: [{ url: photoUrl(photoId, 1000), alt: name }],
+    priceKobo: priceNaira * 100,
+    compareAtKobo: null,
+    categoryId: category,
+    featured,
+    position: n,
+    variants: opts.map(([options, price], i) => ({
+      id: `d-${slug}-v${i + 1}`,
+      options,
+      priceKobo: price === null ? null : price * 100,
+      stock: null,
+      sku: null,
+      position: i,
+    })),
+  });
+  return {
+    siteId: "sample",
+    currency: "NGN",
+    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Collect from the front desk, 14 Akin Adesola Street." },
+    categories: cats,
+    products: [
+      dish(0, "mixed-grill-platter", "Mixed grill platter", "c-grill", 24000, true,
+        "Suya chicken, beef skewers, charred peppers and yam with three dips. Made to share.",
+        "photo-1555939594-58d7cb561ad1", [[{ Size: "For two" }, null], [{ Size: "For four" }, 42000]]),
+      dish(1, "suya-beef", "Sliced suya beef", "c-grill", 14500, true,
+        "Yaji-rubbed sirloin, fresh pepper, red onion and crushed groundnut.", "photo-1504674900247-0877df9cc836"),
+      dish(2, "smoky-ribs", "Smoky pepper ribs", "c-grill", 16500, true,
+        "Slow-smoked pork ribs with a scotch bonnet glaze and tomato salad.", "photo-1544025162-d76694265947"),
+      dish(3, "steak-and-chips", "Pepper steak & chips", "c-grill", 15000, false,
+        "Grilled sirloin, ata dindin butter and hand-cut chips.", "photo-1600891964092-4316c288032e"),
+      dish(4, "asun-meatballs", "Asun meatballs", "c-grill", 7000, false,
+        "Spiced goat meatballs on rocket with a smoky pepper sauce.", "photo-1529042410759-befb1204b468"),
+      dish(5, "seafood-pepper-stew", "Seafood pepper stew", "c-mains", 13000, true,
+        "Prawns and fish in a rich tomato-pepper stew, served with white rice.", "photo-1559847844-5315695dadae"),
+      dish(6, "peppered-chicken", "Peppered chicken", "c-mains", 9500, false,
+        "Wok-tossed chicken with peppers, basil and onions.", "photo-1604908176997-125f25cc6f3d",
+        [[{ Spice: "Medium" }, null], [{ Spice: "Hot" }, null]]),
+      dish(7, "crispy-chicken", "Crispy fried chicken", "c-mains", 8500, true,
+        "Buttermilk-brined, double-fried, with a sweet chilli dip.", "photo-1626645738196-c2a7c87a8f58",
+        [[{ Pieces: "4 pieces" }, null], [{ Pieces: "8 pieces" }, 15500]]),
+      dish(8, "grilled-chicken-bowl", "Grilled chicken bowl", "c-bowls", 7500, false,
+        "Charred chicken, egg, corn, cucumber and greens with a lime dressing.", "photo-1546069901-ba9599a7e63c"),
+      dish(9, "garden-bowl", "Garden power bowl", "c-bowls", 6500, false,
+        "Avocado, chickpeas, sweet potato, tomatoes and leaves. Vegan.", "photo-1512621776951-a57141f2eefd"),
+      dish(10, "greek-salad", "Feta & olive salad", "c-bowls", 6000, false,
+        "Tomato, cucumber, red onion, olives and feta.", "photo-1625944230945-1b7dd3b949ab"),
+      dish(11, "raspberry-cake", "Raspberry layer cake", "c-sweet", 4500, false,
+        "Vanilla sponge, raspberry cream and fresh berries.", "photo-1565958011703-44f9829ba187"),
+      dish(12, "glazed-doughnuts", "Glazed doughnuts", "c-sweet", 3500, false,
+        "Chocolate and vanilla glaze with sprinkles.", "photo-1551024601-bec78aea704b",
+        [[{ Box: "Box of 3" }, null], [{ Box: "Box of 6" }, 6500]]),
+      dish(13, "mint-lime-cooler", "Mint & lime cooler", "c-sweet", 3000, false,
+        "Fresh lime, crushed mint and soda over ice.", "photo-1513558161293-cdaf765ed2fd"),
+    ],
+  };
+}
+
 /**
  * Per-template sample catalogues for `/dev/templates/<key>/shop/...` previews. Shop templates
- * (t13 Mode, t14 Cartly) register a builder here; anything else gets the empty default.
+ * (t7 Tavola, t13 Mode, t14 Cartly) register a builder here; anything else gets the empty default.
  */
 export const SHOP_SAMPLES: Record<string, (() => ShopData) | undefined> = {
+  t7: restaurantShop,
   t13: fashionShop,
   t14: storeShop,
 };
