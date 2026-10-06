@@ -186,7 +186,7 @@ export default function SiteOverviewPage({
 
   async function onPublishSite() {
     if (!siteId) return;
-    if (!window.confirm("Publish this site and all 3 pages?")) return;
+    if (!window.confirm("Publish this site and all its pages?")) return;
 
     setPublishSuccess(null);
     setPublishError(null);
@@ -203,7 +203,11 @@ export default function SiteOverviewPage({
         }),
       );
       chrome?.setStatus(res.site.status);
-      setPublishSuccess("Site published.");
+      if (res.extraPagesError) {
+        setPublishError(`Site published, but the extra pages are still drafts (${res.extraPagesError}). Publish them from each page's editor.`);
+      } else {
+        setPublishSuccess("Site published.");
+      }
     } catch (err) {
       setPublishError(formatSupabaseError(err));
     } finally {
