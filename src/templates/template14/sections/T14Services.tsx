@@ -56,7 +56,9 @@ export default function T14Services({
       <div className="t14-container">
         <header className="t14-how-head t14-reveal">
           <h2 className="t14-h2">How it works.</h2>
-          {live ? <p className="t14-lead">Three steps from browsing to your door.</p> : null}
+          {live ? (
+            <p className="t14-lead">{items.length === 3 ? "Three steps from browsing to your door." : "From browsing to your door."}</p>
+          ) : null}
         </header>
 
         <ol className="t14-how-grid">

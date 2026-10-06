@@ -23,8 +23,12 @@ function CountUp({ stat, title }: { stat: Stat; title: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const final = formatStat(stat, stat.value);
   const [text, setText] = useState(final);
+  const done = useRef(false);
+  const { prefix, value, decimals, suffix } = stat;
 
   useEffect(() => {
+    if (done.current) return;
+    const s: Stat = { prefix, value, decimals, suffix };
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -33,13 +37,14 @@ function CountUp({ stat, title }: { stat: Stat; title: string }) {
       (entries) => {
         if (!entries.some((e) => e.isIntersecting)) return;
         io.disconnect();
+        done.current = true;
         const start = performance.now();
         const tick = (now: number) => {
           const p = Math.min(1, (now - start) / DURATION);
-          setText(formatStat(stat, stat.value * easeOutCubic(p)));
+          setText(formatStat(s, s.value * easeOutCubic(p)));
           if (p < 1) raf = requestAnimationFrame(tick);
         };
-        setText(formatStat(stat, 0));
+        setText(formatStat(s, 0));
         raf = requestAnimationFrame(tick);
       },
       { threshold: 0.4 },
@@ -49,7 +54,7 @@ function CountUp({ stat, title }: { stat: Stat; title: string }) {
       io.disconnect();
       cancelAnimationFrame(raf);
     };
-  }, [stat]);
+  }, [prefix, value, decimals, suffix]);
 
   return (
     <>
