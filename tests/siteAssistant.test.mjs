@@ -298,3 +298,41 @@ test("usage: only answers with changes count; chat is capped at 3x", () => {
   assert.equal(chatAllowanceFor(5), 30);
   assert.equal(chatAllowanceFor(null), null);
 });
+
+test("renderTraffic names the most visited pages with real numbers", async () => {
+  const { renderTraffic } = await import("../src/lib/ai/siteAssistant.ts");
+  const { parseOverview } = await import("../src/lib/insights/overview.ts");
+  const overview = parseOverview({
+    days: 30,
+    totals: { views: 100, visitors: 60, prev_views: 80, prev_visitors: 50 },
+    daily: [{ day: "2026-10-05", views: 7, visitors: 5 }],
+    top_pages: [
+      { path: "/", views: 70, visitors: 40 },
+      { path: "/p/menu", views: 30, visitors: 20 },
+    ],
+    top_referrers: [{ host: "instagram.com", views: 25 }],
+    devices: [{ device: "mobile", views: 80 }],
+    shop: { orders: 2 },
+    inbox: { enquiries: 3, bookings: 1, unread: 0 },
+  });
+  const text = renderTraffic(overview);
+  assert.match(text, /1\. Home \(\/\) — 70 views, 40 visitors \(70% of views\)/);
+  assert.match(text, /2\. \/p\/menu — 30 views/);
+  assert.match(text, /instagram\.com \(25\)/);
+});
+
+test("renderTraffic says so when there is no data or insights are unavailable", async () => {
+  const { renderTraffic } = await import("../src/lib/ai/siteAssistant.ts");
+  const { parseOverview } = await import("../src/lib/insights/overview.ts");
+  assert.match(renderTraffic(null), /not available/);
+  assert.match(renderTraffic(parseOverview({ days: 30, totals: { views: 0 } })), /no visits recorded/);
+});
+
+test("the assistant prompt carries the traffic block and the rule to use it", () => {
+  const { system, user } = buildAssistantPrompt({
+    snapshot: { ...snapshot(), traffic: null },
+    messages: [{ role: "user", content: "what page was visited the most?" }],
+  });
+  assert.match(user, /TRAFFIC: not available/);
+  assert.match(system, /TRAFFIC block/);
+});
