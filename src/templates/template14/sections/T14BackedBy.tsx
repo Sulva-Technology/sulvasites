@@ -9,10 +9,11 @@ function isImageUrl(url: string | null | undefined): url is string {
 }
 
 /** Press and stockist names set in the display font on a hairline band (logos are shown greyscale). */
-export default function T14BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
+/** `inStrip`: on a live-shop home the category strip shows these logos instead, so this band steps aside (not in the editor). */
+export default function T14BackedBy({ section, sectionIndex, inStrip = false }: { section: BackedBySection; sectionIndex?: number; inStrip?: boolean }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const real = (section.logos ?? []).filter((l) => l.name?.trim() || isImageUrl(l.url));
-  if (!enabled && real.length === 0) return null;
+  if (!enabled && (real.length === 0 || inStrip)) return null;
   const title = section.title || (enabled ? "" : "As seen in");
   const logos = enabled ? (section.logos?.length ? section.logos : [{ name: "", url: null }]) : real;
 
