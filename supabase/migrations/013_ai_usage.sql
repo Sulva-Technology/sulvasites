@@ -1,6 +1,8 @@
 -- 013_ai_usage.sql — run once in Supabase SQL Editor (after schema.sql and 001-012).
 -- Metering for the "Ask AI" site assistant: one row per AI request, used to enforce each site's
 -- monthly allowance (AI_ASSISTANT_MONTHLY_LIMIT, default 50; Sulvatech admins are not metered).
+-- feature 'assistant' = an answer that proposed a change (counted); 'assistant_chat' = advice or no change
+-- (not counted toward the allowance, but capped at 3x it to stop unlimited free use).
 -- Idempotent.
 --
 -- Access model
@@ -15,7 +17,7 @@ create table if not exists public.ai_usage (
   created_at timestamptz not null default now()
 );
 
-create index if not exists ai_usage_site_created_idx on public.ai_usage (site_id, created_at desc);
+create index if not exists ai_usage_site_feature_created_idx on public.ai_usage (site_id, feature, created_at desc);
 
 alter table public.ai_usage enable row level security;
 

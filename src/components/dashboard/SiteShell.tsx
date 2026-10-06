@@ -173,7 +173,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
         {children}
       </div>
       {value.role === "owner" || value.role === "admin" ? (
-        <SiteAssistantPanel siteId={siteId} editorBase={`${base}/content`} />
+        <SiteAssistantPanel siteId={siteId} editorBase={`${base}/content`} profileHref={`${base}/content/profile`} />
       ) : null}
     </SiteContext.Provider>
   );

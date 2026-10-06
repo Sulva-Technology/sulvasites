@@ -165,3 +165,136 @@ test("monthly allowance: admins unmetered, owners default 50 or env", () => {
   assert.equal(monthlyLimitFor("owner", { AI_ASSISTANT_MONTHLY_LIMIT: "200" }), 200);
   assert.equal(monthStartIso(new Date("2026-10-05T12:00:00Z")), "2026-10-01T00:00:00.000Z");
 });
+
+// ---------- business details, quality gate, remove/move, usage ----------
+
+import {
+  chatAllowanceFor,
+  profileFromRow,
+  profileUpdatePayload,
+  usageFeatureFor,
+} from "../src/lib/ai/siteAssistant.ts";
+
+const withProfile = () => ({
+  ...snapshot(),
+  profile: profileFromRow({
+    business_name: "Mama's Kitchen",
+    phone: "08012345678",
+    address: "Lekki, Lagos",
+    socials: { instagram: "@mamaskitchen", hours: "Mon–Sat · 9:00–18:00", nav_labels: { home: "Start" } },
+  }),
+});
+
+test("profile: owner-typed phone and hours are accepted", () => {
+  const owner = "Our new number is 0803 555 1234 and we now open 8am to 8pm Monday to Saturday";
+  const out = parseAssistantOutput(
+    { reply: "ok", actions: [{ type: "update_profile", fields: { phone: "0803 555 1234", hours: "Mon–Sat · 8:00–20:00" } }] },
+    withProfile(),
+    owner,
+  );
+  assert.equal(out.actions.length, 1);
+  const a = out.actions[0];
+  assert.equal(a.type, "update_profile");
+  assert.equal(a.after.phone, "0803 555 1234");
+  assert.equal(a.before.phone, "08012345678");
+  assert.equal(a.after.hours, "Mon–Sat · 8:00–20:00");
+});
+
+test("profile: invented contact details and hours are dropped", () => {
+  const out = parseAssistantOutput(
+    {
+      reply: "ok",
+      actions: [
+        { type: "update_profile", fields: { phone: "0909 000 1111", email: "hello@mamaskitchen.ng", hours: "Mon–Sun · 7:00–23:00" } },
+      ],
+    },
+    withProfile(),
+    "please update our contact details",
+  );
+  assert.equal(out.actions.length, 0);
+});
+
+test("profile: clearing a field is allowed; payload keeps other socials keys", () => {
+  const s = withProfile();
+  const out = parseAssistantOutput({ reply: "ok", actions: [{ type: "update_profile", fields: { instagram: "" } }] }, s, "remove our instagram");
+  assert.deepEqual(out.actions[0].after, { instagram: "" });
+  const payload = profileUpdatePayload(
+    { socials: { instagram: "@mamaskitchen", hours: "x", nav_labels: { home: "Start" } } },
+    { instagram: "", phone: "0803" },
+  );
+  assert.deepEqual(payload, { phone: "0803", socials: { instagram: null, hours: "x", nav_labels: { home: "Start" } } });
+});
+
+test("profile: tagline goes through the quality gate", () => {
+  const out = parseAssistantOutput(
+    { reply: "ok", actions: [{ type: "update_profile", fields: { tagline: "World-class jollof. Home-cooked jollof in Lekki." } }] },
+    withProfile(),
+    "new tagline please",
+  );
+  assert.equal(out.actions[0].after.tagline, "Home-cooked jollof in Lekki.");
+});
+
+test("quality gate: cliches and invented numbers are removed from new copy, owner's text kept", () => {
+  const s = snapshot();
+  s.pages[0].data.sections[1].items[0].answer = "Yes. We are passionate about food.";
+  const out = parseAssistantOutput(
+    {
+      reply: "ok",
+      actions: [
+        {
+          type: "edit_section",
+          page: "home",
+          section: 1,
+          content: {
+            title: "Questions",
+            items: [
+              { question: "Do you deliver?", answer: "Yes. We are passionate about food." },
+              { question: "How fast?", answer: "Within 30 minutes. We are world-class. Orders come hot." },
+            ],
+          },
+        },
+      ],
+    },
+    s,
+    "add a faq about delivery speed",
+  );
+  const items = out.actions[0].after.items;
+  assert.equal(items[0].answer, "Yes. We are passionate about food.");
+  assert.equal(items[1].answer, "Orders come hot.");
+});
+
+test("quality gate: numbers the owner gave are kept", () => {
+  const out = parseAssistantOutput(
+    { reply: "ok", actions: [{ type: "edit_section", page: "home", section: 0, content: { subtext: "Lunch trays from ₦5,000, delivered in Lekki." } }] },
+    snapshot(),
+    "mention lunch trays start at ₦5,000",
+  );
+  assert.match(out.actions[0].after.subtext, /₦5,000/);
+});
+
+test("remove and move sections, one action per section", () => {
+  const out = parseAssistantOutput(
+    {
+      reply: "ok",
+      actions: [
+        { type: "remove_section", page: "home", section: 2 },
+        { type: "edit_section", page: "home", section: 2, content: { title: "Crew" } },
+        { type: "move_section", page: "home", section: 1, to: 0 },
+        { type: "move_section", page: "home", section: 0, to: 0 },
+        { type: "remove_section", page: "home", section: 7 },
+      ],
+    },
+    snapshot(),
+  );
+  assert.deepEqual(out.actions.map((a) => a.type), ["remove_section", "move_section"]);
+  assert.equal(out.actions[0].before.type, "team");
+  assert.equal(out.actions[1].to, 0);
+});
+
+test("usage: only answers with changes count; chat is capped at 3x", () => {
+  assert.equal(usageFeatureFor({ reply: "x", actions: [] }), "assistant_chat");
+  assert.equal(usageFeatureFor({ reply: "x", actions: [{}] }), "assistant");
+  assert.equal(chatAllowanceFor(50), 150);
+  assert.equal(chatAllowanceFor(5), 30);
+  assert.equal(chatAllowanceFor(null), null);
+});

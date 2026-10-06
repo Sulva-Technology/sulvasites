@@ -5,10 +5,16 @@ import { aiErrorResponse } from "@/lib/ai/http.server";
 import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
   buildAssistantPrompt,
+  PROFILE_COLUMNS,
+  USAGE_CHAT,
+  USAGE_COUNTED,
+  chatAllowanceFor,
   monthStartIso,
   monthlyLimitFor,
   normalizeAssistantMessages,
   parseAssistantOutput,
+  profileFromRow,
+  usageFeatureFor,
   type SiteSnapshot,
   type SnapshotPage,
 } from "@/lib/ai/siteAssistant";
@@ -24,18 +30,18 @@ export const maxDuration = 60;
 type Ctx = { params: Promise<{ siteId: string }> };
 type Usage = { used: number; limit: number | null };
 
-const PROFILE_FIELDS = ["tagline", "description", "address", "phone", "email", "whatsapp"] as const;
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
 }
 
-/** Requests this site has made this month, or null when metering is unavailable (migration 013 not run). */
-async function usedThisMonth(siteId: string): Promise<number | null> {
+/** This month's usage rows of one kind, or null when metering is unavailable (migration 013 not run). */
+async function usedThisMonth(siteId: string, feature: string = USAGE_COUNTED): Promise<number | null> {
   const { count, error } = await supabaseService()
     .from("ai_usage")
     .select("id", { count: "exact", head: true })
     .eq("site_id", siteId)
+    .eq("feature", feature)
     .gte("created_at", monthStartIso());
   if (error) {
     console.error("ai_usage count failed (run migration 013_ai_usage.sql):", error.message);
@@ -48,7 +54,7 @@ async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
   const db = supabaseService();
   const [siteRes, profileRes, pagesRes, extraRes] = await Promise.all([
     db.from("sites").select("template_key, slug").eq("id", siteId).maybeSingle(),
-    db.from("business_profiles").select(`business_name, ${PROFILE_FIELDS.join(", ")}`).eq("site_id", siteId).maybeSingle(),
+    db.from("business_profiles").select(PROFILE_COLUMNS).eq("site_id", siteId).maybeSingle(),
     db.from("pages").select("key, status, data").eq("site_id", siteId),
     db.from("extra_pages").select("key, status, data").eq("site_id", siteId),
   ]);
@@ -57,11 +63,7 @@ async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
   }
   if (!siteRes.data) return null;
 
-  const profileRow = (profileRes.data ?? {}) as Record<string, unknown>;
-  const profile: Record<string, string> = {};
-  for (const f of PROFILE_FIELDS) {
-    if (typeof profileRow[f] === "string") profile[f] = (profileRow[f] as string).slice(0, 600);
-  }
+  const profile = profileFromRow(profileRes.data as Record<string, unknown> | null);
 
   const toPage = (kind: SnapshotPage["kind"]) => (r: Record<string, unknown>): SnapshotPage => {
     const data = (r.data ?? {}) as Partial<PageData>;
@@ -83,7 +85,7 @@ async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
 
   return {
     templateKey: String(siteRes.data.template_key ?? ""),
-    businessName: (profileRow.business_name as string | undefined) || String(siteRes.data.slug ?? ""),
+    businessName: profile.business_name || String(siteRes.data.slug ?? ""),
     profile,
     pages: [...core, ...extra],
   };
@@ -135,6 +137,13 @@ export async function POST(req: Request, ctx: Ctx) {
       429,
     );
   }
+  const chatLimit = chatAllowanceFor(limit);
+  if (chatLimit !== null) {
+    const chats = await usedThisMonth(siteId, USAGE_CHAT);
+    if (chats !== null && chats >= chatLimit) {
+      return json({ error: "You've reached this month's limit for AI chat. It resets on the 1st.", usage: { used: used ?? 0, limit } }, 429);
+    }
+  }
 
   try {
     const snapshot = await loadSnapshot(siteId);
@@ -149,14 +158,18 @@ export async function POST(req: Request, ctx: Ctx) {
     } catch {
       return json({ error: "The AI gave a garbled answer. Please try again." }, 422);
     }
-    const result = parseAssistantOutput(raw, snapshot);
+    const ownerText = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
+    const result = parseAssistantOutput(raw, snapshot, ownerText);
 
+    // Only an answer that proposes a change uses up the allowance; advice and "I didn't get that" are free.
+    const feature = usageFeatureFor(result);
     const { error: logError } = await supabaseService()
       .from("ai_usage")
-      .insert({ site_id: siteId, user_id: auth.userId, feature: "assistant" });
+      .insert({ site_id: siteId, user_id: auth.userId, feature });
     if (logError) console.error("ai_usage insert failed:", logError.message);
 
-    return json({ ...result, usage: { used: (used ?? 0) + 1, limit } satisfies Usage });
+    const usedNow = (used ?? 0) + (feature === USAGE_COUNTED ? 1 : 0);
+    return json({ ...result, usage: { used: usedNow, limit } satisfies Usage });
   } catch (e) {
     return aiErrorResponse(e);
   }

@@ -130,7 +130,7 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
         <Tabs label="Site sections" tourId="site-tabs" active={active} items={tabs} />
         {children}
       </div>
-      <SiteAssistantPanel siteId={siteId} editorBase={base} />
+      <SiteAssistantPanel siteId={siteId} editorBase={base} profileHref={`${base}?view=settings`} />
     </AdminSiteContext.Provider>
   );
 }

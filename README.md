@@ -40,6 +40,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Unit tests (Node built-in runner, `tests/`) |
+| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live model (needs `GROQ_API_KEY`; one model call each). Run it before launch and after any model change; it fails below 85%. |
 
 ## How routing works
 

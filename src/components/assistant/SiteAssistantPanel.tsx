@@ -4,15 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
-import { applyAssistantAction } from "@/lib/ai/assistantApply";
+import { applyAssistantAction, undoAssistantAction, type UndoRecord } from "@/lib/ai/assistantApply";
 import { diffText, type TextChange } from "@/lib/ai/rewrite";
-import type { AssistantAction } from "@/lib/ai/siteAssistant";
+import { profileFieldLabel, type AssistantAction } from "@/lib/ai/siteAssistant";
 import { defaultSection } from "@/lib/pageSchema";
 import { ensureSession } from "@/lib/supabase/browser";
-import { describeSections } from "@/templates/pagePresets";
+import { SECTION_LABELS, describeSections } from "@/templates/pagePresets";
 
-type ApplyState = "applying" | { done: string } | { error: string };
-type ChatEntry = { role: "user" | "assistant"; content: string; actions?: AssistantAction[]; error?: boolean };
+type ApplyState =
+  | "applying"
+  | "undoing"
+  | { done: string; undo: UndoRecord; error?: string }
+  | { undone: true }
+  | { error: string };
+type ChatEntry = { id: string; role: "user" | "assistant"; content: string; actions?: AssistantAction[]; error?: boolean };
 type Usage = { used: number; limit: number | null };
 type Stored = { messages: ChatEntry[]; applied: Record<string, ApplyState>; open: boolean };
 
@@ -20,11 +25,16 @@ const MAX_STORED = 30;
 
 const GENERAL_IDEAS = [
   "Make my homepage headline stronger",
+  "Update my opening hours",
   "Add 3 FAQs about delivery and payment",
   "Add a pricing page",
   "What should I improve on my site?",
 ];
 const PAGE_IDEAS = ["Make this page more persuasive", "Write SEO for this page", "Shorten the text on this page"];
+
+function newId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+}
 
 function storageKey(siteId: string) {
   return `sulva-ai-chat:${siteId}`;
@@ -73,22 +83,48 @@ function changesFor(action: AssistantAction): TextChange[] {
       return diffText(defaultSection(action.section.type), action.section);
     case "set_seo":
       return diffText(action.before, action.after);
+    case "update_profile":
+      return Object.keys(action.after).map((f) => ({
+        path: profileFieldLabel(f),
+        before: action.before[f as keyof typeof action.before] ?? "",
+        after: action.after[f as keyof typeof action.after] || "(removed)",
+      }));
     default:
       return [];
   }
 }
 
-function actionKey(msgIndex: number, action: AssistantAction) {
-  return `${msgIndex}:${action.id}`;
+function actionKey(entryId: string, action: AssistantAction) {
+  return `${entryId}:${action.id}`;
+}
+
+function sectionGist(s: { type: string } & Record<string, unknown>) {
+  const text = [s.headline, s.title].find((v) => typeof v === "string" && v.trim()) as string | undefined;
+  return `${SECTION_LABELS[s.type as keyof typeof SECTION_LABELS] ?? s.type}${text ? ` (“${plain(text).slice(0, 60)}”)` : ""}`;
+}
+
+/** Plain explanation for changes that are not text edits. */
+function noteFor(action: AssistantAction): string | null {
+  if (action.type === "remove_section") return `Removes the ${sectionGist(action.before)} section from this page.`;
+  if (action.type === "move_section") {
+    return `Moves the ${sectionGist(action.before)} section from position ${action.sectionIndex + 1} to ${action.to + 1}.`;
+  }
+  if (action.type === "add_page") {
+    return `Includes: ${describeSections(action.data.sections.map((s) => s.type))}. Added as a hidden draft.`;
+  }
+  return null;
 }
 
 export default function SiteAssistantPanel({
   siteId,
   editorBase,
+  profileHref,
 }: {
   siteId: string;
   /** Base for editor links, e.g. /admin/sites/<id> or /dashboard/<id>/content. */
   editorBase: string;
+  /** Where the business details are edited. */
+  profileHref: string;
 }) {
   const pathname = usePathname() ?? "";
   const focusPage = focusFromPath(pathname);
@@ -107,7 +143,7 @@ export default function SiteAssistantPanel({
   useEffect(() => {
     const stored = load(siteId);
     if (stored) {
-      setMessages(stored.messages ?? []);
+      setMessages((stored.messages ?? []).map((m) => ({ ...m, id: m.id ?? newId() })));
       setApplied(stored.applied ?? {});
       setOpen(Boolean(stored.open));
     }
@@ -147,7 +183,7 @@ export default function SiteAssistantPanel({
   async function send(text: string) {
     const content = text.trim();
     if (!content || busy) return;
-    const next: ChatEntry[] = [...messages, { role: "user", content }];
+    const next: ChatEntry[] = [...messages, { id: newId(), role: "user", content }];
     setMessages(next);
     setInput("");
     setBusy(true);
@@ -165,19 +201,37 @@ export default function SiteAssistantPanel({
         | null;
       if (json?.usage) setUsage(json.usage);
       if (!res.ok || !json?.reply) throw new Error(json?.error ?? "The assistant is unavailable right now.");
-      setMessages((m) => [...m, { role: "assistant", content: json.reply!, actions: json.actions ?? [] }]);
+      setMessages((m) => [...m, { id: newId(), role: "assistant", content: json.reply!, actions: json.actions ?? [] }]);
     } catch (e) {
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: e instanceof Error ? e.message : "Something went wrong.", error: true },
+        { id: newId(), role: "assistant", content: e instanceof Error ? e.message : "Something went wrong.", error: true },
       ]);
     } finally {
       setBusy(false);
     }
   }
 
-  async function apply(msgIndex: number, action: AssistantAction) {
-    const key = actionKey(msgIndex, action);
+  /** True when the screen behind the panel shows what `action` changes (and keeps its own copy of it). */
+  function touchesOpenScreen(action: AssistantAction) {
+    if (action.type === "update_profile") {
+      return pathname.endsWith("/profile") || window.location.search.includes("view=settings");
+    }
+    return action.type !== "add_page" && action.page === focusPage;
+  }
+
+  /** Saves the new state, then reloads the open editor so a later "Save" there can't write old text back. */
+  function settle(action: AssistantAction, key: string, state: ApplyState) {
+    const nextApplied = { ...applied, [key]: state };
+    setApplied(nextApplied);
+    if (touchesOpenScreen(action)) {
+      save(siteId, { messages: messages.slice(-MAX_STORED), applied: nextApplied, open: true });
+      window.location.reload();
+    }
+  }
+
+  async function apply(entryId: string, action: AssistantAction) {
+    const key = actionKey(entryId, action);
     setApplied((a) => ({ ...a, [key]: "applying" }));
     try {
       const result = await applyAssistantAction(siteId, action);
@@ -185,15 +239,26 @@ export default function SiteAssistantPanel({
         setApplied((a) => ({ ...a, [key]: { error: result.error } }));
         return;
       }
-      setApplied((a) => ({ ...a, [key]: { done: result.key } }));
-      // The open editor holds its own copy of this page; reload it so it shows the change
-      // (and so a later "Save" there doesn't write the old text back).
-      if (action.type !== "add_page" && action.page === focusPage) {
-        save(siteId, { messages: messages.slice(-MAX_STORED), applied: { ...applied, [key]: { done: result.key } }, open: true });
-        window.location.reload();
-      }
+      settle(action, key, { done: result.key, undo: result.undo });
     } catch (e) {
       setApplied((a) => ({ ...a, [key]: { error: e instanceof Error ? e.message : "Could not apply." } }));
+    }
+  }
+
+  async function undo(entryId: string, action: AssistantAction) {
+    const key = actionKey(entryId, action);
+    const state = applied[key];
+    if (!state || typeof state !== "object" || !("done" in state)) return;
+    setApplied((a) => ({ ...a, [key]: "undoing" }));
+    try {
+      const result = await undoAssistantAction(siteId, state.undo);
+      if (!result.ok) {
+        setApplied((a) => ({ ...a, [key]: { ...state, error: result.error } }));
+        return;
+      }
+      settle(action, key, { undone: true });
+    } catch (e) {
+      setApplied((a) => ({ ...a, [key]: { ...state, error: e instanceof Error ? e.message : "Could not undo." } }));
     }
   }
 
@@ -209,6 +274,7 @@ export default function SiteAssistantPanel({
   }
 
   function editorHref(action: AssistantAction, appliedKey: string) {
+    if (action.type === "update_profile") return profileHref;
     if (action.type === "add_page") return `${editorBase}/extra-pages/${appliedKey}`;
     return `${editorBase}/${action.pageKind === "core" ? "pages" : "extra-pages"}/${action.page}`;
   }
@@ -284,13 +350,13 @@ export default function SiteAssistantPanel({
           </div>
         ) : null}
 
-        {messages.map((m, i) =>
+        {messages.map((m) =>
           m.role === "user" ? (
-            <div key={i} className="ml-8 whitespace-pre-line rounded-2xl rounded-br-md bg-koi-ink px-3.5 py-2.5 text-sm text-white">
+            <div key={m.id} className="ml-8 whitespace-pre-line rounded-2xl rounded-br-md bg-koi-ink px-3.5 py-2.5 text-sm text-white">
               {m.content}
             </div>
           ) : (
-            <div key={i} className="mr-4 space-y-2">
+            <div key={m.id} className="mr-4 space-y-2">
               <div
                 className={`whitespace-pre-line rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm ${
                   m.error ? "border border-red-200 bg-red-50 text-red-700" : "bg-koi-paper text-koi-ink"
@@ -299,29 +365,35 @@ export default function SiteAssistantPanel({
                 {m.content}
               </div>
               {(m.actions ?? []).map((action) => {
-                const key = actionKey(i, action);
+                const key = actionKey(m.id, action);
                 const state = applied[key];
-                const done = state && typeof state === "object" && "done" in state ? state.done : null;
+                const doneState = state && typeof state === "object" && "done" in state ? state : null;
+                const done = doneState?.done ?? null;
+                const undone = !!state && typeof state === "object" && "undone" in state;
+                const error = state && typeof state === "object" && "error" in state ? state.error : null;
                 const changes = changesFor(action);
+                const note = noteFor(action);
                 const isOpen = expanded[key] ?? false;
-                const pageName = action.type === "add_page" ? action.label : action.pageLabel;
-                const live = action.type !== "add_page" && action.pageLive;
+                const heading =
+                  action.type === "add_page"
+                    ? "New page"
+                    : action.type === "update_profile"
+                      ? "Business details"
+                      : `${action.pageLabel} page`;
+                const live = action.type !== "add_page" && action.type !== "update_profile" && action.pageLive;
                 return (
                   <div key={key} className="rounded-2xl bg-white p-3 ring-1 ring-koi-ink/10">
-                    <div className="text-[11px] font-medium uppercase tracking-wider text-koi-ink/45">
-                      {action.type === "add_page" ? "New page" : `${pageName} page`}
-                    </div>
+                    <div className="text-[11px] font-medium uppercase tracking-wider text-koi-ink/45">{heading}</div>
                     <div className="mt-0.5 text-sm font-medium text-koi-ink">{action.summary}</div>
 
-                    {action.type === "add_page" ? (
-                      <p className="mt-1 text-xs text-koi-ink/55">
-                        Includes: {describeSections(action.data.sections.map((s) => s.type))}. Added as a hidden draft.
-                      </p>
-                    ) : live ? (
+                    {note ? <p className="mt-1 text-xs text-koi-ink/60">{note}</p> : null}
+                    {done || undone ? null : live ? (
                       <p className="mt-1 text-xs text-amber-700">This page is live — the change shows on your site right away.</p>
+                    ) : action.type === "update_profile" ? (
+                      <p className="mt-1 text-xs text-amber-700">Shows in the header, footer and contact details across your site.</p>
                     ) : null}
-                    {action.type !== "add_page" && action.page === focusPage && !done ? (
-                      <p className="mt-1 text-xs text-koi-ink/55">Applying reloads this editor — save your own edits first.</p>
+                    {touchesOpenScreen(action) && !done ? (
+                      <p className="mt-1 text-xs text-koi-ink/55">Applying reloads this screen — save your own edits first.</p>
                     ) : null}
 
                     {changes.length > 0 ? (
@@ -350,17 +422,29 @@ export default function SiteAssistantPanel({
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {done ? (
+                      {done || state === "undoing" ? (
                         <>
                           <span className="text-xs font-medium text-emerald-700">✓ Applied</span>
-                          <Link href={editorHref(action, done)} className="text-xs font-medium text-koi-ink underline underline-offset-2">
-                            {action.type === "add_page" ? "Open page" : "Open in editor"}
-                          </Link>
+                          {done ? (
+                            <Link href={editorHref(action, done)} className="text-xs font-medium text-koi-ink underline underline-offset-2">
+                              {action.type === "add_page" ? "Open page" : "Open in editor"}
+                            </Link>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => void undo(m.id, action)}
+                            disabled={state === "undoing"}
+                            className="ml-auto rounded-full px-3 py-1 text-xs font-medium text-koi-ink ring-1 ring-koi-ink/15 hover:bg-koi-paper disabled:opacity-60"
+                          >
+                            {state === "undoing" ? "Undoing…" : "Undo"}
+                          </button>
                         </>
+                      ) : undone ? (
+                        <span className="text-xs font-medium text-koi-ink/55">↩ Undone — your previous version is back</span>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => void apply(i, action)}
+                          onClick={() => void apply(m.id, action)}
                           disabled={state === "applying"}
                           className="rounded-full bg-koi-ink px-4 py-1.5 text-xs font-semibold text-white hover:bg-black disabled:opacity-60"
                         >
@@ -368,9 +452,7 @@ export default function SiteAssistantPanel({
                         </button>
                       )}
                     </div>
-                    {state && typeof state === "object" && "error" in state ? (
-                      <p className="mt-2 text-xs text-red-700">{state.error}</p>
-                    ) : null}
+                    {error ? <p className="mt-2 text-xs text-red-700">{error}</p> : null}
                   </div>
                 );
               })}
