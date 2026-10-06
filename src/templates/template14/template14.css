@@ -13,7 +13,8 @@
 
   --t14-paper: var(--t14-surface);
   --t14-card: #ffffff;
-  --t14-subtle: #a1a1a1;     /* decorative and dimmed headline line (>=24px) only */
+  --t14-subtle: #a1a1a1;     /* decoration only */
+  --t14-dim-text: #8a8a8a;   /* dimmed headline line (>=24px): 3.45:1 on white, 3.17:1 on paper */
   --t14-line: color-mix(in srgb, var(--t14-ink) 8%, transparent);
   --t14-line-strong: color-mix(in srgb, var(--t14-ink) 18%, transparent);
   --t14-btn: var(--t14-accent2);
@@ -77,6 +78,7 @@
   --t14-surface: var(--t14-dark-surface, #141414) !important;
   --t14-card: #1a1a1a;
   --t14-subtle: #5c5c5c;
+  --t14-dim-text: #7a7a7a;   /* 4.6:1 on #0a0a0a, 4.3:1 on #141414 */
   --t14-line: rgb(255 255 255 / 0.08);
   --t14-line-strong: rgb(255 255 255 / 0.16);
   --t14-btn: #ffffff;
@@ -90,7 +92,7 @@
 
 .t14-band { margin-inline: var(--t14-inset); border-radius: var(--t14-r-xl); overflow: hidden; }
 .t14-paper { background: var(--t14-paper); }
-.t14-dim { color: var(--t14-subtle); }
+.t14-dim { color: var(--t14-dim-text); }
 .t14-pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px;
   font: 600 14px/1 var(--t14-font); border: 0; cursor: pointer; text-decoration: none; transition: transform .3s var(--t14-ease), opacity .2s, background-color .2s; }
 .t14-pill:active { transform: scale(.97); }
@@ -500,13 +502,13 @@
 .t14-hero-card { position: relative; height: calc(100svh - 2 * var(--t14-inset)); min-height: 600px; max-height: 900px; color: #fff; background: #1f1f1f; isolation: isolate; }
 .t14-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transform: scale(1.04); transition: transform 1.6s var(--t14-ease); }
 .t14-hero-card:hover .t14-hero-img { transform: scale(1.06); }
-.t14-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(0 0 0 / .42) 0%, rgb(0 0 0 / .12) 42%, rgb(0 0 0 / .5) 100%); }
-.t14-hero-inner { padding-top: clamp(120px, 18vh, 170px); }
+.t14-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(0 0 0 / .42) 0%, rgb(0 0 0 / .32) 42%, rgb(0 0 0 / .5) 100%); }
+.t14-hero-inner { padding-top: clamp(120px, 18vh, 170px); padding-bottom: 88px; }
 .t14-hero-chip { display: inline-flex; height: 28px; padding: 0 12px; border-radius: 999px; font: 500 12px/28px var(--t14-font); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t14-hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; margin-top: 18px; align-items: start; }
-.t14-hero-title { color: #fff; text-wrap: balance; }
+.t14-hero-title { color: #fff; text-wrap: balance; text-shadow: 0 1px 24px rgb(0 0 0 / .25); }
 .t14-hero-dim { color: rgb(255 255 255 / .55); }
-.t14-hero-lead { margin: 6px 0 0; font-size: 15px; line-height: 1.6; color: rgb(255 255 255 / .82); max-width: 40ch; }
+.t14-hero-lead { margin: 6px 0 0; font-size: 15px; line-height: 1.6; color: rgb(255 255 255 / .82); max-width: 40ch; text-shadow: 0 1px 24px rgb(0 0 0 / .25); }
 .t14-hero-ctas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .t14-hero-ctas .t14-pill { height: 36px; font-size: 13px; padding: 0 16px; }
 .t14-hero-status { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); height: 36px; padding: 0 16px; border-radius: 999px; color: #fff;
@@ -515,9 +517,17 @@
 @keyframes t14-hero-pulse { 70% { box-shadow: 0 0 0 10px rgb(255 255 255 / 0); } 100% { box-shadow: 0 0 0 0 rgb(255 255 255 / 0); } }
 .t14-hero:not([data-photo="true"]) .t14-hero-card { background: radial-gradient(90% 70% at 70% 20%, #3a3a3a, #111 70%); }
 
-/* Headlines on paper: the dimmed line is large text (>= 24px) in the subtle grey (~2.3:1 on paper, a deliberate dimmed lead-in per the nor.ma reference). */
-.t14-on-paper .t14-hero-dim { color: var(--t14-subtle); }
+/* Headlines on paper: the dimmed line is large text (>= 24px) in --t14-dim-text, >= 3:1 on bg and paper in both modes. */
+.t14-on-paper .t14-hero-dim { color: var(--t14-dim-text); }
 .t14-on-paper .t14-h1 { text-wrap: balance; }
+
+/* Breadcrumbs on shop pages (restyled again in the shop pages task). */
+.t14-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--t14-muted); }
+.t14-crumbs a { text-decoration: none; }
+.t14-crumbs a:hover { color: var(--t14-ink); text-decoration: underline; }
+.t14-crumbs span[aria-hidden="true"] { color: var(--t14-subtle); }
+.t14-crumbs [aria-current] { color: var(--t14-ink); }
+.t14-card-title { font: 600 20px/1.3 var(--t14-display); margin: 0 0 14px; }
 
 /* About: paper band. The main element already adds 76px, so 64px here gives about 140px under the page top. */
 .t14-aboutband { margin-top: 0; padding: 64px 0 72px; }
@@ -574,7 +584,7 @@
 
 @media (max-width: 820px) {
   .t14-hero-grid { grid-template-columns: 1fr; gap: 16px; }
-  .t14-hero-card { min-height: 640px; }
+  .t14-hero-card { height: auto; min-height: auto; max-height: none; }
   .t14-ab-grid { grid-template-columns: minmax(0, 1fr); }
   .t14-ab-photo { aspect-ratio: 4 / 4.4; }
   .t14-aboutband { padding: 32px 0 40px; }

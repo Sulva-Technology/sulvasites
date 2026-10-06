@@ -8,6 +8,8 @@ export function splitTwoTone(headline: string): [string, string] {
   if (nl.length > 1) return [nl[0]!, nl.slice(1).join(" ")];
   const sentence = h.match(/^(.+?[.!?])\s+(.+)$/);
   if (sentence) return [sentence[1]!, sentence[2]!];
+  const comma = h.match(/^([^,]+,)\s*(.+)$/);
+  if (comma) return [comma[1]!.trim(), comma[2]!.trim()];
   const words = h.split(/\s+/);
   if (words.length < 2) return ["", h];
   const cut = Math.ceil(words.length / 2);

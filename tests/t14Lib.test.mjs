@@ -8,6 +8,7 @@ test("splitTwoTone: explicit line break wins", () => {
 test("splitTwoTone: first sentence, else near the middle word", () => {
   assert.deepEqual(splitTwoTone("Everyday goods. Delivered fast."), ["Everyday goods.", "Delivered fast."]);
   assert.deepEqual(splitTwoTone("Fresh groceries delivered to your door"), ["Fresh groceries delivered", "to your door"]);
+  assert.deepEqual(splitTwoTone("Everyday essentials, one easy cart"), ["Everyday essentials,", "one easy cart"]);
   assert.deepEqual(splitTwoTone("Shop"), ["", "Shop"]);
   assert.deepEqual(splitTwoTone(""), ["", ""]);
 });
