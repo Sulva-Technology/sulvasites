@@ -15,16 +15,23 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server only, never NEXT_PUBLIC_
    NEXT_PUBLIC_PLATFORM_DOMAIN=soothecontrols.site
-   OPENROUTER_API_KEY=...               # AI for every feature (site builder, setup chat, rewrite, SEO, "Ask AI")
-   # OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free   # default; free endpoint (may be logged, daily caps). Drop ":free" for the paid, no-data-retention endpoint
-   # OPENROUTER_TIMEOUT_MS=25000          # per-call limit before falling back to Groq
-   GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
+   # AI for every feature (site builder, setup chat, rewrite, SEO, "Ask AI"). All free tiers; set any of them.
+   # They are tried in order — Gemini, then OpenRouter, then Groq — and the next answers when one is out of quota or down.
+   GEMINI_API_KEY=...                   # first choice: free key from aistudio.google.com. Also checks product photos
+   # GEMINI_MODEL=gemini-3.8-flash        # default (free tier). Free-tier prompts may be used by Google to improve its products
+   # GEMINI_TIMEOUT_MS=20000              # per-call limit before moving on to OpenRouter
+   OPENROUTER_API_KEY=...               # second choice. A one-off $10 credit purchase lifts free models from 50 to 1,000 requests/day
+   # OPENROUTER_MODEL=thinkingmachines/inkling:free   # default; free endpoint (may be logged, daily caps). Drop ":free" for the paid, no-data-retention endpoint
+   # OPENROUTER_FALLBACK_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free   # default; OpenRouter tries it when the main model errors ("off" to disable)
+   # OPENROUTER_TIMEOUT_MS=25000          # time budget shared by Gemini and OpenRouter before falling back to Groq
+   # AI_PROVIDERS=openrouter,gemini       # change which of the two goes first
+   GROQ_API_KEY=...                     # optional last resort when the others fail or are slow
    # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
    # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
-   # Product photos in "Ask AI" (add products by chat). The main model is text-only, so a vision model checks the photos:
+   # Product photos in "Ask AI" (add products by chat). A vision model (Gemini, else OpenRouter's) checks the photos:
    UNSPLASH_ACCESS_KEY=...              # recommended: free "Access Key" from unsplash.com/developers (demo mode: 50 searches/hour)
    # PEXELS_API_KEY=...                 # optional, used first when set (Pexels has paused new keys)
-   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free   # default (free); looks at candidate and owner-attached photos
+   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free   # default (free); used when Gemini is not set or fails
    # AI_VISION=off                      # turn the vision step off (photo search then keeps the provider's order)
    ```
 
@@ -51,7 +58,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Unit tests (Node built-in runner, `tests/`) |
-| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live model (`OPENROUTER_API_KEY` and/or `GROQ_API_KEY`; one model call each; `-- --groq` for Groq only). Run it before launch and after any model change; it fails below 85%. |
+| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live models (`GEMINI_API_KEY`, `OPENROUTER_API_KEY` and/or `GROQ_API_KEY`; one model call each). `-- --gemini`, `-- --openrouter` or `-- --groq` scores one provider alone, to compare them. Run it before launch and after any model change; it fails below 85%. |
 
 ## How routing works
 

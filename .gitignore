@@ -13,4 +13,4 @@ pnpm-debug.log*
 
 .DS_Store
 .cursor/
-tests/eval/last-assistant-eval.json
+tests/eval/last-assistant-eval*.json
