@@ -27,6 +27,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/schema.sql`
    - `supabase/migrations/*.sql` (numbered order) up to `011`
    - `supabase/admin/add_current_user_as_admin.sql` (after creating your user)
+   - Locked out of `/admin` or a site later? Run `supabase/admin/restore_admin_access.sql` with your email
    - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
    - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
    - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeHost, rewritePathForHost } from "../src/lib/hostRouting.ts";
+import { normalizeHost, rewritePathForHost, siteRefForHost, siteScopedRedirect } from "../src/lib/hostRouting.ts";
 
 const P = "soothecontrols.site";
 
@@ -49,4 +49,30 @@ test("owner back-office paths work on the site's own link (subdomain and custom 
       assert.equal(rewritePathForHost(host, path, P), null, `${host}${path}`);
     }
   }
+});
+
+test("siteRefForHost identifies the site a host serves", () => {
+  assert.deepEqual(siteRefForHost("loveable.soothecontrols.site", P), { slug: "loveable" });
+  assert.deepEqual(siteRefForHost("www.Client.com:443", P), { hostname: "client.com" });
+  assert.equal(siteRefForHost("soothecontrols.site", P), null);
+  assert.equal(siteRefForHost("localhost:3000", P), null);
+  assert.equal(siteRefForHost("app-git-x.vercel.app", P), null);
+  // Platform on a nested domain (e.g. sulvasites.sulvatech.com)
+  assert.deepEqual(siteRefForHost("loveable.sulvasites.sulvatech.com", "sulvasites.sulvatech.com"), { slug: "loveable" });
+  assert.equal(siteRefForHost("sulvasites.sulvatech.com", "sulvasites.sulvatech.com"), null);
+});
+
+test("siteScopedRedirect keeps the back office on the host's site", () => {
+  const id = "site-1";
+  for (const path of ["/admin", "/admin/sites", "/admin/sites/new", "/admin/users", "/admin/templates/t1", "/admin/sites/other/shop"]) {
+    assert.equal(siteScopedRedirect(path, id), "/admin/sites/site-1", path);
+  }
+  for (const path of ["/admin/sites/site-1", "/admin/sites/site-1/shop/orders", "/admin/sites/site-1/preview"]) {
+    assert.equal(siteScopedRedirect(path, id), null, path);
+  }
+  assert.equal(siteScopedRedirect("/dashboard", id), "/dashboard/site-1");
+  assert.equal(siteScopedRedirect("/dashboard/other/inbox", id), "/dashboard/site-1");
+  assert.equal(siteScopedRedirect("/dashboard/site-1/content", id), null);
+  assert.equal(siteScopedRedirect("/admin/sites/site-10", id), "/admin/sites/site-1");
+  assert.equal(siteScopedRedirect("/login", id), null);
 });

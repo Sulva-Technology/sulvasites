@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveHostSite } from "./hostSite";
 import { postLoginRoute, type Membership, type SiteRole } from "./siteAccess";
 
 /** Loads the signed-in user's memberships (RLS limits site_members rows to their own sites). */
@@ -33,5 +34,7 @@ export async function resolvePostLoginRoute(supabase: SupabaseClient): Promise<s
   if (adminError) throw adminError;
 
   const memberships = isAdmin ? [] : await loadMemberships(supabase, user.id);
-  return postLoginRoute({ isAdmin: Boolean(isAdmin), mustChangePassword, memberships });
+  const hostSite = await resolveHostSite(supabase).catch(() => null);
+  const hostSiteId = hostSite?.kind === "site" ? hostSite.siteId : null;
+  return postLoginRoute({ isAdmin: Boolean(isAdmin), mustChangePassword, memberships, hostSiteId });
 }

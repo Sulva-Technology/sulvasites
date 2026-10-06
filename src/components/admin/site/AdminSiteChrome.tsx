@@ -6,6 +6,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import SiteAssistantPanel from "@/components/assistant/SiteAssistantPanel";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
+import { useHostSite } from "@/components/HostSiteScope";
 import { canAdminSite } from "@/lib/supabase/adminScope";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { templateLabel, templateSupportsShop } from "@/templates/meta";
@@ -50,6 +51,8 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
   const [domain, setDomain] = useState<string | null>(null);
   // Admins may open only sites they created (super admins: any). null while checking.
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  // On a site's own address there is no sites list to go back to.
+  const onPlatform = useHostSite().kind === "platform";
 
   useEffect(() => {
     if (!siteId || bare) return;
@@ -93,11 +96,13 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
           <p className="mt-1 text-sm text-koi-ink/60">
             Admins can open only the sites they created. Ask a super admin if you need access.
           </p>
-          <div className="mt-4">
-            <PillButton href="/admin/sites" variant="quiet">
-              Back to your sites
-            </PillButton>
-          </div>
+          {onPlatform ? (
+            <div className="mt-4">
+              <PillButton href="/admin/sites" variant="quiet">
+                Back to your sites
+              </PillButton>
+            </div>
+          ) : null}
         </Card>
       </>
     );
