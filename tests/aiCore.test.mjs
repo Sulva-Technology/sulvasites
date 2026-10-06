@@ -100,3 +100,26 @@ test("a missing fallback model does not hide a rate limit on the primary", async
   );
   await assert.rejects(groqChat({ user: "hi" }, h.deps), (e) => e.code === "rate_limited");
 });
+
+const tooLarge = (limit, requested) =>
+  status(413, JSON.stringify({ error: { message: `Request too large for model \`m\` on tokens per minute (TPM): Limit ${limit}, Requested ${requested}, please reduce your message size and try again.` } }));
+
+test("413 caused by the answer budget retries once with a budget that fits", async () => {
+  const h = harness([tooLarge(8000, 21000), ok("fits now")], { GROQ_API_KEY: "k", GROQ_MODEL: "primary", GROQ_FALLBACK_MODEL: "backup" });
+  assert.equal(await groqChat({ user: "hi", maxTokens: 16384 }, h.deps), "fits now");
+  // prompt = 21000 - 16384 = 4616 tokens; 8000 - 4616 - 200 leaves 3184 for the answer.
+  assert.deepEqual(h.calls.map((c) => [c.model, c.max_tokens]), [["primary", 16384], ["primary", 3184]]);
+  assert.deepEqual(h.sleeps, []);
+});
+
+test("413 with a prompt too big for the primary moves to the fallback model", async () => {
+  const h = harness([tooLarge(8000, 23000), tooLarge(12000, 23000), ok("from backup")], { GROQ_API_KEY: "k", GROQ_MODEL: "primary", GROQ_FALLBACK_MODEL: "backup" });
+  assert.equal(await groqChat({ user: "hi", maxTokens: 16384 }, h.deps), "from backup");
+  assert.deepEqual(h.calls.map((c) => [c.model, c.max_tokens]), [["primary", 16384], ["backup", 16384], ["backup", 5184]]);
+});
+
+test("413 everywhere surfaces a plain too_large message", async () => {
+  const h = harness([tooLarge(8000, 30000), tooLarge(12000, 30000)], { GROQ_API_KEY: "k", GROQ_MODEL: "primary", GROQ_FALLBACK_MODEL: "backup" });
+  await assert.rejects(groqChat({ user: "hi", maxTokens: 4096 }, h.deps), (e) => e.code === "too_large" && e.status === 413 && /smaller parts/.test(e.message));
+  assert.equal(h.calls.length, 2);
+});
