@@ -19,6 +19,7 @@ export function isBypassPath(pathname: string) {
     // Owner back office, reachable from the site's own link (e.g. store.<platform>/dashboard).
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/change-password") ||
+    pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/no-access") ||
     pathname.startsWith("/d/") ||
     pathname === "/favicon.ico" ||

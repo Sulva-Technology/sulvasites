@@ -6,6 +6,7 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import { getPublicAssetUrl } from "@/lib/assets";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
+import { siteStartMode } from "@/lib/templateTheme";
 import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
@@ -74,7 +75,7 @@ export default function Template8({
     [pageData, pages],
   );
   const pageHasForm = !!pageData?.sections?.some((s) => s?.type === "contact_card" && s.showForm);
-  const [mode, toggleMode] = useColorMode();
+  const [mode, toggleMode] = useColorMode(siteStartMode(site.template_key, profile.theme_colors));
   const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
     ? "extra"
     : effectivePage === "about" || effectivePage === "contact"

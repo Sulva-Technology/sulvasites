@@ -7,6 +7,7 @@ import { getPublicAssetUrl } from "@/lib/assets";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { useCart } from "@/lib/shop/useCart";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
+import { siteStartMode } from "@/lib/templateTheme";
 import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
@@ -77,7 +78,7 @@ export default function Template14({
     () => collectHours(profile, [pages.contact, pages.home, pages.about, pageData]),
     [profile, pages, pageData],
   );
-  const [mode, toggleMode] = useColorMode();
+  const [mode, toggleMode] = useColorMode(siteStartMode(site.template_key, profile.theme_colors));
 
   const siteId = shop?.siteId ?? site.id;
   const cart = useCart(siteId);

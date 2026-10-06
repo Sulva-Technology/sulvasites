@@ -6,6 +6,7 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import { getPublicAssetUrl } from "@/lib/assets";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
+import { siteStartMode } from "@/lib/templateTheme";
 import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
@@ -85,7 +86,7 @@ export default function Template12({
   const pageHasCredentials = !!pageData?.sections?.some(
     (s) => s?.type === "backed_by" && (editor?.enabled || s.logos?.some((l) => l.name?.trim() || l.url)),
   );
-  const [mode, toggleMode] = useColorMode();
+  const [mode, toggleMode] = useColorMode(siteStartMode(site.template_key, profile.theme_colors));
   const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
     ? "extra"
     : effectivePage === "about" || effectivePage === "contact"

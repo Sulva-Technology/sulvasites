@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -75,6 +76,11 @@ export default function LoginPage() {
         <PillButton type="submit" loading={isLoading} className="w-full">
           {isLoading ? "Signing in..." : "Sign in"}
         </PillButton>
+        <p className="text-center text-sm">
+          <Link href="/forgot-password" className="text-white/80 underline underline-offset-4 hover:text-white">
+            Forgot password?
+          </Link>
+        </p>
       </form>
     </AuthCard>
   );

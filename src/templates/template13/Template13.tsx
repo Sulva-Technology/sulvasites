@@ -7,6 +7,7 @@ import { getPublicAssetUrl } from "@/lib/assets";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { useCart } from "@/lib/shop/useCart";
 import { buildTemplateThemeStyle } from "@/lib/themeVars";
+import { siteStartMode } from "@/lib/templateTheme";
 import type { TemplateProps } from "@/templates/registry";
 import { useColorMode } from "@/templates/shared/colorMode";
 import TemplateFonts from "@/templates/shared/fonts";
@@ -80,7 +81,7 @@ export default function Template13({
     () => findSizeGuideHtml([pageData, pages.about, pages.home, pages.contact]),
     [pageData, pages],
   );
-  const [mode, toggleMode] = useColorMode("dark");
+  const [mode, toggleMode] = useColorMode(siteStartMode(site.template_key, profile.theme_colors, "dark"));
 
   const siteId = shop?.siteId ?? site.id;
   const cart = useCart(siteId);

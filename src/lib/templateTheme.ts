@@ -229,15 +229,55 @@ function hexLuminance(input: string | undefined): number | null {
 
 /**
  * When the owner picked a light-mode accent but no dark one, reuse it in dark mode
- * if it stays readable (>= 3:1) on the dark background — keeps the brand colour.
+ * on the dark background, lifted toward white until readable (>= 3:1) — keeps the brand colour.
  */
 export function carriedDarkAccent(templateKey: string, colors: ThemeSemanticColors): string | null {
   const dark = getTemplateThemeConfig(templateKey)?.dark;
   if (!dark?.defaults.accent || !colors.accent || colors[`${DARK_PREFIX}accent`]) return null;
-  const a = hexLuminance(colors.accent);
   const b = hexLuminance(colors[`${DARK_PREFIX}bg`] ?? dark.defaults.bg);
-  if (a == null || b == null) return null;
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3 ? colors.accent : null;
+  if (b == null || hexLuminance(colors.accent) == null) return null;
+  // Too dark to read? Lift it toward white so the brand hue still shows.
+  for (let step = 0; step <= 9; step++) {
+    const c = step === 0 ? colors.accent : mixWithWhite(colors.accent, step / 10);
+    const a = hexLuminance(c)!;
+    if ((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3) return c;
+  }
+  return null;
+}
+
+function mixWithWhite(hex: string, amount: number): string {
+  const m = hex.trim().slice(1);
+  return (
+    "#" +
+    [0, 2, 4]
+      .map((i) => {
+        const v = parseInt(m.slice(i, i + 2), 16);
+        return Math.round(v + (255 - v) * amount).toString(16).padStart(2, "0");
+      })
+      .join("")
+  );
+}
+
+/**
+ * Mode a site opens in before the visitor picks one. An owner who changed only the
+ * light palette opens in light, so their colours aren't hidden behind the template's
+ * dark defaults (dark-first templates, or visitors whose system is set to dark).
+ */
+export function siteStartMode(
+  templateKey: string,
+  themeColors: unknown,
+  templateDefault?: "light" | "dark",
+): "light" | "dark" | undefined {
+  const cfg = getTemplateThemeConfig(templateKey);
+  const saved = (themeColors as Record<string, unknown> | null | undefined)?.[templateKey];
+  if (!cfg?.dark || !saved || typeof saved !== "object") return templateDefault;
+  const changed = (k: string, def: string | undefined) => {
+    const v = (saved as Record<string, unknown>)[k];
+    return typeof v === "string" && v.trim().toLowerCase() !== (def ?? "").toLowerCase();
+  };
+  const lightChanged = Object.entries(cfg.defaults).some(([k, v]) => changed(k, v));
+  const darkChanged = Object.entries(cfg.dark.defaults).some(([k, v]) => changed(`${DARK_PREFIX}${k}`, v));
+  return lightChanged && !darkChanged ? "light" : templateDefault;
 }
 
 /** Dark-mode colours the editor should show: saved value, else carried accent, else default. */

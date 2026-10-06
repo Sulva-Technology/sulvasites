@@ -7,6 +7,9 @@ export type { ColorMode } from "./colorModeCore";
 
 const KEY = "sulva-color-mode";
 
+/** Window event the admin palette editor fires to show the preview in the mode being edited (not saved). */
+export const PREVIEW_MODE_EVENT = "sulva:preview-mode";
+
 function readStored(): ColorMode | null {
   try {
     const v = window.localStorage.getItem(KEY);
@@ -29,7 +32,15 @@ export function useColorMode(fallback?: ColorMode): [ColorMode, () => void] {
     const sync = () => setMode(resolveMode(readStored(), !!mq?.matches, fallback));
     sync();
     mq?.addEventListener?.("change", sync);
-    return () => mq?.removeEventListener?.("change", sync);
+    const preview = (e: Event) => {
+      const next = (e as CustomEvent<ColorMode>).detail;
+      if (next === "light" || next === "dark") setMode(next);
+    };
+    window.addEventListener(PREVIEW_MODE_EVENT, preview);
+    return () => {
+      mq?.removeEventListener?.("change", sync);
+      window.removeEventListener(PREVIEW_MODE_EVENT, preview);
+    };
   }, [fallback]);
 
   const toggle = useCallback(() => {

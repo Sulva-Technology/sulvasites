@@ -76,3 +76,8 @@ test("siteScopedRedirect keeps the back office on the host's site", () => {
   assert.equal(siteScopedRedirect("/admin/sites/site-10", id), "/admin/sites/site-1");
   assert.equal(siteScopedRedirect("/login", id), null);
 });
+
+test("forgot-password is served by the app on every host, like login", () => {
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/forgot-password", "soothecontrols.site"), null);
+  assert.equal(rewritePathForHost("client.com", "/forgot-password", "soothecontrols.site"), null);
+});

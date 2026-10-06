@@ -8,6 +8,7 @@ import {
   getTemplateThemeConfig,
   type ThemeSemanticColors,
 } from "@/lib/templateTheme";
+import { PREVIEW_MODE_EVENT } from "@/templates/shared/colorMode";
 
 interface ColorPaletteSidebarProps {
   isOpen: boolean;
@@ -56,11 +57,15 @@ export default function ColorPaletteSidebar({
   const [mode, setMode] = useState<"light" | "dark">("light");
   const hasDark = !!config.dark;
 
-  const switchMode = (next: "light" | "dark") => {
-    setMode(next);
-    // Show the preview in the mode being edited.
-    getTargetRoot?.()?.setAttribute("data-mode", next);
-  };
+  const switchMode = (next: "light" | "dark") => setMode(next);
+
+  // Show the preview in the mode being edited — otherwise a dark-first template, or the
+  // admin's own dark system setting, hides the light colours being changed.
+  useEffect(() => {
+    if (!isOpen || !hasDark) return;
+    window.dispatchEvent(new CustomEvent(PREVIEW_MODE_EVENT, { detail: mode }));
+    getTargetRoot?.()?.setAttribute("data-mode", mode);
+  }, [isOpen, hasDark, mode, getTargetRoot]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
