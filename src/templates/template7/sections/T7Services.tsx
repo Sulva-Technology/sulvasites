@@ -3,7 +3,7 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
-import { reserveHref, splitPrice, useT7 } from "../ctx";
+import { reserveHref, shopHref, splitPrice, useT7 } from "../ctx";
 import { IconArrow, Ornament } from "../icons";
 
 // Placeholder hints shown on empty fields while editing (never saved).
@@ -80,8 +80,13 @@ export default function T7Services({ section, sectionIndex }: { section: Service
           </ul>
 
           <div className="t7-menu-foot">
-            <a className="t7-btn" href={reserveHref(ctx)}>
-              Reserve a table <IconArrow size={16} />
+            {ctx.shop ? (
+              <a className="t7-btn" href={shopHref(ctx.baseUrl)}>
+                Order online <IconArrow size={16} />
+              </a>
+            ) : null}
+            <a className={ctx.shop ? "t7-btn t7-btn-ghost" : "t7-btn"} href={reserveHref(ctx)}>
+              Reserve a table {ctx.shop ? null : <IconArrow size={16} />}
             </a>
           </div>
         </div>

@@ -5,7 +5,7 @@ import type { HeroSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
 import T7Hours from "../components/T7Hours";
-import { cityOf, directionsHref, menuHref, reserveHref, useT7 } from "../ctx";
+import { cityOf, directionsHref, menuHref, reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconClock, IconMail, IconPhone, IconPin, Ornament } from "../icons";
 
 function Photo({ src, alt, fallback, eager }: { src?: string; alt?: string; fallback: string; eager?: boolean }) {
@@ -235,9 +235,15 @@ export default function T7Hero({
           {lead}
           <div className="t7-actions">
             {cta("t7-btn t7-btn-cream")}
-            <a className="t7-btn t7-btn-glass" href={menuHref(ctx)}>
-              View menu
-            </a>
+            {ctx.shop ? (
+              <a className="t7-btn t7-btn-glass" href={shopHref(ctx.baseUrl)}>
+                Order online
+              </a>
+            ) : (
+              <a className="t7-btn t7-btn-glass" href={menuHref(ctx)}>
+                View menu
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
-import { directionsHref, reserveHref, useT7 } from "../ctx";
+import { directionsHref, reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconCutlery, IconPhone, Ornament } from "../icons";
 import T7Hours from "./T7Hours";
 
@@ -28,7 +28,7 @@ export default function T7Footer({ logoUrl }: { logoUrl: string | null }) {
 
   return (
     <>
-      {pageKind !== "contact" ? (
+      {pageKind !== "contact" && pageKind !== "shop" ? (
         <section className="t7-band" data-photo={!!bandPhoto}>
           {bandPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -42,7 +42,11 @@ export default function T7Footer({ logoUrl }: { logoUrl: string | null }) {
               <a className="t7-btn t7-btn-cream" href={reserveHref(ctx)}>
                 Reserve a table <IconArrow size={16} />
               </a>
-              {profile.phone ? (
+              {ctx.shop ? (
+                <a className="t7-btn t7-btn-glass" href={shopHref(baseUrl)}>
+                  Order online
+                </a>
+              ) : profile.phone ? (
                 <a className="t7-btn t7-btn-glass" href={buildTelLink(profile.phone)}>
                   <IconPhone size={16} /> Call us
                 </a>

@@ -8,12 +8,13 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink } from "@/templates/shared/links";
-import { reserveHref, useT7 } from "../ctx";
-import { IconArrow, IconClose, IconCutlery, IconMenu, IconPhone } from "../icons";
+import { reserveHref, shopHref, useT7 } from "../ctx";
+import { IconArrow, IconBag, IconClose, IconCutlery, IconMenu, IconPhone } from "../icons";
+import { useBag } from "../shop/useBag";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
-/** Single-row masthead: wordmark left, nav, reserve. Floats over the home hero until scrolled. */
+/** Floating glass pill navbar: wordmark, links, order/reserve and the bag. Detached from the top edge on every page. */
 export default function T7Header({
   logoUrl,
   currentPage,
@@ -24,7 +25,8 @@ export default function T7Header({
   currentExtraKey?: string | null;
 }) {
   const ctx = useT7();
-  const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
+  const { baseUrl, navPages, profile, hours, mode, toggleMode, shop, openCart, pageKind } = ctx;
+  const { count, ready } = useBag();
   const editor = useInlineEditor();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -53,6 +55,9 @@ export default function T7Header({
   const items: NavItem[] = [
     { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
     ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    ...(shop && !navPages.some((p) => p.key === "shop")
+      ? [{ id: "order", href: shopHref(baseUrl), label: "Order", active: pageKind === "shop" }]
+      : []),
     { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
     { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact" },
   ];
@@ -100,8 +105,18 @@ export default function T7Header({
 
           <div className="t7-mast-end">
             <ModeToggle mode={mode} onToggle={toggleMode} className="t7-round" />
-            <a href={reserveHref(ctx)} className="t7-btn t7-btn-sm t7-hide-sm">
-              Reserve a table
+            {shop ? (
+              <button type="button" className="t7-round t7-bag" onClick={openCart} aria-haspopup="dialog" aria-label={`Open your order${ready && count ? ` (${count} items)` : ""}`}>
+                <IconBag size={18} />
+                {ready && count > 0 ? (
+                  <span className="t7-bag-n" aria-hidden="true">
+                    {count > 99 ? "99+" : count}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            <a href={shop ? shopHref(baseUrl) : reserveHref(ctx)} className="t7-btn t7-btn-sm t7-hide-sm">
+              {shop ? "Order online" : "Reserve"}
             </a>
             <button
               type="button"
@@ -143,8 +158,13 @@ export default function T7Header({
               </div>
             ) : null}
             <div className="t7-drawer-foot">
-              <a className="t7-btn" href={reserveHref(ctx)} onClick={() => setOpen(false)}>
-                Reserve a table <IconArrow size={16} />
+              {shop ? (
+                <Link className="t7-btn" href={shopHref(baseUrl)} onClick={() => setOpen(false)}>
+                  Order online <IconArrow size={16} />
+                </Link>
+              ) : null}
+              <a className={shop ? "t7-btn t7-btn-ghost" : "t7-btn"} href={reserveHref(ctx)} onClick={() => setOpen(false)}>
+                Reserve a table {shop ? null : <IconArrow size={16} />}
               </a>
               {profile.phone ? (
                 <a className="t7-btn t7-btn-ghost" href={buildTelLink(profile.phone)}>

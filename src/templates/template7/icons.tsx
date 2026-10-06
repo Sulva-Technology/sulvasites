@@ -127,3 +127,35 @@ export const Ornament = ({ size = 12 }: P) => (
 );
 
 export const KITCHEN_ICONS = [IconFlame, IconLeaf, IconHands, IconWheat, IconPot, IconFish];
+
+export const IconMinus = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const IconCheck = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="m5 12.5 4.5 4.5L19 7" />
+  </svg>
+);
+
+export const IconBag = ({ size = 22 }: P) => (
+  <svg {...base(size)}>
+    <path d="M5 8h14l-1 12H6L5 8Z" />
+    <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+  </svg>
+);
+
+export const IconTrash = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 7h16M10 7V4.5h4V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" />
+  </svg>
+);
+
+export const IconAlert = ({ size = 22 }: P) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7.5v5.5M12 16.2v.1" />
+  </svg>
+);
