@@ -35,6 +35,8 @@ export default function T14Sections({ pageData }: { pageData: PageData }) {
   const firstServices = sections.findIndex((s) => s.type === "services");
   const firstForm = sections.findIndex((s) => s.type === "contact_card" && s.showForm);
   const firstBackedBy = sections.findIndex((s) => s.type === "backed_by");
+  // The strip (which swallows backed_by logos) only renders after a primary hero at index 0.
+  const stripHost = sections[0]?.type === "hero";
   const storefront = pageKind === "home" && !!shop && shop.products.length > 0;
   // The closing "plain" hero (globe call-to-action) keeps its place; the rail and spotlight sit before it.
   const lastHero = sections.reduce((acc, s, i) => (s.type === "hero" && i > 0 ? i : acc), -1);
@@ -72,7 +74,7 @@ export default function T14Sections({ pageData }: { pageData: PageData }) {
           case "values":
             return <T14Values key={key} section={section} sectionIndex={i} />;
           case "backed_by":
-            return <T14BackedBy key={key} section={section} sectionIndex={i} inStrip={storefront && i === firstBackedBy} />;
+            return <T14BackedBy key={key} section={section} sectionIndex={i} inStrip={storefront && stripHost && i === firstBackedBy} />;
           case "use_cases":
             return <T14UseCases key={key} section={section} sectionIndex={i} />;
           case "testimonials":

@@ -50,7 +50,7 @@ export default function T14Rail() {
     if (!el) return;
     const card = el.querySelector("li");
     const w = (card ? card.getBoundingClientRect().width : 300) + 12;
-    el.scrollBy({ left: dir * w, behavior: "smooth" });
+    el.scrollBy({ left: dir * w, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
 
   return (

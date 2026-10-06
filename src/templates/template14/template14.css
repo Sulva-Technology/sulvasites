@@ -2337,10 +2337,10 @@ textarea.t14-input {
 
 .t14-spot { min-height: 100svh; display: grid; place-items: center; align-content: center; gap: 28px; text-align: center; padding: 120px 20px; background: var(--t14-bg); }
 .t14-spot-stage { position: relative; width: min(420px, 70vw); aspect-ratio: 1; display: grid; place-items: center; }
-.t14-spot-obj { width: 100%; height: 100%; object-fit: contain; transform: scale(var(--s, 1)) rotate(var(--r, 0deg)); animation: t14-float 6s ease-in-out infinite alternate;
-  filter: drop-shadow(0 30px 40px rgb(0 0 0 / .18)); }
+.t14-spot-obj { width: 100%; aspect-ratio: 1; border-radius: var(--t14-r-xl); object-fit: cover; transform: scale(var(--s, 1)) rotate(var(--r, 0deg)); animation: t14-float 6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 24px 32px rgb(0 0 0 / .1)); }
 .t14-spot-shadow { position: absolute; bottom: -4%; left: 20%; right: 20%; height: 14%; background: radial-gradient(closest-side, rgb(0 0 0 / .22), transparent); transform: scale(var(--s, 1)); }
-.template14[data-mode="dark"] .t14-spot-obj { filter: drop-shadow(0 30px 40px rgb(0 0 0 / .6)); }
+.template14[data-mode="dark"] .t14-spot-obj { filter: drop-shadow(0 24px 32px rgb(0 0 0 / .45)); }
 @keyframes t14-float { to { translate: 0 -8px; } }
 
 @media (prefers-reduced-motion: reduce) {
