@@ -395,6 +395,10 @@
    Glass tone (home hero photo only) is white on a photo; the hero adds its own scrim. */
 .t14-header { position: fixed; inset: 12px 0 auto; z-index: 40; pointer-events: none; }
 .t14-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.t14-header-row > .t14-nav { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.t14-header-row > .t14-brand, .t14-header-row > .t14-actions { flex: none; }
+.t14-actions { flex-wrap: nowrap; white-space: nowrap; }
+.t14-actions > * { flex: none; }
 .t14-island { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 6px; border-radius: 999px;
   transition: background-color .4s var(--t14-ease), color .4s, border-color .4s; border: 1px solid transparent; }
 .t14-header[data-tone="glass"] .t14-island { background: var(--t14-glass); border-color: var(--t14-glass-line); color: #fff;
@@ -402,9 +406,9 @@
 .t14-header[data-tone="solid"] .t14-island { background: var(--t14-glass-solid); border-color: var(--t14-line); color: var(--t14-ink);
   backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: 0 8px 30px -12px rgb(0 0 0 / .18); }
 .t14-brand { padding: 0 16px; font: 600 15px/1 var(--t14-display); letter-spacing: .04em; text-transform: uppercase; text-decoration: none;
-  min-width: 0; max-width: 46vw; }
+  max-width: 46vw; overflow: hidden; }
 .t14-brand img { max-height: 22px; width: auto; }
-.t14-brand-name { font: inherit; letter-spacing: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t14-brand-name { min-width: 0; font: inherit; letter-spacing: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .t14-nav a, .t14-nav button { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 999px; border: 0; background: none;
   color: inherit; font: 500 13px/1 var(--t14-font); text-decoration: none; opacity: .86; cursor: pointer; white-space: nowrap;
   transition: opacity .2s, background-color .2s; }
@@ -2442,9 +2446,6 @@ textarea.t14-input {
   }
   .t14-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .t14-mega-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .t14-footer-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

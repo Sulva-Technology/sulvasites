@@ -217,7 +217,9 @@ export default function T14Header({
     { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact", icon: <IconPhone size={14} /> },
   ];
   // The home link is the wordmark on desktop; keep it in the nav only for the phone menu.
-  const navItems = items.filter((it) => it.id !== "home" && !(shop && it.href === shopHref(baseUrl)));
+  // The wordmark is home on desktop; in the editor keep a Home item so its label stays editable.
+  const navItems = items.filter((it) => (it.id !== "home" || editor?.enabled) && !(shop && it.href === shopHref(baseUrl)));
+  const hasDealsPage = navPages.some((p) => p.key === "deals" || /^deals$/i.test(p.label.trim()));
 
   const saveNavLabel = (key: PageKey, next: string) =>
     editor?.updateProfileField?.("socials", { ...socials, nav_labels: { ...navLabels, [key]: next } });
@@ -240,6 +242,7 @@ export default function T14Header({
     if (!shop) return;
     const q = query.trim();
     setSearchOpen(false);
+    searchBtnRef.current?.focus();
     if (shopViewKind === "list") return; // already filtering live
     router.push(`${shopHref(baseUrl)}${q ? `?q=${encodeURIComponent(q)}` : ""}`);
   };
@@ -279,7 +282,7 @@ export default function T14Header({
                 <IconGrid size={14} /> Categories <IconChevronDown size={12} />
               </button>
             ) : null}
-            {shop && deals > 0 ? (
+            {shop && deals > 0 && !hasDealsPage ? (
               <Link href={`${shopHref(baseUrl)}?sale=1`}>
                 <IconTag size={14} /> Deals
               </Link>
@@ -334,7 +337,15 @@ export default function T14Header({
         </div>
 
         {megaOpen && shop ? (
-          <div id="t14-mega" ref={megaRef} className="t14-mega t14-container">
+          <div
+            id="t14-mega"
+            ref={megaRef}
+            className="t14-mega t14-container"
+            onBlur={(e) => {
+              const next = e.relatedTarget as Node | null;
+              if (next && !e.currentTarget.contains(next) && next !== megaBtnRef.current) setMegaOpen(false);
+            }}
+          >
             {cats.map((c) => (
               <Link key={c.id} href={c.href} className="t14-mega-card" onClick={() => setMegaOpen(false)}>
                 <span className="t14-mega-thumb">
@@ -378,7 +389,10 @@ export default function T14Header({
               <ul className="t14-searchhits">
                 {hits.map((p) => (
                   <li key={p.id}>
-                    <Link href={productHref(baseUrl, p)} onClick={() => setSearchOpen(false)}>
+                    <Link href={productHref(baseUrl, p)} onClick={() => {
+                        setSearchOpen(false);
+                        searchBtnRef.current?.focus();
+                      }}>
                       <span className="t14-searchthumb">
                         {p.images[0]?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
