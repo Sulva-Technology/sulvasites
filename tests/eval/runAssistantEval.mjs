@@ -1,6 +1,5 @@
-// Runs the "Ask AI" evaluation set against the live model and prints a pass/fail table.
-//   GEMINI_API_KEY=... OPENROUTER_API_KEY=... GROQ_API_KEY=... npm run eval:assistant   (all cases, the
-//                                                    live setup: Gemini, then OpenRouter, then Groq)
+// Run against the live models with `npm run eval:assistant` (loads keys from .env.local). `-- --delay=0` turns pacing off.
+//   npm run eval:assistant                          (all cases)
 //   npm run eval:assistant -- phone hours           (only these ids)
 //   npm run eval:assistant -- --gemini              (one provider only, to compare them:
 //                       --openrouter / --groq        run each and compare the scores)
@@ -19,6 +18,17 @@ const args = process.argv.slice(2);
 const KEYS = { gemini: "GEMINI_API_KEY", openrouter: "OPENROUTER_API_KEY", groq: "GROQ_API_KEY" };
 const soloProvider = Object.keys(KEYS).find((p) => args.includes(`--${p}`)) ?? null;
 const only = args.filter((a) => !a.startsWith("--"));
+const delayArg = args.find((a) => a.startsWith("--delay="));
+// Free tiers allow only a few requests per minute; pace the run unless told otherwise.
+let DELAY_MS = 4000;
+if (delayArg) {
+  const delayValue = Number(delayArg.slice("--delay=".length));
+  if (!Number.isFinite(delayValue) || delayValue < 0) {
+    console.error("--delay must be a number of milliseconds, e.g. --delay=4000");
+    process.exit(2);
+  }
+  DELAY_MS = Math.min(delayValue, 60000);
+}
 const cases = only.length ? CASES.filter((c) => only.includes(c.id)) : CASES;
 // One provider only: blank the other keys so nothing falls back to them.
 const env = soloProvider
@@ -32,6 +42,7 @@ if (!Object.values(KEYS).some((k) => env[k])) {
 
 const rows = [];
 for (const c of cases) {
+  if (rows.length && DELAY_MS) await new Promise((r) => setTimeout(r, DELAY_MS));
   const snapshot = fixtureSite();
   const messages = [{ role: "user", content: c.request }];
   let result = null;

@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --no-warnings --test \"tests/*.test.mjs\"",
-    "eval:assistant": "node --experimental-strip-types --no-warnings tests/eval/runAssistantEval.mjs"
+    "eval:assistant": "node --env-file-if-exists=.env.local --experimental-strip-types --no-warnings tests/eval/runAssistantEval.mjs"
   },
   "repository": {
     "type": "git",

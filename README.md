@@ -58,7 +58,20 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Unit tests (Node built-in runner, `tests/`) |
-| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in `tests/eval/` against the live models (`GEMINI_API_KEY`, `OPENROUTER_API_KEY` and/or `GROQ_API_KEY`; one model call each). `-- --gemini`, `-- --openrouter` or `-- --groq` scores one provider alone, to compare them. Run it before launch and after any model change; it fails below 85%. |
+| `npm run eval:assistant` | Runs the 20 real-style "Ask AI" requests in tests/eval/ against the live models (keys from .env.local; one model call each, 4s apart — `-- --delay=0` to go faster on paid keys). `-- --gemini`, `-- --openrouter` or `-- --groq` scores one provider alone. Run it before launch and after any model change; it fails below 85%. |
+
+## Production AI
+
+Free tiers are fine for building sites, but they cannot carry several owners using "Ask AI" at once
+(2026-10-06 eval on free keys: Gemini 408/429 on every call, Groq out of quota after 3).
+Before onboarding clients set **one paid key** — either is enough:
+
+- `GEMINI_API_KEY` from a Google AI Studio project with billing on (Tier 1). Keep `GEMINI_MODEL` unset.
+- `OPENROUTER_API_KEY` with credit, and `OPENROUTER_MODEL` without the `:free` suffix.
+
+Keep the free keys of the other providers set as fallbacks. A provider that runs out of quota or times out is
+skipped for up to a few minutes (`src/lib/ai/providerHealth.ts`). Then run `npm run eval:assistant`; it must
+pass (≥ 85%) against the production keys.
 
 ## How routing works
 
