@@ -8,6 +8,7 @@ import { IconArrow, IconBag, IconClose } from "../icons";
 import CartLines from "./CartLines";
 import { useFocusTrap } from "./useFocusTrap";
 import { useBag } from "./useBag";
+import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 /** Slide-out bag. Mounted only while open: focus moves in and is trapped, Escape and the scrim close it. */
 export default function CartDrawer() {
@@ -42,6 +43,7 @@ export default function CartDrawer() {
               <Link className="t13-pill t13-pill-lg t13-add" href={`${shopHref(baseUrl)}/checkout`} onClick={closeCart}>
                 Checkout <IconArrow size={18} />
               </Link>
+              <WhatsAppOrderButton rows={rows} onNavigate={closeCart} />
               <Link className="t13-text-btn t13-center" href={shopHref(baseUrl)} onClick={closeCart}>
                 Keep shopping
               </Link>
