@@ -15,6 +15,7 @@ import { shopHref, useT14 } from "../ctx";
 import { IconArrow, IconBag, IconCheck, IconLock } from "../icons";
 import CartLines, { type LineProblem } from "./CartLines";
 import { useBag } from "./useBag";
+import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 type Field = "name" | "email" | "phone" | "address" | "notes";
 type Errors = Partial<Record<Field, string>>;
@@ -50,6 +51,13 @@ export default function CheckoutPage() {
   const effective = pickup ? method : "delivery";
   const fee = effective === "delivery" ? shop.settings.deliveryFeeKobo : 0;
   const total = subtotal + fee;
+
+  // Whatever the shopper has typed so far rides along in the WhatsApp message.
+  const formDetails = () => {
+    const data = formRef.current ? new FormData(formRef.current) : null;
+    const get = (k: string) => String(data?.get(k) ?? "");
+    return { name: get("name"), phone: get("phone"), email: get("email"), address: get("address"), notes: get("notes") };
+  };
 
   const focusFirst = (errs: Errors) => {
     const order: Field[] = ["name", "email", "phone", "address", "notes"];
@@ -351,6 +359,13 @@ export default function CheckoutPage() {
             <p className="t14-co-secure">
               <IconLock size={13} /> Secured by Paystack
             </p>
+            <WhatsAppOrderButton
+              rows={rows}
+              label="Finish on WhatsApp instead"
+              deliveryMethod={effective}
+              deliveryKobo={fee}
+              getDetails={formDetails}
+            />
             <Link className="t14-co-edit" href={`${shopHref(baseUrl)}/cart`}>
               Edit bag
             </Link>
