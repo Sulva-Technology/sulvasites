@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --no-warnings --test \"tests/*.test.mjs\""
+    "test": "node --experimental-strip-types --no-warnings --test \"tests/*.test.mjs\"",
+    "eval:assistant": "node --experimental-strip-types --no-warnings tests/eval/runAssistantEval.mjs"
   },
   "repository": {
     "type": "git",

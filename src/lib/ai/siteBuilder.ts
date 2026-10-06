@@ -14,7 +14,8 @@ import {
   type Brief,
   type ChatMessage,
 } from "./brief.ts";
-import { GroqError, extractJson, groqChat } from "./groq.server.ts";
+import { GroqError, extractJson } from "./groq.server.ts";
+import { aiChat } from "./llm.server.ts";
 import { completeDraft, fallbackSeo, parsePageOutput } from "./pageContent.ts";
 import { getPageJobs, type PageJob } from "./pagePlans.ts";
 import {
@@ -100,7 +101,7 @@ export async function planSite(
   input: { messages?: unknown; state?: unknown; templateOverride?: string | null },
   deps: BuilderDeps = {},
 ): Promise<SitePlan> {
-  const chat = deps.chat ?? groqChat;
+  const chat = deps.chat ?? aiChat;
   const messages: ChatMessage[] = normalizeMessages(input.messages);
   let brief = normalizeBrief(input.state);
 
@@ -173,7 +174,7 @@ export function profileFromBrief(brief: Brief, tagline: string, description: str
 }
 
 export async function writeProfile(plan: SitePlan, deps: BuilderDeps = {}): Promise<SiteProfile> {
-  const chat = deps.chat ?? groqChat;
+  const chat = deps.chat ?? aiChat;
   const { brief } = plan;
   let tagline = "";
   let description = "";
@@ -193,7 +194,7 @@ export async function writeProfile(plan: SitePlan, deps: BuilderDeps = {}): Prom
 // ---------- stage 3: write one page, with validate + repair ----------
 
 export async function writePage(plan: SitePlan, key: string, deps: BuilderDeps = {}, avoid: string[] = []): Promise<PageResult> {
-  const chat = deps.chat ?? groqChat;
+  const chat = deps.chat ?? aiChat;
   const job = getPageJobs(plan.templateKey).find((j) => j.key === key);
   if (!job) throw new Error(`Unknown page '${key}' for this template.`);
   return generatePage(job, plan, chat, avoid);
@@ -341,7 +342,7 @@ export async function buildSite(
   deps: BuilderDeps = {},
 ): Promise<BuildResult> {
   const progress = deps.onProgress ?? (() => {});
-  deps = { ...deps, chat: patientChat(deps.chat ?? groqChat) };
+  deps = { ...deps, chat: patientChat(deps.chat ?? aiChat) };
   progress("plan");
   const plan = await planSite(input, deps);
   progress("profile");

@@ -10,7 +10,8 @@ import {
   type Brief,
   type ChatMessage,
 } from "./brief.ts";
-import { extractJson, groqChat, type GroqChatOptions } from "./groq.server.ts";
+import { extractJson, type GroqChatOptions } from "./groq.server.ts";
+import { aiChat } from "./llm.server.ts";
 import { MAX_CHAT_QUESTIONS, buildChatPrompt } from "./prompts/builders.ts";
 import { SAMPLING } from "./prompts/rules.ts";
 import { chooseTemplateFallback } from "./templateChoice.ts";
@@ -108,7 +109,7 @@ export async function runAssistantTurn(
   args: { messages: unknown; state?: unknown },
   deps: { chat?: ChatFn } = {},
 ): Promise<AssistantTurn> {
-  const chat = deps.chat ?? groqChat;
+  const chat = deps.chat ?? aiChat;
   const messages = normalizeMessages(args.messages);
   const prior = normalizeBrief(args.state);
   const questions = countQuestions(messages);

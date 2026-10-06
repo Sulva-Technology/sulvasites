@@ -108,6 +108,7 @@ export const SAMPLING = {
   rewrite: { temperature: 0.5, reasoningEffort: "medium", maxTokens: 8192 },
   translate: { temperature: 0.2, reasoningEffort: "low", maxTokens: 8192 },
   seo: { temperature: 0.3, reasoningEffort: "medium", maxTokens: 8192 },
+  assistant: { temperature: 0.4, reasoningEffort: "medium", maxTokens: 8192 },
 } as const satisfies Record<string, Sampling>;
 
 /** Silent checklist appended to every writing prompt. */

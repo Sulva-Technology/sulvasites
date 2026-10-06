@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 
+import SiteAssistantPanel from "@/components/assistant/SiteAssistantPanel";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
 import { canAdminSite } from "@/lib/supabase/adminScope";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
@@ -129,6 +130,7 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
         <Tabs label="Site sections" tourId="site-tabs" active={active} items={tabs} />
         {children}
       </div>
+      <SiteAssistantPanel siteId={siteId} editorBase={base} profileHref={`${base}?view=settings`} />
     </AdminSiteContext.Provider>
   );
 }
