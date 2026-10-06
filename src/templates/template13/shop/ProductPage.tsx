@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { formatNaira } from "@/lib/shop/money";
 import type { ShopProduct } from "@/lib/shop/types";
+import { buildWhatsAppOrderLink, buildWhatsAppProductMessage } from "@/lib/shop/whatsappOrder";
 import { buildWhatsAppLink } from "@/templates/shared/links";
 import { shopHref, useT13 } from "../ctx";
 import { IconRuler } from "../icons";
@@ -242,6 +243,20 @@ export default function ProductPage({ product }: { product: ShopProduct }) {
               <a
                 className="t13-pill t13-pill-glass t13-pill-lg t13-wa"
                 href={buildWhatsAppLink(profile.whatsapp)}
+                onClick={(e) => {
+                  const href = buildWhatsAppOrderLink(
+                    profile.whatsapp,
+                    buildWhatsAppProductMessage({
+                      businessName: profile.business_name,
+                      productName: product.name,
+                      options: selected,
+                      quantity: qty,
+                      unitKobo: price,
+                      url: `${window.location.origin}${window.location.pathname}`,
+                    }),
+                  );
+                  if (href) e.currentTarget.href = href;
+                }}
                 target="_blank"
                 rel="noreferrer"
               >

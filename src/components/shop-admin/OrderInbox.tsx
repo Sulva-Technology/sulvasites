@@ -20,10 +20,21 @@ export type OrderRow = {
   stock_issue: boolean;
   amount_mismatch: boolean;
   paid_after_cancel: boolean;
+  /** Missing until migration 015 has run; treat as "paystack". */
+  channel?: "paystack" | "whatsapp";
   created_at: string;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+// WhatsApp orders can take a while to settle in the chat, so they stay visible longer.
+const WHATSAPP_WAIT_MS = 7 * DAY_MS;
+
+export const isWhatsAppOrder = (o: Pick<OrderRow, "channel">) => o.channel === "whatsapp";
+
+/** Name to show for an order; WhatsApp orders may have no details (the chat identifies the shopper). */
+export function customerLabel(o: Pick<OrderRow, "customer_name" | "channel">): string {
+  return o.customer_name || (isWhatsAppOrder(o) ? "WhatsApp customer" : "—");
+}
 const LIMIT = 300;
 
 export function OrderFlags({ o }: { o: Pick<OrderRow, "stock_issue" | "amount_mismatch" | "paid_after_cancel"> }) {
@@ -41,12 +52,16 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
   return <Badge tone={tone}>{ORDER_STATUS_LABEL[status]}</Badge>;
 }
 
+export function ChannelBadge({ o }: { o: Pick<OrderRow, "channel"> }) {
+  return isWhatsAppOrder(o) ? <Badge tone="green">WhatsApp</Badge> : null;
+}
+
 export default function OrderInbox(props: ShopAdminProps) {
   const { siteId, basePath } = props;
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"active" | "all" | OrderStatus>("active");
+  const [filter, setFilter] = useState<"active" | "all" | "whatsapp" | OrderStatus>("active");
   const [q, setQ] = useState("");
 
   const load = useCallback(async () => {
@@ -55,7 +70,8 @@ export default function OrderInbox(props: ShopAdminProps) {
       const db = await getAuthenticatedClient();
       const { data, error } = await db
         .from("orders")
-        .select("id, reference, status, customer_name, customer_email, total_kobo, paid_at, stock_issue, amount_mismatch, paid_after_cancel, created_at")
+        // "*" so the inbox keeps working on databases that haven't run migration 015 (channel) yet.
+        .select("*")
         .eq("site_id", siteId)
         .order("created_at", { ascending: false })
         .limit(LIMIT);
@@ -78,7 +94,10 @@ export default function OrderInbox(props: ShopAdminProps) {
     return orders.filter((o) => {
       if (filter === "active") {
         // Abandoned checkouts (still awaiting payment after a day) are hidden by default.
-        if (o.status === "pending" && now - new Date(o.created_at).getTime() > DAY_MS) return false;
+        const wait = isWhatsAppOrder(o) ? WHATSAPP_WAIT_MS : DAY_MS;
+        if (o.status === "pending" && now - new Date(o.created_at).getTime() > wait) return false;
+      } else if (filter === "whatsapp") {
+        if (!isWhatsAppOrder(o)) return false;
       } else if (filter !== "all" && o.status !== filter) {
         return false;
       }
@@ -92,6 +111,9 @@ export default function OrderInbox(props: ShopAdminProps) {
   }, [orders, filter, q]);
 
   const attention = orders.filter((o) => o.paid_after_cancel || o.stock_issue || o.amount_mismatch).length;
+  const waitingOnWhatsApp = orders.filter(
+    (o) => isWhatsAppOrder(o) && o.status === "pending" && Date.now() - new Date(o.created_at).getTime() <= WHATSAPP_WAIT_MS,
+  ).length;
 
   return (
     <div>
@@ -107,6 +129,7 @@ export default function OrderInbox(props: ShopAdminProps) {
           <select className={inputCls} value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
             <option value="active">Active (hides old unpaid)</option>
             <option value="all">All</option>
+            <option value="whatsapp">WhatsApp orders</option>
             <option value="paid">Paid</option>
             <option value="fulfilled">Fulfilled</option>
             <option value="pending">Awaiting payment</option>
@@ -121,6 +144,14 @@ export default function OrderInbox(props: ShopAdminProps) {
       {attention > 0 ? (
         <div className="mb-3">
           <Notice kind="warn">{attention} order(s) need attention (flagged below).</Notice>
+        </div>
+      ) : null}
+      {waitingOnWhatsApp > 0 ? (
+        <div className="mb-3">
+          <Notice kind="info">
+            {waitingOnWhatsApp} WhatsApp order{waitingOnWhatsApp === 1 ? "" : "s"} waiting. Open one and click &quot;Mark completed&quot; once the
+            customer has paid you, so the sale is recorded and stock is updated.
+          </Notice>
         </div>
       ) : null}
       {err ? (
@@ -154,12 +185,13 @@ export default function OrderInbox(props: ShopAdminProps) {
                       </Link>
                     </td>
                     <td className="py-2 pr-3">
-                      <div className="text-koi-ink">{o.customer_name}</div>
+                      <div className="text-koi-ink">{customerLabel(o)}</div>
                       <div className="text-xs text-koi-ink/55">{o.customer_email}</div>
                     </td>
                     <td className="py-2 pr-3 font-medium text-koi-ink">{formatNaira(o.total_kobo)}</td>
                     <td className="py-2 pr-3">
                       <div className="flex flex-wrap gap-1">
+                        <ChannelBadge o={o} />
                         <StatusBadge status={o.status} />
                         <OrderFlags o={o} />
                       </div>

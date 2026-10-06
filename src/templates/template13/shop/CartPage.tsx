@@ -7,6 +7,7 @@ import { shopHref, useT13 } from "../ctx";
 import { IconArrow, IconBag } from "../icons";
 import CartLines from "./CartLines";
 import { useBag } from "./useBag";
+import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 /** Full-page bag. */
 export default function CartPage() {
@@ -60,6 +61,7 @@ export default function CartPage() {
               <Link className="t13-pill t13-pill-lg t13-add" href={`${shopHref(baseUrl)}/checkout`}>
                 Checkout <IconArrow size={18} />
               </Link>
+              <WhatsAppOrderButton rows={rows} />
               <Link className="t13-text-btn t13-center" href={shopHref(baseUrl)}>
                 Continue shopping
               </Link>

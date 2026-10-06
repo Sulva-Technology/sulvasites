@@ -5,6 +5,8 @@ import { parseOverview, type Overview } from "@/lib/insights/overview";
 import { extractJson } from "@/lib/ai/groq.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
 import { aiChat } from "@/lib/ai/llm.server";
+import { describeOwnerPhotos, enrichProductImages } from "@/lib/ai/productImages.server";
+import { cleanOwnerPhotos, shopFromRows, type ShopSnapshot } from "@/lib/ai/shopAssistant";
 import { SAMPLING } from "@/lib/ai/prompts/rules";
 import {
   buildAssistantPrompt,
@@ -12,6 +14,7 @@ import {
   USAGE_CHAT,
   USAGE_COUNTED,
   chatAllowanceFor,
+  effortFor,
   monthStartIso,
   monthlyLimitFor,
   normalizeAssistantMessages,
@@ -80,6 +83,31 @@ async function loadTraffic(req: Request, siteId: string): Promise<Overview | nul
   }
 }
 
+/** Products, categories and stock for the prompt. Null when the shop tables cannot be read (the assistant then says so). */
+async function loadShop(siteId: string): Promise<ShopSnapshot | null> {
+  const db = supabaseService();
+  const [cats, prods, vars] = await Promise.all([
+    db.from("product_categories").select("id, name").eq("site_id", siteId).order("position"),
+    db
+      .from("products")
+      .select("id, name, slug, description, images, price_kobo, compare_at_kobo, category_id, active, featured, position", { count: "exact" })
+      .eq("site_id", siteId)
+      .order("position")
+      .limit(200),
+    db.from("product_variants").select("id, product_id, options, price_kobo, stock, position").eq("site_id", siteId).order("position").limit(2000),
+  ]);
+  if (cats.error || prods.error || vars.error) {
+    console.error("shop load failed for the assistant:", (cats.error ?? prods.error ?? vars.error)?.message);
+    return null;
+  }
+  return shopFromRows({
+    categories: (cats.data ?? []) as Record<string, unknown>[],
+    products: (prods.data ?? []) as Record<string, unknown>[],
+    variants: (vars.data ?? []) as Record<string, unknown>[],
+    total: prods.count ?? undefined,
+  });
+}
+
 async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
   const db = supabaseService();
   const [siteRes, profileRes, pagesRes, extraRes] = await Promise.all([
@@ -136,6 +164,7 @@ export async function GET(req: Request, ctx: Ctx) {
  * here. The owner applies the edits they approve from the browser, under their own permissions.
  */
 export async function POST(req: Request, ctx: Ctx) {
+  const startedAt = Date.now();
   const { siteId } = await ctx.params;
   const auth = await requireSiteRole(req, siteId, ["owner", "admin"]);
   if (!auth.ok) return auth.response;
@@ -155,6 +184,7 @@ export async function POST(req: Request, ctx: Ctx) {
     return json({ error: "Send a message first." }, 400);
   }
   const focusPage = typeof b.focusPage === "string" ? b.focusPage.slice(0, 80) : undefined;
+  const photos = cleanOwnerPhotos(b.photos);
 
   const limit = monthlyLimitFor(auth.role, process.env);
   const used = await usedThisMonth(siteId);
@@ -176,12 +206,30 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   try {
-    const [snapshot, traffic] = await Promise.all([loadSnapshot(siteId), loadTraffic(req, siteId)]);
+    const [snapshot, traffic, shop] = await Promise.all([loadSnapshot(siteId), loadTraffic(req, siteId), loadShop(siteId)]);
     if (!snapshot) return json({ error: "Site not found." }, 404);
     snapshot.traffic = traffic;
+    snapshot.shop = shop;
 
-    const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage });
-    const text = await aiChat({ system, user, json: true, ...SAMPLING.assistant });
+    // The main model is text-only: a vision model looks at attached photos and the main model reads its notes.
+    let photoNotes: string[] = [];
+    if (photos.length) {
+      const seen = await describeOwnerPhotos(photos);
+      photoNotes = photos.map((_, i) => seen[i] || "(the photo could not be analysed; ask the owner what the product is)");
+    }
+
+    // The whole request must end inside maxDuration: the model gets most of it, photo search the rest.
+    const budgetEnd = startedAt + 55_000;
+    const lastMessage = messages[messages.length - 1]!.content;
+    const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage, photoNotes });
+    const text = await aiChat({
+      system,
+      user,
+      json: true,
+      ...SAMPLING.assistant,
+      reasoningEffort: effortFor(lastMessage),
+      timeoutMs: Math.max(15_000, Math.min(38_000, budgetEnd - Date.now() - 12_000)),
+    });
 
     let raw: unknown;
     try {
@@ -191,6 +239,11 @@ export async function POST(req: Request, ctx: Ctx) {
     }
     const ownerText = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
     const result = parseAssistantOutput(raw, snapshot, ownerText);
+    // An owner photo can only be used when that many were really attached.
+    for (const a of result.actions) {
+      if (a.type === "add_product" && a.product.photo && a.product.photo > photos.length) a.product.photo = null;
+    }
+    await enrichProductImages(result.actions, budgetEnd - 1500);
 
     // Only an answer that proposes a change uses up the allowance; advice and "I didn't get that" are free.
     const feature = usageFeatureFor(result);

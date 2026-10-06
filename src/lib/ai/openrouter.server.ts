@@ -21,9 +21,14 @@ function defaultSleep(ms: number) {
 
 /** The request body. Exported for tests. */
 export function openRouterBody(model: string, opts: GroqChatOptions): Record<string, unknown> {
-  const messages: Array<{ role: string; content: string }> = [];
+  const messages: Array<{ role: string; content: unknown }> = [];
   if (opts.system) messages.push({ role: "system", content: opts.system });
-  messages.push({ role: "user", content: opts.user });
+  messages.push({
+    role: "user",
+    content: opts.images?.length
+      ? [{ type: "text", text: opts.user }, ...opts.images.map((url) => ({ type: "image_url", image_url: { url } }))]
+      : opts.user,
+  });
   const body: Record<string, unknown> = {
     model,
     messages,
@@ -43,7 +48,8 @@ export function openRouterBody(model: string, opts: GroqChatOptions): Record<str
 type Attempt = { ok: true; text: string } | { ok: false; error: GroqError; retryable: boolean; retryAfterMs?: number };
 
 async function callOnce(fetchImpl: typeof fetch, apiKey: string, model: string, opts: GroqChatOptions, env: Record<string, string | undefined>): Promise<Attempt> {
-  const timeoutMs = Number(env.OPENROUTER_TIMEOUT_MS) > 0 ? Number(env.OPENROUTER_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
+  const timeoutMs =
+    opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : Number(env.OPENROUTER_TIMEOUT_MS) > 0 ? Number(env.OPENROUTER_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -118,15 +124,25 @@ export function openRouterModel(env: Record<string, string | undefined> = proces
   return env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
 }
 
-/** One chat completion via OpenRouter; retries once on rate limits, timeouts and server errors. */
-export async function openRouterChat(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<string> {
+/** The model that can look at pictures. The main model is text-only, so image checks go to this one. */
+export const DEFAULT_OPENROUTER_VISION_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
+
+export function openRouterVisionModel(env: Record<string, string | undefined> = process.env): string {
+  return env.OPENROUTER_VISION_MODEL || DEFAULT_OPENROUTER_VISION_MODEL;
+}
+
+/** Vision is on whenever OpenRouter is, unless switched off with AI_VISION=off. */
+export function visionConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return openRouterConfigured(env) && env.AI_VISION !== "off";
+}
+
+async function chatWithModel(model: string, opts: GroqChatOptions, deps: GroqDeps): Promise<string> {
   const env = deps.env ?? process.env;
   const fetchImpl = deps.fetch ?? fetch;
   const sleep = deps.sleep ?? defaultSleep;
   const apiKey = env.OPENROUTER_API_KEY;
   if (!apiKey) throw new GroqError("not_configured", "OpenRouter is not configured. Set OPENROUTER_API_KEY.");
 
-  const model = openRouterModel(env);
   let last: GroqError | null = null;
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     const result = await callOnce(fetchImpl, apiKey, model, opts, env);
@@ -136,4 +152,14 @@ export async function openRouterChat(opts: GroqChatOptions, deps: GroqDeps = {})
     if (attempt < ATTEMPTS - 1) await sleep(Math.min(result.retryAfterMs ?? 800, MAX_BACKOFF_MS));
   }
   throw last ?? new GroqError("upstream", "OpenRouter request failed.");
+}
+
+/** One chat completion via OpenRouter; retries once on rate limits, timeouts and server errors. */
+export async function openRouterChat(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<string> {
+  return chatWithModel(openRouterModel(deps.env ?? process.env), opts, deps);
+}
+
+/** A chat completion that includes opts.images, answered by the vision model. No Groq fallback: it has no vision. */
+export async function openRouterVisionChat(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<string> {
+  return chatWithModel(openRouterVisionModel(deps.env ?? process.env), opts, deps);
 }

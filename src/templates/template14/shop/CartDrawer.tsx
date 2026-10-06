@@ -8,6 +8,7 @@ import { IconArrow, IconBag, IconClose } from "../icons";
 import CartLines from "./CartLines";
 import { useFocusTrap } from "./useFocusTrap";
 import { useBag } from "./useBag";
+import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 /** Floating bag sheet. Mounted only while open: focus moves in and is trapped, Escape and the scrim close it. */
 export default function CartDrawer() {
@@ -51,6 +52,7 @@ export default function CartDrawer() {
               <Link className="t14-pill t14-pill-black t14-pill-xl t14-pill-block" href={`${shopHref(baseUrl)}/checkout`} onClick={closeCart}>
                 Checkout <IconArrow size={18} />
               </Link>
+              <WhatsAppOrderButton rows={rows} onNavigate={closeCart} />
               <Link className="t14-pill t14-pill-soft t14-pill-block" href={`${shopHref(baseUrl)}/cart`} onClick={closeCart}>
                 View bag
               </Link>

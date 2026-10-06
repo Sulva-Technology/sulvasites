@@ -28,6 +28,10 @@ export type GroqChatOptions = {
   maxTokens?: number;
   temperature?: number;
   reasoningEffort?: "low" | "medium" | "high";
+  /** OpenRouter only: per-call time limit, for turns that legitimately think for longer. */
+  timeoutMs?: number;
+  /** OpenRouter vision calls only: image URLs or data URLs shown to the model with the user text. */
+  images?: string[];
 };
 
 export type GroqDeps = {

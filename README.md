@@ -21,6 +21,11 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
    # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
    # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
+   # Product photos in "Ask AI" (add products by chat). The main model is text-only, so a vision model checks the photos:
+   UNSPLASH_ACCESS_KEY=...              # recommended: free "Access Key" from unsplash.com/developers (demo mode: 50 searches/hour)
+   # PEXELS_API_KEY=...                 # optional, used first when set (Pexels has paused new keys)
+   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning   # default; looks at candidate and owner-attached photos
+   # AI_VISION=off                      # turn the vision step off (photo search then keeps the provider's order)
    ```
 
 3. In the Supabase SQL editor run, in order:
@@ -31,6 +36,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
    - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
    - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)
+   - `supabase/migrations/015_whatsapp_orders.sql` (orders sent on WhatsApp show under Orders; owners mark them completed)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 

@@ -3,6 +3,8 @@
 import { createContext, useContext } from "react";
 
 import type { PageData } from "@/lib/pageSchema";
+import type { useCart } from "@/lib/shop/useCart";
+import type { ShopData, ShopView } from "@/lib/shop/types";
 import type { NavPage, TemplateProps } from "@/templates/registry";
 import type { ColorMode } from "@/templates/shared/colorMode";
 
@@ -16,11 +18,25 @@ export type T7Ctx = {
   /** Whether the home page has a services ("menu") section to jump to. */
   homeHasMenu: boolean;
   profile: TemplateProps["profile"];
-  pageKind: "home" | "about" | "contact" | "extra";
+  pageKind: "home" | "about" | "contact" | "extra" | "shop";
   pageLabel: string;
   mode: ColorMode;
   toggleMode: () => void;
+  /** Online ordering data, when the shop is live for this site. Without it the order/cart UI is hidden. */
+  shop: ShopData | null;
+  siteId: string;
+  cart: ReturnType<typeof useCart>;
+  cartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  /** Politely announces a message to screen readers (e.g. "Added to your order"). */
+  announce: (message: string) => void;
+  /** Which ordering view is showing, or null on ordinary pages. */
+  shopViewKind: ShopView["kind"] | null;
 };
+
+/** The online ordering page. */
+export const shopHref = (baseUrl: string) => `${baseUrl}/shop`;
 
 const Ctx = createContext<T7Ctx | null>(null);
 

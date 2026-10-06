@@ -11,11 +11,10 @@ import {
   parseCustomerPhone,
 } from "@/lib/shop/checkoutInput";
 import { formatNaira } from "@/lib/shop/money";
-import { shopHref, useT13 } from "../ctx";
+import { shopHref, useT7 } from "../ctx";
 import { IconArrow, IconBag } from "../icons";
 import CartLines, { type LineProblem } from "./CartLines";
 import { useBag } from "./useBag";
-import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 type Field = "name" | "email" | "phone" | "address" | "notes";
 type Errors = Partial<Record<Field, string>>;
@@ -27,7 +26,7 @@ const TEXT_CONTROL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
-    <span id={id} className="t13-field-error" role="alert">
+    <span id={id} className="t7-field-error" role="alert">
       {message}
     </span>
   ) : null;
@@ -35,7 +34,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 /** Guest checkout: contact, delivery or pickup, then Paystack. Validation mirrors the server's rules. */
 export default function CheckoutPage() {
-  const { baseUrl, shop, cart } = useT13();
+  const { baseUrl, shop, cart } = useT7();
   const { rows, subtotal, blocked, ready } = useBag();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -51,13 +50,6 @@ export default function CheckoutPage() {
   const effective = pickup ? method : "delivery";
   const fee = effective === "delivery" ? shop.settings.deliveryFeeKobo : 0;
   const total = subtotal + fee;
-
-  // Whatever the shopper has typed so far rides along in the WhatsApp message.
-  const formDetails = () => {
-    const data = formRef.current ? new FormData(formRef.current) : null;
-    const get = (k: string) => String(data?.get(k) ?? "");
-    return { name: get("name"), phone: get("phone"), email: get("email"), address: get("address"), notes: get("notes") };
-  };
 
   const focusFirst = (errs: Errors) => {
     const order: Field[] = ["name", "email", "phone", "address", "notes"];
@@ -95,7 +87,7 @@ export default function CheckoutPage() {
       return;
     }
     if (blocked) {
-      setFormError("Some items in your bag are no longer available. Update your bag to continue.");
+      setFormError("Some items in your order are no longer available. Update your order to continue.");
       return;
     }
 
@@ -129,11 +121,11 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <section className="t13-section t13-sp">
-        <div className="t13-container">
-          <h1 className="t13-sp-title">Checkout</h1>
-          <p className="t13-muted" role="status">
-            Loading your bag
+      <section className="t7-section t7-shop-page">
+        <div className="t7-container">
+          <h1 className="t7-h1">Checkout</h1>
+          <p className="t7-muted" role="status">
+            Loading your order
           </p>
         </div>
       </section>
@@ -142,16 +134,16 @@ export default function CheckoutPage() {
 
   if (rows.length === 0) {
     return (
-      <section className="t13-section t13-sp">
-        <div className="t13-container">
-          <h1 className="t13-sp-title">Checkout</h1>
-          <div className="t13-empty">
-            <span className="t13-empty-ico" aria-hidden="true">
+      <section className="t7-section t7-shop-page">
+        <div className="t7-container">
+          <h1 className="t7-h1">Checkout</h1>
+          <div className="t7-empty">
+            <span className="t7-empty-ico" aria-hidden="true">
               <IconBag size={38} />
             </span>
-            <p className="t13-empty-title">Your bag is empty</p>
-            <Link className="t13-pill t13-pill-solid t13-pill-lg" href={shopHref(baseUrl)}>
-              Continue shopping
+            <p className="t7-empty-title">Your order is empty</p>
+            <Link className="t7-btn t7-btn-lg" href={shopHref(baseUrl)}>
+              Back to the menu
             </Link>
           </div>
         </div>
@@ -159,32 +151,30 @@ export default function CheckoutPage() {
     );
   }
 
-  const desc = (f: Field) => (errors[f] ? `t13-err-${f}` : undefined);
+  const desc = (f: Field) => (errors[f] ? `t7-err-${f}` : undefined);
 
   return (
-    <section className="t13-section t13-sp">
-      <div className="t13-container">
-        <header className="t13-sp-head">
-          <nav className="t13-crumbs" aria-label="Breadcrumb">
-            <Link href={shopHref(baseUrl)}>Shop</Link>
+    <section className="t7-section t7-shop-page">
+      <div className="t7-container">
+        <header className="t7-shop-head">
+          <nav className="t7-crumbs" aria-label="Breadcrumb">
+            <Link href={shopHref(baseUrl)}>Menu</Link>
             <span aria-hidden="true">/</span>
-            <Link href={`${shopHref(baseUrl)}/cart`}>Bag</Link>
+            <Link href={`${shopHref(baseUrl)}/cart`}>Your order</Link>
             <span aria-hidden="true">/</span>
             <span aria-current="page">Checkout</span>
           </nav>
-          <h1 className="t13-sp-title">Checkout</h1>
+          <h1 className="t7-h1">Checkout</h1>
         </header>
 
-        <div className="t13-bag-layout t13-co-layout">
-          <form id="t13-checkout-form" ref={formRef} className="t13-checkout" onSubmit={onSubmit} noValidate aria-label="Checkout">
-            <fieldset className="t13-fieldset">
-              <legend>
-                <span className="t13-mono t13-fs-n">01</span> Contact
-              </legend>
-              <label className="t13-field">
+        <div className="t7-bag-layout">
+          <form ref={formRef} className="t7-checkout" onSubmit={onSubmit} noValidate aria-label="Checkout">
+            <fieldset className="t7-fieldset">
+              <legend>Contact</legend>
+              <label className="t7-field">
                 <span>Full name</span>
                 <input
-                  className="t13-input"
+                  className="t7-input"
                   name="name"
                   autoComplete="name"
                   required
@@ -192,13 +182,13 @@ export default function CheckoutPage() {
                   aria-invalid={!!errors.name}
                   aria-describedby={desc("name")}
                 />
-                <FieldError id="t13-err-name" message={errors.name} />
+                <FieldError id="t7-err-name" message={errors.name} />
               </label>
-              <div className="t13-form-row">
-                <label className="t13-field">
+              <div className="t7-form-row">
+                <label className="t7-field">
                   <span>Email</span>
                   <input
-                    className="t13-input"
+                    className="t7-input"
                     name="email"
                     type="email"
                     autoComplete="email"
@@ -207,12 +197,12 @@ export default function CheckoutPage() {
                     aria-invalid={!!errors.email}
                     aria-describedby={desc("email")}
                   />
-                  <FieldError id="t13-err-email" message={errors.email} />
+                  <FieldError id="t7-err-email" message={errors.email} />
                 </label>
-                <label className="t13-field">
+                <label className="t7-field">
                   <span>Phone</span>
                   <input
-                    className="t13-input"
+                    className="t7-input"
                     name="phone"
                     type="tel"
                     autoComplete="tel"
@@ -221,25 +211,23 @@ export default function CheckoutPage() {
                     aria-invalid={!!errors.phone}
                     aria-describedby={desc("phone")}
                   />
-                  <FieldError id="t13-err-phone" message={errors.phone} />
+                  <FieldError id="t7-err-phone" message={errors.phone} />
                 </label>
               </div>
             </fieldset>
 
-            <fieldset className="t13-fieldset">
-              <legend>
-                <span className="t13-mono t13-fs-n">02</span> {pickup ? "Delivery or pickup" : "Delivery"}
-              </legend>
+            <fieldset className="t7-fieldset">
+              <legend>{pickup ? "Delivery or pickup" : "Delivery"}</legend>
               {pickup ? (
-                <div className="t13-choice-row">
-                  <label className="t13-choice" data-checked={effective === "delivery"}>
+                <div className="t7-choice-row">
+                  <label className="t7-choice" data-checked={effective === "delivery"}>
                     <input type="radio" name="method" value="delivery" checked={effective === "delivery"} onChange={() => setMethod("delivery")} />
                     <span>
                       <b>Delivery</b>
                       <small>{shop.settings.deliveryFeeKobo > 0 ? formatNaira(shop.settings.deliveryFeeKobo) : "Free"}</small>
                     </span>
                   </label>
-                  <label className="t13-choice" data-checked={effective === "pickup"}>
+                  <label className="t7-choice" data-checked={effective === "pickup"}>
                     <input type="radio" name="method" value="pickup" checked={effective === "pickup"} onChange={() => setMethod("pickup")} />
                     <span>
                       <b>Pickup</b>
@@ -249,10 +237,10 @@ export default function CheckoutPage() {
                 </div>
               ) : null}
               {effective === "delivery" ? (
-                <label className="t13-field">
+                <label className="t7-field">
                   <span>Delivery address</span>
                   <textarea
-                    className="t13-input"
+                    className="t7-input"
                     name="address"
                     rows={3}
                     maxLength={ADDRESS_MAX}
@@ -262,74 +250,62 @@ export default function CheckoutPage() {
                     aria-invalid={!!errors.address}
                     aria-describedby={desc("address")}
                   />
-                  <FieldError id="t13-err-address" message={errors.address} />
+                  <FieldError id="t7-err-address" message={errors.address} />
                 </label>
               ) : shop.settings.pickupNote ? (
-                <p className="t13-note">{shop.settings.pickupNote}</p>
+                <p className="t7-note">{shop.settings.pickupNote}</p>
               ) : null}
-              <label className="t13-field">
+              <label className="t7-field">
                 <span>Notes (optional)</span>
                 <textarea
-                  className="t13-input"
+                  className="t7-input"
                   name="notes"
                   rows={2}
                   maxLength={NOTES_MAX}
                   aria-invalid={!!errors.notes}
                   aria-describedby={desc("notes")}
                 />
-                <FieldError id="t13-err-notes" message={errors.notes} />
+                <FieldError id="t7-err-notes" message={errors.notes} />
               </label>
             </fieldset>
 
             {formError ? (
-              <div className="t13-form-error" role="alert">
+              <div className="t7-form-error" role="alert">
                 <p>{formError}</p>
                 {Object.keys(problems).length ? (
                   <p>
-                    <Link href={`${shopHref(baseUrl)}/cart`}>Review your bag</Link>
+                    <Link href={`${shopHref(baseUrl)}/cart`}>Review your order</Link>
                   </p>
                 ) : null}
               </div>
             ) : null}
 
-            <div className="t13-fieldset">
-              <h2 className="t13-fs-h">
-                <span className="t13-mono t13-fs-n">03</span> Payment
-              </h2>
-              <p className="t13-fine" role="status">
-                {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
-              </p>
-            </div>
+            <button type="submit" className="t7-btn t7-btn-block t7-btn-lg" disabled={busy}>
+              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : `Pay ${formatNaira(total)}`}
+              {!busy ? <IconArrow size={18} /> : null}
+            </button>
+            <p className="t7-fine t7-center" role="status">
+              {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
+            </p>
           </form>
 
-          <aside className="t13-summary" aria-label="Order summary">
-            <h2 className="t13-sum-title">Your order</h2>
+          <aside className="t7-summary" aria-label="Order summary">
+            <h2 className="t7-card-title">Your order</h2>
             <CartLines rows={rows} serverProblems={problems} readOnly />
-            <p className="t13-sum-row t13-mono">
+            <p className="t7-sum-row">
               <span>Subtotal</span>
               <b>{formatNaira(subtotal)}</b>
             </p>
-            <p className="t13-sum-row t13-mono">
+            <p className="t7-sum-row">
               <span>{effective === "pickup" ? "Pickup" : "Delivery"}</span>
               <b>{fee > 0 ? formatNaira(fee) : "Free"}</b>
             </p>
-            <p className="t13-sum-row t13-sum-total t13-mono">
+            <p className="t7-sum-row t7-sum-total">
               <span>Total</span>
               <b>{formatNaira(total)}</b>
             </p>
-            <button type="submit" form="t13-checkout-form" className="t13-pill t13-pill-lg t13-add" disabled={busy}>
-              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : "Pay with Paystack"}
-              {!busy ? <IconArrow size={18} /> : null}
-            </button>
-            <WhatsAppOrderButton
-              rows={rows}
-              label="Finish on WhatsApp instead"
-              deliveryMethod={effective}
-              deliveryKobo={fee}
-              getDetails={formDetails}
-            />
-            <Link className="t13-text-btn t13-center" href={`${shopHref(baseUrl)}/cart`}>
-              Edit bag
+            <Link className="t7-textlink t7-center" href={`${shopHref(baseUrl)}/cart`}>
+              Edit order
             </Link>
           </aside>
         </div>
