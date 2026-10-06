@@ -3,8 +3,12 @@
 import { GroqError, type GroqChatOptions, type GroqDeps } from "./groq.server.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-/** Paid endpoint on purpose: the ":free" variant may log prompts, and prompts carry customers' business details. */
-export const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+/**
+ * Free endpoint by choice: no OpenRouter credit needed. Free providers may log prompts (which carry
+ * customers' business details) and have daily request caps; set OPENROUTER_MODEL to the model id
+ * without ":free" for the paid, no-data-retention endpoint.
+ */
+export const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const ATTEMPTS = 2;
 const MAX_BACKOFF_MS = 8000;
 /**
@@ -125,7 +129,7 @@ export function openRouterModel(env: Record<string, string | undefined> = proces
 }
 
 /** The model that can look at pictures. The main model is text-only, so image checks go to this one. */
-export const DEFAULT_OPENROUTER_VISION_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
+export const DEFAULT_OPENROUTER_VISION_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free";
 
 export function openRouterVisionModel(env: Record<string, string | undefined> = process.env): string {
   return env.OPENROUTER_VISION_MODEL || DEFAULT_OPENROUTER_VISION_MODEL;

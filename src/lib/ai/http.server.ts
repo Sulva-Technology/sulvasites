@@ -6,6 +6,7 @@ const STATUS: Record<GroqError["code"], number> = {
   not_configured: 500,
   bad_key: 502,
   rate_limited: 429,
+  too_large: 413,
   upstream: 502,
   empty: 422,
 };

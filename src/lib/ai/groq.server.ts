@@ -5,7 +5,7 @@ const ATTEMPTS_PER_MODEL = 2;
 // Free-tier token-per-minute limits ask for waits of 10-20s; honour them.
 const MAX_BACKOFF_MS = 20000;
 
-export type GroqErrorCode = "not_configured" | "bad_key" | "rate_limited" | "upstream" | "empty";
+export type GroqErrorCode = "not_configured" | "bad_key" | "rate_limited" | "too_large" | "upstream" | "empty";
 
 export class GroqError extends Error {
   code: GroqErrorCode;
@@ -46,7 +46,12 @@ type Completion = {
 
 type Attempt =
   | { ok: true; text: string }
-  | { ok: false; error: GroqError; retryable: boolean; retryAfterMs?: number };
+  | { ok: false; error: GroqError; retryable: boolean; retryAfterMs?: number; tooLarge?: { limit: number; requested: number } };
+
+// The smallest answer budget worth asking for; below this a JSON reply gets cut off.
+const MIN_ANSWER_TOKENS = 1500;
+const TOO_LARGE_MESSAGE =
+  "That message is too long for the AI to handle in one go. Send it in smaller parts — for a product list, about 10 products at a time.";
 
 function defaultSleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -57,6 +62,7 @@ async function callOnce(
   apiKey: string,
   model: string,
   opts: GroqChatOptions,
+  maxTokens: number,
 ): Promise<Attempt> {
   const messages: Array<{ role: string; content: string }> = [];
   if (opts.system) messages.push({ role: "system", content: opts.system });
@@ -67,7 +73,7 @@ async function callOnce(
     messages,
     temperature: opts.temperature ?? 0.65,
     // gpt-oss reasoning tokens count against this budget.
-    max_tokens: opts.maxTokens ?? 4096,
+    max_tokens: maxTokens,
   };
   if (opts.json) body.response_format = { type: "json_object" };
   if (opts.reasoningEffort && model.startsWith("openai/gpt-oss")) {
@@ -116,6 +122,18 @@ async function callOnce(
         error: new GroqError("rate_limited", "Groq rate limit reached. Try again in a moment.", status, detail),
       };
     }
+    // Groq counts prompt + max_tokens against the per-minute token limit and refuses a request
+    // that could never fit: "... (TPM): Limit 8000, Requested 21470, please reduce your message size".
+    if (status === 413) {
+      const limit = Number(detail.match(/limit\s*:?\s*(\d+)/i)?.[1]);
+      const requested = Number(detail.match(/requested\s*:?\s*(\d+)/i)?.[1]);
+      return {
+        ok: false,
+        retryable: false,
+        tooLarge: limit > 0 && requested > 0 ? { limit, requested } : undefined,
+        error: new GroqError("too_large", TOO_LARGE_MESSAGE, status, detail),
+      };
+    }
     // 5xx and "model not available" style 400/404 are worth a retry / fallback model.
     const modelProblem = (status === 400 || status === 404) && /model/i.test(detail);
     return {
@@ -153,12 +171,29 @@ export async function groqChat(opts: GroqChatOptions, deps: GroqDeps = {}): Prom
 
   let lastError: GroqError | null = null;
   let rateLimited: GroqError | null = null;
+  let tooLarge: GroqError | null = null;
   for (const model of models) {
+    let maxTokens = opts.maxTokens ?? 4096;
+    let shrunk = false;
     for (let attempt = 0; attempt < ATTEMPTS_PER_MODEL; attempt++) {
-      const result = await callOnce(fetchImpl, apiKey, model, opts);
+      const result = await callOnce(fetchImpl, apiKey, model, opts, maxTokens);
       if (result.ok) return result.text;
       lastError = result.error;
       if (result.error.code === "rate_limited") rateLimited = result.error;
+      if (result.error.code === "too_large") {
+        tooLarge = result.error;
+        // Too big only because of the answer budget: ask again with a budget that fits.
+        const t = result.tooLarge;
+        const fits = t ? t.limit - (t.requested - maxTokens) - 200 : 0;
+        if (!shrunk && fits >= MIN_ANSWER_TOKENS && fits < maxTokens) {
+          maxTokens = fits;
+          shrunk = true;
+          attempt--;
+          continue;
+        }
+        // The prompt alone is too big for this model; the fallback model may allow more.
+        break;
+      }
       if (!result.retryable) throw result.error;
       if (attempt < ATTEMPTS_PER_MODEL - 1) {
         const backoff = Math.min(result.retryAfterMs ?? 500 * 2 ** attempt, MAX_BACKOFF_MS);
@@ -168,6 +203,7 @@ export async function groqChat(opts: GroqChatOptions, deps: GroqDeps = {}): Prom
   }
   // A missing fallback model (404) must not hide the real problem, e.g. a rate limit on the primary.
   if (rateLimited && lastError?.status === 404) throw rateLimited;
+  if (tooLarge && lastError?.status === 404) throw tooLarge;
   throw lastError ?? new GroqError("upstream", "Groq request failed.");
 }
 
