@@ -43,3 +43,13 @@ export function buildCreateOrderArgs(i: CreateOrderInput) {
     })),
   };
 }
+
+export type CreateWhatsAppOrderInput = Omit<CreateOrderInput, "paymentMode" | "keyRef">;
+
+/** Arguments for `create_whatsapp_order` (migration 015): create_order's, without payment mode / key ref. */
+export function buildCreateWhatsAppOrderArgs(i: CreateWhatsAppOrderInput) {
+  const args: Partial<ReturnType<typeof buildCreateOrderArgs>> = buildCreateOrderArgs({ ...i, paymentMode: "platform", keyRef: "" });
+  delete args.p_payment_mode;
+  delete args.p_key_ref;
+  return args as Omit<ReturnType<typeof buildCreateOrderArgs>, "p_payment_mode" | "p_key_ref">;
+}

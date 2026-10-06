@@ -27,10 +27,12 @@ export type WhatsAppOrderInput = {
   businessName?: string | null;
   items: WhatsAppOrderItem[];
   subtotalKobo: number;
-  /** Omitted on the bag (delivery is chosen at checkout). */
-  deliveryMethod?: "delivery" | "pickup" | null;
+  /** Omitted on the bag (delivery is chosen at checkout); "agree" = to be settled in the chat. */
+  deliveryMethod?: "delivery" | "pickup" | "agree" | null;
   deliveryKobo?: number | null;
   customer?: WhatsAppOrderDetails | null;
+  /** Order reference when the bag was registered, so the seller can find it under Orders. */
+  reference?: string | null;
 };
 
 /** Long bags are summarised so the wa.me link stays well inside browser/WhatsApp URL limits. */
@@ -45,7 +47,10 @@ function clean(value: string | null | undefined, max: number = FIELD_MAX): strin
 
 export function buildWhatsAppOrderMessage(input: WhatsAppOrderInput): string {
   const business = clean(input.businessName, 80);
-  const lines: string[] = [business ? `Hello ${business}, I'd like to place this order:` : "Hello, I'd like to place this order:", ""];
+  const lines: string[] = [business ? `Hello ${business}, I'd like to place this order:` : "Hello, I'd like to place this order:"];
+  const reference = clean(input.reference, 40);
+  if (reference) lines.push(`Order ref: ${reference}`);
+  lines.push("");
 
   const items = input.items.filter((i) => Number.isSafeInteger(i.quantity) && i.quantity > 0);
   items.slice(0, WHATSAPP_MAX_ITEMS).forEach((item, n) => {
@@ -62,6 +67,8 @@ export function buildWhatsAppOrderMessage(input: WhatsAppOrderInput): string {
   if (input.deliveryMethod === "pickup") {
     lines.push("Pickup: Free");
     lines.push(`Total: ${formatNaira(input.subtotalKobo)}`);
+  } else if (input.deliveryMethod === "agree") {
+    lines.push("Delivery or pickup: to be agreed");
   } else if (input.deliveryMethod === "delivery") {
     const fee = Number.isSafeInteger(input.deliveryKobo) && (input.deliveryKobo as number) > 0 ? (input.deliveryKobo as number) : 0;
     lines.push(`Delivery: ${fee > 0 ? formatNaira(fee) : "Free"}`);

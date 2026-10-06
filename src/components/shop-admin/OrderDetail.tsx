@@ -7,7 +7,7 @@ import { formatNaira } from "@/lib/shop/money";
 import { allowedTransitions, ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/shop/orderStatus";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { btnCls, btnDangerCls, cardCls, errMsg, Notice, type ShopAdminProps } from "./common";
-import { OrderFlags, StatusBadge } from "./OrderInbox";
+import { ChannelBadge, customerLabel, isWhatsAppOrder, OrderFlags, StatusBadge } from "./OrderInbox";
 import ShopAdminTabs from "./ShopAdminTabs";
 
 type Order = {
@@ -29,6 +29,7 @@ type Order = {
   stock_issue: boolean;
   amount_mismatch: boolean;
   paid_after_cancel: boolean;
+  channel?: "paystack" | "whatsapp";
   created_at: string;
 };
 type Item = {
@@ -124,6 +125,30 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
     }
   }
 
+  // WhatsApp orders are paid in the chat, so a member confirms them here (complete_whatsapp_order,
+  // migration 015). That marks the order paid and takes the items out of stock, like a Paystack payment.
+  async function markCompleted() {
+    if (!order) return;
+    if (!window.confirm(`Mark ${order.reference} completed? Only do this once the customer has paid you. Stock will be updated.`)) return;
+    setBusy(true);
+    setErr(null);
+    setOk(null);
+    try {
+      const db = await getAuthenticatedClient();
+      const { data, error } = await db.rpc("complete_whatsapp_order", { p_order: order.id });
+      if (error) throw error;
+      if (data === "not_pending") throw new Error("This order is no longer open, so it can't be completed.");
+      setOk(data === "already_completed" ? "This order was already completed." : "Order completed and recorded as paid.");
+      await load();
+    } catch (e) {
+      setErr(errMsg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const whatsapp = order ? isWhatsAppOrder(order) : false;
+  const canComplete = !!order && whatsapp && order.status === "pending";
   const actions = order ? allowedTransitions(order, role) : [];
 
   return (
@@ -165,23 +190,32 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
           <section className={cardCls}>
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <h2 className="font-mono text-sm font-semibold text-koi-ink">{order.reference}</h2>
+              <ChannelBadge o={order} />
               <StatusBadge status={order.status} />
               <OrderFlags o={order} />
             </div>
             <dl>
               <Row label="Placed">{new Date(order.created_at).toLocaleString()}</Row>
-              <Row label="Paid">{order.paid_at ? new Date(order.paid_at).toLocaleString() : "Not paid"}</Row>
-              <Row label="Paystack ref">{order.paystack_reference ?? "—"}</Row>
-              <Row label="Payment mode">{order.payment_mode === "own_keys" ? "Shop's own Paystack" : order.payment_mode === "platform" ? "Sulvatech Paystack" : "—"}</Row>
+              <Row label={whatsapp ? "Completed" : "Paid"}>
+                {order.paid_at ? new Date(order.paid_at).toLocaleString() : whatsapp ? "Not yet" : "Not paid"}
+              </Row>
+              {whatsapp ? (
+                <Row label="Payment">On WhatsApp (outside Paystack)</Row>
+              ) : (
+                <>
+                  <Row label="Paystack ref">{order.paystack_reference ?? "—"}</Row>
+                  <Row label="Payment mode">{order.payment_mode === "own_keys" ? "Shop's own Paystack" : order.payment_mode === "platform" ? "Sulvatech Paystack" : "—"}</Row>
+                </>
+              )}
             </dl>
           </section>
 
           <section className={cardCls}>
             <h2 className="mb-2 text-sm font-semibold text-koi-ink">Customer</h2>
             <dl>
-              <Row label="Name">{order.customer_name}</Row>
-              <Row label="Email">{order.customer_email}</Row>
-              <Row label="Phone">{order.customer_phone}</Row>
+              <Row label="Name">{customerLabel(order)}</Row>
+              <Row label="Email">{order.customer_email || "—"}</Row>
+              <Row label="Phone">{order.customer_phone || (whatsapp ? "See the WhatsApp chat" : "—")}</Row>
               <Row label="Delivery">{order.delivery_method === "pickup" ? "Pickup" : "Delivery"}</Row>
               {order.delivery_address ? <Row label="Address"><span className="whitespace-pre-wrap">{order.delivery_address}</span></Row> : null}
               {order.notes ? <Row label="Notes"><span className="whitespace-pre-wrap">{order.notes}</span></Row> : null}
@@ -224,10 +258,20 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
 
           <section className={cardCls}>
             <h2 className="mb-2 text-sm font-semibold text-koi-ink">Actions</h2>
-            {actions.length === 0 ? (
+            {canComplete ? (
+              <p className="mb-3 text-sm text-koi-ink/70">
+                The customer sent this order on WhatsApp. Once they have paid you, mark it completed to record the sale and update stock.
+              </p>
+            ) : null}
+            {actions.length === 0 && !canComplete ? (
               <p className="text-sm text-koi-ink/60">No status changes are available for this order.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
+                {canComplete ? (
+                  <button type="button" className={btnCls} disabled={busy} onClick={() => void markCompleted()}>
+                    Mark completed
+                  </button>
+                ) : null}
                 {actions.map((a) => (
                   <button
                     key={a}
@@ -242,7 +286,9 @@ export default function OrderDetail(props: ShopAdminProps & { orderId: string })
               </div>
             )}
             <p className="mt-3 text-xs text-koi-ink/55">
-              Refunds are made in Paystack by hand; &quot;Mark refunded&quot; only records it here.
+              {whatsapp
+                ? "Refunds for WhatsApp orders are made directly with the customer; \"Mark refunded\" only records it here."
+                : <>Refunds are made in Paystack by hand; &quot;Mark refunded&quot; only records it here.</>}
               {role === "staff" ? " Only the shop owner can mark an order refunded." : ""}
             </p>
           </section>

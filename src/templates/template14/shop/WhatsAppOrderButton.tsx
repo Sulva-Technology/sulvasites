@@ -1,12 +1,14 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 
 import {
   buildWhatsAppOrderLink,
   buildWhatsAppOrderMessage,
   type WhatsAppOrderDetails,
+  type WhatsAppOrderInput,
 } from "@/lib/shop/whatsappOrder";
+import { registerWhatsAppOrder } from "@/lib/shop/whatsappOrderClient";
 import { useT14 } from "../ctx";
 import { IconChat } from "../icons";
 import { productHref, type ResolvedLine } from "./helpers";
@@ -22,7 +24,11 @@ type Props = {
   onNavigate?: () => void;
 };
 
-/** Sends the bag to the business on WhatsApp, pre-typed, for shoppers who'd rather finish the order in chat. */
+/**
+ * Sends the bag to the business on WhatsApp, pre-typed, for shoppers who'd rather finish the order in chat.
+ * The bag is first recorded as a pending WhatsApp order (its reference goes in the message) so the owner
+ * can find it under Orders and mark it completed. If that fails, WhatsApp still opens without a reference.
+ */
 export default function WhatsAppOrderButton({
   rows,
   className = "t14-pill t14-pill-soft t14-pill-block t14-wa",
@@ -32,42 +38,77 @@ export default function WhatsAppOrderButton({
   getDetails,
   onNavigate,
 }: Props) {
-  const { profile, baseUrl } = useT14();
+  const { profile, baseUrl, siteId } = useT14();
+  const [pending, setPending] = useState(false);
+  const busy = useRef(false);
   const orderable = rows.filter((r) => r.product && r.problem === null);
 
-  const build = (origin: string | null, details?: WhatsAppOrderDetails) =>
-    buildWhatsAppOrderLink(
-      profile.whatsapp,
-      buildWhatsAppOrderMessage({
-        businessName: profile.business_name,
-        items: orderable.map((r) => ({
-          name: r.product!.name,
-          variantLabel: r.variant ? Object.values(r.variant.options).join(" / ") : null,
-          quantity: r.line.quantity,
-          unitKobo: r.unitKobo,
-          lineTotalKobo: r.totalKobo,
-          url: origin ? `${origin}${productHref(baseUrl, r.product!)}` : null,
-        })),
-        subtotalKobo: orderable.reduce((n, r) => n + r.totalKobo, 0),
-        deliveryMethod: deliveryMethod ?? null,
-        deliveryKobo: deliveryKobo ?? null,
-        customer: details ?? null,
-      }),
-    );
+  const urlOf = (origin: string | null, productId: string) => {
+    const p = orderable.find((r) => r.product!.id === productId)?.product;
+    return origin && p ? `${origin}${productHref(baseUrl, p)}` : null;
+  };
 
-  const href = build(null);
+  const localMessage = (origin: string | null, details?: WhatsAppOrderDetails): WhatsAppOrderInput => ({
+    businessName: profile.business_name,
+    items: orderable.map((r) => ({
+      name: r.product!.name,
+      variantLabel: r.variant ? Object.values(r.variant.options).join(" / ") : null,
+      quantity: r.line.quantity,
+      unitKobo: r.unitKobo,
+      lineTotalKobo: r.totalKobo,
+      url: urlOf(origin, r.product!.id),
+    })),
+    subtotalKobo: orderable.reduce((n, r) => n + r.totalKobo, 0),
+    deliveryMethod: deliveryMethod ?? null,
+    deliveryKobo: deliveryKobo ?? null,
+    customer: details ?? null,
+  });
+
+  const href = buildWhatsAppOrderLink(profile.whatsapp, buildWhatsAppOrderMessage(localMessage(null)));
   if (!href || orderable.length === 0) return null;
 
-  // Rebuild on click so the message carries product links and the latest checkout details.
-  const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    const fresh = build(window.location.origin, getDetails?.());
-    if (fresh) e.currentTarget.href = fresh;
+  const onClick = async (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (busy.current) return;
+    busy.current = true;
+    setPending(true);
+    // Open the tab now, inside the click, so popup blockers allow it; it's pointed at WhatsApp below.
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
+
+    const origin = window.location.origin;
+    const details = getDetails?.();
+    const order = await registerWhatsAppOrder(siteId, {
+      lines: orderable.map((r) => r.line),
+      deliveryMethod: deliveryMethod ?? null,
+      customer: details ? { name: details.name ?? "", email: details.email ?? "", phone: details.phone ?? "" } : undefined,
+      address: details?.address ?? null,
+      notes: details?.notes ?? null,
+    });
+
+    const message: WhatsAppOrderInput = order
+      ? {
+          businessName: profile.business_name,
+          reference: order.reference,
+          items: order.items.map((i) => ({ ...i, url: urlOf(origin, i.productId) })),
+          subtotalKobo: order.subtotalKobo,
+          deliveryMethod: order.deliveryMethod ?? "agree",
+          deliveryKobo: order.deliveryKobo,
+          customer: details ?? null,
+        }
+      : localMessage(origin, details);
+    const link = buildWhatsAppOrderLink(profile.whatsapp, buildWhatsAppOrderMessage(message)) ?? href;
+
+    if (win && !win.closed) win.location.href = link;
+    else window.location.href = link;
+    busy.current = false;
+    setPending(false);
     onNavigate?.();
   };
 
   return (
-    <a className={className} href={href} target="_blank" rel="noreferrer" onClick={onClick}>
-      <IconChat size={18} /> {label}
+    <a className={className} href={href} target="_blank" rel="noreferrer" onClick={onClick} aria-busy={pending}>
+      <IconChat size={18} /> {pending ? "Opening WhatsApp…" : label}
     </a>
   );
 }
