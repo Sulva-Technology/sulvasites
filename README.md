@@ -29,6 +29,7 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/admin/add_current_user_as_admin.sql` (after creating your user)
    - `supabase/migrations/012_admin_site_ownership.sql` (put your email on its `SUPER ADMIN EMAIL` line first)
    - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
+   - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. `npm run dev` → http://localhost:3000/login, sites at http://localhost:3000/<slug>
 
