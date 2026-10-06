@@ -1,10 +1,10 @@
 // Product photos for the "Ask AI" assistant: search real photos by what the product is, let a vision
-// model look at the candidates and keep only the ones that show the item. The main assistant model is
-// text-only, so the looking is done by OPENROUTER_VISION_MODEL. Never throws: when search or vision is
+// model look at the candidates and keep only the ones that show the item. The looking is done by
+// Gemini, else OPENROUTER_VISION_MODEL (see aiVisionChat). Never throws: when search or vision is
 // unavailable the owner simply gets fewer (or no) suggestions and can still upload their own.
 // Relative imports only (Node test runner).
 import { extractJson } from "./groq.server.ts";
-import { openRouterVisionChat, visionConfigured } from "./openrouter.server.ts";
+import { aiVisionChat, visionConfigured } from "./llm.server.ts";
 import { isAllowedProductImageUrl, type ImageChoice } from "./shopAssistant.ts";
 import type { AssistantAction } from "./siteAssistant.ts";
 import { STOCK_PHOTOS, hintWords, photoUrl } from "../stockPhotos.ts";
@@ -164,7 +164,7 @@ export async function pickWithVision(
   const env = deps.env ?? process.env;
   if (!visionConfigured(env) || candidates.length === 0) return null;
   try {
-    const reply = await openRouterVisionChat(
+    const reply = await aiVisionChat(
       {
         system: VISION_SYSTEM,
         user:
@@ -194,7 +194,7 @@ export async function describeOwnerPhotos(photos: string[], deps: ImageDeps = {}
   const env = deps.env ?? process.env;
   if (!photos.length || !visionConfigured(env)) return [];
   try {
-    const reply = await openRouterVisionChat(
+    const reply = await aiVisionChat(
       {
         system:
           "You describe product photos for a shop owner who is adding items to their online store. For each photo, in order, say what the item is, its colour, material and any readable text, brand or size, in one or two plain sentences. " +

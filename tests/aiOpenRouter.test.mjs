@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 
 import { GroqError } from "../src/lib/ai/groq.server.ts";
 import { aiChat, aiChatWithInfo } from "../src/lib/ai/llm.server.ts";
-import { DEFAULT_OPENROUTER_MODEL, openRouterBody, openRouterChat } from "../src/lib/ai/openrouter.server.ts";
+import {
+  DEFAULT_OPENROUTER_FALLBACK_MODEL,
+  DEFAULT_OPENROUTER_MODEL,
+  openRouterBody,
+  openRouterChat,
+} from "../src/lib/ai/openrouter.server.ts";
 
 function ok(text) {
   return new Response(JSON.stringify({ choices: [{ message: { content: text } }] }), { status: 200 });
@@ -27,9 +32,10 @@ function harness(env, ...answers) {
   };
 }
 
-test("body: default free Nemotron Ultra, hidden reasoning, JSON mode", () => {
+test("body: default free Inkling, hidden reasoning, JSON mode", () => {
   const b = openRouterBody(DEFAULT_OPENROUTER_MODEL, { system: "s", user: "u", json: true, reasoningEffort: "low", maxTokens: 999 });
-  assert.equal(b.model, "nvidia/nemotron-3-ultra-550b-a55b:free");
+  assert.equal(b.model, "thinkingmachines/inkling:free");
+  assert.equal(b.models, undefined);
   assert.equal(b.provider, undefined);
   assert.deepEqual(b.reasoning, { effort: "low", exclude: true });
   assert.deepEqual(b.response_format, { type: "json_object" });
@@ -48,6 +54,16 @@ test("OpenRouter is used first when its key is set", async () => {
   assert.deepEqual(r, { text: "from openrouter", provider: "openrouter", model: DEFAULT_OPENROUTER_MODEL });
   assert.match(h.calls[0].url, /openrouter\.ai/);
   assert.equal(h.calls[0].headers.Authorization, "Bearer or");
+});
+
+test("Nemotron Ultra is OpenRouter's own fallback for text; OPENROUTER_FALLBACK_MODEL=off removes it", async () => {
+  const h = harness({ OPENROUTER_API_KEY: "or" }, ok("x"));
+  await aiChat({ user: "hi" }, h.deps);
+  assert.deepEqual(h.calls[0].body.models, ["thinkingmachines/inkling:free", DEFAULT_OPENROUTER_FALLBACK_MODEL]);
+  assert.equal(h.calls[0].body.provider, undefined);
+  const h2 = harness({ OPENROUTER_API_KEY: "or", OPENROUTER_FALLBACK_MODEL: "off" }, ok("x"));
+  await aiChat({ user: "hi" }, h2.deps);
+  assert.equal(h2.calls[0].body.models, undefined);
 });
 
 test("OPENROUTER_MODEL overrides the model", async () => {
@@ -105,5 +121,8 @@ test("no OpenRouter key: plain Groq as before", async () => {
 
 test("no keys at all: a clear 'not configured' error naming OpenRouter", async () => {
   const h = harness({});
-  await assert.rejects(aiChat({ user: "hi" }, h.deps), (e) => e.code === "not_configured" && /OPENROUTER_API_KEY/.test(e.message));
+  await assert.rejects(
+    aiChat({ user: "hi" }, h.deps),
+    (e) => e.code === "not_configured" && /OPENROUTER_API_KEY/.test(e.message) && /GEMINI_API_KEY/.test(e.message),
+  );
 });
