@@ -21,6 +21,11 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    GROQ_API_KEY=...                     # optional automatic fallback when OpenRouter fails or is slow
    # GROQ_MODEL=... GROQ_FALLBACK_MODEL=...   # optional Groq model overrides
    # AI_ASSISTANT_MONTHLY_LIMIT=50        # "Ask AI" requests per site per month for owners (admins unmetered)
+   # Product photos in "Ask AI" (add products by chat). The main model is text-only, so a vision model checks the photos:
+   PEXELS_API_KEY=...                   # recommended: free key from pexels.com/api; photos are searched by what each product is
+   # UNSPLASH_ACCESS_KEY=...            # optional second photo source (Unsplash asks apps to credit/track downloads)
+   # OPENROUTER_VISION_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning   # default; looks at candidate and owner-attached photos
+   # AI_VISION=off                      # turn the vision step off (photo search then keeps the provider's order)
    ```
 
 3. In the Supabase SQL editor run, in order:

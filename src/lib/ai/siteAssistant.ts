@@ -12,10 +12,24 @@ import {
   type PagePreset,
 } from "../../templates/pagePresets.ts";
 import { hasTraffic, shareOf, type Overview } from "../insights/overview.ts";
+import { formatNaira } from "../shop/money.ts";
 import { emptyBrief, verifyContact, type BriefContact } from "./brief.ts";
 import { BUDGETS, buildSystemPrompt, delimitTranscript, delimitUserData, detectLocale } from "./prompts/rules.ts";
 import { clampSection, cleanCopyField, copyFacts, dedupeSection, fitSentence, type CopyFacts } from "./quality.ts";
 import { sanitizeHtml } from "./rewrite.ts";
+import {
+  MAX_PRODUCT_ACTIONS,
+  describeProduct,
+  renderShop,
+  shapeNewProduct,
+  shapeProductUpdate,
+  shapeStockUpdate,
+  type ImageChoice,
+  type ProductDraft,
+  type ProductFields,
+  type ShopSnapshot,
+  type StockChange,
+} from "./shopAssistant.ts";
 
 export type AssistantMessage = { role: "user" | "assistant"; content: string };
 
@@ -56,6 +70,8 @@ export type SiteSnapshot = {
   pages: SnapshotPage[];
   /** Page-view summary for the owner's questions about visitors; absent when insights are unavailable. */
   traffic?: Overview | null;
+  /** The shop's products, categories and stock; absent when the shop tables are unavailable. */
+  shop?: ShopSnapshot | null;
 };
 
 type ActionBase = { id: string; summary: string };
@@ -68,14 +84,23 @@ export type AssistantAction =
   | (ActionBase & PageRef & { type: "move_section"; sectionIndex: number; to: number; before: Section })
   | (ActionBase & PageRef & { type: "set_seo"; before: SeoData; after: SeoData })
   | (ActionBase & { type: "update_profile"; before: ProfileFields; after: ProfileFields })
-  | (ActionBase & { type: "add_page"; key: string; label: string; data: PageData });
+  | (ActionBase & { type: "add_page"; key: string; label: string; data: PageData })
+  | (ActionBase & { type: "add_product"; product: ProductDraft; categoryIsNew: boolean; imageOptions: ImageChoice[] })
+  | (ActionBase & { type: "update_product"; productId: string; productName: string; before: ProductFields; after: ProductFields; categoryIsNew: boolean })
+  | (ActionBase & { type: "set_stock"; productId: string; productName: string; changes: StockChange[] });
+
+export type { ImageChoice, ProductDraft, ProductFields, ShopSnapshot, StockChange };
+
+/** Actions that change the shop rather than the site's pages. They have their own, larger cap. */
+export const isProductAction = (type: unknown): boolean =>
+  type === "add_product" || type === "update_product" || type === "set_stock";
 
 export type AssistantResult = { reply: string; actions: AssistantAction[] };
 
 export const MAX_MESSAGES = 16;
 export const MAX_MESSAGE_CHARS = 2000;
 export const MAX_ACTIONS = 6;
-const MAX_REPLY_CHARS = 1500;
+const MAX_REPLY_CHARS = 2500;
 const MAX_LIST_ITEMS = 12;
 const MAX_FIELD_CHARS = 3000;
 const SNAPSHOT_BUDGET = 28000;
@@ -112,6 +137,13 @@ export function usageFeatureFor(result: AssistantResult): string {
 /** Free (no-change) turns are not counted, but are capped so the chat cannot be used without limit. */
 export function chatAllowanceFor(limit: number | null): number | null {
   return limit === null ? null : Math.max(30, limit * 3);
+}
+
+const ADVICE_RE = /\b(why|how (can|do|should)|should i|improv|advice|suggest|strateg|analy[sz]|insight|grow|more sales|sell more|traffic|visitor|compet|better|review my|what.{0,12}(wrong|missing|best|work)|plan|price|pricing)\b/i;
+
+/** Reasoning effort for a turn: think hardest on advice and strategy, move quickly on plain edits. */
+export function effortFor(lastMessage: string): "medium" | "high" {
+  return ADVICE_RE.test(lastMessage) ? "high" : "medium";
 }
 
 /** First instant of the current calendar month (UTC), as ISO. */
@@ -241,7 +273,7 @@ export function assistantFacts(snapshot: SiteSnapshot, ownerText: string): CopyF
   brief.businessName = snapshot.businessName;
   const p = snapshot.profile;
   brief.contact = { ...brief.contact, ...pickContact(p) };
-  brief.notes = [ownerText, Object.values(p).join(" "), JSON.stringify(snapshot.pages.map((x) => x.data))].join(" ");
+  brief.notes = [ownerText, Object.values(p).join(" "), JSON.stringify(snapshot.pages.map((x) => x.data)), renderShop(snapshot.shop)].join(" ");
   return copyFacts(brief);
 }
 
@@ -342,7 +374,10 @@ const ACTION_SHAPE = `{
     { "type": "move_section", "page": page key, "section": section number, "to": new section number, "summary": string },
     { "type": "set_seo", "page": page key, "title": string, "description": string, "summary": string },
     { "type": "update_profile", "fields": { only the business details to change, e.g. "phone": string, "hours": string }, "summary": string },
-    { "type": "add_page", "name": string, "layout": layout key, "sections": [full section JSON, ...], "summary": string }
+    { "type": "add_page", "name": string, "layout": layout key, "sections": [full section JSON, ...], "summary": string },
+    { "type": "add_product", "name": string, "price": number in naira, "compareAtPrice": number|null, "description": string, "category": string, "stock": number (only for a product with no options), "variants": [{ "options": { "Size": "M", "Colour": "Red" }, "stock": number, "price": number }], "featured": boolean, "imageQuery": string, "photo": number, "summary": string },
+    { "type": "update_product", "productId": id from the SHOP block, "newName": string, "description": string, "price": number, "compareAtPrice": number|null, "category": string, "active": boolean, "featured": boolean, "summary": string },
+    { "type": "set_stock", "productId": id from the SHOP block, "changes": [{ "variantId": id from the SHOP block or null when the product has no options, "stock": number }], "summary": string }
   ]
 }`;
 
@@ -392,7 +427,12 @@ export function renderTraffic(traffic: Overview | null | undefined): string {
       ? "where visitors came from: " + traffic.topReferrers.map((r) => `${r.host} (${r.views})`).join(", ")
       : "",
     traffic.devices.length ? "devices: " + traffic.devices.map((d) => `${d.device} ${d.views}`).join(", ") : "",
-    `enquiries: ${traffic.inbox.enquiries}; bookings: ${traffic.inbox.bookings}; paid orders: ${traffic.shop.orders}`,
+    `enquiries: ${traffic.inbox.enquiries}; bookings: ${traffic.inbox.bookings}; unread messages: ${traffic.inbox.unread}`,
+    `shop: ${traffic.shop.orders} paid orders, ${formatNaira(traffic.shop.revenueKobo)} revenue` +
+      (traffic.shop.prevOrders > 0 ? ` (previous ${traffic.days} days: ${traffic.shop.prevOrders} orders, ${formatNaira(traffic.shop.prevRevenueKobo)})` : ""),
+    traffic.shop.topProducts.length
+      ? "best sellers: " + traffic.shop.topProducts.map((x) => `${x.name} (${x.quantity} sold, ${formatNaira(x.revenueKobo)})`).join(", ")
+      : "",
   ];
   return lines.filter(Boolean).join("\n");
 }
@@ -406,8 +446,10 @@ export function buildAssistantPrompt(args: {
   snapshot: SiteSnapshot;
   messages: AssistantMessage[];
   focusPage?: string;
+  /** What the vision model saw in each photo the owner attached, in order (photo 1 first). */
+  photoNotes?: string[];
 }): { system: string; user: string } {
-  const { snapshot, messages, focusPage } = args;
+  const { snapshot, messages, focusPage, photoNotes = [] } = args;
   const p = snapshot.profile;
   const layouts = layoutOptions(snapshot.templateKey)
     .map((l) => `${l.key} (${l.label}: ${l.sections.join(", ")})`)
@@ -422,8 +464,13 @@ export function buildAssistantPrompt(args: {
     preserveLinks: true,
     outputNote: `Shape: ${ACTION_SHAPE}`,
     extraRules: [
-      "reply is plain text for the owner, at most 4 short sentences, no markdown. Say what you propose and that they can review and apply it. Never claim a change is already made.",
-      `At most ${MAX_ACTIONS} actions. Use an empty actions array when no edit is needed or the request is unclear; then ask one short question in reply.`,
+      "reply is plain text for the owner, no markdown. For a change: say what you propose in a few short sentences and that they can review and apply it. For a question or advice: answer it properly, as a sharp consultant would, with specifics. Use short lines or '1.' lists when it helps. Never claim a change is already made.",
+      "Ground every opinion in this owner's data: the TRAFFIC and SHOP blocks and their pages. Cite real numbers (a page's views, a best seller, a product with no photo or no stock, a price that sits oddly against the others) instead of generic tips. When the data shows a clear next step, suggest it and offer to draft it.",
+      `At most ${MAX_ACTIONS} site actions (pages, sections, SEO, business details) plus up to ${MAX_PRODUCT_ACTIONS} product actions. Use an empty actions array when no edit is needed or the request is unclear; then ask the short question you need in reply.`,
+      "PRODUCTS: the owner can add and manage shop products by chatting. add_product when they ask to add, list or upload products, including a whole pasted list or catalogue (add every product in one answer, up to " + MAX_PRODUCT_ACTIONS + "). The price MUST be a figure the owner typed; never guess or estimate one. If a product has no stated price, do not propose it: ask for the missing prices in reply, naming each product. The same goes for stock counts: use only numbers the owner gave, and 0 for sold out.",
+      "add_product copy: description is 1 to 3 persuasive sentences built only from what the owner told you (material, size, use, who it is for), no invented specs or claims. category must be one of the existing categories exactly as listed in SHOP when one fits, otherwise a short new name. variants: only for options the owner mentioned (sizes, colours), each with its stock when given. Never re-add a product already in SHOP; use update_product or set_stock for those.",
+      "imageQuery: 2 to 4 plain words a stock-photo site would tag the right picture with, naming the object and its colour or material (e.g. \"red leather handbag\", \"ankara print dress\"), no brand names. The server searches real photos with it and a vision model picks the best match, so be specific about the object, not the business. If the owner attached photos, set photo to that photo's number to use their own picture for the product.",
+      "update_product and set_stock: copy productId and variantId exactly from the SHOP block. Hide a product with active:false rather than deleting it.",
       "edit_section: 'page' is a page key shown as PAGE \"key\", 'section' is the [number] shown before the section. 'content' is the whole section with the same type; keep every image url, link and href exactly as given.",
       "You may add or remove items in lists of services, values, FAQs and testimonials. Keep team members, gallery images, logos and project items in the same count and order.",
       "add_section: for a section the page does not have yet. Prefer inserting before a contact_card section.",
@@ -442,7 +489,12 @@ export function buildAssistantPrompt(args: {
   const user = [
     "Current site content:",
     delimitUserData("site", renderSnapshot(snapshot, focusPage), SNAPSHOT_BUDGET + 4000),
+    "Shop:\n" + delimitUserData("shop", renderShop(snapshot.shop), 16000),
     "Site traffic:\n" + delimitUserData("traffic", renderTraffic(snapshot.traffic), 4000),
+    photoNotes.length
+      ? "Photos the owner attached to their latest message (a vision model described them; photo N is the Nth):\n" +
+        delimitUserData("photos", photoNotes.map((n, i) => `${i + 1}. ${n}`).join("\n"), 4000)
+      : "",
     focusPage ? `The owner is currently looking at page "${focusPage}". "This page" means that page.` : "",
     history.length ? "Earlier conversation:\n" + delimitTranscript(history, 5000) : "",
     "Owner's latest message:",
@@ -482,14 +534,19 @@ export function parseAssistantOutput(raw: unknown, snapshot: SiteSnapshot, owner
   const facts = assistantFacts(snapshot, ownerText);
   const obj = isRecord(raw) ? raw : {};
   const reply = typeof obj.reply === "string" ? obj.reply.replace(/[*_`#]+/g, "").trim().slice(0, MAX_REPLY_CHARS) : "";
-  const rawActions = Array.isArray(obj.actions) ? obj.actions.slice(0, MAX_ACTIONS * 2) : [];
+  const rawActions = Array.isArray(obj.actions) ? obj.actions.slice(0, (MAX_ACTIONS + MAX_PRODUCT_ACTIONS) * 2) : [];
   const actions: AssistantAction[] = [];
   const takenKeys = snapshot.pages.map((p) => p.key);
   const editedSections = new Set<string>();
+  const takenSlugs = (snapshot.shop?.products ?? []).map((x) => x.slug);
+  const takenNames = (snapshot.shop?.products ?? []).map((x) => x.name.trim().toLowerCase());
+  const touchedProducts = new Set<string>();
+  let productCount = 0;
 
   for (const a of rawActions) {
-    if (actions.length >= MAX_ACTIONS) break;
     if (!isRecord(a)) continue;
+    const forShop = isProductAction(a.type);
+    if (forShop ? productCount >= MAX_PRODUCT_ACTIONS : actions.length - productCount >= MAX_ACTIONS) continue;
     const summary = clip(a.summary, 160);
     const id = `a${actions.length + 1}`;
 
@@ -568,6 +625,32 @@ export function parseAssistantOutput(raw: unknown, snapshot: SiteSnapshot, owner
           : buildPresetPageData({ ...layout, label, headline: label });
       takenKeys.push(key);
       actions.push({ id, type: "add_page", key, label, data, summary: summary || `Add a "${label}" page` });
+    } else if (a.type === "add_product") {
+      if (!snapshot.shop) continue;
+      const made = shapeNewProduct(a, snapshot.shop, ownerText, facts, takenSlugs, takenNames);
+      if (!made) continue;
+      takenSlugs.push(made.product.slug);
+      takenNames.push(made.product.name.toLowerCase());
+      productCount++;
+      actions.push({ id, type: "add_product", product: made.product, categoryIsNew: made.categoryIsNew, imageOptions: [], summary: summary || describeProduct(made.product) });
+    } else if (a.type === "update_product") {
+      if (!snapshot.shop) continue;
+      const change = shapeProductUpdate(a, snapshot.shop, ownerText, facts);
+      if (!change || touchedProducts.has(`u:${change.product.id}`)) continue;
+      touchedProducts.add(`u:${change.product.id}`);
+      productCount++;
+      actions.push({
+        id, type: "update_product", productId: change.product.id, productName: change.product.name,
+        before: change.before, after: change.after, categoryIsNew: change.categoryIsNew,
+        summary: summary || `Update “${change.product.name}”`,
+      });
+    } else if (a.type === "set_stock") {
+      if (!snapshot.shop) continue;
+      const change = shapeStockUpdate(a, snapshot.shop, ownerText);
+      if (!change || touchedProducts.has(`s:${change.product.id}`)) continue;
+      touchedProducts.add(`s:${change.product.id}`);
+      productCount++;
+      actions.push({ id, type: "set_stock", productId: change.product.id, productName: change.product.name, changes: change.changes, summary: summary || `Update stock for “${change.product.name}”` });
     }
   }
 
