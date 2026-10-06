@@ -22,12 +22,12 @@ const delayArg = args.find((a) => a.startsWith("--delay="));
 // Free tiers allow only a few requests per minute; pace the run unless told otherwise.
 let DELAY_MS = 4000;
 if (delayArg) {
-  const delayValue = Number(delayArg.slice("--delay=".length));
-  if (!Number.isFinite(delayValue) || delayValue < 0) {
+  const raw = delayArg.slice("--delay=".length).trim();
+  if (raw === "" || !Number.isFinite(Number(raw)) || Number(raw) < 0) {
     console.error("--delay must be a number of milliseconds, e.g. --delay=4000");
     process.exit(2);
   }
-  DELAY_MS = Math.min(delayValue, 60000);
+  DELAY_MS = Math.min(Number(raw), 60000);
 }
 const cases = only.length ? CASES.filter((c) => only.includes(c.id)) : CASES;
 // One provider only: blank the other keys so nothing falls back to them.
