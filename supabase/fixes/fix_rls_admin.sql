@@ -1,3 +1,6 @@
+-- ⚠️  OUTDATED: written before super admins (012). Its admin_users policy lets ANY admin create
+-- admins. Do not run it on a database that has 012; if you already did, 014's trigger still keeps
+-- admin management super-admin-only. Prefer re-running 012 to restore the intended policies.
 -- Fix RLS for admin access (sites + related tables)
 -- Goal: ensure authenticated admins (in public.admin_users) can write to public.sites
 -- and prevent circular RLS dependencies when checking admin status.

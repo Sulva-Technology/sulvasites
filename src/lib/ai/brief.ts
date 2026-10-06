@@ -190,13 +190,44 @@ export function isChatMessage(m: unknown): m is ChatMessage {
 }
 
 /** Cleans a client transcript: valid roles, trimmed, capped. */
-export function normalizeMessages(raw: unknown, maxMessages = 24, maxChars = 2000): ChatMessage[] {
+/** Long enough for a pasted brief, bio or company profile (~1,200 words). */
+export const MAX_MESSAGE_CHARS = 8000;
+
+export function normalizeMessages(raw: unknown, maxMessages = 24, maxChars = MAX_MESSAGE_CHARS): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(isChatMessage)
     .map((m) => ({ role: m.role, content: m.content.trim().slice(0, maxChars) }))
     .filter((m) => m.content)
     .slice(-maxMessages);
+}
+
+const NOT_A_NAME = /^(hi|hello|hey|good|please|pls|can|could|i|i'm|im|we|we're|my|our|this|the|a|an|help|build|make|create|need|want)\b/i;
+
+function looksLikeTitle(line: string, maxWords: number): boolean {
+  const words = line.split(/\s+/).filter(Boolean);
+  return line.length >= 2 && line.length <= 80 && words.length <= maxWords && !/[.?!:;]$/.test(line) && !NOT_A_NAME.test(line);
+}
+
+/**
+ * Last-resort reading of a pasted profile or brief when the model returned nothing usable:
+ * a short first line is the name and the short line under it (or the first sentence) says what
+ * they do — e.g. "Iyiola Ogunjobi" / "Builder, founder, problem solver". Returns {} unless both
+ * are found, so a chat greeting or a single word never becomes a business name.
+ */
+export function guessBriefFromText(text: string): Partial<Pick<Brief, "businessName" | "whatTheyDo">> {
+  const lines = text.split(/\r?\n/).map((l) => l.replace(/^[#*\s>-]+|[*\s]+$/g, "").trim()).filter(Boolean);
+  const first = lines[0];
+  if (!first || !looksLikeTitle(first, 8)) return {};
+  const second = lines[1] ?? "";
+  let whatTheyDo = "";
+  if (second && second.length <= 160 && !/[?]$/.test(second)) whatTheyDo = second.split(/(?<=[.!?])\s+/)[0]!.replace(/[.!]$/, "");
+  else {
+    const sentence = lines.slice(1).join(" ").match(/^[^.!?]{10,200}[.!?]/)?.[0];
+    if (sentence) whatTheyDo = sentence.trim();
+  }
+  if (!whatTheyDo) return {};
+  return { businessName: first.slice(0, 80), whatTheyDo: whatTheyDo.slice(0, 300) };
 }
 
 export function ownerText(messages: ChatMessage[]): string {

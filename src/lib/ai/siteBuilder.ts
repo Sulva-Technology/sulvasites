@@ -111,7 +111,9 @@ export async function planSite(
     brief = mergeBrief(brief, turn.state);
   }
   if (!brief.businessName && !brief.whatTheyDo) {
-    throw new Error("Not enough information to build a site. Tell me the business name and what it does.");
+    throw new Error(
+      "Not enough information to build a site. Start your brief with the business (or person's) name on the first line and what they do on the second.",
+    );
   }
   if (!brief.businessName) brief.businessName = "My Business";
 

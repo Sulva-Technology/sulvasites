@@ -255,6 +255,7 @@ for select
 to authenticated
 using (user_id = auth.uid());
 
+-- Narrowed to super admins by migration 012, and enforced by a trigger in 014.
 create policy admin_full_access on public.admin_users
 for all
 to authenticated
