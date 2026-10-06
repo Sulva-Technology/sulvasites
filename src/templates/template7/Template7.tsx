@@ -73,7 +73,7 @@ export default function Template7({
   const homeHasMenu = !!pages.home?.sections?.some(
     (s) => s?.type === "services" && s.items?.some((it) => it.title?.trim()),
   );
-  const [mode, toggleMode] = useColorMode();
+  const [mode, toggleMode] = useColorMode("dark");
   const pageKind: "home" | "about" | "contact" | "extra" = currentExtraKey
     ? "extra"
     : effectivePage === "about" || effectivePage === "contact"

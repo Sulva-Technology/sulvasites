@@ -103,11 +103,11 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
   // Restaurant — "Tavola"
   t7: config("t7", {
     accent: "#b5452b",
-    accent2: "#2a1712",
-    ink: "#231815",
-    muted: "#75655c",
-    bg: "#fbf6ee",
-    surface: "#f2e8d9",
+    accent2: "#0b0b0b",
+    ink: "#0b0b0b",
+    muted: "#6b6a66",
+    bg: "#f5f4f1",
+    surface: "#ebe9e4",
   }, { accent2: "Dark bands & footer", surface: "Menu cards / panels" }),
   // Clinic / health — "Vital"
   t8: config("t8", {
@@ -179,7 +179,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t4: { accent2: "#12152a", ink: "#eef0fb", muted: "#9aa0ba", bg: "#05060c", surface: "#0e1120" },
   t5: { accent2: "#2a1f26", ink: "#f6eef2", muted: "#b4a7b0", bg: "#120d10", surface: "#1c1519" },
   t6: { accent2: "#1d1d1b", ink: "#f1f0eb", muted: "#a3a29c", bg: "#0f0f0e", surface: "#1a1a18" },
-  t7: { accent: "#e0784f", accent2: "#24150f", ink: "#f3e7d6", muted: "#b8a595", bg: "#140d0a", surface: "#1e140f" },
+  t7: { accent: "#e0784f", accent2: "#101010", ink: "#f5f3ee", muted: "#a6a39c", bg: "#050505", surface: "#101010" },
   t8: { accent: "#4fd1b5", accent2: "#061a20", ink: "#e3f1ee", muted: "#9bb4b6", bg: "#0b2129", surface: "#0f2c35" },
   t9: { accent: "#ff3b35", accent2: "#0f0f10", ink: "#f4f4f5", muted: "#a1a1a9", bg: "#000000", surface: "#0d0d0e" },
   t10: { accent: "#8ea3ff", accent2: "#090f29", ink: "#f4f2ea", muted: "#aab2d0", bg: "#0e1533", surface: "#131c40" },
