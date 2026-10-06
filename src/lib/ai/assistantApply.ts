@@ -4,6 +4,7 @@ import { createExtraPage, listExtraPages } from "@/lib/extraPages";
 import { uploadSiteImage } from "@/lib/assets";
 import { validatePageData, type PageData, type Section } from "@/lib/pageSchema";
 import { slugify } from "@/lib/slugify";
+import { ensureShopEnabled } from "@/lib/shop/autoEnable";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { uniquePageKey } from "@/templates/pagePresets";
 
@@ -173,6 +174,8 @@ async function applyAddProduct(siteId: string, action: Extract<AssistantAction, 
       return { ok: false, error: variantError.message };
     }
   }
+  // Products are only visible with the shop on, so adding one switches it on.
+  await ensureShopEnabled(db, siteId, "products");
   return { ok: true, key: id, undo: { kind: "product", id, categoryId: createdCategory } };
 }
 

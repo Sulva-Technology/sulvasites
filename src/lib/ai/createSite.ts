@@ -4,6 +4,7 @@ import { createExtraPage } from "@/lib/extraPages";
 import { validatePageData, type PageData } from "@/lib/pageSchema";
 import { pickPhotos, photoUrl } from "@/lib/stockPhotos";
 import { expandPalette } from "@/lib/ai/setupPalette";
+import { ensureShopEnabled, shopOnByDefault } from "@/lib/shop/autoEnable";
 import { replaceUploadTokens, type SiteSetup } from "@/lib/ai/setupPhotos";
 import { slugify } from "@/lib/slugify";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
@@ -105,6 +106,11 @@ export async function createSiteFromBuild(result: BuildResult, desiredSlug: stri
     } catch (e) {
       warnings.push(`Extra page "${extra.label}" could not be created (${e instanceof Error ? e.message : "error"}).`);
     }
+  }
+
+  // An online store's shop is on from the start; it shows to customers once the site is published.
+  if (shopOnByDefault(result.templateKey) && !(await ensureShopEnabled(supabase, siteId, "new_site"))) {
+    warnings.push("The shop could not be switched on automatically. Turn it on in the Shop tab.");
   }
 
   return { siteId, slug, warnings };
