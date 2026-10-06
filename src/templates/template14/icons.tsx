@@ -154,3 +154,30 @@ export const IconAlert = ({ size = 22 }: P) => (
     <path d="M12 7.5v5.5M12 16.2v.1" />
   </svg>
 );
+
+export const IconHome = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 11 12 4l8 7M6 10v9h12v-9" />
+  </svg>
+);
+
+export const IconInfo = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 8h.01" />
+  </svg>
+);
+
+export const IconDoc = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5" />
+  </svg>
+);
+
+export const IconPercent = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M18 6 6 18" />
+    <circle cx="7.5" cy="7.5" r="2" />
+    <circle cx="16.5" cy="16.5" r="2" />
+  </svg>
+);
