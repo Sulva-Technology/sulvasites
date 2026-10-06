@@ -11,6 +11,7 @@ import {
   uniquePageKey,
   type PagePreset,
 } from "../../templates/pagePresets.ts";
+import { hasTraffic, shareOf, type Overview } from "../insights/overview.ts";
 import { emptyBrief, verifyContact, type BriefContact } from "./brief.ts";
 import { BUDGETS, buildSystemPrompt, delimitTranscript, delimitUserData, detectLocale } from "./prompts/rules.ts";
 import { clampSection, cleanCopyField, copyFacts, dedupeSection, fitSentence, type CopyFacts } from "./quality.ts";
@@ -53,6 +54,8 @@ export type SiteSnapshot = {
   businessName: string;
   profile: ProfileFields;
   pages: SnapshotPage[];
+  /** Page-view summary for the owner's questions about visitors; absent when insights are unavailable. */
+  traffic?: Overview | null;
 };
 
 type ActionBase = { id: string; summary: string };
@@ -369,6 +372,31 @@ export function renderSnapshot(snapshot: SiteSnapshot, focusPage?: string): stri
   return ["BUSINESS DETAILS (edit with update_profile):", profile, "", ...parts].join("\n");
 }
 
+/** Visitor numbers for the prompt, so the assistant can answer "which page is visited most?" from real data. */
+export function renderTraffic(traffic: Overview | null | undefined): string {
+  if (!traffic) return "TRAFFIC: not available right now.";
+  if (!hasTraffic(traffic)) {
+    return `TRAFFIC (last ${traffic.days} days): no visits recorded yet. Visit tracking may be new, or the site has not had visitors.`;
+  }
+  const label = (path: string) => (path === "/" ? "Home (/)" : path);
+  const last7 = traffic.daily.slice(-7).reduce((n, d) => n + d.views, 0);
+  const lines = [
+    `TRAFFIC (last ${traffic.days} days, bots and Do-Not-Track visitors excluded):`,
+    `total page views: ${traffic.totals.views}; visitors (sum of daily unique visitors): ${traffic.totals.visitors}; views in the last 7 days: ${last7}`,
+    traffic.totals.prevViews > 0 ? `previous ${traffic.days} days: ${traffic.totals.prevViews} views` : "",
+    "most visited pages (most first):",
+    ...traffic.topPages.map(
+      (r, i) => `  ${i + 1}. ${label(r.path)} — ${r.views} views, ${r.visitors} visitors (${shareOf(r.views, traffic.totals.views)}% of views)`,
+    ),
+    traffic.topReferrers.length
+      ? "where visitors came from: " + traffic.topReferrers.map((r) => `${r.host} (${r.views})`).join(", ")
+      : "",
+    traffic.devices.length ? "devices: " + traffic.devices.map((d) => `${d.device} ${d.views}`).join(", ") : "",
+    `enquiries: ${traffic.inbox.enquiries}; bookings: ${traffic.inbox.bookings}; paid orders: ${traffic.shop.orders}`,
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
 function layoutOptions(templateKey: string): PagePreset[] {
   const seen = new Set<string>();
   return [...getPagePresets(templateKey), ...PAGE_STARTERS].filter((p) => !seen.has(p.key) && seen.add(p.key));
@@ -403,6 +431,7 @@ export function buildAssistantPrompt(args: {
       `update_profile: for the business name, tagline, description, address, phone, WhatsApp, email, social links (${SOCIAL_FIELDS.filter((f) => f !== "hours").join(", ")}) and opening hours. These show in the header, footer and contact blocks of every page, so change them here, never by editing page text. Use "" to clear a field. Copy phone numbers, emails, handles and addresses exactly as the owner typed them; never guess one. hours is one line per row, e.g. "Mon–Fri · 9:00–18:00\\nSat · 10:00–16:00".`,
       "set_seo: title at most " + BUDGETS.seoTitle + " characters, description at most " + BUDGETS.seoDescription + " characters, both specific to that page.",
       `add_page: only when the owner asks for a new page. 'layout' is one of: ${layouts}. 'sections' are the layout's sections filled with real copy (hero first, contact_card last). Leave image urls empty.`,
+      "Questions about visitors, traffic, popular pages, referrers or devices: answer from the TRAFFIC block in reply, naming the page and its numbers; '/' is the Home page and '/p/<key>' are the other pages. Never invent or estimate numbers. If TRAFFIC says not available or no visits, say exactly that and leave actions empty. Only 90 days of history are kept.",
       "Only edit what the owner asked for. Do not rewrite other sections or pages unprompted.",
       "Section JSON shapes: " + SECTION_SHAPES.join(" | "),
     ],
@@ -413,6 +442,7 @@ export function buildAssistantPrompt(args: {
   const user = [
     "Current site content:",
     delimitUserData("site", renderSnapshot(snapshot, focusPage), SNAPSHOT_BUDGET + 4000),
+    "Site traffic:\n" + delimitUserData("traffic", renderTraffic(snapshot.traffic), 4000),
     focusPage ? `The owner is currently looking at page "${focusPage}". "This page" means that page.` : "",
     history.length ? "Earlier conversation:\n" + delimitTranscript(history, 5000) : "",
     "Owner's latest message:",

@@ -1,5 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+import { parseOverview, type Overview } from "@/lib/insights/overview";
 import { extractJson } from "@/lib/ai/groq.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
 import { aiChat } from "@/lib/ai/llm.server";
@@ -49,6 +51,33 @@ async function usedThisMonth(siteId: string, feature: string = USAGE_COUNTED): P
     return null;
   }
   return count ?? 0;
+}
+
+/**
+ * Last 30 days of visitor numbers, read with the caller's own session so insights_overview applies
+ * its owner/admin check. Null when insights are unavailable (e.g. migration 011 not run); the
+ * assistant then says so instead of guessing.
+ */
+async function loadTraffic(req: Request, siteId: string): Promise<Overview | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const token = (req.headers.get("authorization") ?? "").replace(/^bearer\s+/i, "").trim();
+  if (!url || !anonKey || !token) return null;
+  try {
+    const db = createClient(url, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const { data, error } = await db.rpc("insights_overview", { p_site: siteId, p_days: 30 });
+    if (error) {
+      console.error("insights_overview failed for the assistant:", error.message);
+      return null;
+    }
+    return parseOverview(data);
+  } catch (e) {
+    console.error("insights_overview failed for the assistant:", e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
@@ -147,8 +176,9 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   try {
-    const snapshot = await loadSnapshot(siteId);
+    const [snapshot, traffic] = await Promise.all([loadSnapshot(siteId), loadTraffic(req, siteId)]);
     if (!snapshot) return json({ error: "Site not found." }, 404);
+    snapshot.traffic = traffic;
 
     const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage });
     const text = await aiChat({ system, user, json: true, ...SAMPLING.assistant });
