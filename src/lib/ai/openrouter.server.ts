@@ -1,5 +1,5 @@
-// OpenRouter client (OpenAI-compatible chat completions). Used by the "Ask AI" site assistant,
-// with Groq as the automatic fallback (see llm.server.ts). Relative imports only (Node test runner).
+// OpenRouter client (OpenAI-compatible chat completions). Second in line after Gemini, with Groq as
+// the last resort (see llm.server.ts). Relative imports only (Node test runner).
 import { GroqError, type GroqChatOptions, type GroqDeps } from "./groq.server.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -8,7 +8,9 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
  * customers' business details) and have daily request caps; set OPENROUTER_MODEL to the model id
  * without ":free" for the paid, no-data-retention endpoint.
  */
-export const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+export const DEFAULT_OPENROUTER_MODEL = "thinkingmachines/inkling:free";
+/** Tried by OpenRouter itself when the main model errors (down, at capacity). OPENROUTER_FALLBACK_MODEL=off disables it. */
+export const DEFAULT_OPENROUTER_FALLBACK_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const ATTEMPTS = 2;
 const MAX_BACKOFF_MS = 8000;
 /**
@@ -24,7 +26,7 @@ function defaultSleep(ms: number) {
 }
 
 /** The request body. Exported for tests. */
-export function openRouterBody(model: string, opts: GroqChatOptions): Record<string, unknown> {
+export function openRouterBody(model: string, opts: GroqChatOptions, fallback: string | null = null): Record<string, unknown> {
   const messages: Array<{ role: string; content: unknown }> = [];
   if (opts.system) messages.push({ role: "system", content: opts.system });
   messages.push({
@@ -42,22 +44,30 @@ export function openRouterBody(model: string, opts: GroqChatOptions): Record<str
     // Think, but keep the thinking out of the reply: the app only reads the JSON answer.
     reasoning: { effort: opts.reasoningEffort ?? "medium", exclude: true },
   };
+  if (fallback && fallback !== model) body.models = [model, fallback];
   if (opts.json) body.response_format = { type: "json_object" };
   // Customer business details are in these prompts: only route to providers that don't store or
   // train on them. Free endpoints are logged by design, so this would leave them unroutable.
-  if (!model.endsWith(":free")) body.provider = { data_collection: "deny" };
+  if (![model, fallback].some((m) => m?.endsWith(":free"))) body.provider = { data_collection: "deny" };
   return body;
 }
 
 type Attempt = { ok: true; text: string } | { ok: false; error: GroqError; retryable: boolean; retryAfterMs?: number };
 
-async function callOnce(fetchImpl: typeof fetch, apiKey: string, model: string, opts: GroqChatOptions, env: Record<string, string | undefined>): Promise<Attempt> {
+async function callOnce(
+  fetchImpl: typeof fetch,
+  apiKey: string,
+  model: string,
+  fallback: string | null,
+  opts: GroqChatOptions,
+  env: Record<string, string | undefined>,
+): Promise<Attempt> {
   const timeoutMs =
     opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : Number(env.OPENROUTER_TIMEOUT_MS) > 0 ? Number(env.OPENROUTER_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await request(fetchImpl, apiKey, model, opts, env, controller.signal);
+    return await request(fetchImpl, apiKey, model, fallback, opts, env, controller.signal);
   } catch (e) {
     if (controller.signal.aborted) {
       // Not retried: a second slow attempt would use up the time the fallback needs.
@@ -73,6 +83,7 @@ async function request(
   fetchImpl: typeof fetch,
   apiKey: string,
   model: string,
+  fallback: string | null,
   opts: GroqChatOptions,
   env: Record<string, string | undefined>,
   signal: AbortSignal,
@@ -88,7 +99,7 @@ async function request(
         "HTTP-Referer": env.NEXT_PUBLIC_SITE_URL || "https://sulvasites.com",
         "X-Title": "Sulva Sites",
       },
-      body: JSON.stringify(openRouterBody(model, opts)),
+      body: JSON.stringify(openRouterBody(model, opts, fallback)),
       signal,
     });
   } catch (e) {
@@ -128,19 +139,20 @@ export function openRouterModel(env: Record<string, string | undefined> = proces
   return env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
 }
 
-/** The model that can look at pictures. The main model is text-only, so image checks go to this one. */
+/** OpenRouter's own second choice for text, or null when switched off with OPENROUTER_FALLBACK_MODEL=off. */
+export function openRouterFallbackModel(env: Record<string, string | undefined> = process.env): string | null {
+  const m = env.OPENROUTER_FALLBACK_MODEL || DEFAULT_OPENROUTER_FALLBACK_MODEL;
+  return m === "off" ? null : m;
+}
+
+/** OpenRouter's model for pictures, used when Gemini is not set or fails. */
 export const DEFAULT_OPENROUTER_VISION_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free";
 
 export function openRouterVisionModel(env: Record<string, string | undefined> = process.env): string {
   return env.OPENROUTER_VISION_MODEL || DEFAULT_OPENROUTER_VISION_MODEL;
 }
 
-/** Vision is on whenever OpenRouter is, unless switched off with AI_VISION=off. */
-export function visionConfigured(env: Record<string, string | undefined> = process.env): boolean {
-  return openRouterConfigured(env) && env.AI_VISION !== "off";
-}
-
-async function chatWithModel(model: string, opts: GroqChatOptions, deps: GroqDeps): Promise<string> {
+async function chatWithModel(model: string, fallback: string | null, opts: GroqChatOptions, deps: GroqDeps): Promise<string> {
   const env = deps.env ?? process.env;
   const fetchImpl = deps.fetch ?? fetch;
   const sleep = deps.sleep ?? defaultSleep;
@@ -149,7 +161,7 @@ async function chatWithModel(model: string, opts: GroqChatOptions, deps: GroqDep
 
   let last: GroqError | null = null;
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-    const result = await callOnce(fetchImpl, apiKey, model, opts, env);
+    const result = await callOnce(fetchImpl, apiKey, model, fallback, opts, env);
     if (result.ok) return result.text;
     last = result.error;
     if (!result.retryable) throw result.error;
@@ -160,10 +172,11 @@ async function chatWithModel(model: string, opts: GroqChatOptions, deps: GroqDep
 
 /** One chat completion via OpenRouter; retries once on rate limits, timeouts and server errors. */
 export async function openRouterChat(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<string> {
-  return chatWithModel(openRouterModel(deps.env ?? process.env), opts, deps);
+  const env = deps.env ?? process.env;
+  return chatWithModel(openRouterModel(env), openRouterFallbackModel(env), opts, deps);
 }
 
-/** A chat completion that includes opts.images, answered by the vision model. No Groq fallback: it has no vision. */
+/** A chat completion that includes opts.images, answered by the vision model (llm.server.ts tries Gemini first). */
 export async function openRouterVisionChat(opts: GroqChatOptions, deps: GroqDeps = {}): Promise<string> {
-  return chatWithModel(openRouterVisionModel(deps.env ?? process.env), opts, deps);
+  return chatWithModel(openRouterVisionModel(deps.env ?? process.env), null, opts, deps);
 }
