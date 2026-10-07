@@ -13,7 +13,8 @@ import {
   type PublicSiteContext,
 } from "@/lib/publicSite.server";
 import { loadPublicShop } from "@/lib/shop/loadPublicShop.server";
-import { templateSupportsShop } from "@/templates/meta";
+import { loadPublicBlog } from "@/lib/blog/load.server";
+import { templateIsBlogFirst, templateSupportsShop } from "@/templates/meta";
 import { InboxSiteProvider } from "@/templates/shared/inbox";
 import { getTemplate } from "@/templates/registry";
 
@@ -31,6 +32,10 @@ export default async function PublicSitePage({
   const navPages = await loadNavPages(siteData.site.id, siteData.site.template_key);
   // Shop templates show the bag and "shop the looks" on every page while the shop is live.
   const shop = templateSupportsShop(siteData.site.template_key) ? await loadPublicShop(siteData.site.id) : null;
+  // Blog-first templates lead their home page with the latest posts.
+  const blog = templateIsBlogFirst(siteData.site.template_key)
+    ? await loadPublicBlog(siteData.site.id, siteData.site.template_key)
+    : null;
 
   // Owner-managed business data (menu, timetable, doctors...) replaces the matching sections' items;
   // sites without items (or before migration 009) render their own page content unchanged.
@@ -72,6 +77,7 @@ export default async function PublicSitePage({
         navPages,
         currentExtraKey: page.kind === "extra" ? page.key : null,
         shop: shop ?? undefined,
+        blog: blog ?? undefined,
       })}
       </InboxSiteProvider>
     </>

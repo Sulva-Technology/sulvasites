@@ -30,6 +30,7 @@ export default function Template4({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,7 @@ export default function Template4({
         <T4Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T4Sections pageData={pageData} />
+          {slot}
         </main>
         <T4Footer logoUrl={logoUrl} />
       </div>

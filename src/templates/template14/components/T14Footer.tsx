@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { directionsHref, shopHref, useT14 } from "../ctx";
 import T14Hours from "./T14Hours";
 
@@ -90,7 +90,7 @@ export default function T14Footer({ logoUrl }: { logoUrl: string | null }) {
             <div className="t14-footer-links">
               <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
               {navPages.map((p) => (
-                <Link key={p.key} href={p.key === "shop" && shop ? shopHref(baseUrl) : `${baseUrl}/p/${p.key}`}>
+                <Link key={p.key} href={p.key === "shop" && shop ? shopHref(baseUrl) : navPageHref(baseUrl, p)}>
                   {p.label}
                 </Link>
               ))}

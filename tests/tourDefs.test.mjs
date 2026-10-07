@@ -19,8 +19,8 @@ test("owner tour mentions no AI", () => {
 });
 
 test("owner: owner role on shop template", () => {
-  const ids = visible(ownerTour, { siteId: "s1", siteCount: 1, tabs: ["overview", "content", "shop", "inbox", "insights", "team"] });
-  assert.deepEqual(ids, ["welcome", "status", "tabs", "content", "inbox", "shop", "insights", "team", "replay"]);
+  const ids = visible(ownerTour, { siteId: "s1", siteCount: 1, tabs: ["overview", "content", "blog", "shop", "inbox", "insights", "team"] });
+  assert.deepEqual(ids, ["welcome", "status", "tabs", "content", "blog", "inbox", "shop", "insights", "team", "replay"]);
 });
 
 test("owner: staff sees only their tabs", () => {

@@ -1,7 +1,7 @@
 // Relative-import-safe pure helpers for site membership rules.
 export type SiteRole = "owner" | "staff";
 export type Membership = { siteId: string; role: SiteRole };
-export type DashboardTab = "overview" | "content" | "inbox" | "business" | "insights" | "team" | "shop";
+export type DashboardTab = "overview" | "content" | "blog" | "inbox" | "business" | "insights" | "team" | "shop";
 
 /** `hostSiteId`: signing in on a site's own address lands on that site's admin / dashboard. */
 export function postLoginRoute(i: {
@@ -21,7 +21,10 @@ export function postLoginRoute(i: {
   return "/no-access";
 }
 
-/** Tabs for a role. `shop` adds the Shop tab (templates with a shop); staff get it too, limited to orders. */
+/**
+ * Tabs for a role. `shop` adds the Shop tab (templates with a shop); staff get it too, limited to orders.
+ * Blog sits with Content: owners and admins write posts, staff don't.
+ */
 export function tabsForRole(
   role: SiteRole | "admin",
   opts: { shop?: boolean; business?: boolean } = {},
@@ -29,11 +32,16 @@ export function tabsForRole(
   let tabs: DashboardTab[] =
     role === "staff"
       ? ["overview", "inbox", "business"]
-      : ["overview", "content", "inbox", "business", "insights", "team"];
+      : ["overview", "content", "blog", "inbox", "business", "insights", "team"];
   // Templates without business managers (shop templates) have nothing to show under Business.
   if (opts.business === false) tabs = tabs.filter((t) => t !== "business");
-  if (opts.shop) tabs.splice(role === "staff" ? 1 : 2, 0, "shop");
+  if (opts.shop) tabs.splice(role === "staff" ? 1 : 3, 0, "shop");
   return tabs;
+}
+
+/** Blog posts: owners and Sulvatech admins write them (RLS: can_edit_site); staff do not. */
+export function canEditBlog(role: SiteRole | "admin" | null | undefined): boolean {
+  return role === "owner" || role === "admin";
 }
 
 /** Insights (site analytics, shop revenue): owners and Sulvatech admins only; staff do not see them. */

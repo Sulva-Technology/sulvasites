@@ -44,6 +44,8 @@ fill content (by hand or with AI), and publish it to `<slug>.soothecontrols.site
    - `supabase/migrations/013_ai_usage.sql` ("Ask AI" monthly allowance; without it requests are not metered)
    - `supabase/migrations/014_super_admin_only_guard.sql` (only super admins can add, change or remove admins)
    - `supabase/migrations/015_whatsapp_orders.sql` (orders sent on WhatsApp show under Orders; owners mark them completed)
+   - `supabase/migrations/016_shop_on_by_default.sql` (turns the shop on for sites that are plainly selling)
+   - `supabase/migrations/017_blog_posts.sql` (blog for every site: posts at `/blog`, written on the Blog tab; check with `supabase/tests/017_blog_posts_check.sql`)
    - `supabase/fixes/fix_storage_rls.sql` (bucket `site-assets`)
 4. Supabase → Authentication:
    - **SMTP settings:** use Resend (host `smtp.resend.com`, port 465, user `resend`, password = `RESEND_API_KEY`,

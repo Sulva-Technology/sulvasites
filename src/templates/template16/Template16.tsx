@@ -34,6 +34,7 @@ export default function Template16({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -113,6 +114,7 @@ export default function Template16({
         <T16Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T16Sections pageData={pageData} />
+          {slot}
         </main>
         <T16Footer logoUrl={logoUrl} />
       </div>

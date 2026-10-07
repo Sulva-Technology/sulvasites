@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { applyHref, directionsHref, useT10 } from "../ctx";
 import { IconArrow, IconCalendar, IconCap, Scribble } from "../icons";
 import T10Hours from "./T10Hours";
@@ -97,7 +97,7 @@ export default function T10Footer({ logoUrl }: { logoUrl: string | null }) {
               <div className="t10-footer-links">
                 <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
                 {navPages.map((p) => (
-                  <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                  <Link key={p.key} href={navPageHref(baseUrl, p)}>
                     {p.label}
                   </Link>
                 ))}

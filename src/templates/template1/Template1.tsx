@@ -28,6 +28,7 @@ export default function Template1({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -86,6 +87,7 @@ export default function Template1({
         <T1Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T1Sections pageData={pageData} />
+          {slot}
         </main>
         <T1Footer logoUrl={logoUrl} />
       </div>

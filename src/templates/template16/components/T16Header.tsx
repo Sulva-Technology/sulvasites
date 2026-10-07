@@ -7,7 +7,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildWhatsAppLink } from "@/templates/shared/links";
+import { buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { joinHref, useT16 } from "../ctx";
 import { IconArrow, IconChat, IconCircles, IconClose, IconMenu } from "../icons";
 
@@ -93,7 +93,7 @@ export default function T16Header({
   const items: NavItem[] = [
     { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
     { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
-    ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    ...navPages.map((p) => ({ id: `p-${p.key}`, href: navPageHref(baseUrl, p), label: p.label, active: currentExtraKey === p.key })),
     { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact" },
   ];
 

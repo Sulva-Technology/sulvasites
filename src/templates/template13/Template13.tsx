@@ -52,6 +52,7 @@ export default function Template13({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
   shop,
   shopView,
 }: TemplateProps) {
@@ -182,6 +183,7 @@ export default function Template13({
         <T13Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} overHero={pageData?.sections?.[0]?.type === "hero"} />
         <main id="t13-main" tabIndex={-1}>
           {shop && shopView ? <ShopViews view={shopView} /> : <T13Sections pageData={pageData} />}
+          {slot}
         </main>
         <T13Footer logoUrl={logoUrl} />
         <T13Composer />

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { useT2 } from "../ctx";
 
 const SOCIALS: Array<[key: string, label: string]> = [
@@ -47,7 +47,7 @@ export default function T2Footer() {
             <div className="t2-footer-links">
               <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
               {navPages.map((p) => (
-                <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                <Link key={p.key} href={navPageHref(baseUrl, p)}>
                   {p.label}
                 </Link>
               ))}

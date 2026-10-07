@@ -190,6 +190,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#fafafa",
     surface: "#ffffff",
   }, { accent2: "Brand bands & call-to-action", surface: "Cards / panels" }),
+  // Blog / publication — "Folio"
+  t17: config("t17", {
+    accent: "#c8462b",
+    accent2: "#1c1a16",
+    ink: "#1c1a16",
+    muted: "#6b665c",
+    bg: "#f6f3ec",
+    surface: "#fffdf8",
+  }, { accent: "Accent (links, highlights)", accent2: "Subscribe band & footer", surface: "Cards / panels" }),
 };
 
 // Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
@@ -207,6 +216,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t14: { ink: "#f5f5f5", muted: "#a1a1a1", bg: "#0a0a0a", surface: "#141414" },
   t15: { accent: "#ff4d5e", accent2: "#000000", ink: "#f5f5f7", muted: "#9b9ba3", bg: "#050505", surface: "#141416" },
   t16: { accent: "#5ab0e0", accent2: "#0c4a6b", ink: "#ededed", muted: "#a3a3a3", bg: "#050505", surface: "#0e0e0f" },
+  t17: { accent: "#f0805f", accent2: "#0b0a09", ink: "#ece8df", muted: "#a49e92", bg: "#131210", surface: "#1c1a17" },
 };
 
 for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {

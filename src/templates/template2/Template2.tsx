@@ -28,6 +28,7 @@ export default function Template2({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -84,6 +85,7 @@ export default function Template2({
         <T2Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T2Sections pageData={pageData} />
+          {slot}
         </main>
         <T2Footer />
       </div>

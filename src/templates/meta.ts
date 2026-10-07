@@ -11,6 +11,8 @@ export type TemplateMeta = {
    * available, but the AI still treats the business as a regular one when picking a template.
    */
   ordering?: boolean;
+  /** A blog-first template: its home page leads with the latest posts (every template can have a blog). */
+  blogFirst?: boolean;
 };
 
 export const TEMPLATE_META: TemplateMeta[] = [
@@ -30,6 +32,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t14", name: "Cartly", category: "General store", description: "Online stores and retailers: a quiet, product-first storefront with rounded cards, a product configurator, search, cart and Paystack checkout. Light + dark modes.", shop: true },
   { key: "t15", name: "Marque", category: "Automotive", description: "Car dealers, classic and luxury showrooms, restorers, detailers and car clubs: obsidian glass with a cinematic video or photo hero and a scrolling collection of cars. Dark + light modes." },
   { key: "t16", name: "Circle", category: "Community", description: "Churches, faith communities, membership clubs, masterminds and nonprofits: an airy off-white look with serif-italic headlines, deep-blue brand bands, community cards with fees and a join form. Light + dark modes." },
+  { key: "t17", name: "Folio", category: "Blog & publication", description: "Writers, bloggers, newsletters, magazines and thought leaders: warm paper or ink-dark pages, serif headlines, a home page that leads with your latest posts, topics and a subscribe form. Light + dark modes.", blogFirst: true },
 ];
 
 export function templateLabel(key: string) {
@@ -40,4 +43,9 @@ export function templateLabel(key: string) {
 /** True for templates that can run the shop engine: e-commerce (`shop: true`) or online ordering (`ordering: true`). */
 export function templateSupportsShop(key: string) {
   return TEMPLATE_META.some((t) => t.key === key && (t.shop === true || t.ordering === true));
+}
+
+/** True for templates whose home page shows the latest blog posts. */
+export function templateIsBlogFirst(key: string) {
+  return TEMPLATE_META.some((t) => t.key === key && t.blogFirst === true);
 }

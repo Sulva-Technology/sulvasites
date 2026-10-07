@@ -1,5 +1,6 @@
 "use client";
 
+import { navPageHref } from "@/templates/shared/links";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -56,7 +57,7 @@ export default function T3Header({
     { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
     ...navPages.map((p) => ({
       id: `p-${p.key}`,
-      href: `${baseUrl}/p/${p.key}`,
+      href: navPageHref(baseUrl, p),
       label: p.label,
       active: currentExtraKey === p.key,
     })),

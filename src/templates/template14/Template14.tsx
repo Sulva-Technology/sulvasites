@@ -53,6 +53,7 @@ export default function Template14({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
   shop,
   shopView,
 }: TemplateProps) {
@@ -180,6 +181,7 @@ export default function Template14({
         <T14Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} overHero={overHero} />
         <main id="t14-main" tabIndex={-1} data-clear={!(overHero && photos.length > 0)}>
           {shop && shopView ? <ShopViews view={shopView} /> : <T14Sections pageData={pageData} />}
+          {slot}
         </main>
         <T14Footer logoUrl={logoUrl} />
         <p className="t14-sr" role="status" aria-live="polite" aria-atomic="true">

@@ -27,6 +27,7 @@ export default function Template3({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -121,6 +122,7 @@ export default function Template3({
           navPages={navPages}
           baseUrl={baseUrl}
         />
+        {slot}
       </main>
 
       <T3Footer

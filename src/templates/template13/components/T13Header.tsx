@@ -7,7 +7,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildTelLink } from "@/templates/shared/links";
+import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { shopHref, useT13 } from "../ctx";
 import { IconArrow, IconClose, IconMenu, IconPhone } from "../icons";
 import { useFocusTrap } from "../shop/useFocusTrap";
@@ -101,7 +101,7 @@ export default function T13Header({
     ...(shop && !hasShopPage ? [{ id: "shop", href: shopHref(baseUrl), label: "Shop", active: onShop }] : []),
     ...navPages.map((p) => ({
       id: `p-${p.key}`,
-      href: p.key === "shop" && shop ? shopHref(baseUrl) : `${baseUrl}/p/${p.key}`,
+      href: p.key === "shop" && shop ? shopHref(baseUrl) : navPageHref(baseUrl, p),
       label: p.label,
       active: p.key === "shop" ? onShop : currentExtraKey === p.key,
     })),

@@ -5,7 +5,7 @@ import Link from "next/link";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { NavPage } from "@/templates/registry";
-import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, navPageHref } from "@/templates/shared/links";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -64,7 +64,7 @@ export default function T3Footer({
               <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
               <Link href={`${baseUrl}/about`}>{navLabels.about || "About"}</Link>
               {navPages.map((p) => (
-                <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                <Link key={p.key} href={navPageHref(baseUrl, p)}>
                   {p.label}
                 </Link>
               ))}

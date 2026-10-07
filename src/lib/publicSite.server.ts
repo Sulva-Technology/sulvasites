@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { getPublicAssetUrl } from "@/lib/assets";
+import { BLOG_NAV_KEY, blogLabelFor } from "@/lib/blog/blogPath";
+import { hasPublishedPosts } from "@/lib/blog/load.server";
 import { normalizeHostname } from "@/lib/domains";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
@@ -94,20 +96,22 @@ export const loadPublicSite = cache(
   },
 );
 
-/** Published extra pages for the site's navigation, in template-preset order. */
+/**
+ * Published extra pages for the site's navigation, in template-preset order, then "Blog" once a
+ * post is published (it replaces any extra page keyed "blog").
+ */
 export const loadNavPages = cache(
   async (siteId: string, templateKey: string): Promise<NavPage[]> => {
-    const { data, error } = await supabaseServer()
-      .from("extra_pages")
-      .select("key")
-      .eq("site_id", siteId)
-      .eq("status", "published");
-    if (error || !data) return [];
-    const keys = (data as Array<{ key: string }>).map((r) => r.key);
-    return sortPageKeys(templateKey, keys).map((key) => ({
-      key,
-      label: labelForPageKey(templateKey, key),
-    }));
+    const [{ data, error }, blog] = await Promise.all([
+      supabaseServer().from("extra_pages").select("key").eq("site_id", siteId).eq("status", "published"),
+      hasPublishedPosts(siteId),
+    ]);
+    const keys = error || !data ? [] : (data as Array<{ key: string }>).map((r) => r.key);
+    const pages: NavPage[] = sortPageKeys(templateKey, keys)
+      .filter((key) => !(blog && key === BLOG_NAV_KEY))
+      .map((key) => ({ key, label: labelForPageKey(templateKey, key) }));
+    if (blog) pages.push({ key: BLOG_NAV_KEY, label: blogLabelFor(templateKey), href: "/blog" });
+    return pages;
   },
 );
 

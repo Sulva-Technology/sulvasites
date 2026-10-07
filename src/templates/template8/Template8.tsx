@@ -47,6 +47,7 @@ export default function Template8({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,7 @@ export default function Template8({
         <T8Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T8Sections pageData={pageData} />
+          {slot}
         </main>
         <T8Footer logoUrl={logoUrl} />
       </div>

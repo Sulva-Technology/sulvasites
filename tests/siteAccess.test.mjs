@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canInvite, canRemove, canManageBusinessData, canViewInsights, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
+import { canInvite, canRemove, canManageBusinessData, canEditBlog, canViewInsights, postLoginRoute, tabsForRole, isUuid, isEmailExistsError } from "../src/lib/siteAccess.ts";
 
 test("postLoginRoute", () => {
   assert.equal(postLoginRoute({ isAdmin: true, mustChangePassword: true, memberships: [] }), "/change-password");
@@ -11,22 +11,22 @@ test("postLoginRoute", () => {
 });
 
 test("tabsForRole", () => {
-  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "inbox", "business", "insights", "team"]);
-  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff"), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole with shop", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "shop", "inbox", "business", "insights", "team"]);
-  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "shop", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff", { shop: true }), ["overview", "shop", "inbox", "business"]);
   assert.deepEqual(tabsForRole("staff", { shop: false }), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole hides Business for templates without managers", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "shop", "inbox", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "blog", "shop", "inbox", "insights", "team"]);
   assert.deepEqual(tabsForRole("staff", { shop: true, business: false }), ["overview", "shop", "inbox"]);
-  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
 });
 
 test("canManageBusinessData", () => {
@@ -35,6 +35,14 @@ test("canManageBusinessData", () => {
   assert.equal(canManageBusinessData("admin"), true);
   assert.equal(canManageBusinessData(null), false);
   assert.equal(canManageBusinessData(undefined), false);
+});
+
+test("canEditBlog: owners and admins, not staff", () => {
+  assert.equal(canEditBlog("owner"), true);
+  assert.equal(canEditBlog("admin"), true);
+  assert.equal(canEditBlog("staff"), false);
+  assert.equal(canEditBlog(null), false);
+  assert.ok(!tabsForRole("staff").includes("blog"));
 });
 
 test("canInvite", () => {

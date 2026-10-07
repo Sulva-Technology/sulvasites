@@ -47,6 +47,7 @@ export default function Template10({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -140,6 +141,7 @@ export default function Template10({
         <T10Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T10Sections pageData={pageData} />
+          {slot}
         </main>
         <T10Footer logoUrl={logoUrl} />
       </div>

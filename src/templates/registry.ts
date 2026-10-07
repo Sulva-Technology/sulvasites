@@ -1,5 +1,6 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
+import type { BlogData } from "@/lib/blog/types";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import type { ShopData, ShopView } from "@/lib/shop/types";
 import type { SiteData } from "@/lib/siteResolver.server";
@@ -19,9 +20,13 @@ import Template13 from "@/templates/template13/Template13";
 import Template14 from "@/templates/template14/Template14";
 import Template15 from "@/templates/template15/Template15";
 import Template16 from "@/templates/template16/Template16";
+import Template17 from "@/templates/template17/Template17";
 
-/** A published extra page shown in navigation, served at `${baseUrl}/p/${key}`. */
-export type NavPage = { key: string; label: string };
+/**
+ * A navigation entry: a published extra page served at `${baseUrl}/p/${key}`, or a built-in
+ * section with its own `href` path (e.g. the blog at "/blog"). Link it with `navPageHref`.
+ */
+export type NavPage = { key: string; label: string; href?: string };
 
 export type TemplateProps = {
   site: Pick<SiteData["site"], "id" | "slug" | "template_key">;
@@ -37,6 +42,10 @@ export type TemplateProps = {
   /** Storefront data; only set (with `shopView`) on /shop/... routes of shop-capable templates. */
   shop?: ShopData;
   shopView?: ShopView;
+  /** Published blog posts (no bodies); set on blog routes and, for blog-first templates, on every page. */
+  blog?: BlogData;
+  /** Content rendered inside <main> after the page's sections (blog lists and articles). */
+  slot?: ReactNode;
 };
 
 /** Single source of truth for which template_key renders which component. */
@@ -57,6 +66,7 @@ export const TEMPLATES: Record<string, ComponentType<TemplateProps>> = {
   t14: Template14,
   t15: Template15,
   t16: Template16,
+  t17: Template17,
 };
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES);

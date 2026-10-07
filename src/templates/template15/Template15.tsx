@@ -32,6 +32,7 @@ export default function Template15({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -115,6 +116,7 @@ export default function Template15({
         <T15Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T15Sections pageData={pageData} />
+          {slot}
         </main>
         <T15Footer logoUrl={logoUrl} />
       </div>

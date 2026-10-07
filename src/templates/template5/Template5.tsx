@@ -30,6 +30,7 @@ export default function Template5({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,7 @@ export default function Template5({
         <T5Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T5Sections pageData={pageData} />
+          {slot}
         </main>
         <T5Footer />
       </div>

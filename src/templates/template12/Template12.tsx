@@ -48,6 +48,7 @@ export default function Template12({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -157,6 +158,7 @@ export default function Template12({
         <T12Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T12Sections pageData={pageData} />
+          {slot}
         </main>
         <T12Footer logoUrl={logoUrl} />
       </div>

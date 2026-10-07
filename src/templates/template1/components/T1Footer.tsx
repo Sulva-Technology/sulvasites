@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { useT1 } from "../ctx";
 import { IconArrow } from "../icons";
 import { T1Mark } from "./T1Header";
@@ -68,7 +68,7 @@ export default function T1Footer({ logoUrl }: { logoUrl: string | null }) {
                 <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
                 <Link href={`${baseUrl}/about`}>{navLabels.about || "About"}</Link>
                 {navPages.map((p) => (
-                  <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                  <Link key={p.key} href={navPageHref(baseUrl, p)}>
                     {p.label}
                   </Link>
                 ))}

@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { directionsHref, joinHref, useT9 } from "../ctx";
 import { IconArrow, IconBolt, IconPhone } from "../icons";
 import T9Hours from "./T9Hours";
@@ -90,7 +90,7 @@ export default function T9Footer({ logoUrl }: { logoUrl: string | null }) {
               <div className="t9-footer-links">
                 <Link href={`${baseUrl}/`}>{navLabels.home || "Home"}</Link>
                 {navPages.map((p) => (
-                  <Link key={p.key} href={`${baseUrl}/p/${p.key}`}>
+                  <Link key={p.key} href={navPageHref(baseUrl, p)}>
                     {p.label}
                   </Link>
                 ))}

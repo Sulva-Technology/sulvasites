@@ -5,7 +5,7 @@ import Link from "next/link";
 import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { directionsHref, shopHref, useT13 } from "../ctx";
 
 const SOCIALS: Array<[key: string, label: string]> = [
@@ -73,7 +73,7 @@ export default function T13Footer({ logoUrl }: { logoUrl: string | null }) {
           {navPages
             .filter((p) => !(hasSizeGuidePage && p.key === "size-guide"))
             .map((p) => (
-            <Link key={p.key} href={p.key === "shop" && shop ? shopHref(baseUrl) : `${baseUrl}/p/${p.key}`}>
+            <Link key={p.key} href={p.key === "shop" && shop ? shopHref(baseUrl) : navPageHref(baseUrl, p)}>
               {p.label}
             </Link>
           ))}

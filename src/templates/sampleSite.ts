@@ -2120,6 +2120,113 @@ function communitySite(): TemplateProps {
   };
 }
 
+const journalHome: PageData = {
+  seo: { title: "Amara Nwosu — Essays on work, place and paying attention", description: "A personal journal of essays, notes and reading lists from Lagos." },
+  sections: [
+    {
+      type: "hero",
+      headline: "Essays on work, place and paying attention.",
+      subtext: "A slow journal from Lagos. New writing most Sundays, about the quiet craft of doing good work and the city that keeps me awake.",
+      ctaText: "",
+      ctaHref: "",
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Essays", desc: "Long reads on work, attention and the habits that hold a life together." },
+        { title: "Places", desc: "Notes from Lagos and the towns I wander through, one street at a time." },
+        { title: "Reading lists", desc: "The books on my bedside table each season, and why they earned it." },
+        { title: "Letters", desc: "Advice for younger writers, gathered from a decade of rejections." },
+      ],
+    },
+    {
+      type: "richtext",
+      title: "Why this journal exists",
+      body: "<p>I started writing here because I needed somewhere slower than social media. A place for thoughts that take more than a minute to read and more than a day to write.</p><p>Every post is written by hand, edited twice and published when it is ready, not before. If that sounds like your kind of reading, you are very welcome here.</p>",
+    },
+    {
+      type: "testimonials",
+      title: "Letters from readers",
+      items: [
+        { name: "Tolu A.", role: "Reader since 2023", quote: "The only newsletter I open the moment it arrives. It feels like a letter from a friend who reads more than I do." },
+        { name: "Chidi O.", role: "Designer, Abuja", quote: "Her essay on doing less changed how I plan my weeks. I have sent it to everyone I work with." },
+      ],
+    },
+    { type: "backed_by", title: "Writing featured in", logos: [{ name: "The Lagos Review", url: null }, { name: "Afreada", url: null }, { name: "Open Country Mag", url: null }, { name: "Brittle Paper", url: null }] },
+  ],
+};
+
+const journalAbout: PageData = {
+  seo: { title: "About Amara Nwosu", description: "Writer, editor and essayist based in Lagos." },
+  sections: [
+    {
+      type: "hero",
+      headline: "Hello, I'm Amara.",
+      subtext: "Writer, editor and occasional teacher. I write about work, cities and the small rituals that make a life feel like your own.",
+      ctaText: "Write to me",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "A little about me",
+      body: "<p>I grew up between Enugu and Lagos, studied literature, and spent eight years as an editor before going independent. These days I write essays, edit books for small presses and teach a weekend writing workshop.</p><p>This journal is where I think out loud. Thank you for reading.</p>",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Slow, on purpose", desc: "One good post is worth more than five rushed ones." },
+        { title: "Honest about what I don't know", desc: "I write to find out what I think, and say so." },
+        { title: "Always free to read", desc: "Every post stays free. Subscribing just brings it to your inbox." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "From the desk",
+      images: [
+        { url: "", alt: "Morning pages at the writing desk" },
+        { url: "", alt: "Lagos lagoon at first light" },
+        { url: "", alt: "A stack of books for the season" },
+      ],
+    },
+  ],
+};
+
+const journalContact: PageData = {
+  seo: { title: "Contact Amara Nwosu", description: "Write to Amara about collaborations, speaking or just to say hello." },
+  sections: [
+    { type: "hero", headline: "Say hello.", subtext: "Questions, pitches, collaborations or a note about something you read. I answer every letter, usually within a week.", ctaText: "", ctaHref: "" },
+    { type: "contact_card", showForm: true, mapLink: "" },
+    {
+      type: "faq",
+      title: "Before you write",
+      items: [
+        { question: "Do you accept guest posts?", answer: "Not at the moment, but I love recommendations. Send me writers you think I should read." },
+        { question: "Can I republish an essay?", answer: "Usually yes, with credit and a link back. Write to me first so I can say thank you properly." },
+        { question: "Are you available for speaking?", answer: "A few times a year, mostly on writing and creative work. Send the date and audience and I will reply quickly." },
+      ],
+    },
+  ],
+};
+
+function journalSite(): TemplateProps {
+  const base = sampleSiteBase("t17");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Amara Nwosu",
+      tagline: "Essays, notes and reading lists, most Sundays.",
+      description: "A slow journal from Lagos about work, place and paying attention.",
+      address: "Yaba, Lagos",
+      phone: "+234 802 555 0177",
+      email: "letters@amaranwosu.com",
+      whatsapp: "",
+      socials: { instagram: "https://instagram.com", twitter: "https://x.com", linkedin: "https://linkedin.com" },
+    },
+    pages: { home: journalHome, about: journalAbout, contact: journalContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -2149,7 +2256,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                             ? automotiveSite()
                             : templateKey === "t16"
                               ? communitySite()
-                              : sampleSiteBase(templateKey);
+                              : templateKey === "t17"
+                                ? journalSite()
+                                : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

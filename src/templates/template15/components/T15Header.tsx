@@ -7,7 +7,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildTelLink } from "@/templates/shared/links";
+import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { enquireHref, useT15 } from "../ctx";
 import { IconArrow, IconClose, IconMenu, IconPhone, IconWheel } from "../icons";
 
@@ -92,7 +92,7 @@ export default function T15Header({
 
   const items: NavItem[] = [
     { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
-    ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    ...navPages.map((p) => ({ id: `p-${p.key}`, href: navPageHref(baseUrl, p), label: p.label, active: currentExtraKey === p.key })),
     { id: "about", coreKey: "about", href: `${baseUrl}/about`, label: navLabels.about || "About", active: currentPage === "about" },
     { id: "contact", coreKey: "contact", href: `${baseUrl}/contact`, label: navLabels.contact || "Contact", active: currentPage === "contact" },
   ];

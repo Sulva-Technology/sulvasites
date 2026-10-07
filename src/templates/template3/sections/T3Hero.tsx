@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import EditableText from "@/components/inline-editor/EditableText";
 import type { HeroSection } from "@/lib/pageSchema";
 import type { NavPage, TemplateProps } from "@/templates/registry";
-import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
+import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { initials, pad2, useSectionEditor } from "../edit";
 import { T3ArrowIcon } from "../ui";
 
@@ -210,7 +210,7 @@ export default function T3Hero({
   }
 
   if (variant === "extra") {
-    const tabs = [{ key: "", label: "Home", href: `${baseUrl}/` }, ...navPages.map((p) => ({ key: p.key, label: p.label, href: `${baseUrl}/p/${p.key}` }))];
+    const tabs = [{ key: "", label: "Home", href: `${baseUrl}/` }, ...navPages.map((p) => ({ key: p.key, label: p.label, href: navPageHref(baseUrl, p) }))];
     return (
       <section className="t3-hero t3-hero-page">
         <div className="t3-glow" aria-hidden="true" />

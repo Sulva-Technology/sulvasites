@@ -38,6 +38,7 @@ export function useSite(): SiteContextValue {
 const TAB_LABELS: Record<DashboardTab, string> = {
   overview: "Overview",
   content: "Content",
+  blog: "Blog",
   inbox: "Inbox",
   business: "Business",
   insights: "Insights",

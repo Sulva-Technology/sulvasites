@@ -47,6 +47,7 @@ export default function Template9({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,7 @@ export default function Template9({
         <T9Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T9Sections pageData={pageData} />
+          {slot}
         </main>
         <T9Footer logoUrl={logoUrl} />
       </div>

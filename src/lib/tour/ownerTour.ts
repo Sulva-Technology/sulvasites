@@ -52,6 +52,14 @@ export const ownerTour: TourDef = {
       body: "Edit the words and pictures on your pages. Save a draft, preview it, then publish when you're happy.",
     },
     {
+      id: "blog",
+      target: "tab-blog",
+      ...onSite,
+      when: hasTab("blog"),
+      title: "Blog",
+      body: "Write news, guides and stories. Once you publish your first post, a Blog link appears on your site.",
+    },
+    {
       id: "inbox",
       target: "tab-inbox",
       ...onSite,

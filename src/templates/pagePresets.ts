@@ -108,6 +108,11 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "departments", label: "Departments", headline: "Ways to serve and grow", sections: ["hero", "services", "values", "contact_card"] },
     { key: "leadership", label: "Leadership", headline: "The people who lead us", sections: ["hero", "team", "testimonials"] },
   ],
+  // Blog / publication (the blog itself lives at /blog)
+  t17: [
+    { key: "start-here", label: "Start here", headline: "New here? Start with these", sections: ["hero", "richtext", "use_cases", "contact_card"] },
+    { key: "work-with-me", label: "Work with me", headline: "Writing, speaking and collaborations", sections: ["hero", "services", "testimonials", "faq", "contact_card"] },
+  ],
 };
 
 /**
@@ -128,8 +133,8 @@ export const PAGE_STARTERS: PagePreset[] = [
 /** The starter used when someone names their own page without picking a layout. */
 export const BLANK_STARTER = PAGE_STARTERS[PAGE_STARTERS.length - 1]!;
 
-/** Keys a page can never use: the built-in pages and the /p/ prefix. */
-export const RESERVED_PAGE_KEYS = ["home", "about", "contact", "p"];
+/** Keys a page can never use: the built-in pages, the /p/ prefix and the blog (it has its own tab). */
+export const RESERVED_PAGE_KEYS = ["home", "about", "contact", "p", "blog"];
 
 /** Plain-English names for each section type, shown so owners know what a page contains. */
 export const SECTION_LABELS: Record<Section["type"], string> = {

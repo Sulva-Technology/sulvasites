@@ -9,7 +9,7 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import type { PageKey } from "@/lib/pageSchema";
 import { formatNaira } from "@/lib/shop/money";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildTelLink } from "@/templates/shared/links";
+import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { shopHref, useT14 } from "../ctx";
 import {
   IconArrow,
@@ -208,7 +208,7 @@ export default function T14Header({
     ...(shop && !hasShopPage ? [{ id: "shop", href: shopHref(baseUrl), label: "Shop", active: onShop, icon: <IconBag size={14} /> }] : []),
     ...navPages.map((p) => ({
       id: `p-${p.key}`,
-      href: p.key === "shop" && shop ? shopHref(baseUrl) : `${baseUrl}/p/${p.key}`,
+      href: p.key === "shop" && shop ? shopHref(baseUrl) : navPageHref(baseUrl, p),
       label: p.label,
       active: p.key === "shop" ? onShop : currentExtraKey === p.key,
       icon: p.key === "shop" ? <IconBag size={14} /> : <IconDoc size={14} />,

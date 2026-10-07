@@ -52,6 +52,7 @@ export default function Template7({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
   shop,
   shopView,
 }: TemplateProps) {
@@ -174,6 +175,7 @@ export default function Template7({
         <T7Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           {shop && shopView ? <ShopViews view={shopView} /> : <T7Sections pageData={pageData} />}
+          {slot}
         </main>
         <T7Footer logoUrl={logoUrl} />
         <p className="t7-sr" role="status" aria-live="polite" aria-atomic="true">

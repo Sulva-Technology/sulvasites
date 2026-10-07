@@ -48,6 +48,7 @@ export default function Template6({
   pageOverride,
   navPages = [],
   currentExtraKey = null,
+  slot,
 }: TemplateProps) {
   const editor = useInlineEditor();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -121,6 +122,7 @@ export default function Template6({
         <T6Header logoUrl={logoUrl} currentPage={navPage} currentExtraKey={currentExtraKey} />
         <main>
           <T6Sections pageData={pageData} />
+          {slot}
         </main>
         <T6Footer logoUrl={logoUrl} />
       </div>

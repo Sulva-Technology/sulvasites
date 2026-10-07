@@ -7,7 +7,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
-import { buildTelLink } from "@/templates/shared/links";
+import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconBag, IconClose, IconCutlery, IconMenu, IconPhone } from "../icons";
 import { useBag } from "../shop/useBag";
@@ -54,7 +54,7 @@ export default function T7Header({
 
   const items: NavItem[] = [
     { id: "home", coreKey: "home", href: `${baseUrl}/`, label: navLabels.home || "Home", active: currentPage === "home" },
-    ...navPages.map((p) => ({ id: `p-${p.key}`, href: `${baseUrl}/p/${p.key}`, label: p.label, active: currentExtraKey === p.key })),
+    ...navPages.map((p) => ({ id: `p-${p.key}`, href: navPageHref(baseUrl, p), label: p.label, active: currentExtraKey === p.key })),
     ...(shop && !navPages.some((p) => p.key === "shop")
       ? [{ id: "order", href: shopHref(baseUrl), label: "Order", active: pageKind === "shop" }]
       : []),

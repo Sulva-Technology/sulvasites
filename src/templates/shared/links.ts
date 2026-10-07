@@ -1,5 +1,10 @@
 /** Contact link builders shared by all templates. */
 
+/** Where a navigation entry points: its own path (blog) or the extra page at /p/<key>. */
+export function navPageHref(baseUrl: string, page: { key: string; href?: string }): string {
+  return page.href ? `${baseUrl}${page.href}` : `${baseUrl}/p/${page.key}`;
+}
+
 export function buildTelLink(phone: string | null | undefined): string {
   if (!phone) return "#";
   return `tel:${phone.replace(/\s/g, "")}`;

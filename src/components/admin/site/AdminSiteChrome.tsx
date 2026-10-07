@@ -113,6 +113,7 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
   const tabs: Array<{ id: string; label: string; href: string }> = [
     { id: "overview", label: "Overview", href: base },
     { id: "pages", label: "Pages", href: `${base}/pages/home` },
+    { id: "blog", label: "Blog", href: `${base}/blog` },
   ];
   if (!site || kindsForTemplate(tk).length > 0) tabs.push({ id: "business", label: "Business", href: `${base}/business` });
   tabs.push({ id: "inbox", label: "Inbox", href: `${base}/inbox` });
@@ -122,6 +123,7 @@ export default function AdminSiteChrome({ children }: { children: ReactNode }) {
 
   let active = "overview";
   if (pathname.startsWith(`${base}/pages/`) || pathname.startsWith(`${base}/extra-pages/`)) active = "pages";
+  else if (pathname.startsWith(`${base}/blog`)) active = "blog";
   else if (pathname.startsWith(`${base}/business`)) active = "business";
   else if (pathname.startsWith(`${base}/inbox`)) active = "inbox";
   else if (pathname.startsWith(`${base}/insights`)) active = "insights";
