@@ -225,6 +225,7 @@ const KINDS_BY_CATEGORY: Partial<Record<PhotoCategory, BusinessKind[]>> = {
   creative: ["project", "service"],
   tech: ["service"],
   logistics: ["service"],
+  automotive: ["project", "service"],
   general: ["service"],
   // fashion / retail: shop templates, products are managed in the Shop tab.
 };
@@ -237,6 +238,24 @@ type Override = Partial<
 > & { statuses?: string[] };
 
 const OVERRIDES: Partial<Record<PhotoCategory, Partial<Record<BusinessKind, Override>>>> = {
+  automotive: {
+    project: {
+      singular: "Car",
+      plural: "Inventory",
+      blurb: "Cars for sale with location, status, price and photos.",
+      emptyHint: "Add your first car, or import the list from your website.",
+      nameLabel: "Car (make, model, year)",
+      namePlaceholder: "1967 Ford Mustang Fastback",
+      priceLabel: "Price (₦, optional)",
+      activeLabel: "Listed",
+      inactiveBadge: "Unlisted",
+      statuses: STATUS_PROPERTY,
+    },
+    service: {
+      namePlaceholder: "Full detail & ceramic coat",
+      blurb: "Servicing, restoration, detailing and other work, with optional price.",
+    },
+  },
   real_estate: {
     project: {
       singular: "Property",

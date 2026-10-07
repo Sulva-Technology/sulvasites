@@ -172,6 +172,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#ffffff",
     surface: "#f5f5f5",
   }, { accent2: "Buttons & dark bands", surface: "Paper cards / panels" }),
+  // Automotive — "Marque" (obsidian glass, dark-first; these are the pearl-mode values)
+  t15: config("t15", {
+    accent: "#c8102e",
+    accent2: "#050505",
+    ink: "#0f0f13",
+    muted: "#5e5d66",
+    bg: "#f5f3f7",
+    surface: "#ffffff",
+  }, { accent2: "Hero shade & night panels", surface: "Glass panels" }),
 };
 
 // Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
@@ -187,6 +196,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t12: { accent: "#ff8a3d", accent2: "#0e1011", ink: "#eef0f1", muted: "#a3abb1", bg: "#16191b", surface: "#1f2326" },
   t13: { ink: "#f4f4f5", muted: "#9ea3ad", bg: "#0a0a0b", surface: "#111113" },
   t14: { ink: "#f5f5f5", muted: "#a1a1a1", bg: "#0a0a0a", surface: "#141414" },
+  t15: { accent: "#ff4d5e", accent2: "#000000", ink: "#f5f5f7", muted: "#9b9ba3", bg: "#050505", surface: "#141416" },
 };
 
 for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {
@@ -212,8 +222,10 @@ export function toCssVarMap(templateKey: string, colors: ThemeSemanticColors): R
       : cfg.variables[semanticKey];
     if (cssVar) cssVars[cssVar] = value;
   }
-  const carried = carriedDarkAccent(templateKey, colors);
-  if (carried && cfg.dark?.variables.accent) cssVars[cfg.dark.variables.accent] = carried;
+  for (const [k, v] of Object.entries(carriedDarkColors(templateKey, colors))) {
+    const cssVar = cfg.dark?.variables[k];
+    if (cssVar) cssVars[cssVar] = v;
+  }
   return cssVars;
 }
 
@@ -227,13 +239,20 @@ function hexLuminance(input: string | undefined): number | null {
   return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
 }
 
+/** The owner changed this light key (saved palettes hold every key, mostly at their defaults). */
+function ownerChanged(templateKey: string, colors: ThemeSemanticColors, key: string): boolean {
+  const v = colors[key];
+  const def = getTemplateThemeConfig(templateKey)?.defaults[key];
+  return typeof v === "string" && v.trim() !== "" && v.trim().toLowerCase() !== (def ?? "").toLowerCase();
+}
+
 /**
  * When the owner picked a light-mode accent but no dark one, reuse it in dark mode
  * on the dark background, lifted toward white until readable (>= 3:1) — keeps the brand colour.
  */
 export function carriedDarkAccent(templateKey: string, colors: ThemeSemanticColors): string | null {
   const dark = getTemplateThemeConfig(templateKey)?.dark;
-  if (!dark?.defaults.accent || !colors.accent || colors[`${DARK_PREFIX}accent`]) return null;
+  if (!dark?.defaults.accent || colors[`${DARK_PREFIX}accent`] || !ownerChanged(templateKey, colors, "accent")) return null;
   const b = hexLuminance(colors[`${DARK_PREFIX}bg`] ?? dark.defaults.bg);
   if (b == null || hexLuminance(colors.accent) == null) return null;
   // Too dark to read? Lift it toward white so the brand hue still shows.
@@ -243,6 +262,29 @@ export function carriedDarkAccent(templateKey: string, colors: ThemeSemanticColo
     if ((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3) return c;
   }
   return null;
+}
+
+/**
+ * Light-palette brand colours that also work in dark mode: the accent (see carriedDarkAccent)
+ * and a dark-band colour (accent2) dark enough to keep light text readable.
+ */
+export function carriedDarkColors(templateKey: string, colors: ThemeSemanticColors): ThemeSemanticColors {
+  const dark = getTemplateThemeConfig(templateKey)?.dark;
+  if (!dark) return {};
+  const out: ThemeSemanticColors = {};
+  const accent = carriedDarkAccent(templateKey, colors);
+  if (accent) out.accent = accent;
+  const a2 = hexLuminance(colors.accent2);
+  if (
+    dark.defaults.accent2 &&
+    !colors[`${DARK_PREFIX}accent2`] &&
+    ownerChanged(templateKey, colors, "accent2") &&
+    a2 != null &&
+    a2 < 0.12
+  ) {
+    out.accent2 = colors.accent2;
+  }
+  return out;
 }
 
 function mixWithWhite(hex: string, amount: number): string {
@@ -259,9 +301,10 @@ function mixWithWhite(hex: string, amount: number): string {
 }
 
 /**
- * Mode a site opens in before the visitor picks one. An owner who changed only the
- * light palette opens in light, so their colours aren't hidden behind the template's
- * dark defaults (dark-first templates, or visitors whose system is set to dark).
+ * Mode a site opens in before the visitor picks one. Brand colours carry into dark mode,
+ * but changed backgrounds, panels or text don't — so an owner who changed those in the light
+ * palette only opens in light, instead of behind the template's dark defaults (dark-first
+ * templates, or visitors whose system is set to dark).
  */
 export function siteStartMode(
   templateKey: string,
@@ -271,23 +314,28 @@ export function siteStartMode(
   const cfg = getTemplateThemeConfig(templateKey);
   const saved = (themeColors as Record<string, unknown> | null | undefined)?.[templateKey];
   if (!cfg?.dark || !saved || typeof saved !== "object") return templateDefault;
-  const changed = (k: string, def: string | undefined) => {
-    const v = (saved as Record<string, unknown>)[k];
-    return typeof v === "string" && v.trim().toLowerCase() !== (def ?? "").toLowerCase();
-  };
-  const lightChanged = Object.entries(cfg.defaults).some(([k, v]) => changed(k, v));
-  const darkChanged = Object.entries(cfg.dark.defaults).some(([k, v]) => changed(`${DARK_PREFIX}${k}`, v));
-  return lightChanged && !darkChanged ? "light" : templateDefault;
+  const colors = Object.fromEntries(
+    Object.entries(saved as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === "string"),
+  );
+  const darkChanged = Object.entries(cfg.dark.defaults).some(([k, v]) => {
+    const d = colors[`${DARK_PREFIX}${k}`];
+    return !!d && d.trim().toLowerCase() !== v.toLowerCase();
+  });
+  if (darkChanged) return templateDefault;
+  const carried = carriedDarkColors(templateKey, colors);
+  // Keys dark mode replaces (light-only templates' keys never apply) that the owner changed and that don't carry over.
+  const hidden = Object.keys(cfg.dark.defaults).some((k) => ownerChanged(templateKey, colors, k) && !(k in carried));
+  return hidden ? "light" : templateDefault;
 }
 
-/** Dark-mode colours the editor should show: saved value, else carried accent, else default. */
+/** Dark-mode colours the editor should show: saved value, else carried brand colour, else default. */
 export function effectiveDarkColors(templateKey: string, colors: ThemeSemanticColors): ThemeSemanticColors {
   const dark = getTemplateThemeConfig(templateKey)?.dark;
   if (!dark) return {};
-  const carried = carriedDarkAccent(templateKey, colors);
+  const carried = carriedDarkColors(templateKey, colors);
   const out: ThemeSemanticColors = {};
   for (const [k, v] of Object.entries(dark.defaults)) {
-    out[k] = colors[`${DARK_PREFIX}${k}`] ?? (k === "accent" && carried ? carried : v);
+    out[k] = colors[`${DARK_PREFIX}${k}`] ?? carried[k] ?? v;
   }
   return out;
 }

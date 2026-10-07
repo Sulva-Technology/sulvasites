@@ -166,6 +166,14 @@ const PRESETS: Record<string, PalettePreset[]> = {
     p("logistics", "Yellow", "#f4c430", "#1a1a1a"),
     p("logistics", "Navy", "#1f3a5f", "#0a0f1c"),
   ],
+  automotive: [
+    p("automotive", "Racing red", "#c8102e", "#050505"),
+    p("automotive", "Gold", "#c9a227", "#0c0b08"),
+    p("automotive", "British green", "#1f5c3a", "#07110b"),
+    p("automotive", "Gulf blue", "#2f7fc1", "#071420"),
+    p("automotive", "Orange", "#f77f00", "#120c06"),
+    p("automotive", "Silver", "#6b7280", "#0a0a0b"),
+  ],
   general: [
     p("general", "Teal", "#0ea58c", "#0b1220"),
     p("general", "Blue", "#1b6fe0", "#0e1726"),

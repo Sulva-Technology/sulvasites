@@ -304,6 +304,31 @@ export const INDUSTRIES: Record<string, IndustryGuide> = {
     fallbackOffers: ["Popular categories", "Everyday essentials", "New arrivals"],
     shop: true,
   },
+  t15: {
+    key: "t15",
+    category: "Automotive",
+    photoCategory: "automotive",
+    keywords: [
+      "car dealer", "car dealership", "dealership", "car sales", "cars for sale", "car showroom", "showroom", "classic car", "classic cars", "vintage car", "luxury cars",
+      "supercar", "used cars", "tokunbo", "automobile", "automotive", "motors", "cars", "vehicle", "vehicles", "car detailing", "detailing", "car wash",
+      "car restoration", "restoration", "car rental", "car hire", "auto repair", "mechanic", "garage", "car club",
+    ],
+    audience: "buyers and enthusiasts who want to trust the car, the history and the people selling it",
+    mustAnswer: "what cars or services you offer, where to see them, and how to enquire or book a viewing",
+    features: ["the cars or collection the owner named", "services such as sourcing, servicing, restoration or detailing (only as stated)", "how viewings, test drives and enquiries work", "part-exchange, finance or shipping ONLY if stated"],
+    trust: ["clear enquiry and viewing process", "inspection or history checks ONLY if stated", "years in business or cars sold ONLY if stated"],
+    faqTopics: ["how to book a viewing or test drive", "inspection and paperwork (only as stated)", "payment and delivery (only as stated)", "part-exchange (only if stated)"],
+    ctas: ["Make an enquiry", "Book a viewing", "View the collection"],
+    avoid: ["invented cars, prices, mileage, specs or provenance", "fake sold counts or reviews", "pushy urgency"],
+    roles: {
+      services: "services offered: sales, sourcing, servicing, restoration, detailing, storage",
+      values: "short figures or promises shown large (e.g. years trading or cars delivered ONLY if stated, else promises like 'Inspected' or 'Hand-picked')",
+      use_cases: "cars in the collection or inventory: title = make, model and year; description = short specs separated by ' · ' then one sentence",
+      gallery: "photos of the cars and showroom; captions read as short story titles",
+      backed_by: "marques sold or serviced, partners and club memberships (only as stated)",
+    },
+    fallbackOffers: ["Cars for sale", "Sourcing", "Servicing"],
+  },
 };
 
 export const GENERIC_INDUSTRY: IndustryGuide = {

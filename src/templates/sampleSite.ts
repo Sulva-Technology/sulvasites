@@ -1783,6 +1783,173 @@ function storeShop(): ShopData {
   };
 }
 
+const car = (i: number, alt?: string) => {
+  const p = STOCK_PHOTOS.automotive[i % STOCK_PHOTOS.automotive.length]!;
+  return { url: photoUrl(p.id), alt: alt ?? p.alt };
+};
+
+const automotiveHome: PageData = {
+  seo: { title: "Apex Classics — classic and collector cars in Lagos", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Where automotive legends live.",
+      subtext: "Hand-picked classic, collector and performance cars — inspected, documented and ready to view in our Lekki showroom.",
+      ctaText: "Explore the collection",
+      ctaHref: "#collection",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Since 2009", desc: "Buying and selling collector cars" },
+        { title: "Inspected", desc: "Every car checked before it's listed" },
+        { title: "Worldwide", desc: "Sourcing and shipping on request" },
+      ],
+    },
+    {
+      type: "use_cases",
+      title: "The collection",
+      description: "A changing line-up of icons, modern classics and future collectibles.",
+      items: [
+        { title: "1990 Ferrari 348 tb", description: "Lekki · Available · ₦185,000,000 · Two owners, full service history and a fresh belt service.", linkText: "", linkHref: "" },
+        { title: "1971 Mercedes-Benz 280 SE Coupé", description: "Lekki · Under offer · Restored inside and out, matching numbers.", linkText: "", linkHref: "" },
+        { title: "2019 Porsche 911 GT3 RS", description: "Lagos · Available · Weissach package, 9,800 km, one owner.", linkText: "", linkHref: "" },
+        { title: "1967 Ford Mustang Fastback", description: "Lekki · Sold · Rotisserie restoration with a 289 V8 and four-speed manual.", linkText: "", linkHref: "" },
+        { title: "1989 BMW M3 (E30)", description: "Lekki · Available · Original paint, recently recommissioned.", linkText: "", linkHref: "" },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Sales & sourcing", desc: "Find the right car, or let us search our network for the one you've always wanted." },
+        { title: "Servicing & restoration", desc: "Specialist mechanics for routine care, recommissioning and full restorations." },
+        { title: "Detailing", desc: "Paint correction, ceramic coating and concours preparation." },
+        { title: "Storage", desc: "Secure, climate-controlled storage with battery care and regular runs." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Stories behind the machines",
+      images: [
+        car(0, "The Ferrari that taught us patience"),
+        car(1, "The golden era of German coupés"),
+        car(3, "Inside a ground-up Mustang restoration"),
+        car(9, "Why analog interiors still win"),
+        car(5),
+        car(7),
+        car(10),
+      ],
+    },
+    {
+      type: "backed_by",
+      title: "Marques we sell & service",
+      logos: [
+        { name: "Ferrari", url: null },
+        { name: "Porsche", url: null },
+        { name: "Mercedes-Benz", url: null },
+        { name: "BMW M", url: null },
+        { name: "Jaguar", url: null },
+        { name: "Ford", url: null },
+      ],
+    },
+    {
+      type: "testimonials",
+      title: "From our owners",
+      items: [
+        { name: "Tolu A.", role: "Bought a Porsche 911", company: "", quote: "Every question answered before I'd asked it. The car was exactly as described — down to the last stone chip." },
+        { name: "Emeka N.", role: "Mustang restoration", company: "", quote: "They treated my father's car like it was their own. Photos every week and a finish that's better than new." },
+        { name: "Sade O.", role: "Storage & servicing", company: "", quote: "I travel a lot. Knowing the car is run, charged and ready when I land is worth every naira." },
+      ],
+    },
+    {
+      type: "faq",
+      title: "Good to know",
+      items: [
+        { question: "Can I view a car before buying?", answer: "Of course. Book a private viewing at the showroom — weekdays or Saturday — and we'll have the car ready with its paperwork." },
+        { question: "Do you take part-exchange?", answer: "Often, yes. Send us photos and details of your car and we'll give you a valuation." },
+        { question: "Can you find a specific car?", answer: "Tell us the make, model, spec and budget. We search our network here and abroad and keep you updated." },
+        { question: "Do you deliver?", answer: "We can arrange enclosed delivery within Nigeria and shipping from overseas." },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const automotiveAbout: PageData = {
+  seo: { title: "About Apex Classics", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Enthusiasts first. Dealers second.",
+      subtext: "We started Apex Classics to buy and sell the cars we love, the way we'd want to buy them ourselves.",
+      ctaText: "Make an enquiry",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "How every car is chosen",
+      body: "<p>We only list cars we'd be happy to own. Each one is inspected by our workshop, road-tested and photographed in detail before it goes on sale.</p><ul><li>Full inspection and test drive</li><li>History and paperwork checked</li><li>Honest descriptions — the good and the imperfect</li></ul>",
+    },
+    {
+      type: "team",
+      title: "The people behind the keys",
+      subtitle: "Sales, workshop and detailing under one roof.",
+      members: [
+        { name: "Dapo Akande", role: "Founder", bio: "Collector for twenty years; still drives a '72 2002 every Sunday.", photoUrl: person(13), linkedinUrl: "" },
+        { name: "Ifeoma Eze", role: "Sales & sourcing", bio: "Finds the cars our clients ask for, here and abroad.", photoUrl: person(1), linkedinUrl: "" },
+        { name: "Musa Bello", role: "Head of workshop", bio: "Restorations, recommissioning and everything mechanical.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Grace Okoro", role: "Detailing", bio: "Paint correction and concours preparation.", photoUrl: person(9), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Honest", desc: "Every flaw photographed and described" },
+        { title: "Hands-on", desc: "Our own workshop prepares every car" },
+        { title: "Personal", desc: "One contact from first call to handover" },
+      ],
+    },
+    { type: "contact_card", showForm: false, mapLink: "" },
+  ],
+};
+
+const automotiveContact: PageData = {
+  seo: { title: "Visit the showroom", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Come and see them in person",
+      subtext: "Ask about a car, book a viewing or a test drive, or tell us what you're looking for.",
+      ctaText: "Make an enquiry",
+      ctaHref: "#enquire",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function automotiveSite(): TemplateProps {
+  const base = sampleSiteBase("t15");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "Apex Classics",
+      tagline: "Classic, collector and performance cars in Lagos.",
+      description: "A showroom for classic and collector cars with sourcing, servicing, detailing and storage.",
+      address: "8 Admiralty Way, Lekki, Lagos",
+      phone: "+234 802 555 0199",
+      email: "hello@apexclassics.ng",
+      whatsapp: "+2348025550199",
+      socials: {
+        instagram: "https://instagram.com",
+        youtube: "https://youtube.com",
+        hours: "Mon–Fri · 09:00–18:00\nSaturday · 10:00–16:00\nSunday · By appointment",
+      },
+    },
+    pages: { home: automotiveHome, about: automotiveAbout, contact: automotiveContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1808,7 +1975,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                         ? fashionSite()
                         : templateKey === "t14"
                           ? storeSite()
-                          : sampleSiteBase(templateKey);
+                          : templateKey === "t15"
+                            ? automotiveSite()
+                            : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

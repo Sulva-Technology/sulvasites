@@ -96,6 +96,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "deals", label: "Deals", headline: "Deals", sections: ["hero", "richtext", "contact_card"] },
     { key: "help", label: "Help & delivery", headline: "Help & delivery", sections: ["hero", "faq", "contact_card"] },
   ],
+  // Automotive
+  t15: [
+    { key: "inventory", label: "Inventory", headline: "Cars for sale", sections: ["hero", "use_cases", "faq", "contact_card"] },
+    { key: "services", label: "Services", headline: "Services", sections: ["hero", "services", "values", "contact_card"] },
+    { key: "stories", label: "Stories", headline: "Stories behind the machines", sections: ["hero", "gallery", "richtext", "contact_card"] },
+  ],
 };
 
 /**

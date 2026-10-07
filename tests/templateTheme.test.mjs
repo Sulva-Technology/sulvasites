@@ -71,10 +71,27 @@ test("owner who changed only the light palette opens in light mode", () => {
   assert.equal(siteStartMode("t10", { t10: {} }), undefined);
   // Light colour changed, no dark ones: light.
   assert.equal(siteStartMode("t7", { t7: { ...d, bg: "#ffeedd" } }, "dark"), "light");
-  assert.equal(siteStartMode("t10", { t10: { accent: "#ff0000" } }), "light");
+  assert.equal(siteStartMode("t10", { t10: { ink: "#222222" } }), "light");
+  // Brand colours carry into dark mode, so changing only them keeps the template's own start mode
+  // (the setup assistant saves exactly this: new accent + accent2, neutrals at their defaults).
+  assert.equal(siteStartMode("t7", { t7: { ...d, accent: "#1b6fe0", accent2: "#0b1830" } }, "dark"), "dark");
+  assert.equal(siteStartMode("t10", { t10: { accent: "#ff0000" } }), undefined);
+  // A light accent2 can't carry into dark bands, so it shows in light.
+  assert.equal(siteStartMode("t7", { t7: { ...d, accent2: "#f0e0d0" } }, "dark"), "light");
   // Dark palette customised too: owner chose both, keep template default.
   assert.equal(siteStartMode("t7", { t7: { bg: "#ffeedd", dark_bg: "#111111" } }, "dark"), "dark");
   // Palette saved for another template is ignored; t1 has no dark mode.
   assert.equal(siteStartMode("t7", { t8: { bg: "#ffeedd" } }, "dark"), "dark");
   assert.equal(siteStartMode("t1", { t1: { bg: "#ffeedd" } }), undefined);
+});
+
+test("unchanged light colours never replace the dark defaults", () => {
+  const d = TEMPLATE_THEME_CONFIGS.t7.defaults;
+  const vars = toCssVarMap("t7", { ...d });
+  assert.equal(vars["--t7-dark-accent"], undefined);
+  assert.equal(vars["--t7-dark-accent2"], undefined);
+  assert.deepEqual(effectiveDarkColors("t7", { ...d }), TEMPLATE_THEME_CONFIGS.t7.dark.defaults);
+  // A changed dark accent2 carries; a light one doesn't.
+  assert.equal(toCssVarMap("t7", { ...d, accent2: "#0b1830" })["--t7-dark-accent2"], "#0b1830");
+  assert.equal(toCssVarMap("t7", { ...d, accent2: "#f0e0d0" })["--t7-dark-accent2"], undefined);
 });

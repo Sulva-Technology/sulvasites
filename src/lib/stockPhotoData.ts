@@ -1,6 +1,6 @@
 // Curated free-license Unsplash photos (hotlinked). Relative-import safe for the Node test runner.
 export const PHOTO_CATEGORIES = [
-  "corporate", "clinic", "beauty", "real_estate", "food", "tech", "creative", "fashion", "fitness", "education", "construction", "retail", "events", "logistics", "general",
+  "corporate", "clinic", "beauty", "real_estate", "food", "tech", "creative", "fashion", "fitness", "education", "construction", "retail", "events", "logistics", "automotive", "general",
 ] as const;
 export type PhotoCategory = (typeof PHOTO_CATEGORIES)[number];
 export type StockPhoto = { id: string; alt: string };
@@ -201,6 +201,20 @@ export const STOCK_PHOTOS: Record<PhotoCategory, StockPhoto[]> = {
     { id: "photo-1601467995997-ac1ae9a8fff4", alt: "Truck parked by a depot" },
     { id: "photo-1733662095268-7a88cb5fa10e", alt: "Delivery truck on a street" },
     { id: "photo-1605678141352-ccd8c79848d9", alt: "Delivery van on the road" },
+  ],
+  automotive: [
+    { id: "photo-1583121274602-3e2820c69888", alt: "Red Ferrari parked against a white wall" },
+    { id: "photo-1523828446771-151afb8374f1", alt: "Green classic Mercedes-Benz coupe" },
+    { id: "photo-1617814086906-d847a8bc6fca", alt: "Two black sports cars on a harbour quay" },
+    { id: "photo-1544896478-d5b709d413c5", alt: "Red vintage Ford Mustang among pine trees" },
+    { id: "photo-1503736334956-4c8f8e92946d", alt: "Ferrari at speed on an open road" },
+    { id: "photo-1643142314913-0cf633d9bbb5", alt: "Red car on a showroom floor" },
+    { id: "photo-1542362567-b07e54358753", alt: "Grey sports coupe in daylight" },
+    { id: "photo-1692406069831-0bb7ea297645", alt: "Showroom lined with cars" },
+    { id: "photo-1548618607-fe992dd33eff", alt: "Grey sports coupe in a workshop" },
+    { id: "photo-1519381577144-50b1eed100ec", alt: "Red and black Porsche interior" },
+    { id: "photo-1632823469850-2f77dd9c7f93", alt: "Detailer waxing a car bonnet" },
+    { id: "photo-1484687742385-1249620c2687", alt: "Classic teal sedan by a brick building" },
   ],
   general: [
     { id: "photo-1687422808248-f807f4ea2a2e", alt: "Business owner in an apron checking his phone" },
