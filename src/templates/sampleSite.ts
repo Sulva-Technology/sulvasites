@@ -1950,6 +1950,176 @@ function automotiveSite(): TemplateProps {
   };
 }
 
+const gathering = (i: number, alt?: string) => {
+  const p = STOCK_PHOTOS.community[i % STOCK_PHOTOS.community.length]!;
+  return { url: photoUrl(p.id), alt: alt ?? p.alt };
+};
+
+const communityHome: PageData = {
+  seo: { title: "The Kindred Circle — a faith-centred community for intentional people", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Kindred don't blend in, they stand out.",
+      subtext: "A purpose-driven community of people committed to personal growth, spiritual depth and intentional living.",
+      ctaText: "Become a member",
+      ctaHref: "",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "120+", desc: "Members" },
+        { title: "3", desc: "Countries" },
+        { title: "Weekly", desc: "Gatherings" },
+        { title: "100%", desc: "Commitment" },
+      ],
+    },
+    {
+      type: "richtext",
+      title: "A community of intentional people.",
+      body: "<p>The Kindred Circle is a faith-centred community and a movement of people committed to growth, discipline and impact. Built on strong values, we foster a culture of accountability, consistency and excellence — a place where members are challenged, supported and inspired to become better versions of themselves.</p><ul><li>Spiritually grounded</li><li>Mentally sharp</li><li>Skilfully equipped</li><li>Community-oriented</li><li>Purpose aligned</li></ul>",
+    },
+    {
+      type: "use_cases",
+      title: "Find your circle",
+      description: "Choose the circle that matches your current season of growth, leadership and purpose.",
+      items: [
+        { title: "Better Men", description: "Online · ₦15,000 · Brotherhood, accountability and honest conversations for men who want to lead well at home and work.", linkText: "", linkHref: "" },
+        { title: "Budding CEOs", description: "Hybrid · ₦25,000 · A mastermind for founders and aspiring founders building businesses with integrity.", linkText: "", linkHref: "" },
+        { title: "Creative Lab", description: "Lagos · ₦10,000 · Designers, writers and makers sharpening their craft and building a body of work together.", linkText: "", linkHref: "" },
+      ],
+    },
+    {
+      type: "services",
+      items: [
+        { title: "Health & Wellness", desc: "Caring for the whole person — physical health, mental clarity and emotional balance for every member." },
+        { title: "Content", desc: "Capturing what we're building through writing, social content and community resources." },
+        { title: "Design", desc: "Shaping our visual identity with the graphics, templates and assets that represent us with excellence." },
+      ],
+    },
+    {
+      type: "team",
+      title: "The people who lead us",
+      subtitle: "Founders and moderators who guide the community day to day.",
+      members: [
+        { name: "Tobi Adeyemi", role: "Founder", bio: "Started the circle in 2021 with six friends and a weekly call.", photoUrl: person(0), linkedinUrl: "https://linkedin.com" },
+        { name: "Ifeoma Nwosu", role: "Community lead", bio: "Keeps every circle connected and every new member welcomed.", photoUrl: person(1), linkedinUrl: "" },
+        { name: "David Mensah", role: "Mentorship", bio: "Pairs members with mentors and runs the Budding CEOs mastermind.", photoUrl: person(13), linkedinUrl: "" },
+        { name: "Grace Bello", role: "Wellness", bio: "Leads the Health & Wellness department and monthly check-ins.", photoUrl: person(9), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "testimonials",
+      title: "Lives changed in the circle",
+      items: [
+        { name: "Kemi A.", role: "Member since 2022", company: "", quote: "I came for the accountability and stayed for the people. My prayer life, my finances and my business all look different now." },
+        { name: "Chidi O.", role: "Better Men", company: "", quote: "For the first time I have men around me who ask the hard questions — and then show up to help." },
+        { name: "Amara E.", role: "Creative Lab", company: "", quote: "The circle pushed me to finally publish my work. Having people who believe in you changes everything." },
+      ],
+    },
+    {
+      type: "gallery",
+      title: "Moments together",
+      images: [gathering(0), gathering(2), gathering(5), gathering(4), gathering(7)],
+    },
+    {
+      type: "faq",
+      title: "Frequently asked questions",
+      items: [
+        { question: "Who can join?", answer: "Anyone who wants to grow intentionally and is happy to show up — online or in person." },
+        { question: "How does joining work?", answer: "Pick a circle, send us a message and we'll welcome you personally, add you to the group and introduce you to your circle lead." },
+        { question: "Is there a membership fee?", answer: "Each circle has a small one-off fee that covers resources and gatherings. Ask us if cost is a barrier — we never want it to be." },
+        { question: "When do you meet?", answer: "Circles meet weekly online, and the whole community gathers in person once a month." },
+      ],
+    },
+  ],
+};
+
+const communityAbout: PageData = {
+  seo: { title: "About The Kindred Circle", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Built on faith, grown in community.",
+      subtext: "We started with six friends and a weekly call. Today we're a family of members across three countries, still growing one honest conversation at a time.",
+      ctaText: "Become a member",
+      ctaHref: "",
+    },
+    {
+      type: "richtext",
+      title: "Our mission, our vision.",
+      body: "<p>To raise a disciplined circle of purpose-driven people equipped with clarity, competence, character and capacity to influence their spaces through faith, creativity, leadership and service.</p><ul><li>Faith-centred growth</li><li>Disciplined accountability</li><li>Creative excellence</li></ul>",
+    },
+    {
+      type: "values",
+      items: [
+        { title: "Faith-first", desc: "Grounded in what we believe" },
+        { title: "Accountable", desc: "We show up for each other" },
+        { title: "Excellent", desc: "Our best, every time" },
+      ],
+    },
+    {
+      type: "team",
+      title: "The people who lead us",
+      subtitle: "",
+      members: [
+        { name: "Tobi Adeyemi", role: "Founder", bio: "Started the circle in 2021 with six friends and a weekly call.", photoUrl: person(0), linkedinUrl: "" },
+        { name: "Ifeoma Nwosu", role: "Community lead", bio: "Keeps every circle connected and every new member welcomed.", photoUrl: person(1), linkedinUrl: "" },
+        { name: "David Mensah", role: "Mentorship", bio: "Pairs members with mentors and runs the Budding CEOs mastermind.", photoUrl: person(13), linkedinUrl: "" },
+      ],
+    },
+    {
+      type: "backed_by",
+      title: "Partners & affiliations",
+      logos: [
+        { name: "Grace Chapel", url: null },
+        { name: "Lagos Founders Network", url: null },
+        { name: "Hope Foundation", url: null },
+        { name: "Campus Fellowship", url: null },
+      ],
+    },
+  ],
+};
+
+const communityContact: PageData = {
+  seo: { title: "Join The Kindred Circle", description: "" },
+  sections: [
+    {
+      type: "hero",
+      headline: "Get in touch.",
+      subtext: "Have a question or ready to join? We'd love to hear from you.",
+      ctaText: "Send a message",
+      ctaHref: "#join",
+    },
+    { type: "contact_card", showForm: true, mapLink: "" },
+  ],
+};
+
+function communitySite(): TemplateProps {
+  const base = sampleSiteBase("t16");
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      business_name: "The Kindred Circle",
+      tagline: "A faith-centred community for people pursuing discipline, purpose and excellence.",
+      description:
+        "To become a trusted home where young leaders, creatives and professionals are spiritually grounded, mentally sharp, skilfully equipped and purpose aligned.",
+      address: "12 Bourdillon Road, Ikoyi, Lagos",
+      phone: "+234 701 555 0126",
+      email: "hello@kindredcircle.org",
+      whatsapp: "+2347015550126",
+      socials: {
+        instagram: "https://instagram.com",
+        twitter: "https://x.com",
+        linkedin: "https://linkedin.com",
+        hours: "Circles · Weekly, online\nCommunity gathering · First Saturday, 4pm",
+      },
+    },
+    pages: { home: communityHome, about: communityAbout, contact: communityContact },
+  };
+}
+
 /** Sample site with stock photos filled in, the same way AI-generated sites get them. */
 export function sampleSite(templateKey: string): TemplateProps {
   const base =
@@ -1977,7 +2147,9 @@ export function sampleSite(templateKey: string): TemplateProps {
                           ? storeSite()
                           : templateKey === "t15"
                             ? automotiveSite()
-                            : sampleSiteBase(templateKey);
+                            : templateKey === "t16"
+                              ? communitySite()
+                              : sampleSiteBase(templateKey);
   return { ...base, pages: fillSiteImages(base.pages, categoryForTemplate(templateKey), `sample-${templateKey}`) };
 }
 

@@ -102,6 +102,12 @@ const PRESETS: Record<string, PagePreset[]> = {
     { key: "services", label: "Services", headline: "Services", sections: ["hero", "services", "values", "contact_card"] },
     { key: "stories", label: "Stories", headline: "Stories behind the machines", sections: ["hero", "gallery", "richtext", "contact_card"] },
   ],
+  // Community
+  t16: [
+    { key: "communities", label: "Communities", headline: "Find your circle", sections: ["hero", "use_cases", "faq", "contact_card"] },
+    { key: "departments", label: "Departments", headline: "Ways to serve and grow", sections: ["hero", "services", "values", "contact_card"] },
+    { key: "leadership", label: "Leadership", headline: "The people who lead us", sections: ["hero", "team", "testimonials"] },
+  ],
 };
 
 /**

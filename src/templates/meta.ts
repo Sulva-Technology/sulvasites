@@ -29,6 +29,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { key: "t13", name: "Mode", category: "Fashion shop", description: "Fashion and clothing brands: a cinematic dark storefront with serif headlines, a lookbook feed, cart and Paystack checkout. Dark + light modes.", shop: true },
   { key: "t14", name: "Cartly", category: "General store", description: "Online stores and retailers: a quiet, product-first storefront with rounded cards, a product configurator, search, cart and Paystack checkout. Light + dark modes.", shop: true },
   { key: "t15", name: "Marque", category: "Automotive", description: "Car dealers, classic and luxury showrooms, restorers, detailers and car clubs: obsidian glass with a cinematic video or photo hero and a scrolling collection of cars. Dark + light modes." },
+  { key: "t16", name: "Circle", category: "Community", description: "Churches, faith communities, membership clubs, masterminds and nonprofits: an airy off-white look with serif-italic headlines, deep-blue brand bands, community cards with fees and a join form. Light + dark modes." },
 ];
 
 export function templateLabel(key: string) {

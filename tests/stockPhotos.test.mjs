@@ -30,6 +30,7 @@ test("categoryForTemplate maps templates", () => {
   assert.equal(categoryForTemplate("t13"), "fashion");
   assert.equal(categoryForTemplate("t14"), "retail");
   assert.equal(categoryForTemplate("t15"), "automotive");
+  assert.equal(categoryForTemplate("t16"), "community");
   assert.equal(categoryForTemplate("zzz"), "general");
 });
 

@@ -226,6 +226,7 @@ const KINDS_BY_CATEGORY: Partial<Record<PhotoCategory, BusinessKind[]>> = {
   tech: ["service"],
   logistics: ["service"],
   automotive: ["project", "service"],
+  community: ["project", "service"],
   general: ["service"],
   // fashion / retail: shop templates, products are managed in the Shop tab.
 };
@@ -238,6 +239,28 @@ type Override = Partial<
 > & { statuses?: string[] };
 
 const OVERRIDES: Partial<Record<PhotoCategory, Partial<Record<BusinessKind, Override>>>> = {
+  community: {
+    project: {
+      singular: "Community",
+      plural: "Communities",
+      blurb: "Sub-communities and groups members can join, with format, membership fee and photos.",
+      emptyHint: "Add your first community, or import the list from your website.",
+      nameLabel: "Community name",
+      namePlaceholder: "Budding CEOs",
+      priceLabel: "Membership fee (₦, optional)",
+      activeLabel: "Open to join",
+      inactiveBadge: "Closed",
+    },
+    service: {
+      singular: "Department",
+      plural: "Departments",
+      nameLabel: "Department or programme",
+      namePlaceholder: "Health & Wellness",
+      priceLabel: null,
+      blurb: "Departments, ministries and programmes members can serve in or attend.",
+      emptyHint: "Add your first department, or import the list from your website.",
+    },
+  },
   automotive: {
     project: {
       singular: "Car",

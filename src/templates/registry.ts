@@ -18,6 +18,7 @@ import Template12 from "@/templates/template12/Template12";
 import Template13 from "@/templates/template13/Template13";
 import Template14 from "@/templates/template14/Template14";
 import Template15 from "@/templates/template15/Template15";
+import Template16 from "@/templates/template16/Template16";
 
 /** A published extra page shown in navigation, served at `${baseUrl}/p/${key}`. */
 export type NavPage = { key: string; label: string };
@@ -55,6 +56,7 @@ export const TEMPLATES: Record<string, ComponentType<TemplateProps>> = {
   t13: Template13,
   t14: Template14,
   t15: Template15,
+  t16: Template16,
 };
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES);

@@ -1,6 +1,6 @@
 // Curated free-license Unsplash photos (hotlinked). Relative-import safe for the Node test runner.
 export const PHOTO_CATEGORIES = [
-  "corporate", "clinic", "beauty", "real_estate", "food", "tech", "creative", "fashion", "fitness", "education", "construction", "retail", "events", "logistics", "automotive", "general",
+  "corporate", "clinic", "beauty", "real_estate", "food", "tech", "creative", "fashion", "fitness", "education", "construction", "retail", "events", "logistics", "automotive", "community", "general",
 ] as const;
 export type PhotoCategory = (typeof PHOTO_CATEGORIES)[number];
 export type StockPhoto = { id: string; alt: string };
@@ -215,6 +215,22 @@ export const STOCK_PHOTOS: Record<PhotoCategory, StockPhoto[]> = {
     { id: "photo-1519381577144-50b1eed100ec", alt: "Red and black Porsche interior" },
     { id: "photo-1632823469850-2f77dd9c7f93", alt: "Detailer waxing a car bonnet" },
     { id: "photo-1484687742385-1249620c2687", alt: "Classic teal sedan by a brick building" },
+  ],
+  community: [
+    { id: "photo-1525776658211-37bdb8a0b32b", alt: "Friends gathered in a circle on a hill at golden hour" },
+    { id: "photo-1609234656388-0ff363383899", alt: "Members standing together with arms around each other" },
+    { id: "photo-1610070835951-156b6921281d", alt: "Group sitting in a circle on the grass" },
+    { id: "photo-1729089049887-389a46c99546", alt: "Small group praying together" },
+    { id: "photo-1590650046871-92c887180603", alt: "Four women talking over coffee" },
+    { id: "photo-1522158637959-30385a09e0da", alt: "Congregation at a worship night" },
+    { id: "photo-1523240795612-9a054b0db644", alt: "Mentor and young men laughing over a laptop" },
+    { id: "photo-1758599668203-05ee0bca83ef", alt: "Volunteers smiling at a community clean-up" },
+    { id: "photo-1761666520005-3ffcf13e74c8", alt: "Community members sitting together at a gathering" },
+    { id: "photo-1543702404-38c2035462ad", alt: "Members laying hands in prayer" },
+    { id: "photo-1540575467063-178a50c2df87", alt: "Audience seated at a conference" },
+    { id: "photo-1600019246742-3b66977db044", alt: "Hands holding a Bible outdoors" },
+    { id: "photo-1731703809282-44225fb895a7", alt: "People sitting on the floor in deep conversation" },
+    { id: "photo-1702599057905-d3859caa8b61", alt: "Group of friends standing in a circle" },
   ],
   general: [
     { id: "photo-1687422808248-f807f4ea2a2e", alt: "Business owner in an apron checking his phone" },

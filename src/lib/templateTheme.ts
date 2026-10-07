@@ -181,6 +181,15 @@ export const TEMPLATE_THEME_CONFIGS: Record<string, TemplateThemeConfig> = {
     bg: "#f5f3f7",
     surface: "#ffffff",
   }, { accent2: "Hero shade & night panels", surface: "Glass panels" }),
+  // Community — "Circle" (off-white, deep-blue brand bands; light-first)
+  t16: config("t16", {
+    accent: "#166d9c",
+    accent2: "#0f5c85",
+    ink: "#0a0a0a",
+    muted: "#525252",
+    bg: "#fafafa",
+    surface: "#ffffff",
+  }, { accent2: "Brand bands & call-to-action", surface: "Cards / panels" }),
 };
 
 // Dark-mode values — must match each template's `[data-mode="dark"]` fallbacks (test enforces).
@@ -197,6 +206,7 @@ const DARK_DEFAULTS: Record<string, Partial<Record<SemanticKey, string>>> = {
   t13: { ink: "#f4f4f5", muted: "#9ea3ad", bg: "#0a0a0b", surface: "#111113" },
   t14: { ink: "#f5f5f5", muted: "#a1a1a1", bg: "#0a0a0a", surface: "#141414" },
   t15: { accent: "#ff4d5e", accent2: "#000000", ink: "#f5f5f7", muted: "#9b9ba3", bg: "#050505", surface: "#141416" },
+  t16: { accent: "#5ab0e0", accent2: "#0c4a6b", ink: "#ededed", muted: "#a3a3a3", bg: "#050505", surface: "#0e0e0f" },
 };
 
 for (const [key, defaults] of Object.entries(DARK_DEFAULTS)) {

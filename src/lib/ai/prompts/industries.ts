@@ -329,6 +329,33 @@ export const INDUSTRIES: Record<string, IndustryGuide> = {
     },
     fallbackOffers: ["Cars for sale", "Sourcing", "Servicing"],
   },
+  t16: {
+    key: "t16",
+    category: "Community",
+    photoCategory: "community",
+    keywords: [
+      "church", "ministry", "fellowship", "parish", "chapel", "mosque", "faith", "faith-based", "christian", "worship", "bible study", "prayer group", "youth group",
+      "community", "membership", "members club", "club", "society", "association", "alumni", "network", "mastermind", "movement", "circle",
+      "nonprofit", "non-profit", "ngo", "charity", "foundation", "volunteer", "volunteers", "outreach", "mentorship", "leadership community",
+    ],
+    audience: "people looking for belonging, growth and a community they can trust",
+    mustAnswer: "who the community is for, what members do together, and how to join",
+    features: ["the sub-communities, groups or programmes the owner named", "what members get: meetings, mentorship, events, resources (only as stated)", "how joining works and any membership fee (only as stated)", "departments or ways to serve (only as stated)"],
+    trust: ["leaders named by the owner", "clear joining steps", "member count, countries or years ONLY if stated"],
+    faqTopics: ["who can join", "how joining works", "membership fee (only as stated)", "when and where the community meets (only as stated)"],
+    ctas: ["Become a member", "Join via WhatsApp", "Explore communities"],
+    avoid: ["invented member counts, fees, leaders or testimonies", "promises of outcomes", "preachy or pushy tone"],
+    roles: {
+      services: "departments, ministries or programmes members can serve in or attend",
+      values: "short figures or pillars shown large (member count or countries ONLY if stated, else pillars like 'Faith-first' or 'Accountable')",
+      use_cases: "sub-communities or groups members can join: title = group name; description = short details separated by ' · ' (format, membership fee if stated) then one sentence on who it is for",
+      richtext: "the mission, vision and values in the owner's words, with a short bullet list of pillars",
+      team: "leaders, pastors, founders or moderators",
+      gallery: "photos of gatherings, services, meetups and outreach",
+      backed_by: "partners, affiliations, chapters or sponsors (only as stated)",
+    },
+    fallbackOffers: ["Communities", "Mentorship", "Gatherings"],
+  },
 };
 
 export const GENERIC_INDUSTRY: IndustryGuide = {
