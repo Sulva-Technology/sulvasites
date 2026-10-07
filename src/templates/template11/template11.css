@@ -431,7 +431,6 @@
   color: var(--t11-ink);
   box-shadow: none;
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .t11-btn-ghost:hover {
@@ -494,7 +493,6 @@
   font-weight: 700;
   box-shadow: var(--t11-glow);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .t11-chip svg {
@@ -526,7 +524,6 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--t11-card) 80%, transparent);
   backdrop-filter: saturate(1.5) blur(16px);
-  -webkit-backdrop-filter: saturate(1.5) blur(16px);
   transition: box-shadow 0.25s, border-color 0.25s;
 }
 

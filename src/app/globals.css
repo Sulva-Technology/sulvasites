@@ -80,7 +80,6 @@ span[data-inline-edit="true"]:empty {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
 @keyframes koi-ripple {

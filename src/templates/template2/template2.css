@@ -208,7 +208,6 @@
   z-index: 60;
   background: color-mix(in srgb, var(--t2-bg) 92%, transparent);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--t2-line);
   transition: background 0.35s, border-color 0.35s, color 0.35s;
 }
@@ -223,7 +222,6 @@
 .t2-header[data-overlay="true"] {
   background: transparent;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border-bottom-color: color-mix(in srgb, #fff 22%, transparent);
   color: #fff;
 }

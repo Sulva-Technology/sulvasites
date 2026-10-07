@@ -121,7 +121,6 @@
   border: 1px solid var(--t3-glass-line);
   box-shadow: var(--t3-glass-shadow);
   backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
 }
 
 .t3-glow {
@@ -185,7 +184,6 @@
   border-color: var(--t3-glass-line);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--t3-ink) 8%, transparent);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .t3-btn-ghost:hover {
@@ -248,7 +246,6 @@
   border-color: var(--t3-glass-line);
   box-shadow: var(--t3-glass-shadow);
   backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
 }
 
 .t3-brand {
@@ -369,7 +366,6 @@
   z-index: 80;
   background: color-mix(in srgb, var(--t3-bg) 82%, transparent);
   backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
   color: var(--t3-ink);
   display: flex;
   flex-direction: column;
@@ -636,7 +632,6 @@
   background: color-mix(in srgb, #fff 72%, transparent);
   border: 1px solid color-mix(in srgb, #fff 70%, transparent);
   backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
   font-size: 13px;
   color: #111;
 }
@@ -854,7 +849,6 @@
   border: 1px solid var(--t3-glass-line);
   box-shadow: var(--t3-glass-shadow);
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
 }
 
 .t3-tabs a {
@@ -1025,7 +1019,6 @@
   border: 1px solid var(--t3-glass-line);
   box-shadow: var(--t3-glass-shadow);
   backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
 }
 
 .t3-value-num {
@@ -1811,7 +1804,6 @@
   border: 1px solid var(--t3-glass-line);
   box-shadow: var(--t3-glass-shadow);
   backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
 }
 
 .t3-input {

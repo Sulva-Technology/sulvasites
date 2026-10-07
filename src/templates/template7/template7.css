@@ -233,7 +233,6 @@
   border-color: color-mix(in srgb, #fbf6ee 42%, transparent);
   color: var(--t7-cream) !important;
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .t7-btn-glass:hover {
@@ -291,7 +290,6 @@
   z-index: 50;
   background: color-mix(in srgb, var(--t7-bg) 92%, transparent);
   backdrop-filter: saturate(1.2) blur(12px);
-  -webkit-backdrop-filter: saturate(1.2) blur(12px);
   border-bottom: 1px solid var(--t7-line);
   transition: box-shadow 0.3s;
 }
@@ -692,7 +690,6 @@
   border-top: 1px solid var(--t7-cream-line);
   background: color-mix(in srgb, #140b07 55%, transparent);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .t7-strip-inner {
@@ -3313,7 +3310,6 @@ textarea.t7-input {
   border: 1px solid var(--t7-glass-edge);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   border-radius: var(--t7-radius-lg);
 }
 
@@ -3370,7 +3366,6 @@ textarea.t7-input {
   background: var(--t7-glass);
   border: 1px solid var(--t7-glass-edge);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-textlink {
@@ -3419,7 +3414,6 @@ textarea.t7-input {
   color: var(--t7-ink) !important;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-btn-glass {
@@ -3484,7 +3478,6 @@ textarea.t7-input {
   border: 0;
   box-shadow: none;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   pointer-events: none;
 }
 
@@ -3508,7 +3501,6 @@ textarea.t7-input {
   border: 1px solid var(--t7-glass-edge);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   transition: background 0.35s, box-shadow 0.35s, max-width 0.45s var(--t7-ease);
 }
 
@@ -3617,7 +3609,6 @@ textarea.t7-input {
 .t7-drawer-panel {
   background: var(--t7-glass-strong);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   border-left: 1px solid var(--t7-glass-edge);
 }
 
@@ -3658,7 +3649,6 @@ textarea.t7-input {
   padding: clamp(18px, 2.4vw, 26px);
   background: color-mix(in srgb, #140b07 28%, transparent);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   max-width: 980px;
 }
 
@@ -3675,7 +3665,6 @@ textarea.t7-input {
   background: transparent;
   border: 0;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   padding-bottom: clamp(18px, 3vh, 30px);
 }
 
@@ -3690,7 +3679,6 @@ textarea.t7-input {
   border-radius: 18px;
   background: color-mix(in srgb, #fff 9%, transparent);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 a.t7-strip-item:hover {
@@ -3743,7 +3731,6 @@ a.t7-strip-item:hover {
   border-radius: var(--t7-radius-lg);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-quote,
@@ -3796,7 +3783,6 @@ a.t7-strip-item:hover {
   background: color-mix(in srgb, #fff 8%, transparent);
   border-color: color-mix(in srgb, #fff 18%, transparent);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-shot-frame,
@@ -3815,7 +3801,6 @@ a.t7-strip-item:hover {
   font-weight: 700;
   background: var(--t7-glass-strong);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-input,
@@ -3859,7 +3844,6 @@ a.t7-strip-item:hover {
   border: 1px solid var(--t7-glass-edge);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   transition: transform 0.4s var(--t7-ease), box-shadow 0.4s;
 }
 
@@ -3909,7 +3893,6 @@ a.t7-strip-item:hover {
   font-size: 13.5px;
   font-weight: 700;
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-dishcard-price .t7-price-was {
@@ -4050,7 +4033,6 @@ a.t7-strip-item:hover {
   border: 1px solid var(--t7-glass-edge);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 .t7-order-tabs::-webkit-scrollbar {
@@ -4234,7 +4216,6 @@ a.t7-strip-item:hover {
   background: var(--t7-glass-strong);
   border-left: 1px solid var(--t7-glass-edge);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
   border-radius: var(--t7-radius-lg) 0 0 var(--t7-radius-lg);
 }
 
@@ -4245,7 +4226,6 @@ a.t7-strip-item:hover {
 .t7-scrim {
   background: rgb(10 6 4 / 0.4);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .t7-cartbar {
@@ -4257,7 +4237,6 @@ a.t7-strip-item:hover {
   border: 1px solid var(--t7-glass-edge);
   box-shadow: var(--t7-glass-shadow);
   backdrop-filter: var(--t7-blur);
-  -webkit-backdrop-filter: var(--t7-blur);
 }
 
 /* ----- Responsive ----- */

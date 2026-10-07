@@ -391,7 +391,6 @@ a.t8-topbar-item:hover {
   z-index: 40;
   background: color-mix(in srgb, var(--t8-bg) 88%, transparent);
   backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
@@ -1641,7 +1640,6 @@ a.t8-topbar-item:hover {
   border-radius: 12px;
   background: color-mix(in srgb, #0d2b33 64%, transparent);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;

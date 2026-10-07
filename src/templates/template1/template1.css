@@ -245,7 +245,6 @@
   z-index: 60;
   background: color-mix(in srgb, var(--t1-bg) 86%, transparent);
   backdrop-filter: saturate(1.6) blur(14px);
-  -webkit-backdrop-filter: saturate(1.6) blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s;
 }
