@@ -20,13 +20,19 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     try {
       // The emailed link signs the user in and lands on /change-password to pick a new one.
+      // Always use the platform origin: Supabase's redirect allowlist rejects tenant subdomains and custom domains.
+      const origin = (process.env.NEXT_PUBLIC_SITE_ORIGIN?.trim() || window.location.origin).replace(/\/+$/, "");
       const { error: resetError } = await supabaseBrowser().auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/change-password`,
+        redirectTo: `${origin}/change-password`,
       });
-      // Same answer whether or not the address has an account, so the form can't be used to find accounts.
-      // Only rate limits are worth telling the user about.
-      if (resetError && /rate|too many/i.test(resetError.message)) {
-        setError("Too many attempts. Wait a few minutes and try again.");
+      // Supabase returns no error for an unknown address, so showing real send failures (rate limit, SMTP down)
+      // does not reveal which addresses have accounts.
+      if (resetError) {
+        setError(
+          resetError.status === 429
+            ? "Too many attempts. Wait a few minutes and try again."
+            : "Could not send the email right now. Try again in a few minutes.",
+        );
         return;
       }
       setSent(true);
