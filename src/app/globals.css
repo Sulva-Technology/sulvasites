@@ -81,6 +81,11 @@ span[data-inline-edit="true"]:empty {
   border: 1px solid rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(14px) saturate(140%);
 }
+/* Fixed nav once it leaves the water band: white glass over white content is unreadable. */
+.koi-glass.koi-glass-dark {
+  background: rgba(10, 15, 31, 0.78);
+  border-color: rgba(255, 255, 255, 0.12);
+}
 
 @keyframes koi-ripple {
   from { transform: scale(0.6); opacity: 0.55; }

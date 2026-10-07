@@ -38,12 +38,21 @@ export function GlassNav({ brand, links, right }: { brand: ReactNode; links: Nav
     };
   }, [open]);
 
+  // Darken once the page scrolls past the water header (where white glass stops being readable).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 120);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div
       ref={sheetRef}
-      className="koi-glass fixed left-1/2 top-4 z-40 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 rounded-full p-1.5 font-sans shadow-[0_8px_30px_-12px_rgba(10,15,31,.45)]"
+      className={`koi-glass ${scrolled ? "koi-glass-dark" : ""} transition-colors duration-300 fixed left-1/2 top-4 z-40 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 rounded-full p-1.5 font-sans shadow-[0_8px_30px_-12px_rgba(10,15,31,.45)]`}
     >
       <div className="flex shrink-0 items-center gap-2 pl-2 pr-2 text-sm font-semibold tracking-tight text-white">
         {brand}
