@@ -1,6 +1,6 @@
 // Which lifecycle emails a subscription is due, and their copy. Pure: relative imports only.
 // Keys stored in site_subscriptions.emails_sent; some carry a date suffix so they repeat per pause/grace window.
-import { DAY_MS, daysLeft, type SubSnapshot } from "./subscriptionState.ts";
+import { DAY_MS, type SubSnapshot } from "./subscriptionState.ts";
 
 export type LifecycleKind = "welcome" | "trial_ending" | "paused" | "archive_warning" | "payment_failed";
 

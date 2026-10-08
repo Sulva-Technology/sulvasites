@@ -23,6 +23,9 @@ export async function sendLifecycleEmail(db: SupabaseClient, siteId: string, key
   try {
     const kind = emailKind(key);
     if (!kind) return false;
+    // No subscription row means nothing can be recorded, so send nothing (otherwise callers re-send every run).
+    const sub = await loadSubscription(db, siteId);
+    if (!sub) return false;
     const { data: owner } = await db.from("site_members").select("user_id").eq("site_id", siteId).eq("role", "owner").limit(1).maybeSingle();
     if (!owner) return false;
     const { data: u } = await db.auth.admin.getUserById(owner.user_id as string);
@@ -30,21 +33,33 @@ export async function sendLifecycleEmail(db: SupabaseClient, siteId: string, key
     const cfg = { ...resend(), to };
     if (!isNotifiable(cfg)) return false;
 
-    const [{ data: site }, { data: profile }, sub] = await Promise.all([
+    const [{ data: site }, { data: profile }] = await Promise.all([
       db.from("sites").select("slug").eq("id", siteId).maybeSingle(),
       db.from("business_profiles").select("business_name").eq("site_id", siteId).maybeSingle(),
-      loadSubscription(db, siteId),
     ]);
     if (!site?.slug) return false;
     const mail = buildLifecycleEmail(kind, {
       businessName: (profile?.business_name as string | undefined) || (site.slug as string),
       siteUrl: `https://${site.slug}.${platformDomain()}`,
       billingUrl: `${platformOrigin()}/dashboard/${siteId}/billing`,
-      daysLeft: daysLeft(sub?.trial_ends_at ?? null, Date.now()),
+      daysLeft: daysLeft(sub.trial_ends_at, Date.now()),
     });
+
+    // Record before sending: a failed write must not lead to a re-send on the next run.
+    const recorded = await db
+      .from("site_subscriptions")
+      .update({ emails_sent: [...sub.emails_sent, key] })
+      .eq("site_id", siteId);
+    if (recorded.error) {
+      console.error("[billing] lifecycle email not recorded, skipped", { siteId, key, error: recorded.error.message });
+      return false;
+    }
+
     const ok = await sendResend({ apiKey: cfg.apiKey!, from: cfg.from!, to: to! }, mail);
-    if (ok && sub) {
-      await db.from("site_subscriptions").update({ emails_sent: [...sub.emails_sent, key] }).eq("site_id", siteId);
+    if (!ok) {
+      // Send failed: roll the key back so a later run can retry.
+      const rolled = await db.from("site_subscriptions").update({ emails_sent: sub.emails_sent }).eq("site_id", siteId);
+      if (rolled.error) console.error("[billing] lifecycle email rollback failed", { siteId, key, error: rolled.error.message });
     }
     return ok;
   } catch (err) {

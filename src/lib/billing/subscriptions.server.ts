@@ -22,7 +22,7 @@ export const SUB_COLUMNS =
 export async function loadSubscription(db: SupabaseClient, siteId: string): Promise<SubscriptionRow | null> {
   const { data, error } = await db.from("site_subscriptions").select(SUB_COLUMNS).eq("site_id", siteId).maybeSingle();
   if (error) {
-    if (error.code !== "42P01") console.error("[billing] loadSubscription failed", error.message);
+    if (error.code !== "42P01" && error.code !== "PGRST205") console.error("[billing] loadSubscription failed", error.message);
     return null;
   }
   return (data as SubscriptionRow | null) ?? null;
