@@ -38,7 +38,13 @@ function AdminChrome({ children }: { children: ReactNode }) {
         links={[
           { href: "/admin/sites", label: "Sites" },
           { href: "/admin/templates", label: "Templates" },
-          ...(isSuper ? [{ href: "/admin/users", label: "Users", tourId: "nav-users" }] : []),
+          ...(isSuper
+            ? [
+                { href: "/admin/users", label: "Users", tourId: "nav-users" },
+                { href: "/admin/leads", label: "Leads" },
+                { href: "/admin/billing", label: "Billing" },
+              ]
+            : []),
         ]}
         right={
           <>
