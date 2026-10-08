@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { staffGateMessage } from "@/lib/billing/gates";
+import { loadSubscription } from "@/lib/billing/subscriptions.server";
+
 import { canInvite, canRemove, LAST_OWNER_SQLSTATE, type SiteRole } from "./siteAccess";
 import { supabaseService } from "./supabase/admin.server";
 import { findOrCreateUser, findUserByEmail, type ActorRole } from "./supabase/requireSiteRole.server";
@@ -69,6 +72,16 @@ export async function addMember(
 
   try {
     const service = supabaseService();
+    if (role === "staff" && actor.role !== "admin") {
+      const { count, error: countErr } = await service
+        .from("site_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("site_id", siteId)
+        .eq("role", "staff");
+      if (countErr) return json({ error: "Could not check your plan." }, 500);
+      const gate = staffGateMessage(await loadSubscription(service, siteId), count ?? 0);
+      if (gate) return json({ error: gate }, 403);
+    }
     // Only Sulvatech admins may create accounts. Owners can only add an account that already exists.
     let user: { userId: string; email: string; mustChangePassword: boolean; created?: boolean };
     if (actor.role === "admin") {

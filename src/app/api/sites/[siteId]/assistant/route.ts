@@ -24,6 +24,8 @@ import {
   type SiteSnapshot,
   type SnapshotPage,
 } from "@/lib/ai/siteAssistant";
+import { effectiveAiLimit } from "@/lib/billing/planFeatures";
+import { loadSubscription } from "@/lib/billing/subscriptions.server";
 import type { PageData } from "@/lib/pageSchema";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { rateLimit } from "@/lib/supabase/requireAdmin.server";
@@ -154,7 +156,7 @@ export async function GET(req: Request, ctx: Ctx) {
   const { siteId } = await ctx.params;
   const auth = await requireSiteRole(req, siteId, ["owner", "admin"]);
   if (!auth.ok) return auth.response;
-  const limit = monthlyLimitFor(auth.role, process.env);
+  const limit = effectiveAiLimit(auth.role, await loadSubscription(supabaseService(), siteId), monthlyLimitFor(auth.role, process.env));
   const used = await usedThisMonth(siteId);
   return json({ usage: { used: used ?? 0, limit } satisfies Usage });
 }
@@ -186,12 +188,12 @@ export async function POST(req: Request, ctx: Ctx) {
   const focusPage = typeof b.focusPage === "string" ? b.focusPage.slice(0, 80) : undefined;
   const photos = cleanOwnerPhotos(b.photos);
 
-  const limit = monthlyLimitFor(auth.role, process.env);
+  const limit = effectiveAiLimit(auth.role, await loadSubscription(supabaseService(), siteId), monthlyLimitFor(auth.role, process.env));
   const used = await usedThisMonth(siteId);
   if (limit !== null && used !== null && used >= limit) {
     return json(
       {
-        error: `You've used all ${limit} AI requests for this month. Your allowance resets on the 1st — or ask Sulvatech about a bigger plan.`,
+        error: `You've used all ${limit} AI requests for this month. Your allowance resets on the 1st — or upgrade your plan in Billing.`,
         usage: { used, limit } satisfies Usage,
       },
       429,
