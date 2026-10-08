@@ -20,8 +20,9 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(`https://${process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "sulvasites.sulvatech.com"}`),
   title: "Sulva Sites",
-  description: "Sulvatech internal website builder",
+  description: "Websites for Nigerian businesses, by Sulvatech.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
