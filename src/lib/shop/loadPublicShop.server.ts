@@ -1,6 +1,9 @@
 import { cache } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+import { planCheckoutMode } from "@/lib/billing/gates";
+import { getSiteBillingState } from "@/lib/billing/siteState.server";
+
 import { mapShopRows } from "./mapShopRows";
 import type { ShopData } from "./types";
 
@@ -56,13 +59,17 @@ export const loadPublicShop = cache(async (siteId: string): Promise<ShopData | n
     ]);
     if (cats.error || prods.error || vars.error) return null;
 
-    return mapShopRows({
+    const shop = mapShopRows({
       siteId,
       settings,
       categories: (cats.data ?? []) as Record<string, unknown>[],
       products: (prods.data ?? []) as Record<string, unknown>[],
       variants: (vars.data ?? []) as Record<string, unknown>[],
     });
+    // Plan limits: no shop below Commerce; WhatsApp-only while trialing.
+    const mode = planCheckoutMode(shop.settings.checkoutMode, await getSiteBillingState(siteId));
+    if (mode === null) return null;
+    return { ...shop, settings: { ...shop.settings, checkoutMode: mode } };
   } catch (err) {
     console.error("[shop] loadPublicShop failed", { error: err instanceof Error ? err.message : "error" });
     return null;

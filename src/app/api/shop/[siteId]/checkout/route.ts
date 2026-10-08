@@ -14,6 +14,8 @@ import { resolveCallbackUrl } from "@/lib/shop/callbackUrl";
 import { clientIp } from "@/lib/shop/requestIp";
 import { loadActiveHostnames, loadCheckoutContext, loadPricingData } from "@/lib/shop/loadShop.server";
 import { cardCheckoutOpen } from "@/lib/shop/checkoutMode";
+import { shopGateMessage } from "@/lib/billing/gates";
+import { loadSubscription } from "@/lib/billing/subscriptions.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +54,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
   const db = requireServiceClient();
   if (!db) return json({ error: SHOP_NOT_CONFIGURED }, 500);
+
+  const billingGate = shopGateMessage(await loadSubscription(db, siteId), "card", Date.now());
+  if (billingGate) return json({ error: billingGate }, 403);
 
   try {
     const ctxData = await loadCheckoutContext(db, siteId);

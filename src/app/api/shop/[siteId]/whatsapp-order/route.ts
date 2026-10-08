@@ -9,6 +9,8 @@ import { buildCreateWhatsAppOrderArgs } from "@/lib/shop/createOrderArgs";
 import { clientIp } from "@/lib/shop/requestIp";
 import { loadCheckoutContext, loadPricingData } from "@/lib/shop/loadShop.server";
 import { whatsAppOrdersOpen } from "@/lib/shop/checkoutMode";
+import { shopGateMessage } from "@/lib/billing/gates";
+import { loadSubscription } from "@/lib/billing/subscriptions.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +51,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
   const db = requireServiceClient();
   if (!db) return json({ error: SHOP_NOT_CONFIGURED }, 500);
+
+  const billingGate = shopGateMessage(await loadSubscription(db, siteId), "whatsapp", Date.now());
+  if (billingGate) return json({ error: billingGate }, 403);
 
   try {
     const ctxData = await loadCheckoutContext(db, siteId);

@@ -6,6 +6,8 @@ import { clientIp } from "@/lib/shop/requestIp";
 import { INBOX_LIMITS } from "@/lib/inbox/limits";
 import { parseInboxBody, spamScore, SPAM_THRESHOLD } from "@/lib/inbox/input";
 import { buildNotification, isNotifiable, sendResend } from "@/lib/inbox/notify";
+import { siteGateMessage } from "@/lib/billing/gates";
+import { loadSubscription } from "@/lib/billing/subscriptions.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +58,9 @@ export async function POST(req: Request, ctx: Ctx) {
       .maybeSingle();
     if (siteErr) throw new Error("site lookup");
     if (!site || site.status !== "published") return json({ error: "Not found." }, 404);
+
+    const billingGate = siteGateMessage(await loadSubscription(db, siteId), Date.now());
+    if (billingGate) return json({ error: billingGate }, 403);
 
     const siteLimited = shopRateLimit(`inbox-site:${siteId}`, INBOX_LIMITS.siteMax, INBOX_LIMITS.siteWindowMs);
     if (siteLimited) return siteLimited;
