@@ -101,7 +101,8 @@ export async function POST(req: Request) {
   if (!created) return json({ error: "Could not create your site. Please try again." }, 500);
   const { siteId, slug } = created;
   const rollback = async () => {
-    await db.from("sites").delete().eq("id", siteId);
+    const { error } = await db.from("sites").delete().eq("id", siteId);
+    if (error) console.error("[signup] rollback failed", siteId, error.message);
   };
 
   const { error: memberErr } = await db.from("site_members").insert({ site_id: siteId, user_id: auth.userId, role: "owner" });
@@ -126,6 +127,12 @@ export async function POST(req: Request) {
     return json({ error: subErr.code === "23505" ? "You already have a site on a free trial." : "Could not create your site. Please try again." }, subErr.code === "23505" ? 409 : 500);
   }
 
+  // Recorded before the slow AI build so parallel signups with the same email see it and a lost row can't allow a second trial.
+  if (start.trial && !(await recordSignupSignal(db, { ...keys, userId: auth.userId, siteId, flags }))) {
+    await rollback();
+    return json({ error: "Signup is not available right now." }, 503);
+  }
+
   let build: TrialBuild;
   let usedAi = true;
   try {
@@ -138,7 +145,6 @@ export async function POST(req: Request) {
   }
   const warnings = await persistTrialSite(db, siteId, build);
 
-  await recordSignupSignal(db, { ...keys, userId: auth.userId, siteId, flags });
   if (start.trial) await sendLifecycleEmail(db, siteId, "welcome");
 
   const res = json({ siteId, slug, usedAi, warnings });

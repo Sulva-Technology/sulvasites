@@ -38,7 +38,7 @@ export async function collectPriorSignals(db: SupabaseClient, k: SignalKeys): Pr
 export async function recordSignupSignal(
   db: SupabaseClient,
   row: SignalKeys & { userId: string; siteId: string; flags: string[] },
-): Promise<void> {
+): Promise<boolean> {
   const { error } = await db.from("signup_signals").insert({
     user_id: row.userId,
     site_id: row.siteId,
@@ -49,5 +49,9 @@ export async function recordSignupSignal(
     business_key: row.businessKey,
     flags: row.flags,
   });
-  if (error) console.error("[signup] signal insert failed", error.message);
+  if (error) {
+    console.error("[signup] signal insert failed", error.message);
+    return false;
+  }
+  return true;
 }
