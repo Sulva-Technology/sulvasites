@@ -6,7 +6,7 @@ import { pickPhotos, photoUrl } from "@/lib/stockPhotos";
 import { expandPalette } from "@/lib/ai/setupPalette";
 import { ensureShopEnabled, shopOnByDefault } from "@/lib/shop/autoEnable";
 import { replaceUploadTokens, type SiteSetup } from "@/lib/ai/setupPhotos";
-import { slugify } from "@/lib/slugify";
+import { safeSlug } from "@/lib/reservedSlugs";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import type { BuildResult } from "@/lib/ai/siteBuilder";
 
@@ -25,7 +25,7 @@ function errMessage(e: unknown) {
  * and logo, saves profile (with the chosen palette), pages and extra pages.
  */
 export async function createSiteFromBuild(result: BuildResult, desiredSlug: string, setup?: SiteSetup): Promise<CreateSiteOutcome> {
-  const base = slugify(desiredSlug) || "my-site";
+  const base = safeSlug(desiredSlug);
   const supabase = await getAuthenticatedClient();
   const warnings: string[] = [];
 
