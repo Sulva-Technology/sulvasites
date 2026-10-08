@@ -9,7 +9,7 @@ export type HostSite =
   | { kind: "missing" }; // a site address that matches no site the user can see
 
 export function platformDomain(): string {
-  return process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "soothecontrols.site";
+  return process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "sulvasites.sulvatech.com";
 }
 
 /** Resolves `window.location.host` (or the given host) to the site it serves. */

@@ -20,6 +20,7 @@ import { createSiteFromBuild } from "@/lib/ai/createSite";
 import { colorWordsToChoice, expandPalette, type ColorChoice } from "@/lib/ai/setupPalette";
 import { emptySetup, uploadIndex, type SiteSetup } from "@/lib/ai/setupPhotos";
 import { slugify } from "@/lib/slugify";
+import { platformDomain } from "@/lib/hostSite";
 import { safeSlug } from "@/lib/reservedSlugs";
 import { categoryForTemplate, photoUrl } from "@/lib/stockPhotos";
 import { TEMPLATE_META, templateLabel } from "@/templates/meta";
@@ -576,7 +577,7 @@ export default function SiteAssistant() {
                 className="mt-1 w-full rounded-2xl border border-koi-ink/10 bg-white px-4 py-2.5 text-sm text-koi-ink outline-none transition focus:border-koi-sea focus:ring-4 focus:ring-koi-sea/15"
               />
               <span className="mt-1 block text-xs text-koi-ink/60">
-                Preview URL: <span className="font-mono">https://{safeSlug(slug, "your-slug")}.soothecontrols.site</span>. A number is added if it is taken.
+                Preview URL: <span className="font-mono">https://{safeSlug(slug, "your-slug")}.{platformDomain()}</span>. A number is added if it is taken.
               </span>
             </label>
 

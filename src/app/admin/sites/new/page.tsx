@@ -7,6 +7,7 @@ import SiteAssistant from "@/components/admin/SiteAssistant";
 import { createPresetPages } from "@/lib/extraPages";
 import { TEMPLATE_META, templateLabel } from "@/templates/meta";
 import { slugify } from "@/lib/slugify";
+import { platformDomain } from "@/lib/hostSite";
 import { safeSlug } from "@/lib/reservedSlugs";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
@@ -111,7 +112,7 @@ function ManualSetup({ initialTemplate }: { initialTemplate: string | null }) {
           hint={
             <>
               Preview URL:{" "}
-              <span className="font-mono">https://{safeSlug(slug, "your-slug")}.soothecontrols.site</span>
+              <span className="font-mono">https://{safeSlug(slug, "your-slug")}.{platformDomain()}</span>
             </>
           }
         />
