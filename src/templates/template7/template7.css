@@ -2959,6 +2959,11 @@ textarea.t7-input {
   gap: 28px;
 }
 
+/* WhatsApp ordering sits tight under the pay button. */
+.t7-checkout > .t7-btn + .t7-wa {
+  margin-top: -16px;
+}
+
 .t7-fieldset {
   border: 0;
   padding: 0;

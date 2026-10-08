@@ -1,4 +1,5 @@
 /** Public storefront data shapes shared by the loader, the routes and shop-capable templates. */
+import type { CheckoutMode } from "./checkoutMode.ts";
 
 export type ShopImage = { url: string; alt: string };
 
@@ -33,6 +34,10 @@ export type ShopSettings = {
   deliveryFeeKobo: number;
   pickupEnabled: boolean;
   pickupNote: string | null;
+  /** How customers buy: Paystack, WhatsApp, or both (migration 018). */
+  checkoutMode: CheckoutMode;
+  /** Number WhatsApp orders go to; null = the site's contact WhatsApp. */
+  whatsappNumber: string | null;
 };
 
 export type ShopData = {

@@ -10,7 +10,7 @@ import {
 } from "@/lib/shop/whatsappOrder";
 import { registerWhatsAppOrder } from "@/lib/shop/whatsappOrderClient";
 import { orderWhatsApp } from "@/lib/shop/checkoutMode";
-import { useT14 } from "../ctx";
+import { useT7 } from "../ctx";
 import { IconChat } from "../icons";
 import { productHref, type ResolvedLine } from "./helpers";
 
@@ -33,14 +33,14 @@ type Props = {
  */
 export default function WhatsAppOrderButton({
   rows,
-  className = "t14-pill t14-pill-soft t14-pill-block t14-wa",
+  className = "t7-btn t7-btn-ghost t7-btn-block t7-wa",
   label = "Order on WhatsApp",
   deliveryMethod,
   deliveryKobo,
   getDetails,
   onNavigate,
 }: Props) {
-  const { profile, baseUrl, siteId, shop } = useT14();
+  const { profile, baseUrl, siteId, shop } = useT7();
   const whatsapp = orderWhatsApp(shop?.settings, profile.whatsapp);
   const [pending, setPending] = useState(false);
   const busy = useRef(false);

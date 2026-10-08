@@ -13,6 +13,7 @@ import { buildCreateOrderArgs } from "@/lib/shop/createOrderArgs";
 import { resolveCallbackUrl } from "@/lib/shop/callbackUrl";
 import { clientIp } from "@/lib/shop/requestIp";
 import { loadActiveHostnames, loadCheckoutContext, loadPricingData } from "@/lib/shop/loadShop.server";
+import { cardCheckoutOpen } from "@/lib/shop/checkoutMode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +57,9 @@ export async function POST(req: Request, ctx: Ctx) {
     const ctxData = await loadCheckoutContext(db, siteId);
     if (!ctxData) return json({ error: "This shop is not open for orders." }, 404);
     const { site, settings } = ctxData;
+    if (!cardCheckoutOpen(settings.checkout_mode)) {
+      return json({ error: "This shop takes orders on WhatsApp. Use the WhatsApp button to order." }, 409);
+    }
 
     if (input.deliveryMethod === "pickup" && !settings.pickup_enabled) {
       return json({ error: "Pickup is not available for this shop." }, 400);

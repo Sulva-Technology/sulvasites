@@ -9,6 +9,7 @@ import {
   type WhatsAppOrderInput,
 } from "@/lib/shop/whatsappOrder";
 import { registerWhatsAppOrder } from "@/lib/shop/whatsappOrderClient";
+import { orderWhatsApp } from "@/lib/shop/checkoutMode";
 import { useT13 } from "../ctx";
 import { IconChat } from "../icons";
 import { productHref, type ResolvedLine } from "./helpers";
@@ -28,6 +29,7 @@ type Props = {
  * Sends the bag to the business on WhatsApp, pre-typed, for shoppers who'd rather finish the order in chat.
  * The bag is first recorded as a pending WhatsApp order (its reference goes in the message) so the owner
  * can find it under Orders and mark it completed. If that fails, WhatsApp still opens without a reference.
+ * Hidden when the shop's checkout mode is card-only or no WhatsApp number is set.
  */
 export default function WhatsAppOrderButton({
   rows,
@@ -38,7 +40,8 @@ export default function WhatsAppOrderButton({
   getDetails,
   onNavigate,
 }: Props) {
-  const { profile, baseUrl, siteId } = useT13();
+  const { profile, baseUrl, siteId, shop } = useT13();
+  const whatsapp = orderWhatsApp(shop?.settings, profile.whatsapp);
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const orderable = rows.filter((r) => r.product && r.problem === null);
@@ -64,7 +67,7 @@ export default function WhatsAppOrderButton({
     customer: details ?? null,
   });
 
-  const href = buildWhatsAppOrderLink(profile.whatsapp, buildWhatsAppOrderMessage(localMessage(null)));
+  const href = buildWhatsAppOrderLink(whatsapp, buildWhatsAppOrderMessage(localMessage(null)));
   if (!href || orderable.length === 0) return null;
 
   const onClick = async (e: MouseEvent<HTMLAnchorElement>) => {
@@ -97,7 +100,7 @@ export default function WhatsAppOrderButton({
           customer: details ?? null,
         }
       : localMessage(origin, details);
-    const link = buildWhatsAppOrderLink(profile.whatsapp, buildWhatsAppOrderMessage(message)) ?? href;
+    const link = buildWhatsAppOrderLink(whatsapp, buildWhatsAppOrderMessage(message)) ?? href;
 
     if (win && !win.closed) win.location.href = link;
     else window.location.href = link;

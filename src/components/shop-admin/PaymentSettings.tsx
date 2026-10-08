@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   apiFetch, btnCls, btnDangerCls, btnGhostCls, cardCls, errMsg, inputCls, NoAccess, Notice, type ShopAdminProps,
 } from "./common";
+import CheckoutModeSettings from "./CheckoutModeSettings";
 import ShopAdminTabs from "./ShopAdminTabs";
 
 type Status = {
@@ -153,6 +154,15 @@ function Inner(props: ShopAdminProps) {
         <div className="text-sm text-koi-ink/60">Loading…</div>
       ) : !status ? null : (
         <div className="space-y-4">
+          <CheckoutModeSettings
+            siteId={siteId}
+            paymentsReady={
+              status.mode === "platform"
+                ? status.platform.subaccount
+                : status.mode === "own_keys" && Boolean(status.ownKeys.secretLast4 && status.ownKeys.publicKey)
+            }
+          />
+
           <section className={cardCls}>
             <h2 className="mb-2 text-sm font-semibold text-koi-ink">Current setup</h2>
             <p className="text-sm text-koi-ink/80">

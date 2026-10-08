@@ -3,6 +3,7 @@ import { createElement, type ReactElement } from "react";
 import { BLOG_NAV_KEY, parseBlogPath, postsForTag, relatedPosts } from "@/lib/blog/blogPath";
 import { blogHeroPage } from "@/lib/blog/hero";
 import { sanitizePostHtml } from "@/lib/blog/sanitize";
+import type { CheckoutMode } from "@/lib/shop/checkoutMode";
 import { isPageKey } from "@/lib/pageSchema";
 import { sampleBlog } from "@/templates/sampleBlog";
 import { blogSlot } from "@/templates/shared/blog/blogSlot";
@@ -20,7 +21,12 @@ import { sampleExtraPage, sampleShop, sampleSite } from "@/templates/sampleSite"
  *   ["shop", ...]      → storefront views (shop templates only; sampleShop data)
  *   ["blog", ...]      → blog list / tag / post (sampleBlog data)
  */
-export function renderSampleTemplate(key: string, page: string[] | undefined, baseUrl: string): ReactElement | null {
+export function renderSampleTemplate(
+  key: string,
+  page: string[] | undefined,
+  baseUrl: string,
+  opts: { checkoutMode?: CheckoutMode } = {},
+): ReactElement | null {
   const Template = getTemplate(key);
   if (!Template) return null;
 
@@ -33,7 +39,9 @@ export function renderSampleTemplate(key: string, page: string[] | undefined, ba
     blog,
   };
   // Shop templates get the sample catalogue on every page (bag, "shop the looks"), like live sites.
-  const pageShop = templateSupportsShop(key) ? sampleShop(key) : undefined;
+  const shopData = templateSupportsShop(key) ? sampleShop(key) : undefined;
+  const pageShop =
+    shopData && opts.checkoutMode ? { ...shopData, settings: { ...shopData.settings, checkoutMode: opts.checkoutMode } } : shopData;
 
   if (page?.[0] === "blog") {
     const view = parseBlogPath(page.slice(1));
@@ -63,9 +71,8 @@ export function renderSampleTemplate(key: string, page: string[] | undefined, ba
   if (page?.[0] === "shop") {
     if (!templateSupportsShop(key)) return null;
     const view = parseShopPath(page.slice(1));
-    const shop = sampleShop(key);
-    if (!view || !shopViewExists(shop, view)) return null;
-    return createElement(Template, { ...props, currentPage: null, baseUrl, shop, shopView: view });
+    if (!view || !pageShop || !shopViewExists(pageShop, view)) return null;
+    return createElement(Template, { ...props, currentPage: null, baseUrl, shop: pageShop, shopView: view });
   }
 
   if (page?.[0] === "p" && page[1]) {

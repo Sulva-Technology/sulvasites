@@ -6,6 +6,7 @@ import { useMemo, useRef, useState } from "react";
 import { formatNaira } from "@/lib/shop/money";
 import type { ShopProduct } from "@/lib/shop/types";
 import { buildWhatsAppOrderLink, buildWhatsAppProductMessage } from "@/lib/shop/whatsappOrder";
+import { orderWhatsApp } from "@/lib/shop/checkoutMode";
 import { buildWhatsAppLink } from "@/templates/shared/links";
 import { shopHref, useT13 } from "../ctx";
 import { IconRuler } from "../icons";
@@ -42,6 +43,7 @@ function Description({ text }: { text: string | null }) {
 /** Product page: image stack, sticky buy panel (options, size guide, stock, bag, WhatsApp) and details. */
 export default function ProductPage({ product }: { product: ShopProduct }) {
   const { baseUrl, shop, cart, openCart, announce, profile } = useT13();
+  const orderWa = orderWhatsApp(shop?.settings, profile.whatsapp);
   const groups = useMemo(() => optionGroups(product), [product]);
   const [selected, setSelected] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
@@ -239,13 +241,13 @@ export default function ProductPage({ product }: { product: ShopProduct }) {
             <button type="button" className="t13-pill t13-pill-lg t13-add" onClick={add} aria-disabled={soldOutAll}>
               {soldOutAll ? "Sold out" : "Add to bag"}
             </button>
-            {profile.whatsapp ? (
+            {orderWa ? (
               <a
                 className="t13-pill t13-pill-glass t13-pill-lg t13-wa"
-                href={buildWhatsAppLink(profile.whatsapp)}
+                href={buildWhatsAppLink(orderWa)}
                 onClick={(e) => {
                   const href = buildWhatsAppOrderLink(
-                    profile.whatsapp,
+                    orderWa,
                     buildWhatsAppProductMessage({
                       businessName: profile.business_name,
                       productName: product.name,

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { formatNaira } from "@/lib/shop/money";
+import { cardCheckoutOpen } from "@/lib/shop/checkoutMode";
 import type { ShopProduct } from "@/lib/shop/types";
 import { buildWhatsAppLink } from "@/templates/shared/links";
 import { cityOf, shopHref, useT14 } from "../ctx";
@@ -408,7 +409,7 @@ export default function ProductPage({ product }: { product: ShopProduct }) {
 
         <ul className="t14-pdp-trust" aria-label="Why shop here">
           <li>
-            <IconLock size={16} /> Secure Paystack checkout
+            <IconLock size={16} /> {shop && !cardCheckoutOpen(shop.settings.checkoutMode) ? "Order on WhatsApp" : "Secure Paystack checkout"}
           </li>
           {pickup ? (
             <li>

@@ -11,10 +11,12 @@ import {
   parseCustomerPhone,
 } from "@/lib/shop/checkoutInput";
 import { formatNaira } from "@/lib/shop/money";
+import { cardCheckoutOpen, orderWhatsApp } from "@/lib/shop/checkoutMode";
 import { shopHref, useT7 } from "../ctx";
 import { IconArrow, IconBag } from "../icons";
 import CartLines, { type LineProblem } from "./CartLines";
 import { useBag } from "./useBag";
+import WhatsAppOrderButton from "./WhatsAppOrderButton";
 
 type Field = "name" | "email" | "phone" | "address" | "notes";
 type Errors = Partial<Record<Field, string>>;
@@ -34,7 +36,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 /** Guest checkout: contact, delivery or pickup, then Paystack. Validation mirrors the server's rules. */
 export default function CheckoutPage() {
-  const { baseUrl, shop, cart } = useT7();
+  const { baseUrl, shop, cart, profile } = useT7();
   const { rows, subtotal, blocked, ready } = useBag();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -50,6 +52,15 @@ export default function CheckoutPage() {
   const effective = pickup ? method : "delivery";
   const fee = effective === "delivery" ? shop.settings.deliveryFeeKobo : 0;
   const total = subtotal + fee;
+  // WhatsApp-only shops (checkout mode 'whatsapp') have no Paystack step: the form's details ride along in the chat.
+  const card = cardCheckoutOpen(shop.settings.checkoutMode);
+  const canWhatsApp = orderWhatsApp(shop.settings, profile.whatsapp) !== null;
+
+  const formDetails = () => {
+    const data = formRef.current ? new FormData(formRef.current) : null;
+    const get = (k: string) => String(data?.get(k) ?? "");
+    return { name: get("name"), phone: get("phone"), email: get("email"), address: get("address"), notes: get("notes") };
+  };
 
   const focusFirst = (errs: Errors) => {
     const order: Field[] = ["name", "email", "phone", "address", "notes"];
@@ -59,7 +70,7 @@ export default function CheckoutPage() {
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (busy) return;
+    if (busy || !card) return;
     setFormError(null);
     setProblems({});
     const data = new FormData(e.currentTarget);
@@ -280,12 +291,28 @@ export default function CheckoutPage() {
               </div>
             ) : null}
 
-            <button type="submit" className="t7-btn t7-btn-block t7-btn-lg" disabled={busy}>
-              {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : `Pay ${formatNaira(total)}`}
-              {!busy ? <IconArrow size={18} /> : null}
-            </button>
+            {card ? (
+              <button type="submit" className="t7-btn t7-btn-block t7-btn-lg" disabled={busy}>
+                {redirecting ? "Taking you to Paystack" : busy ? "Please wait" : `Pay ${formatNaira(total)}`}
+                {!busy ? <IconArrow size={18} /> : null}
+              </button>
+            ) : null}
+            <WhatsAppOrderButton
+              rows={rows}
+              label={card ? "Finish on WhatsApp instead" : "Send order on WhatsApp"}
+              className={card ? undefined : "t7-btn t7-btn-block t7-btn-lg t7-wa"}
+              deliveryMethod={effective}
+              deliveryKobo={fee}
+              getDetails={formDetails}
+            />
             <p className="t7-fine t7-center" role="status">
-              {redirecting ? "Redirecting to Paystack to complete your payment." : "You will pay securely on Paystack's page."}
+              {!card
+                ? canWhatsApp
+                  ? "Send your order on WhatsApp. We confirm it and how to pay in the chat."
+                  : "Online ordering is paused right now. Please call us to order."
+                : redirecting
+                  ? "Redirecting to Paystack to complete your payment."
+                  : "You will pay securely on Paystack's page."}
             </p>
           </form>
 

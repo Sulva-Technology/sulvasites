@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PricedProduct, PricedVariant } from "./pricing";
+import { parseCheckoutMode, type CheckoutMode } from "./checkoutMode";
 
 export type CheckoutSite = { id: string; slug: string };
 export type CheckoutSettings = {
   delivery_fee_kobo: number;
   pickup_enabled: boolean;
   platform_fee_bps: number;
+  checkout_mode: CheckoutMode;
 };
 
 function num(v: unknown): number | null {
@@ -28,11 +30,20 @@ export async function loadCheckoutContext(
   if (error) throw new Error("Could not load site");
   if (!site || site.status !== "published") return null;
 
-  const { data: s, error: sErr } = await db
+  const base = "enabled, delivery_fee_kobo, pickup_enabled, platform_fee_bps";
+  let { data: s, error: sErr } = await db
     .from("shop_settings")
-    .select("enabled, delivery_fee_kobo, pickup_enabled, platform_fee_bps")
+    .select(`${base}, checkout_mode`)
     .eq("site_id", siteId)
-    .maybeSingle();
+    .maybeSingle<Record<string, unknown>>();
+  // Before migration 018 runs checkout_mode doesn't exist; fall back to the default mode.
+  if (sErr?.code === "42703") {
+    ({ data: s, error: sErr } = await db
+      .from("shop_settings")
+      .select(base)
+      .eq("site_id", siteId)
+      .maybeSingle<Record<string, unknown>>());
+  }
   if (sErr) throw new Error("Could not load shop settings");
   if (!s || s.enabled !== true) return null;
 
@@ -42,6 +53,7 @@ export async function loadCheckoutContext(
       delivery_fee_kobo: num(s.delivery_fee_kobo) ?? 0,
       pickup_enabled: s.pickup_enabled === true,
       platform_fee_bps: num(s.platform_fee_bps) ?? 0,
+      checkout_mode: parseCheckoutMode(s.checkout_mode),
     },
   };
 }

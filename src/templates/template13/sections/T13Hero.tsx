@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 
 import EditableText from "@/components/inline-editor/EditableText";
+import { cardCheckoutOpen } from "@/lib/shop/checkoutMode";
 import type { HeroSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
@@ -242,7 +243,7 @@ export default function T13Hero({
         ) : showCta ? (
           <div className="t13-actions">{cta("t13-pill t13-pill-white t13-pill-lg")}</div>
         ) : null}
-        {shop ? <p className="t13-hero-micro">Secure checkout with Paystack{shop.settings.pickupEnabled ? " · Pickup available" : ""}</p> : null}
+        {shop ? <p className="t13-hero-micro">{cardCheckoutOpen(shop.settings.checkoutMode) ? "Secure checkout with Paystack" : "Order on WhatsApp"}{shop.settings.pickupEnabled ? " · Pickup available" : ""}</p> : null}
         {shop ? (
           <a className="t13-hero-link" href="#t13-new-in">
             Explore what’s new

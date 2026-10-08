@@ -1579,7 +1579,7 @@ function fashionShop(): ShopData {
   return {
     siteId: "sample",
     currency: "NGN",
-    settings: { deliveryFeeKobo: 250000, pickupEnabled: true, pickupNote: "Collect from the studio, Mon–Sat 10:00–18:00." },
+    settings: { deliveryFeeKobo: 250000, pickupEnabled: true, pickupNote: "Collect from the studio, Mon–Sat 10:00–18:00.", checkoutMode: "card_and_whatsapp", whatsappNumber: null },
     categories: cats,
     products,
   };
@@ -1777,7 +1777,7 @@ function storeShop(): ShopData {
   return {
     siteId: "sample",
     currency: "NGN",
-    settings: { deliveryFeeKobo: 200000, pickupEnabled: true, pickupNote: "Collect from the store, Mon–Sat 09:00–19:00." },
+    settings: { deliveryFeeKobo: 200000, pickupEnabled: true, pickupNote: "Collect from the store, Mon–Sat 09:00–19:00.", checkoutMode: "card_and_whatsapp", whatsappNumber: null },
     categories: cats,
     products,
   };
@@ -2346,7 +2346,7 @@ function restaurantShop(): ShopData {
   return {
     siteId: "sample",
     currency: "NGN",
-    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Collect from the front desk, 14 Akin Adesola Street." },
+    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Collect from the front desk, 14 Akin Adesola Street.", checkoutMode: "card_and_whatsapp", whatsappNumber: null },
     categories: cats,
     products: [
       dish(0, "mixed-grill-platter", "Mixed grill platter", "c-grill", 24000, true,
@@ -2400,7 +2400,7 @@ function emptyShop(): ShopData {
   return {
     siteId: "sample",
     currency: "NGN",
-    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Pick up from our store, Mon-Sat 9am-5pm." },
+    settings: { deliveryFeeKobo: 150000, pickupEnabled: true, pickupNote: "Pick up from our store, Mon-Sat 9am-5pm.", checkoutMode: "card_and_whatsapp", whatsappNumber: null },
     categories: [],
     products: [],
   };

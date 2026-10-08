@@ -33,6 +33,7 @@ function Inner(props: ShopAdminProps) {
   const [pay, setPay] = useState<PaymentStatus | null>(null);
   const [payErr, setPayErr] = useState(false);
   const [counts, setCounts] = useState<{ products: number; paid: number } | null>(null);
+  const [whatsappOnly, setWhatsappOnly] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -51,11 +52,14 @@ function Inner(props: ShopAdminProps) {
           pickup_note: data.pickup_note ?? "",
         });
       }
-      const [p, o] = await Promise.all([
+      const [p, o, m] = await Promise.all([
         db.from("products").select("id", { count: "exact", head: true }).eq("site_id", siteId),
         db.from("orders").select("id", { count: "exact", head: true }).eq("site_id", siteId).eq("status", "paid"),
+        // Errors (e.g. migration 018 not run yet) just mean the default mode.
+        db.from("shop_settings").select("checkout_mode").eq("site_id", siteId).maybeSingle(),
       ]);
       setCounts({ products: p.count ?? 0, paid: o.count ?? 0 });
+      setWhatsappOnly(!m.error && m.data?.checkout_mode === "whatsapp");
       if (role === "admin" || role === "owner") {
         const res = await apiFetch<PaymentStatus>(`/api/admin/sites/${encodeURIComponent(siteId)}/shop/payment`);
         if (res.ok) setPay(res.data);
@@ -190,7 +194,8 @@ function Inner(props: ShopAdminProps) {
                 {pay.mode === "own_keys" && pay.ownKeys.secretLast4 ? (
                   <div>Secret key saved (ending {pay.ownKeys.secretLast4})</div>
                 ) : null}
-                {s.enabled && !payReady ? (
+                {whatsappOnly ? <div>Customers order on WhatsApp only.</div> : null}
+                {s.enabled && !payReady && !whatsappOnly ? (
                   <Notice kind="warn">The shop is enabled but payments are not set up, so customers cannot check out.</Notice>
                 ) : null}
               </div>

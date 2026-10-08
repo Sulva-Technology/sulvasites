@@ -23,11 +23,20 @@ export const loadPublicShop = cache(async (siteId: string): Promise<ShopData | n
   try {
     const db = anonClient();
 
-    const { data: settings, error: sErr } = await db
+    const base = "enabled, delivery_fee_kobo, pickup_enabled, pickup_note";
+    let { data: settings, error: sErr } = await db
       .from("shop_settings")
-      .select("enabled, delivery_fee_kobo, pickup_enabled, pickup_note")
+      .select(`${base}, checkout_mode, whatsapp_orders_number`)
       .eq("site_id", siteId)
-      .maybeSingle();
+      .maybeSingle<Record<string, unknown>>();
+    // Before migration 018 runs the new columns don't exist; fall back so shops stay up.
+    if (sErr?.code === "42703") {
+      ({ data: settings, error: sErr } = await db
+        .from("shop_settings")
+        .select(base)
+        .eq("site_id", siteId)
+        .maybeSingle<Record<string, unknown>>());
+    }
     if (sErr || !settings || settings.enabled !== true) return null;
 
     const [cats, prods, vars] = await Promise.all([
@@ -49,7 +58,7 @@ export const loadPublicShop = cache(async (siteId: string): Promise<ShopData | n
 
     return mapShopRows({
       siteId,
-      settings: settings as Record<string, unknown>,
+      settings,
       categories: (cats.data ?? []) as Record<string, unknown>[],
       products: (prods.data ?? []) as Record<string, unknown>[],
       variants: (vars.data ?? []) as Record<string, unknown>[],

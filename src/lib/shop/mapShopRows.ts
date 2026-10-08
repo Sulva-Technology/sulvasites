@@ -1,5 +1,6 @@
 /** Pure mapping of public shop DB rows to ShopData. Relative imports only (unit-tested). */
 import type { ShopCategory, ShopData, ShopImage, ShopProduct, ShopVariant } from "./types.ts";
+import { parseCheckoutMode } from "./checkoutMode.ts";
 
 type Row = Record<string, unknown>;
 
@@ -92,6 +93,8 @@ export function mapShopRows(input: {
       deliveryFeeKobo: int(s.delivery_fee_kobo) ?? 0,
       pickupEnabled: s.pickup_enabled === true,
       pickupNote: str(s.pickup_note),
+      checkoutMode: parseCheckoutMode(s.checkout_mode),
+      whatsappNumber: str(s.whatsapp_orders_number),
     },
     categories: categories.sort((a, b) => a.position - b.position),
     products: products.sort((a, b) => a.position - b.position),
