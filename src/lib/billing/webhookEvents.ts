@@ -59,6 +59,20 @@ export function isBillingWebhook(event: unknown): boolean {
   return false;
 }
 
+/**
+ * Per-invoice id for invoice.* events: the Paystack invoice code, else the subscription code plus the first
+ * per-invoice field present. Null when the payload names none, so the event is ignored instead of deduped
+ * against every other invoice of the same subscription.
+ */
+function invoiceId(code: string, data: Obj): string | null {
+  const invoiceCode = str(data.invoice_code);
+  if (invoiceCode) return invoiceCode;
+  const id = num(data.id) ?? str(data.id);
+  const extra =
+    str(data.period_end) ?? (id === null ? null : String(id)) ?? str(data.paid_at) ?? str(data.created_at);
+  return extra ? `${code}:${extra}` : null;
+}
+
 export function parseBillingEvent(event: unknown): BillingEvent {
   const e = obj(event);
   const name = str(e?.event);
@@ -88,11 +102,10 @@ export function parseBillingEvent(event: unknown): BillingEvent {
   const sub = name.startsWith("invoice.") ? obj(data.subscription) : data;
   const code = str(sub?.subscription_code);
   if (!code) return { kind: "ignore" };
-  const invoice = str(data.invoice_code) ?? `${code}:${str(data.period_end) ?? ""}`;
-
   switch (name) {
-    case "invoice.update":
-      if (!(data.paid === true || data.status === "success")) return { kind: "ignore" };
+    case "invoice.update": {
+      const invoice = invoiceId(code, data);
+      if (!invoice || !(data.paid === true || data.status === "success")) return { kind: "ignore" };
       return {
         kind: "invoice_paid",
         key: `invoice:${invoice}`,
@@ -100,8 +113,12 @@ export function parseBillingEvent(event: unknown): BillingEvent {
         nextPaymentDate: str(sub?.next_payment_date),
         amountKobo: num(data.amount) ?? 0,
       };
-    case "invoice.payment_failed":
+    }
+    case "invoice.payment_failed": {
+      const invoice = invoiceId(code, data);
+      if (!invoice) return { kind: "ignore" };
       return { kind: "payment_failed", key: `failed:${invoice}`, subscriptionCode: code };
+    }
     case "subscription.not_renew":
       return { kind: "not_renew", key: `not_renew:${code}`, subscriptionCode: code };
     case "subscription.disable":

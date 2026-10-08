@@ -63,3 +63,12 @@ test("paid period starts after trial or paid time", () => {
   assert.equal(subscriptionStartDate(now, "2026-11-01T00:00:00Z", null, "monthly").toISOString(), "2026-12-10T00:00:00.000Z");
   assert.equal(subscriptionStartDate(now, null, "2026-11-30T00:00:00Z", "monthly").toISOString(), "2026-12-30T00:00:00.000Z");
 });
+
+test("invoice keys stay unique without invoice_code or period_end", () => {
+  assert.deepEqual(
+    parseBillingEvent({ event: "invoice.update", data: { paid: true, id: 991, amount: 700000, subscription: { subscription_code: "SUB_1" } } }),
+    { kind: "invoice_paid", key: "invoice:SUB_1:991", subscriptionCode: "SUB_1", nextPaymentDate: null, amountKobo: 700000 },
+  );
+  assert.equal(parseBillingEvent({ event: "invoice.payment_failed", data: { subscription: { subscription_code: "SUB_1" } } }).kind, "ignore");
+  assert.equal(parseBillingEvent({ event: "invoice.update", data: { status: "success", id: 992, subscription: { subscription_code: "SUB_1" } } }).kind, "invoice_paid");
+});
