@@ -33,7 +33,10 @@ export default function AdminLeadsPage() {
   async function update(id: string, patch: Partial<Pick<Lead, "status" | "admin_notes">>) {
     const r = await apiFetch("/api/admin/leads", { method: "PATCH", body: JSON.stringify({ id, ...patch }) });
     if (!r.ok) setError(r.data.error ?? "Update failed.");
-    else setVersion((v) => v + 1);
+    else {
+      setError(null);
+      setVersion((v) => v + 1);
+    }
   }
 
   return (

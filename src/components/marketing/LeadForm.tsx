@@ -17,7 +17,14 @@ export default function LeadForm({ template, plan }: { template?: string; plan?:
     setError(null);
     setState("sending");
     const body = Object.fromEntries(new FormData(e.currentTarget).entries());
-    const res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    let res: Response;
+    try {
+      res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    } catch {
+      setError("Network problem. Please try again or use WhatsApp.");
+      setState("idle");
+      return;
+    }
     const data = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
       setError(data.error ?? "Something went wrong.");

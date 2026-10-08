@@ -27,6 +27,7 @@ export async function PATCH(req: Request) {
     patch.status = body.status;
   }
   if (typeof body.admin_notes === "string") patch.admin_notes = body.admin_notes.slice(0, 4000);
+  if (Object.keys(patch).length === 0) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   const { error } = await supabaseService().from("leads").update(patch).eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
