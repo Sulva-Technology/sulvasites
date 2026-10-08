@@ -1,3 +1,4 @@
+import { getSiteBillingState } from "@/lib/billing/siteState.server";
 import { loadPublicSite, type SiteLookup } from "@/lib/publicSite.server";
 
 import { buildRssFeed } from "./feed";
@@ -8,6 +9,10 @@ export async function blogFeedResponse(lookup: SiteLookup, value: string): Promi
   const ctx = await loadPublicSite(lookup, value);
   const blog = ctx ? await loadPublicBlog(ctx.siteData.site.id, ctx.siteData.site.template_key) : null;
   if (!ctx || !blog || !ctx.canonicalHost) return new Response("Not found", { status: 404 });
+  // Paused sites serve nothing, feed included (route handlers are not wrapped by the site layouts).
+  if (!(await getSiteBillingState(ctx.siteData.site.id)).live) {
+    return new Response("Not found", { status: 404, headers: { "cache-control": "no-store" } });
+  }
   const { profile } = ctx.siteData;
   const xml = buildRssFeed({
     siteName: `${profile.business_name} ${blog.label}`,
