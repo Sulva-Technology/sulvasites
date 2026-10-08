@@ -7,6 +7,7 @@ import SiteAssistant from "@/components/admin/SiteAssistant";
 import { createPresetPages } from "@/lib/extraPages";
 import { TEMPLATE_META, templateLabel } from "@/templates/meta";
 import { slugify } from "@/lib/slugify";
+import { safeSlug } from "@/lib/reservedSlugs";
 import { formatSupabaseError } from "@/lib/supabase/formatError";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { useShellHero } from "@/components/ui/AppShell";
@@ -34,7 +35,7 @@ function ManualSetup({ initialTemplate }: { initialTemplate: string | null }) {
     e.preventDefault();
     setError(null);
 
-    const finalSlug = slugify(slug);
+    const finalSlug = safeSlug(slug, "");
     if (!finalSlug) {
       setError("Please enter a business name (or a valid slug).");
       return;
@@ -110,7 +111,7 @@ function ManualSetup({ initialTemplate }: { initialTemplate: string | null }) {
           hint={
             <>
               Preview URL:{" "}
-              <span className="font-mono">https://{slugify(slug) || "your-slug"}.soothecontrols.site</span>
+              <span className="font-mono">https://{safeSlug(slug, "your-slug")}.soothecontrols.site</span>
             </>
           }
         />
