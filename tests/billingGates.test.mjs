@@ -13,6 +13,7 @@ const sub = (over = {}) => ({
 test("shop gate", () => {
   assert.equal(shopGateMessage(null, "card", NOW), null);
   assert.equal(shopGateMessage(sub({ status: "manual", tier: "starter" }), "card", NOW), null);
+  assert.match(shopGateMessage(sub({ status: "manual", tier: "starter", blocked: true }), "card", NOW), /isn't taking orders/);
   assert.equal(shopGateMessage(sub(), "card", NOW), null);
   assert.match(shopGateMessage(sub({ status: "paused" }), "whatsapp", NOW), /isn't taking orders/);
   assert.match(shopGateMessage(sub({ tier: "business" }), "whatsapp", NOW), /isn't included/);

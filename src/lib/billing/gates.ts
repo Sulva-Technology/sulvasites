@@ -5,8 +5,9 @@ import { isLive, type SubSnapshot } from "./subscriptionState.ts";
 
 /** Why a shop order must be refused, or null to allow it. `null` sub = no plan limits. */
 export function shopGateMessage(sub: SubSnapshot | null, kind: "card" | "whatsapp", now: number): string | null {
-  if (!sub || sub.status === "manual") return null;
+  if (!sub) return null;
   if (!isLive(sub, now)) return "This shop isn't taking orders right now.";
+  if (sub.status === "manual") return null;
   const f = featuresForSite(sub);
   if (f && !f.shop) return "Online ordering isn't included in this site's plan.";
   if (kind === "card" && sub.status === "trialing") {
