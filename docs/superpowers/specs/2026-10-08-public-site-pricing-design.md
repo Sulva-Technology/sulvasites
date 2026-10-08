@@ -77,7 +77,7 @@ subdomains and custom domains are unaffected (`hostRouting.ts` already returns n
 | `/signup` | Trial wizard (section 2). |
 | `/start` | Done-for-you brief: name, business, category, template (optional), plan, WhatsApp, email, wants domain (optional desired name), notes → `leads` row + Resend email to Sulvatech; success screen with "Chat on WhatsApp" button. |
 
-Components live in `src/components/marketing/`. Each page sets metadata + OG image. The platform domain
+Components live in `src/components/marketing/`; pages wrap themselves in a `MarketingShell` component (no route group, so `/templates` and `/templates/[key]` can coexist). Each page sets metadata + OG image. The platform domain
 serves `sitemap.xml` / `robots.txt` listing the marketing routes and template demos.
 
 ### Reserved slugs
@@ -107,7 +107,7 @@ Then a **build screen** calls `POST /api/signup/build` (service role):
 2. Creates the site (reserved-slug aware), an owner `site_members` row and a `site_subscriptions` row
    (`trialing`, `trial_ends_at = now + 7 days`, chosen plan).
 3. Builds content: step-1 answers → `Brief` → `siteBuilder` → same persistence as `createSiteFromBuild`
-   (refactored into a server-usable function that takes a Supabase client). On AI failure or timeout (25s),
+   (new server function `persistTrialSite` in `src/lib/signup/` taking the service client; the admin `createSiteFromBuild` stays unchanged). On AI failure or timeout (25s),
    uses the template's sample content with business name, city, WhatsApp and email swapped in.
 4. Publishes the site and returns `{ siteId, slug }`. The client redirects to `/dashboard/<siteId>`, where the
    existing onscreen tour starts. Live URL: `<slug>.<platform>`.
@@ -154,7 +154,7 @@ Enforcement itself is lazy: public rendering and API gates read the subscription
 | 0 | Welcome email + dashboard link |
 | 5 | "2 days left — add a card to keep your site live" email + dashboard banner |
 | 7 | `trialing` → `paused`. Public site shows a friendly "temporarily unavailable" page; dashboard still opens with a pay wall. |
-| 21 | "Your site will be archived in 9 days" email |
+| 28 | "Your site will be archived in 9 days" email |
 | 37 | Site archived (existing soft archive). Admin can restore. |
 
 ## 3. Billing (Paystack Subscriptions)
@@ -200,8 +200,8 @@ by admins.
 
 ### Owner Billing tab (`/dashboard/<siteId>/billing`)
 
-Current plan and price, next charge date, change plan (upgrade: charge new full period now, unused days added
-to the new start date; downgrade: takes effect at period end), update card (Paystack `subscription/:code/manage/link`),
+Current plan and price, next charge date, change plan (any change: pay the new plan now; the new subscription
+starts at max(now, trial end, current period end) so no paid days are lost), update card (Paystack `subscription/:code/manage/link`),
 cancel (→ `cancelling`), payment history from `billing_events`, domain add-on request.
 
 ### Done for you
