@@ -55,3 +55,23 @@ After DNS propagates (can take up to 48 hours, usually much faster):
 The middleware automatically routes:
 - `<slug>.soothecontrols.soothetechnologies.com` → `/<slug>`
 - Custom domains (added in admin) → `/d/<hostname>`
+
+## Client custom domains (automatic)
+
+Admin → site → **Domains** → "Add domain" registers the hostname on the Vercel project
+(plus `www.` as a 308 redirect for an apex), shows the DNS records the client must add, and
+flips the domain to **Active** once Vercel reports it verified and correctly pointed
+("Check DNS", also run automatically for pending domains when the page loads).
+"Remove" detaches it from Vercel and deletes the row.
+
+Server env vars (Vercel → Settings → Environment Variables, Production):
+
+| Name | Value |
+| --- | --- |
+| `VERCEL_API_TOKEN` | Token from vercel.com/account/tokens, scoped to the team |
+| `VERCEL_PROJECT_ID` | The project's ID (Settings → General), e.g. `prj_…` |
+| `VERCEL_TEAM_ID` | Team ID (Team Settings → General), e.g. `team_…` |
+
+Without them the Domains section falls back to manual mode: add the domain in Vercel by
+hand, then press **Mark Active**. Code: `src/lib/vercelDomains.ts`,
+`src/lib/customDomains.server.ts`, `src/app/api/admin/sites/[siteId]/domains/route.ts`.
