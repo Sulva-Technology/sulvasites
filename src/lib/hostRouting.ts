@@ -22,6 +22,7 @@ export function isBypassPath(pathname: string) {
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/no-access") ||
     pathname.startsWith("/d/") ||
+    pathname.startsWith("/brand/") ||
     pathname === "/favicon.ico" ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml"

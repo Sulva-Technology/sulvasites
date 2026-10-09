@@ -1,3 +1,5 @@
+import { SULVA_MARK_PATH } from "@/components/ui/Logo";
+
 const PLATFORM = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "sulvasites.sulvatech.com";
 
 /** Shown on Starter and trial sites. Inline styles so template CSS can't hide or restyle it. */
@@ -14,6 +16,9 @@ export default function SulvaBadge() {
         boxShadow: "0 6px 20px -8px rgba(0,0,0,.45)",
       }}
     >
+      <svg viewBox="0 0 274 329" width="10" height="12" fill="currentColor" aria-hidden="true">
+        <path d={SULVA_MARK_PATH} />
+      </svg>
       Built with <strong style={{ fontWeight: 650 }}>Sulva Sites</strong>
     </a>
   );

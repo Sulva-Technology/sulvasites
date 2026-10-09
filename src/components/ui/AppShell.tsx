@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 
 import { GlassNav } from "./GlassNav";
 import type { NavLink } from "./GlassNav";
+import { SulvaMark } from "./Logo";
 import { WaterBackdrop } from "./WaterBackdrop";
 
 type SetHero = (node: ReactNode) => void;
@@ -39,9 +40,7 @@ function Brand({ label, href }: { label: string; href: string }) {
       href={href}
       className="flex items-center gap-2 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
     >
-      <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-white">
-        <span className="h-2.5 w-2.5 rounded-full bg-koi-orange" />
-      </span>
+      <SulvaMark className="h-6 w-auto" />
       <span className="whitespace-nowrap">{label}</span>
     </Link>
   );

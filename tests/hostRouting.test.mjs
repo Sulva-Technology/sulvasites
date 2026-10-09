@@ -37,7 +37,7 @@ test("shop paths rewrite like any other path (subdomain and custom domain)", () 
 });
 
 test("bypass paths untouched on any host", () => {
-  for (const path of ["/api/ai/generate-site", "/admin", "/login", "/_next/x", "/d/x.com", "/favicon.ico"]) {
+  for (const path of ["/api/ai/generate-site", "/admin", "/login", "/_next/x", "/d/x.com", "/favicon.ico", "/brand/sulva-icon.svg"]) {
     assert.equal(rewritePathForHost("client.com", path, P), null, path);
   }
 });

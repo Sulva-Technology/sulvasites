@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { Logo } from "@/components/ui/Logo";
 import { isPromoActive, promoEndLabel } from "@/lib/marketing/pricing";
 
 const NAV = [
@@ -8,14 +9,6 @@ const NAV = [
   { href: "/pricing", label: "Pricing" },
   { href: "/start", label: "Have us build it" },
 ];
-
-export function Wordmark() {
-  return (
-    <span className="text-lg font-semibold tracking-tight">
-      Sulva <span className="font-serif text-xl italic text-koi-deep">Sites</span>
-    </span>
-  );
-}
 
 export default function MarketingShell({ children }: { children: ReactNode }) {
   const promo = isPromoActive();
@@ -32,7 +25,7 @@ export default function MarketingShell({ children }: { children: ReactNode }) {
         style={{ backdropFilter: "blur(14px)" }}
       >
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
-          <Link href="/" aria-label="Sulva Sites home"><Wordmark /></Link>
+          <Link href="/" aria-label="Sulva Sites home"><Logo /></Link>
           <nav className="order-last flex w-full gap-5 overflow-x-auto text-sm text-koi-ink/80 sm:order-none sm:w-auto">
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="whitespace-nowrap hover:text-koi-deep">{n.label}</Link>
@@ -50,7 +43,7 @@ export default function MarketingShell({ children }: { children: ReactNode }) {
       <footer className="mt-24 border-t border-koi-ink/10">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
           <div>
-            <Wordmark />
+            <Logo />
             <p className="mt-3 max-w-xs text-sm text-koi-ink/70">Websites for Nigerian businesses, by Sulvatech.</p>
           </div>
           <div className="flex flex-col gap-2 text-sm">
