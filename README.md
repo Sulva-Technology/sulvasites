@@ -149,15 +149,15 @@ drafts; existing sites can add them from the site's *Extra pages* panel. Publish
 
 Spec: `docs/superpowers/specs/2026-10-08-public-site-pricing-design.md`.
 
-**Prices** live in `src/lib/marketing/pricing.ts` (naira). Change them there, then re-run the plan script.
+**Prices** live in `src/lib/marketing/pricing.ts` (naira). Change them there, then re-run the plan script. The plan script refuses a Paystack plan whose amount changed, so first rename (or archive) the old plan in the Paystack dashboard, then re-run the script to create the new-priced plan.
 
 **Setup (once per environment)**
-1. Before running the migration, check no existing site uses a reserved slug: `select slug from sites where slug in ('about','admin','api','blog','change-password','contact','d','dashboard','dev','forgot-password','help','login','no-access','pricing','privacy','signup','start','templates','terms','www');` — rename any it returns.
+1. Before running the migration, check no existing site uses a reserved slug: `select slug from sites where slug in ('about','admin','api','blog','change-password','contact','d','dashboard','dev','forgot-password','help','login','no-access','pricing','privacy','signup','start','templates','terms','www');` — if it returns any, agree a new address with that site's owner first — renaming changes the live URL, and the new constraint blocks edits to sites that keep a reserved slug.
 2. Run `supabase/migrations/019_billing.sql` in the Supabase SQL editor.
 3. Supabase → Authentication → Email Templates → Confirm signup: add `Your code: {{ .Token }}`.
-4. Env vars: `CRON_SECRET`, `SIGNUP_SECRET` (any long random strings), `SALES_NOTIFY_EMAIL`, optional `NEXT_PUBLIC_SALES_WHATSAPP` (digits, e.g. 2348012345678). Existing: `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `RESEND_FROM`.
+4. Env vars: `CRON_SECRET`, `SIGNUP_SECRET` (any long random strings), `SALES_NOTIFY_EMAIL`, optional `NEXT_PUBLIC_SALES_WHATSAPP` (digits, e.g. 2348012345678). Existing: `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `RESEND_FROM`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (the plan script needs the last two).
 5. Create Paystack plans: `node --env-file=.env.local --experimental-strip-types --no-warnings scripts/paystack-plans.mjs`.
-   Plan codes differ between test and live mode: run it again with the live key when going live.
+   The script needs Node 22.6+ (for `--experimental-strip-types`). It writes plan codes into whichever Supabase project the env points at. Plan codes differ between test and live mode: run it again with the live key when going live, and only against the production Supabase project (test plan codes there get replaced).
 6. Paystack dashboard → Settings → API Keys & Webhooks: webhook URL `https://<platform domain>/api/paystack/webhook` (shared by shop and billing).
 
 **Going live checklist:** Terms and refund policy pages exist (Paystack asks during activation), live key set, plan script re-run with the live key, test-mode end-to-end passed.
