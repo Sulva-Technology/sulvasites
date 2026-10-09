@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { normalizePhoneNg } from "@/lib/billing/identity";
 import {
@@ -20,12 +20,50 @@ type Saved = { step: Step; answers: SignupAnswers; templateKey: string; tier: Ti
 const STORAGE_KEY = "sv-signup";
 const LABELS = ["Your business", "Pick a look", "Pick a plan", "Your account", "Building"];
 const BUILD_MESSAGES = ["Setting up your site…", "Writing your pages…", "Choosing photos…", "Publishing…"];
+const BLANK_ANSWERS: SignupAnswers = { businessName: "", whatTheyDo: "", city: "", whatsapp: "", sellOnline: false };
 const input = "w-full rounded-2xl bg-white px-4 py-3 ring-1 ring-koi-ink/10 focus:outline-none focus:ring-2 focus:ring-koi-deep";
 
+type Params = { get(name: string): string | null };
+
+/** Explicit URL params (template, plan, interval) only override fields they validly set. */
+function fromParams(params: Params): Partial<Saved> {
+  const template = params.get("template");
+  const plan = params.get("plan");
+  const interval = params.get("interval");
+  const out: Partial<Saved> = {};
+  if (template && TEMPLATE_META.some((t) => t.key === template)) out.templateKey = template;
+  if (isTier(plan)) out.tier = plan;
+  if (isInterval(interval)) out.interval = interval;
+  return out;
+}
+
+function blankState(params: Params): Saved {
+  return { step: 1, answers: { ...BLANK_ANSWERS }, templateKey: "", tier: "business", interval: "monthly", ...fromParams(params) };
+}
+
+/** Read stored progress, validating the shape. A saved build step comes back as the plan step (never auto-rebuild). */
 function load(): Saved | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Saved) : null;
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<Saved> | null;
+    if (!v || typeof v !== "object" || !v.answers || typeof v.answers !== "object") return null;
+    const a = v.answers as Partial<SignupAnswers>;
+    const str = (x: unknown) => (typeof x === "string" ? x : "");
+    const step = typeof v.step === "number" && v.step >= 1 && v.step <= 5 ? Math.floor(v.step) : 1;
+    return {
+      step: (step === 5 ? 3 : step) as Step,
+      answers: {
+        businessName: str(a.businessName),
+        whatTheyDo: str(a.whatTheyDo),
+        city: str(a.city),
+        whatsapp: str(a.whatsapp),
+        sellOnline: a.sellOnline === true,
+      },
+      templateKey: typeof v.templateKey === "string" && TEMPLATE_META.some((t) => t.key === v.templateKey) ? v.templateKey : "",
+      tier: isTier(v.tier) ? v.tier : "business",
+      interval: isInterval(v.interval) ? v.interval : "monthly",
+    };
   } catch {
     return null;
   }
@@ -41,13 +79,8 @@ function save(s: Saved) {
 export default function SignupWizard() {
   const router = useRouter();
   const params = useSearchParams();
-  const [s, setS] = useState<Saved>(() => ({
-    step: 1,
-    answers: { businessName: "", whatTheyDo: "", city: "", whatsapp: "", sellOnline: false },
-    templateKey: TEMPLATE_META.some((t) => t.key === params.get("template")) ? params.get("template")! : "",
-    tier: isTier(params.get("plan")) ? (params.get("plan") as Tier) : "business",
-    interval: isInterval(params.get("interval")) ? (params.get("interval") as Interval) : "monthly",
-  }));
+  const [s, setS] = useState<Saved>(() => blankState(params));
+  const paramsRef = useRef(params);
   const [hasSession, setHasSession] = useState(false);
   const [restored, setRestored] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +92,7 @@ export default function SignupWizard() {
     void Promise.resolve().then(() => {
       if (!live) return;
       const saved = load();
-      if (saved && saved.step < 5) setS(saved);
+      if (saved) setS({ ...saved, ...fromParams(paramsRef.current) });
       setRestored(true);
     });
     void supabaseBrowser().auth.getSession().then(({ data }) => {
@@ -94,7 +127,7 @@ export default function SignupWizard() {
         {s.step === 5 ? (
           <BuildStep
             s={s}
-            onError={(msg) => { setError(msg); }}
+            onError={setError}
             onDone={(siteId) => {
               try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
               router.push(`/dashboard/${siteId}?welcome=1`);
@@ -289,7 +322,7 @@ function AccountStep({ onBack, onDone, setError }: { onBack: () => void; onDone:
   );
 }
 
-function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) => void; onError: (msg: string) => void }) {
+function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) => void; onError: (msg: string | null) => void }) {
   const [msg, setMsg] = useState(0);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -299,8 +332,18 @@ function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) 
     return () => clearInterval(t);
   }, [attempt]);
 
+  // StrictMode mounts effects twice in dev: send one request per attempt, and apply its result
+  // unless the component has really unmounted.
+  const mounted = useRef(false);
+  const startedAttempt = useRef(-1);
   useEffect(() => {
-    let cancelled = false;
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (startedAttempt.current === attempt) return;
+    startedAttempt.current = attempt;
     (async () => {
       try {
         const { data } = await supabaseBrowser().auth.getSession();
@@ -311,24 +354,23 @@ function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) 
           body: JSON.stringify({ answers: s.answers, templateKey: s.templateKey, tier: s.tier, interval: s.interval }),
         });
         const body = (await res.json().catch(() => ({}))) as { siteId?: string; error?: string };
-        if (cancelled) return;
+        if (!mounted.current) return;
         if (res.ok && body.siteId) return onDone(body.siteId);
         setFailed(true);
         onError(body.error ?? "Something went wrong while building your site.");
       } catch {
-        if (cancelled) return;
+        if (!mounted.current) return;
         setFailed(true);
         onError("We couldn't reach the server. Check your connection and try again.");
       }
     })();
-    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt]);
 
   return (
     <div className="py-10 text-center">
       {failed ? (
-        <button type="button" onClick={() => { setMsg(0); setFailed(false); setAttempt((n) => n + 1); }} className="rounded-full bg-koi-deep px-6 py-3 font-medium text-white">Try again</button>
+        <button type="button" onClick={() => { setMsg(0); setFailed(false); onError(null); setAttempt((n) => n + 1); }} className="rounded-full bg-koi-deep px-6 py-3 font-medium text-white">Try again</button>
       ) : (
         <>
           <div className="mx-auto size-10 animate-spin rounded-full border-4 border-koi-deep/20 border-t-koi-deep" />
