@@ -40,6 +40,8 @@ create table if not exists public.site_subscriptions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Set when the billing cron suspended the site on archive; a payment republishes only those sites.
+alter table public.site_subscriptions add column if not exists suspended_by_billing boolean not null default false;
 create index if not exists site_subscriptions_owner_idx on public.site_subscriptions(owner_id);
 create index if not exists site_subscriptions_status_idx on public.site_subscriptions(status);
 -- At most one running trial per account (the API also enforces one unpaid site).

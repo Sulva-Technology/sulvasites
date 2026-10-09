@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { createSubscription, disableSubscription } from "@/lib/billing/paystackBilling.server";
 import { canTransition, DAY_MS, GRACE_DAYS, type SubStatus } from "@/lib/billing/subscriptionState";
-import { loadSubscription, SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
+import { loadSubscription, restoreBillingSuspension, SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
 import { addInterval, parseBillingEvent, subscriptionStartDate, type BillingEvent } from "@/lib/billing/webhookEvents";
 import type { Interval } from "@/lib/marketing/pricing";
 
@@ -139,9 +139,7 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     console.error("[billing] billing secret not saved", { siteId, error: secretErr.message });
     await flag("billing_secret_not_saved");
   }
-  if (sub?.status === "archived") {
-    await db.from("sites").update({ status: "published" }).eq("id", siteId).eq("status", "suspended");
-  }
+  await restoreBillingSuspension(db, siteId);
   // Disable the old Paystack subscription only now: the row points at the new code, so its disable webhook is ignored.
   if (oldCode && oldCode !== newCode) {
     let disabled = false;
@@ -206,6 +204,11 @@ export async function applySubscriptionEvent(db: SupabaseClient, ev: SubEvent): 
       patch = { status: "cancelling" };
       break;
     case "disabled": {
+      // The cron disables an archived site's subscription itself; that must not un-archive it.
+      if (sub.status === "archived") {
+        patch = { status: "archived" };
+        break;
+      }
       const stillPaid = !!sub.current_period_end && Date.parse(sub.current_period_end) > now.getTime();
       patch = stillPaid ? { status: "cancelling" } : { status: "paused", paused_at: now.toISOString() };
       break;
@@ -216,6 +219,7 @@ export async function applySubscriptionEvent(db: SupabaseClient, ev: SubEvent): 
   if (allowed) {
     const { error: upErr } = await db.from("site_subscriptions").update(patch).eq("site_id", sub.site_id);
     if (upErr) return "error";
+    if (ev.kind === "invoice_paid") await restoreBillingSuspension(db, sub.site_id);
   }
   const { error: insErr } = await db.from("billing_events").insert({
     event_key: ev.key,

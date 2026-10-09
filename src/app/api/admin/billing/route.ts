@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { DAY_MS } from "@/lib/billing/subscriptionState";
-import { SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
+import { restoreBillingSuspension, SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
 import { isTier, monthlyEquivalentKobo, type Interval } from "@/lib/marketing/pricing";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { requireAdmin } from "@/lib/supabase/requireAdmin.server";
@@ -69,9 +69,6 @@ export async function POST(req: Request) {
   const siteId = typeof b.siteId === "string" ? b.siteId : "";
   if (!siteId) return json({ error: "Missing siteId." }, 400);
   const { data: current } = await db.from("site_subscriptions").select("status, trial_ends_at").eq("site_id", siteId).maybeSingle();
-  const restore = async () => {
-    if (current?.status === "archived") await db.from("sites").update({ status: "published" }).eq("id", siteId).eq("status", "suspended");
-  };
 
   let patch: Record<string, unknown>;
   switch (b.action) {
@@ -109,6 +106,6 @@ export async function POST(req: Request) {
     ? await db.from("site_subscriptions").update(patch).eq("site_id", siteId)
     : await db.from("site_subscriptions").insert({ site_id: siteId, status: "manual", ...patch });
   if (error) return json({ error: error.code === "23505" ? "This owner already has a site on trial." : error.message }, error.code === "23505" ? 409 : 500);
-  if (b.action === "set_manual" || b.action === "extend_trial") await restore();
+  if (b.action === "set_manual" || b.action === "extend_trial") await restoreBillingSuspension(db, siteId);
   return json({ ok: true });
 }

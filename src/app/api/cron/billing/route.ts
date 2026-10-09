@@ -1,6 +1,8 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { sendLifecycleEmail, sendSalesEmail } from "@/lib/billing/email.server";
+import { disableSubscription } from "@/lib/billing/paystackBilling.server";
 import { emailsDue } from "@/lib/billing/lifecycle";
 import { DAY_MS, sweepStatus } from "@/lib/billing/subscriptionState";
 import { SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
@@ -9,6 +11,30 @@ import { supabaseService } from "@/lib/supabase/admin.server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+/**
+ * Best effort: stop an archived site's Paystack subscription so it cannot charge again. On success
+ * the code is cleared, so a later plan checkout does not try (and fail) to disable it again.
+ */
+async function disableArchived(db: SupabaseClient, siteId: string, code: string): Promise<void> {
+  try {
+    const { data: secret, error } = await db.from("billing_secrets").select("email_token").eq("site_id", siteId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!secret?.email_token) {
+      console.error("[billing] cron archive: no stored token to disable subscription", { site_id: siteId, code });
+      return;
+    }
+    await disableSubscription(code, secret.email_token as string);
+    const { error: clearErr } = await db
+      .from("site_subscriptions")
+      .update({ paystack_subscription_code: null })
+      .eq("site_id", siteId)
+      .eq("paystack_subscription_code", code);
+    if (clearErr) console.error("[billing] cron archive: subscription code not cleared", { site_id: siteId, error: clearErr.message });
+  } catch (err) {
+    console.error("[billing] cron archive: subscription not disabled", { site_id: siteId, code, error: err instanceof Error ? err.message : "error" });
+  }
+}
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -33,16 +59,27 @@ export async function GET(req: Request) {
       let sub = row;
       const next = sweepStatus(sub, now);
       if (next) {
-        const patch = next === "paused" ? { status: next, paused_at: nowIso } : { status: next };
         // Suspend the site before archiving: the cron never reloads an archived row, so a failed
-        // suspend must leave the subscription unchanged for the next run to retry.
+        // suspend must leave the subscription unchanged for the next run to retry. A site that is
+        // already suspended (e.g. by an admin) is left alone and not marked as billing-suspended.
+        let suspendedNow = false;
         if (next === "archived") {
-          const { error: siteErr } = await db.from("sites").update({ status: "suspended" }).eq("id", sub.site_id);
+          const { data: suspended, error: siteErr } = await db
+            .from("sites")
+            .update({ status: "suspended" })
+            .eq("id", sub.site_id)
+            .neq("status", "suspended")
+            .select("id");
           if (siteErr) {
             console.error("[billing] cron suspend site failed", { site_id: sub.site_id, error: siteErr.message });
             continue;
           }
+          suspendedNow = !!suspended?.length;
         }
+        const patch: Record<string, unknown> =
+          next === "paused" ? { status: next, paused_at: nowIso }
+            : next === "archived" && suspendedNow ? { status: next, suspended_by_billing: true }
+              : { status: next };
         // Conditional on the old status so a webhook that landed meanwhile wins.
         const { data: updated, error: upErr } = await db
           .from("site_subscriptions")
@@ -52,8 +89,8 @@ export async function GET(req: Request) {
           .select("site_id");
         if (upErr) console.error("[billing] cron status update failed", { site_id: sub.site_id, error: upErr.message });
         if (upErr || !updated?.length) {
-          if (next === "archived") {
-            // Not archived after all: undo the suspend, but only if still suspended, so a reactivated site stays live.
+          if (suspendedNow) {
+            // Not archived after all: undo this run's suspend, but only if still suspended, so a reactivated site stays live.
             const { error: revertErr } = await db
               .from("sites")
               .update({ status: "published" })
@@ -63,6 +100,7 @@ export async function GET(req: Request) {
           }
           continue;
         }
+        if (next === "archived" && sub.paystack_subscription_code) await disableArchived(db, sub.site_id, sub.paystack_subscription_code);
         sub = { ...sub, ...patch } as SubscriptionRow;
         swept++;
       }

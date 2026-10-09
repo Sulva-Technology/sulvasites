@@ -135,7 +135,7 @@ export default function BillingPanel({ siteId }: { siteId: string }) {
       {!managed && isOwner && s?.hasCard ? (
         <div className={`${cardCls} flex flex-wrap gap-3`}>
           <button type="button" disabled={busy} onClick={() => action("manage")} className="rounded-full px-4 py-2 text-sm ring-1 ring-koi-ink/15">Update card</button>
-          {s.status !== "cancelling" ? (
+          {["active", "past_due"].includes(s.status) ? (
             <button type="button" disabled={busy} onClick={() => action("cancel")} className="rounded-full px-4 py-2 text-sm text-koi-orange ring-1 ring-koi-orange/30">Cancel subscription</button>
           ) : null}
         </div>

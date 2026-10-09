@@ -12,11 +12,13 @@ export type SubscriptionRow = SubSnapshot & {
   paystack_subscription_code: string | null;
   flagged: string | null;
   emails_sent: string[];
+  /** True when the billing cron suspended the site on archive (so a payment may republish it). */
+  suspended_by_billing: boolean;
   created_at: string;
 };
 
 export const SUB_COLUMNS =
-  "site_id, owner_id, tier, interval, plan_id, status, trial_ends_at, current_period_end, grace_ends_at, paused_at, blocked, flagged, emails_sent, paystack_customer_code, paystack_subscription_code, created_at";
+  "site_id, owner_id, tier, interval, plan_id, status, trial_ends_at, current_period_end, grace_ends_at, paused_at, blocked, flagged, emails_sent, suspended_by_billing, paystack_customer_code, paystack_subscription_code, created_at";
 
 /** Service-role read. Null when the site has no row (legacy/manual) or migration 019 has not run. */
 export async function loadSubscription(db: SupabaseClient, siteId: string): Promise<SubscriptionRow | null> {
@@ -28,7 +30,28 @@ export async function loadSubscription(db: SupabaseClient, siteId: string): Prom
   return (data as SubscriptionRow | null) ?? null;
 }
 
-export type OwnedSite = { siteId: string; slug: string; status: SubStatus; businessName: string | null; createdAt: string };
+/**
+ * Call whenever a subscription moves into a live status. Republishes the site only if the billing
+ * cron suspended it (never an admin suspension), then clears the flag. Best effort: logs on failure
+ * and keeps the flag so the next live transition retries.
+ */
+export async function restoreBillingSuspension(db: SupabaseClient, siteId: string): Promise<void> {
+  const { data, error } = await db.from("site_subscriptions").select("suspended_by_billing").eq("site_id", siteId).maybeSingle();
+  if (error) {
+    console.error("[billing] restore suspension read failed", { siteId, error: error.message });
+    return;
+  }
+  if (!data?.suspended_by_billing) return;
+  const { error: siteErr } = await db.from("sites").update({ status: "published" }).eq("id", siteId).eq("status", "suspended");
+  if (siteErr) {
+    console.error("[billing] restore suspension failed", { siteId, error: siteErr.message });
+    return;
+  }
+  const { error: flagErr } = await db.from("site_subscriptions").update({ suspended_by_billing: false }).eq("site_id", siteId);
+  if (flagErr) console.error("[billing] restore suspension flag not cleared", { siteId, error: flagErr.message });
+}
+
+export type OwnedSite ={ siteId: string; slug: string; status: SubStatus; businessName: string | null; createdAt: string };
 
 /** Sites this user owns, with billing status ("manual" when there is no subscription row). */
 export async function listOwnedSites(db: SupabaseClient, userId: string): Promise<OwnedSite[]> {

@@ -105,6 +105,8 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   if (body?.action === "cancel") {
+    // A paused/archived/cancelling site has nothing renewing; cancelling it would only rewrite its status.
+    if (!["active", "past_due"].includes(sub.status)) return json({ error: "There's no active subscription to cancel." }, 409);
     const { data: secret } = await db.from("billing_secrets").select("email_token").eq("site_id", siteId).maybeSingle();
     if (!secret?.email_token) return json({ error: "Could not cancel. Please contact Sulvatech." }, 500);
     try {
