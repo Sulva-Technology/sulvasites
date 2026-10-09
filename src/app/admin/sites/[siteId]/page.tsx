@@ -12,6 +12,7 @@ import AiSeoAllPages from "@/components/admin/AiSeoAllPages";
 import AiSiteContentGenerator from "@/components/admin/AiSiteContentGenerator";
 import DomainsSection, { type DomainRow } from "@/components/admin/site/DomainsSection";
 import ExtraPagesSection from "@/components/admin/site/ExtraPagesSection";
+import SearchEnginesSection from "@/components/admin/site/SearchEnginesSection";
 import ShopAdminLink from "@/components/admin/site/ShopAdminLink";
 import ProfileEditor from "@/components/site-editor/ProfileEditor";
 import TeamManager from "@/components/team/TeamManager";
@@ -418,6 +419,9 @@ export default function SiteOverviewPage({
           domains={domains}
           setDomains={setDomains}
         />
+
+        {/* A2a) Search engines */}
+        <SearchEnginesSection siteId={siteId} published={site.status === "published"} />
 
         {/* B4) Extra pages (per site) */}
         <ExtraPagesSection
