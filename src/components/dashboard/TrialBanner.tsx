@@ -36,7 +36,7 @@ export default function TrialBanner({ siteId }: { siteId: string }) {
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-koi-ink px-4 py-3 text-sm text-white">
       <span>{text}</span>
       <Link href={`/dashboard/${siteId}/billing`} className="rounded-full bg-white px-4 py-1.5 font-medium text-koi-ink">
-        {s === "past_due" ? "Update card" : "Keep my site live"}
+        {s === "past_due" ? "Pay now" : "Keep my site live"}
       </Link>
     </div>
   );

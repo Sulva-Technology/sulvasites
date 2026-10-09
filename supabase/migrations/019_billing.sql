@@ -144,6 +144,9 @@ create index if not exists signup_signals_ip_idx on public.signup_signals(ip_has
 create index if not exists signup_signals_business_idx on public.signup_signals(business_key);
 alter table public.signup_signals enable row level security;
 
+-- Defence in depth: service-role-only tables get no table grants for client roles (RLS already denies).
+revoke all on table public.billing_secrets, public.leads, public.domain_requests, public.signup_signals from anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Public billing state for site rendering. Must match isLive() in
 -- src/lib/billing/subscriptionState.ts. No row => zero rows (caller treats as live).

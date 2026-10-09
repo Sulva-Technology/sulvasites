@@ -149,7 +149,7 @@ drafts; existing sites can add them from the site's *Extra pages* panel. Publish
 
 Spec: `docs/superpowers/specs/2026-10-08-public-site-pricing-design.md`.
 
-**Prices** live in `src/lib/marketing/pricing.ts` (naira). Change them there, then re-run the plan script. The plan script refuses a Paystack plan whose amount changed, so first rename (or archive) the old plan in the Paystack dashboard, then re-run the script to create the new-priced plan.
+**Prices** live in `src/lib/marketing/pricing.ts` (naira). Change them there, then re-run the plan script. The plan script refuses a Paystack plan whose amount changed, so first rename the old plan in the Paystack dashboard, then re-run the script to create the new-priced plan.
 
 **Setup (once per environment)**
 1. Before running the migration, check no existing site uses a reserved slug: `select slug from sites where slug in ('about','admin','api','blog','change-password','contact','d','dashboard','dev','forgot-password','help','login','no-access','pricing','privacy','signup','start','templates','terms','www');` — if it returns any, agree a new address with that site's owner first — renaming changes the live URL, and the new constraint blocks edits to sites that keep a reserved slug.

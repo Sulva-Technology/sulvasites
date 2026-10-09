@@ -64,8 +64,8 @@ export function buildLifecycleEmail(kind: LifecycleKind, c: LifecycleContext): {
     },
     payment_failed: {
       subject: `We couldn't charge your card for ${name}`,
-      lines: [`${name}: your latest payment didn't go through.`, "Your site stays live for 3 more days. Update your card to avoid a pause."],
-      cta: "Update my card",
+      lines: [`${name}: your latest payment didn't go through.`, "Your site stays live for 3 more days. Pay now from your dashboard to keep it live."],
+      cta: "Pay now",
       url: c.billingUrl,
     },
   };

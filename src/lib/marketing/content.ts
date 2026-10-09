@@ -44,7 +44,7 @@ export const HOME_FAQ: Faq[] = [
   { q: "Do I need a card for the free trial?", a: `No. You get ${TRIAL_DAYS} days free with no card. Add one only when you decide to keep your site.` },
   { q: "Can I use my own domain?", a: `Yes, on Business and Commerce. Don't have one? We can buy and manage it for you: ${formatNaira(com.yearly)}/yr for .com, ${formatNaira(ng.yearly)}/yr for .com.ng.` },
   { q: "Can you build it for me?", a: "Yes. Choose “Have us build it”, send a short brief, and our team sets everything up." },
-  { q: "What happens to launch pricing?", a: `Sign up before ${promoEndLabel()} and you keep the launch price for as long as you stay subscribed.` },
+  { q: "What happens to launch pricing?", a: `Subscribe before ${promoEndLabel()} and you keep the launch price for as long as you stay subscribed.` },
 ];
 
 export const PRICING_FAQ: Faq[] = [

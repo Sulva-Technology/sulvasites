@@ -29,7 +29,7 @@ function headline(v: View): { tone: "ok" | "warn" | "error" | "info"; text: stri
   switch (s.status) {
     case "trialing": return { tone: "warn", text: `Free trial: ${v.trialDaysLeft} day${v.trialDaysLeft === 1 ? "" : "s"} left. Pick a plan to keep your site live.` };
     case "active": return { tone: "ok", text: `${PLAN_INFO[s.tier].name} plan · renews ${fmtDate(s.current_period_end)}` };
-    case "past_due": return { tone: "error", text: `Your last payment failed. Update your card before ${fmtDate(s.grace_ends_at)} to avoid a pause.` };
+    case "past_due": return { tone: "error", text: `Your last payment failed. Pay now before ${fmtDate(s.grace_ends_at)} to keep your site live.` };
     case "cancelling": return { tone: "warn", text: `Cancelled · your site stays live until ${fmtDate(s.current_period_end)}.` };
     case "paused": return { tone: "error", text: "Your site is paused. Pick a plan to bring it back instantly." };
     default: return { tone: "error", text: "Your site is archived. Pick a plan to restore it." };
@@ -102,7 +102,7 @@ export default function BillingPanel({ siteId }: { siteId: string }) {
 
       {!managed && isOwner && plan ? (
         <div className={cardCls}>
-          <p className="font-medium">{s && ["active", "cancelling"].includes(s.status) ? "Change plan" : "Keep my site live"}</p>
+          <p className="font-medium">{s?.status === "past_due" ? "Pay now to keep your site live" : s && ["active", "cancelling"].includes(s.status) ? "Change plan" : "Keep my site live"}</p>
           <div className="mt-3 inline-flex rounded-full bg-koi-paper p-1 ring-1 ring-koi-ink/10">
             {(["monthly", "annually"] as const).map((i) => (
               <button key={i} type="button" onClick={() => setPeriod(i)} className={`rounded-full px-4 py-1.5 text-sm ${interval === i ? "bg-koi-ink text-white" : ""}`}>
@@ -124,7 +124,7 @@ export default function BillingPanel({ siteId }: { siteId: string }) {
             })}
           </div>
           <button type="button" disabled={busy} onClick={pay} className="mt-4 rounded-full bg-koi-deep px-6 py-3 font-medium text-white disabled:opacity-50">
-            Pay {formatNaira(plan.price)} with card
+            {s?.status === "past_due" ? "Pay now" : "Pay"} {formatNaira(plan.price)} with card
           </button>
           <p className="mt-2 text-xs text-koi-ink/60">
             Secure payment by Paystack. Renews automatically; cancel any time. Unused trial or paid days are added before your new period starts.
