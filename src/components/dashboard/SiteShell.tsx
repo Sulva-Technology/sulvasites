@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import TrialBanner from "@/components/dashboard/TrialBanner";
 import SiteAssistantPanel from "@/components/assistant/SiteAssistantPanel";
 import { TourContextSync } from "@/components/tour/TourProvider";
 import { kindsForTemplate } from "@/lib/businessData/kinds";
@@ -44,6 +45,7 @@ const TAB_LABELS: Record<DashboardTab, string> = {
   insights: "Insights",
   team: "Team",
   shop: "Shop",
+  billing: "Billing",
 };
 
 function NotFound() {
@@ -159,6 +161,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <TourContextSync siteId={siteId} tabs={tabs} />
       <SiteHero value={value} />
       <div className="space-y-6">
+        {value.role !== "staff" ? <TrialBanner siteId={siteId} /> : null}
         <Tabs
           label="Site sections"
           tourId="site-tabs"

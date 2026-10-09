@@ -11,22 +11,22 @@ test("postLoginRoute", () => {
 });
 
 test("tabsForRole", () => {
-  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
-  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner"), ["overview", "content", "blog", "inbox", "business", "insights", "team", "billing"]);
+  assert.deepEqual(tabsForRole("admin"), ["overview", "content", "blog", "inbox", "business", "insights", "team", "billing"]);
   assert.deepEqual(tabsForRole("staff"), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole with shop", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team"]);
-  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team", "billing"]);
+  assert.deepEqual(tabsForRole("admin", { shop: true }), ["overview", "content", "blog", "shop", "inbox", "business", "insights", "team", "billing"]);
   assert.deepEqual(tabsForRole("staff", { shop: true }), ["overview", "shop", "inbox", "business"]);
   assert.deepEqual(tabsForRole("staff", { shop: false }), ["overview", "inbox", "business"]);
 });
 
 test("tabsForRole hides Business for templates without managers", () => {
-  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "blog", "shop", "inbox", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { shop: true, business: false }), ["overview", "content", "blog", "shop", "inbox", "insights", "team", "billing"]);
   assert.deepEqual(tabsForRole("staff", { shop: true, business: false }), ["overview", "shop", "inbox"]);
-  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "blog", "inbox", "business", "insights", "team"]);
+  assert.deepEqual(tabsForRole("owner", { business: true }), ["overview", "content", "blog", "inbox", "business", "insights", "team", "billing"]);
 });
 
 test("canManageBusinessData", () => {

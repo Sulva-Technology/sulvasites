@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMember } from "@/components/RequireMember";
+import { PillButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useShellHero } from "@/components/ui/AppShell";
 import { PageHero } from "@/components/ui/PageHero";
@@ -47,6 +48,9 @@ export default function DashboardHomePage() {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Your sites</h1>
+      <div className="flex justify-end">
+        <PillButton href="/signup?add=1" size="sm" arrow={false}>New site</PillButton>
+      </div>
       <ul data-tour="site-cards" className="grid gap-4 sm:grid-cols-2">
         {memberships.map((m) => (
           <li key={m.siteId}>

@@ -1,7 +1,7 @@
 // Relative-import-safe pure helpers for site membership rules.
 export type SiteRole = "owner" | "staff";
 export type Membership = { siteId: string; role: SiteRole };
-export type DashboardTab = "overview" | "content" | "blog" | "inbox" | "business" | "insights" | "team" | "shop";
+export type DashboardTab = "overview" | "content" | "blog" | "inbox" | "business" | "insights" | "team" | "shop" | "billing";
 
 /** `hostSiteId`: signing in on a site's own address lands on that site's admin / dashboard. */
 export function postLoginRoute(i: {
@@ -32,7 +32,7 @@ export function tabsForRole(
   let tabs: DashboardTab[] =
     role === "staff"
       ? ["overview", "inbox", "business"]
-      : ["overview", "content", "blog", "inbox", "business", "insights", "team"];
+      : ["overview", "content", "blog", "inbox", "business", "insights", "team", "billing"];
   // Templates without business managers (shop templates) have nothing to show under Business.
   if (opts.business === false) tabs = tabs.filter((t) => t !== "business");
   if (opts.shop) tabs.splice(role === "staff" ? 1 : 3, 0, "shop");
