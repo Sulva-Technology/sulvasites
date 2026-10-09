@@ -60,7 +60,9 @@ One row per submitted host (platform host has `site_id = null`).
 | `id uuid pk`, `site_id uuid null fk sites on delete cascade`, `host text unique` | |
 | `kind text` | `platform` · `subdomain` · `custom` |
 | `google_state text` | `pending` → `token` → `verified` → `added` → `submitted`; subdomains/platform skip to `added` (covered by the domain property) |
+| `google_state_at timestamptz` | when the state last changed (verify waits ≥ 10 min after the token) |
 | `google_token text null` | META verification content value |
+| `checked_at timestamptz null` | last cron visit; the cron visits oldest-first |
 | `sitemap_submitted_at`, `indexnow_pushed_at timestamptz null` | |
 | `failures int default 0`, `last_error text null`, `last_error_at timestamptz null` | |
 | `active bool default true`, `created_at`, `updated_at` | `active = false` when the host stops being a published primary host |
