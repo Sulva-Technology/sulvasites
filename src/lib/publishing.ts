@@ -1,5 +1,6 @@
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
 import { validatePageData, type PageData } from "@/lib/pageSchema";
+import { notifySearchEngines } from "@/lib/search/notifyClient";
 
 type PublishablePageKey = "home" | "about" | "contact";
 
@@ -16,10 +17,11 @@ export async function publishPage(pageId: string, pageDraft: PageData) {
     .from("pages")
     .update({ status: "published", data: pageDraft, published_at: now })
     .eq("id", pageId)
-    .select("status, published_at, updated_at")
+    .select("status, published_at, updated_at, site_id")
     .single();
 
   if (error) throw error;
+  notifySearchEngines((data as { site_id: string }).site_id);
   return data as { status: string; published_at: string | null; updated_at: string };
 }
 
@@ -73,6 +75,7 @@ export async function publishSite(siteId: string) {
     .neq("status", "published")
     .select("id");
   if (extrasError) console.error("Extra pages were not published:", extrasError.message);
+  notifySearchEngines(siteId);
 
   return {
     pages: (pages ?? []) as Array<{

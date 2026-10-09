@@ -8,6 +8,7 @@ import ImageField, { SiteImageProvider } from "@/components/page-editor/ImageFie
 import { Badge, btnCls, btnDangerCls, btnGhostCls, cardCls, errMsg, inputCls, Notice } from "@/components/shop-admin/common";
 import { excerptOf, RESERVED_POST_SLUGS, SLUG_RE, slugifyTitle } from "@/lib/blog/blogPath";
 import type { BlogPostRow } from "@/lib/blog/types";
+import { notifySearchEngines } from "@/lib/search/notifyClient";
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import { isMissingBlogTable, postState, useSitePublicUrl } from "./BlogManager";
 import PostBodyEditor from "./PostBodyEditor";
@@ -186,12 +187,14 @@ function Inner({ siteId, postId, basePath }: { siteId: string; postId: string; b
       if (isNew) {
         const { data, error } = await db.from("blog_posts").insert({ site_id: siteId, ...payload }).select("id").single();
         if (error) throw error;
+        if (status === "published") notifySearchEngines(siteId);
         savedForm.current = JSON.stringify(form);
         router.replace(`${basePath}/${(data as { id: string }).id}`);
         return;
       }
       const { error } = await db.from("blog_posts").update(payload).eq("id", postId).eq("site_id", siteId);
       if (error) throw error;
+      if (status === "published") notifySearchEngines(siteId);
       await load();
       setOk(status === "published" ? "Published. Your post is live." : "Saved as a draft. Visitors can't see it.");
     } catch (e) {

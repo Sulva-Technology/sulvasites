@@ -1,6 +1,7 @@
 import { getAuthenticatedClient } from "@/lib/supabase/browser";
 import type { PageData } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
+import { notifySearchEngines } from "@/lib/search/notifyClient";
 import { buildPresetPageData, getPagePresets } from "@/templates/pagePresets";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -112,6 +113,7 @@ export async function publishExtraPage(pageId: string, data: PageData) {
     .select("id, site_id, key, status, data, updated_at, published_at")
     .single();
   if (error) throw error;
+  notifySearchEngines((updated as { site_id: string }).site_id);
   return updated as unknown as ExtraPageRow;
 }
 
