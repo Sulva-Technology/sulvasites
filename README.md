@@ -152,10 +152,10 @@ Spec: `docs/superpowers/specs/2026-10-08-public-site-pricing-design.md`.
 **Prices** live in `src/lib/marketing/pricing.ts` (naira). Change them there, then re-run the plan script.
 
 **Setup (once per environment)**
-1. Run `supabase/migrations/019_billing.sql` in the Supabase SQL editor.
-2. Supabase → Authentication → Email Templates → Confirm signup: add `Your code: {{ .Token }}`.
-3. Env vars: `CRON_SECRET`, `SIGNUP_SECRET` (any long random strings), `SALES_NOTIFY_EMAIL`, optional `NEXT_PUBLIC_SALES_WHATSAPP` (digits, e.g. 2348012345678). Existing: `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `RESEND_FROM`.
-4. Before running the migration, check no existing site uses a reserved slug: `select slug from sites where slug in ('about','admin','api','blog','change-password','contact','d','dashboard','dev','forgot-password','help','login','no-access','pricing','privacy','signup','start','templates','terms','www');` — rename any it returns.
+1. Before running the migration, check no existing site uses a reserved slug: `select slug from sites where slug in ('about','admin','api','blog','change-password','contact','d','dashboard','dev','forgot-password','help','login','no-access','pricing','privacy','signup','start','templates','terms','www');` — rename any it returns.
+2. Run `supabase/migrations/019_billing.sql` in the Supabase SQL editor.
+3. Supabase → Authentication → Email Templates → Confirm signup: add `Your code: {{ .Token }}`.
+4. Env vars: `CRON_SECRET`, `SIGNUP_SECRET` (any long random strings), `SALES_NOTIFY_EMAIL`, optional `NEXT_PUBLIC_SALES_WHATSAPP` (digits, e.g. 2348012345678). Existing: `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `RESEND_FROM`.
 5. Create Paystack plans: `node --env-file=.env.local --experimental-strip-types --no-warnings scripts/paystack-plans.mjs`.
    Plan codes differ between test and live mode: run it again with the live key when going live.
 6. Paystack dashboard → Settings → API Keys & Webhooks: webhook URL `https://<platform domain>/api/paystack/webhook` (shared by shop and billing).
