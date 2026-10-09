@@ -163,3 +163,24 @@ Spec: `docs/superpowers/specs/2026-10-08-public-site-pricing-design.md`.
 **Payments needing attention:** check this section in Admin → Billing regularly; it lists renewals that matched no site, amount mismatches and checkouts stuck settling, each needing a manual look in the Paystack dashboard.
 
 **Going live checklist:** Terms and refund policy pages exist (Paystack asks during activation), live key set, plan script re-run with the live key, test-mode end-to-end passed.
+
+## Search engines (Google + Bing)
+
+Spec: `docs/superpowers/specs/2026-10-09-search-engine-submission-design.md`. Every published site serves
+`/sitemap.xml` and `/robots.txt` on its own address. A daily cron (`/api/cron/search`) verifies custom domains
+in Google Search Console, submits sitemaps and pushes changed URLs to IndexNow (Bing, Yandex, Seznam, Naver);
+publishing also pings IndexNow straight away. Admin → site → Search engines shows the state and a Resubmit button.
+
+**Setup (once per environment)**
+1. Run `supabase/migrations/020_search_index.sql` in the Supabase SQL editor.
+2. Google Cloud console: create a project (or reuse one), enable **Google Search Console API** and
+   **Site Verification API**, create a service account and a JSON key. Set
+   `GOOGLE_SEARCH_SA_JSON` to the key file base64-encoded (`base64 -w0 key.json`).
+3. Google Search Console: add a **Domain** property for the platform domain (e.g. `sulvasites.sulvatech.com`,
+   verified with the DNS TXT record Google shows), then Settings → Users and permissions → add the service
+   account email as **Owner**. Set `GOOGLE_SEARCH_DOMAIN_PROPERTY=sc-domain:sulvasites.sulvatech.com`.
+4. Set `INDEXNOW_KEY` to 32 random hex characters (`openssl rand -hex 16`). Every host serves it at
+   `/indexnow-key.txt`.
+5. Optional: Bing Webmaster Tools → Import from Google Search Console, for a Bing dashboard.
+
+Missing variables just switch that engine off (the admin card says "not configured").
