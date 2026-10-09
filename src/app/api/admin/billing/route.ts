@@ -11,18 +11,35 @@ export const dynamic = "force-dynamic";
 
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const DOMAIN_STATUSES = ["requested", "quoted", "paid", "active", "rejected"];
+/** A `settling` checkout older than this is stuck (a retry reclaims after 5 min). */
+const STUCK_SETTLE_MS = 10 * 60_000;
 
 export async function GET(req: Request) {
   const auth = await requireAdmin(req, { superOnly: true });
   if (!auth.ok) return auth.response;
   const db = supabaseService();
-  const [subs, plans, domains] = await Promise.all([
+  const stuckBefore = new Date(Date.now() - STUCK_SETTLE_MS).toISOString();
+  const [subs, plans, domains, attention] = await Promise.all([
     db.from("site_subscriptions").select(SUB_COLUMNS).neq("status", "manual").order("created_at", { ascending: false }).limit(2000),
     db.from("billing_plans").select("id, price_kobo, interval"),
     db.from("domain_requests").select("*").neq("status", "rejected").order("created_at", { ascending: false }),
+    // Payments a human must look at: unmatched renewals, amount mismatches, settles that never finished.
+    db
+      .from("billing_events")
+      .select("id, site_id, kind, amount_kobo, status, summary, created_at")
+      .or(`status.in.(needs_attention,mismatch),and(status.eq.settling,summary->>claimed_at.lt."${stuckBefore}")`)
+      .order("created_at", { ascending: false })
+      .limit(100),
   ]);
   if (subs.error) return json({ error: subs.error.message }, 500);
-  const siteIds = ((subs.data ?? []) as unknown as SubscriptionRow[]).map((s) => s.site_id);
+  if (attention.error) console.error("[billing] admin attention events failed", attention.error.message);
+  const attentionEvents = attention.data ?? [];
+  const siteIds = [
+    ...new Set([
+      ...((subs.data ?? []) as unknown as SubscriptionRow[]).map((s) => s.site_id),
+      ...attentionEvents.map((e) => e.site_id as string | null).filter((id): id is string => !!id),
+    ]),
+  ];
   const [sites, profiles] = siteIds.length
     ? await Promise.all([
         db.from("sites").select("id, slug").in("id", siteIds),
@@ -40,7 +57,18 @@ export async function GET(req: Request) {
     }
     return { ...s, slug: slugBy.get(s.site_id) ?? null, business_name: nameBy.get(s.site_id) ?? null };
   });
-  return json({ rows, mrrKobo, domainRequests: domains.data ?? [] });
+  const events = attentionEvents.map((e) => ({
+    id: e.id as string,
+    kind: e.kind as string,
+    status: e.status as string,
+    amount_kobo: (e.amount_kobo as number | null) ?? null,
+    created_at: e.created_at as string,
+    site_id: (e.site_id as string | null) ?? null,
+    slug: e.site_id ? (slugBy.get(e.site_id as string) ?? null) : null,
+    business_name: e.site_id ? (nameBy.get(e.site_id as string) ?? null) : null,
+    subscription_code: ((e.summary as { subscription_code?: string } | null)?.subscription_code as string | undefined) ?? null,
+  }));
+  return json({ rows, mrrKobo, domainRequests: domains.data ?? [], attentionEvents: events });
 }
 
 export async function POST(req: Request) {

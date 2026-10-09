@@ -12,7 +12,11 @@ type Row = {
   trial_ends_at: string | null; current_period_end: string | null; flagged: string | null; blocked: boolean; created_at: string;
 };
 type Domain = { id: string; site_id: string; desired_name: string; status: string; renews_at: string | null; notes: string | null };
-type Data = { rows: Row[]; mrrKobo: number; domainRequests: Domain[] };
+type AttentionEvent = {
+  id: string; kind: string; status: string; amount_kobo: number | null; created_at: string;
+  site_id: string | null; slug: string | null; business_name: string | null; subscription_code: string | null;
+};
+type Data = { rows: Row[]; mrrKobo: number; domainRequests: Domain[]; attentionEvents?: AttentionEvent[] };
 
 const ORDER = ["past_due", "trialing", "paused", "cancelling", "active", "archived"];
 const d = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : "—");
@@ -49,6 +53,7 @@ export default function AdminBillingPage() {
     return ORDER.map((status) => ({ status, rows: rows.filter((r) => r.status === status) })).filter((g) => g.rows.length);
   }, [data]);
   const flagged = data?.rows.filter((r) => r.flagged) ?? [];
+  const attention = data?.attentionEvents ?? [];
   const soon = loadedAt + 2 * 86_400_000;
   const endingSoon = data?.rows.filter((r) => r.status === "trialing" && r.trial_ends_at && Date.parse(r.trial_ends_at) < soon) ?? [];
 
@@ -75,6 +80,22 @@ export default function AdminBillingPage() {
           ))}
         </section>
       ) : null}
+
+      <section className={cardCls}>
+        <h2 className="font-medium">Payments needing attention</h2>
+        <p className="mt-1 text-xs text-koi-ink/60">Renewals we couldn&apos;t match to a site, amount mismatches, and checkouts stuck settling for over 10 minutes. Check each in the Paystack dashboard.</p>
+        {attention.length === 0 ? <p className="mt-2 text-sm text-koi-ink/60">None.</p> : null}
+        {attention.map((e) => (
+          <div key={e.id} className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-koi-ink/5 pt-2 text-sm">
+            <span>{d(e.created_at)}</span>
+            <span className="font-medium">{e.kind.replace(/_/g, " ")}</span>
+            <span className="text-koi-orange">{e.status.replace(/_/g, " ")}</span>
+            <span>{e.amount_kobo ? formatNaira(e.amount_kobo / 100) : "—"}</span>
+            <span>{e.site_id ? <a href={`/admin/sites/${e.site_id}`}>{e.business_name ?? e.slug ?? e.site_id}</a> : "no site"}</span>
+            {e.subscription_code ? <span className="break-all font-mono text-xs text-koi-ink/60">{e.subscription_code}</span> : null}
+          </div>
+        ))}
+      </section>
 
       {endingSoon.length ? <Notice kind="warn">{endingSoon.length} trial(s) end within 48h: {endingSoon.map((r) => r.business_name ?? r.slug).join(", ")}</Notice> : null}
 

@@ -160,4 +160,6 @@ Spec: `docs/superpowers/specs/2026-10-08-public-site-pricing-design.md`.
    The script needs Node 22.6+ (for `--experimental-strip-types`). It writes plan codes into whichever Supabase project the env points at. Plan codes differ between test and live mode: run it again with the live key when going live, and only against the production Supabase project (test plan codes there get replaced).
 6. Paystack dashboard → Settings → API Keys & Webhooks: webhook URL `https://<platform domain>/api/paystack/webhook` (shared by shop and billing).
 
+**Payments needing attention:** check this section in Admin → Billing regularly; it lists renewals that matched no site, amount mismatches and checkouts stuck settling, each needing a manual look in the Paystack dashboard.
+
 **Going live checklist:** Terms and refund policy pages exist (Paystack asks during activation), live key set, plan script re-run with the live key, test-mode end-to-end passed.
