@@ -6,6 +6,7 @@ import { getPublicAssetUrl } from "@/lib/assets";
 import { BLOG_NAV_KEY, blogLabelFor } from "@/lib/blog/blogPath";
 import { hasPublishedPosts } from "@/lib/blog/load.server";
 import { normalizeHostname } from "@/lib/domains";
+import { primaryHostFor } from "@/lib/search/siteHosts.server";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import { validatePageData } from "@/lib/pageSchema";
 import {
@@ -66,11 +67,16 @@ export const loadPublicSite = cache(
       ? getPublicAssetUrl(siteData.profile.logo_path)
       : undefined;
 
+    // One canonical address per site (oldest active custom domain, else the subdomain), so a site
+    // reachable on both is not indexed twice. Local and preview hosts keep their own address.
+    const devHost = reqHost.includes("localhost") || reqHost.endsWith(".vercel.app");
+    const primary = await primaryHostFor(siteData.site);
+
     if (lookup === "hostname") {
       return {
         siteData,
         baseUrl: "",
-        canonicalHost: reqHost || normalizeHostname(value) || undefined,
+        canonicalHost: devHost ? reqHost : primary,
         proto,
         siteQuery: `hostname=${encodeURIComponent(value)}`,
         logoUrl,
@@ -79,11 +85,7 @@ export const loadPublicSite = cache(
 
     const platform = platformDomain();
     const isSubdomain = reqHost === `${value}.${platform}`;
-    const canonicalHost = isSubdomain
-      ? reqHost
-      : reqHost && reqHost !== platform
-        ? reqHost
-        : `${value}.${platform}`;
+    const canonicalHost = devHost && reqHost ? reqHost : primary;
 
     return {
       siteData,
