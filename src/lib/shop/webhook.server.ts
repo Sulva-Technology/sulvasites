@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { handleBillingWebhook } from "@/lib/billing/webhook.server";
+import { isBillingWebhook } from "@/lib/billing/webhookEvents";
 import { verifyPaystackSignature } from "./paystackSignature";
 import { canonicalSiteId } from "./paymentInput";
 import { isOrderReference } from "./reference";
@@ -69,6 +71,13 @@ export async function handlePaystackWebhook(req: Request, scope: WebhookScope): 
   } catch {
     return ok({ ignored: "bad_json" });
   }
+  // Subscription billing shares Sulvatech's single Paystack webhook URL.
+  if (scope.kind === "platform" && isBillingWebhook(event)) {
+    const billingDb = requireServiceClient();
+    if (!billingDb) return status(500, SHOP_NOT_CONFIGURED);
+    return handleBillingWebhook(billingDb, event);
+  }
+
   if (!event || typeof event !== "object" || event.event !== "charge.success") return ok({ ignored: "event" });
 
   const reference = event.data?.reference;
