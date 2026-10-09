@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch, cardCls, Notice } from "@/components/shop-admin/common";
 import { DOMAIN_ADDONS, PLAN_INFO, TIERS, formatNaira, type Interval, type OfferedPlan, type Tier } from "@/lib/marketing/pricing";
 
+/** Fired after every successful billing load so the trial banner can refetch. */
+export const BILLING_CHANGED_EVENT = "billing:changed";
+
 type View = {
   subscription: {
     status: string; tier: Tier; interval: Interval; plan_id: string | null; trial_ends_at: string | null;
@@ -59,6 +62,7 @@ export default function BillingPanel({ siteId }: { siteId: string }) {
         setPeriod(r.data.subscription.interval);
       }
       if (ref) window.history.replaceState(null, "", window.location.pathname);
+      window.dispatchEvent(new Event(BILLING_CHANGED_EVENT));
     });
     return () => {
       cancelled = true;

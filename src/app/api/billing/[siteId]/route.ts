@@ -42,7 +42,7 @@ export async function GET(req: Request, ctx: Ctx) {
 
   // Back from Paystack: settle now instead of waiting for the webhook.
   const ref = new URL(req.url).searchParams.get("verify");
-  if (ref && isBillingReference(ref)) {
+  if (ref && isBillingReference(ref) && !rateLimit(`billing-verify:${auth.userId}`, { limit: 10, windowMs: 10 * 60_000 })) {
     try {
       const tx = await verifyTransaction(ref);
       if (tx.status === "success") {
@@ -112,7 +112,11 @@ export async function POST(req: Request, ctx: Ctx) {
     } catch {
       return json({ error: "Could not reach Paystack. Please try again." }, 502);
     }
-    await db.from("site_subscriptions").update({ status: "cancelling" }).eq("site_id", siteId);
+    const { error: updateError } = await db.from("site_subscriptions").update({ status: "cancelling" }).eq("site_id", siteId);
+    if (updateError) {
+      console.error("[billing] cancel status update failed", updateError.message);
+      return json({ error: "Cancelled with Paystack, but we couldn't update your site. Please contact Sulvatech." }, 500);
+    }
     return json({ ok: true });
   }
 
