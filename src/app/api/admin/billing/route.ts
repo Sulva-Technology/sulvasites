@@ -16,14 +16,19 @@ export async function GET(req: Request) {
   const auth = await requireAdmin(req, { superOnly: true });
   if (!auth.ok) return auth.response;
   const db = supabaseService();
-  const [subs, sites, profiles, plans, domains] = await Promise.all([
+  const [subs, plans, domains] = await Promise.all([
     db.from("site_subscriptions").select(SUB_COLUMNS).neq("status", "manual").order("created_at", { ascending: false }).limit(2000),
-    db.from("sites").select("id, slug"),
-    db.from("business_profiles").select("site_id, business_name"),
     db.from("billing_plans").select("id, price_kobo, interval"),
     db.from("domain_requests").select("*").neq("status", "rejected").order("created_at", { ascending: false }),
   ]);
   if (subs.error) return json({ error: subs.error.message }, 500);
+  const siteIds = ((subs.data ?? []) as unknown as SubscriptionRow[]).map((s) => s.site_id);
+  const [sites, profiles] = siteIds.length
+    ? await Promise.all([
+        db.from("sites").select("id, slug").in("id", siteIds),
+        db.from("business_profiles").select("site_id, business_name").in("site_id", siteIds),
+      ])
+    : [{ data: [] }, { data: [] }];
   const slugBy = new Map((sites.data ?? []).map((s) => [s.id as string, s.slug as string]));
   const nameBy = new Map((profiles.data ?? []).map((p) => [p.site_id as string, p.business_name as string]));
   const planBy = new Map((plans.data ?? []).map((p) => [p.id as string, p]));
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
       break;
     }
     case "allow":
-      patch = { flagged: null };
+      patch = { flagged: null, blocked: false };
       break;
     case "block":
       patch = { blocked: true };

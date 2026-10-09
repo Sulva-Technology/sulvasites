@@ -88,7 +88,7 @@ export default function AdminBillingPage() {
                   <tr key={r.site_id} className="border-t border-koi-ink/5">
                     <td className="py-2">
                       <a href={`/admin/sites/${r.site_id}`} className="font-medium">{r.business_name ?? r.slug}</a>
-                      <span className="block text-xs text-koi-ink/50">{r.slug}</span>
+                      <span className="block text-xs text-koi-ink/50">{r.slug}{r.blocked ? " · BLOCKED" : ""}</span>
                     </td>
                     <td>
                       <select value={r.tier} onChange={(e) => act({ action: "set_tier", siteId: r.site_id, tier: e.target.value })} className="rounded-full px-2 py-1 ring-1 ring-koi-ink/10">
@@ -98,6 +98,7 @@ export default function AdminBillingPage() {
                     <td>{r.interval}</td>
                     <td>{r.status === "trialing" ? `trial ends ${d(r.trial_ends_at)}` : `period ends ${d(r.current_period_end)}`}</td>
                     <td className="space-x-2 text-right">
+                      {r.blocked ? <button className="rounded-full px-3 py-1 text-koi-orange ring-1 ring-koi-orange/30" onClick={() => act({ action: "unblock", siteId: r.site_id })}>Unblock</button> : null}
                       <button className="rounded-full px-3 py-1 ring-1 ring-koi-ink/15" onClick={() => {
                         const days = Number(window.prompt("Extend trial by how many days (1–30)?", "7"));
                         if (days) void act({ action: "extend_trial", siteId: r.site_id, days });
