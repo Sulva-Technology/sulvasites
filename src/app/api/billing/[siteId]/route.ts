@@ -14,6 +14,8 @@ import { requireSiteRole } from "@/lib/supabase/requireSiteRole.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Settling a first charge makes several Paystack calls; a stale settling claim is reclaimable after 5 min.
+export const maxDuration = 60;
 
 type Ctx = { params: Promise<{ siteId: string }> };
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -114,7 +116,7 @@ export async function POST(req: Request, ctx: Ctx) {
     } catch {
       return json({ error: "Could not reach Paystack. Please try again." }, 502);
     }
-    const { error: updateError } = await db.from("site_subscriptions").update({ status: "cancelling" }).eq("site_id", siteId);
+    const { error: updateError } = await db.from("site_subscriptions").update({ status: "cancelling", grace_ends_at: null }).eq("site_id", siteId);
     if (updateError) {
       console.error("[billing] cancel status update failed", updateError.message);
       return json({ error: "Cancelled with Paystack, but we couldn't update your site. Please contact Sulvatech." }, 500);

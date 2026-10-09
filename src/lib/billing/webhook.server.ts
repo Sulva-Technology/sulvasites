@@ -9,7 +9,8 @@ import type { Interval } from "@/lib/marketing/pricing";
 
 type FirstCharge = Extract<BillingEvent, { kind: "first_charge" }>;
 type SubEvent = Exclude<BillingEvent, { kind: "ignore" } | { kind: "first_charge" }>;
-export type SettleResult = "settled" | "already" | "unknown" | "mismatch" | "error";
+/** "busy": another run holds a fresh settling claim; the webhook answers 503 so Paystack retries later. */
+export type SettleResult = "settled" | "already" | "busy" | "unknown" | "mismatch" | "error";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -22,6 +23,7 @@ export async function handleBillingWebhook(db: SupabaseClient, event: unknown): 
     if (ev.kind === "ignore") return NextResponse.json({ ok: true, ignored: "event" }, { headers: NO_STORE });
     const result = ev.kind === "first_charge" ? await settleFirstCharge(db, ev) : await applySubscriptionEvent(db, ev);
     if (result === "error") return NextResponse.json({ error: "Billing webhook failed" }, { status: 500, headers: NO_STORE });
+    if (result === "busy") return NextResponse.json({ error: "Billing settle in progress" }, { status: 503, headers: NO_STORE });
     return NextResponse.json({ ok: true, result }, { headers: NO_STORE });
   } catch (err) {
     console.error("[billing] webhook failed", { kind, error: err instanceof Error ? err.message : "error" });
@@ -29,20 +31,43 @@ export async function handleBillingWebhook(db: SupabaseClient, event: unknown): 
   }
 }
 
+/** A `settling` claim older than this belongs to a function that died (routes run at most 60 s). */
+const STALE_CLAIM_MS = 5 * 60_000;
+
+/**
+ * Whether the site's current Paystack subscription may still charge, so a plan change must disable it.
+ * Cancelling ones were already stopped (owner cancel, not_renew, disable). A paused/archived one is
+ * live only if it paused after a failed payment (grace_ends_at kept), when Paystack may still retry.
+ */
+function mayStillCharge(sub: SubscriptionRow | null): boolean {
+  if (!sub?.paystack_subscription_code) return false;
+  if (sub.status === "cancelling") return false;
+  if (sub.status === "paused" || sub.status === "archived") return !!sub.grace_ends_at;
+  return true;
+}
+
 /**
  * First payment for a plan (new subscription or plan change). Used by the webhook and by the
- * callback verify path; the pending → paid claim makes it run once.
+ * callback verify path. The pending → settling claim makes it run once; `paid` is set only at the
+ * end. A `settling` claim older than STALE_CLAIM_MS may be reclaimed: if that run had already
+ * written the subscription (summary.written_at) the settle is just finished, otherwise it reruns.
  */
 export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Promise<SettleResult> {
   const { data: pending, error } = await db
     .from("billing_events")
-    .select("id, site_id, plan_id, amount_kobo, status")
+    .select("id, site_id, plan_id, amount_kobo, status, summary")
     .eq("event_key", ev.reference)
     .maybeSingle();
   if (error) return "error";
   if (!pending?.site_id || !pending.plan_id) return "unknown";
   if (pending.status === "paid") return "already";
-  if (pending.status !== "pending") return "unknown";
+  const prev = (pending.summary ?? {}) as { claimed_at?: string; subscription_code?: string | null; written_at?: string };
+  if (pending.status === "settling") {
+    const claimedAt = Date.parse(prev.claimed_at ?? "");
+    if (Number.isFinite(claimedAt) && Date.now() - claimedAt < STALE_CLAIM_MS) return "busy";
+  } else if (pending.status !== "pending") {
+    return "unknown";
+  }
 
   const { data: plan } = await db
     .from("billing_plans")
@@ -51,23 +76,62 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     .maybeSingle();
   if (!plan) return "unknown";
   if (ev.currency !== "NGN" || ev.amountKobo !== Number(plan.price_kobo) || ev.amountKobo !== Number(pending.amount_kobo)) {
-    await db.from("billing_events").update({ status: "mismatch", summary: { amount_kobo: ev.amountKobo, currency: ev.currency } }).eq("id", pending.id);
+    await db
+      .from("billing_events")
+      .update({ status: "mismatch", summary: { amount_kobo: ev.amountKobo, currency: ev.currency } })
+      .eq("id", pending.id)
+      .eq("status", pending.status);
     return "mismatch";
   }
 
-  const { data: claimed, error: claimErr } = await db
+  // Claim (or reclaim a stale claim, conditional on the old claimed_at so only one retry wins).
+  const claimedAt = new Date().toISOString();
+  const resumeWritten = pending.status === "settling" && !!prev.written_at;
+  let claim = db
     .from("billing_events")
-    .update({ status: "paid", summary: { paid_at: new Date().toISOString() } })
+    .update({ status: "settling", summary: resumeWritten ? { ...prev, claimed_at: claimedAt } : { claimed_at: claimedAt } })
     .eq("id", pending.id)
-    .eq("status", "pending")
-    .select("id");
+    .eq("status", pending.status);
+  if (pending.status === "settling" && prev.claimed_at) claim = claim.eq("summary->>claimed_at", prev.claimed_at);
+  const { data: claimed, error: claimErr } = await claim.select("id");
   if (claimErr) return "error";
-  if (!claimed?.length) return "already";
+  if (!claimed?.length) return "busy";
+  const checkpoint = async (summary: Record<string, unknown>) => {
+    const { error: cpErr } = await db.from("billing_events").update({ summary }).eq("id", pending.id).eq("status", "settling");
+    if (cpErr) console.error("[billing] settle checkpoint failed", { reference: ev.reference, error: cpErr.message });
+  };
   const unclaim = async () => {
-    await db.from("billing_events").update({ status: "pending" }).eq("id", pending.id);
+    await db.from("billing_events").update({ status: "pending", summary: {} }).eq("id", pending.id);
+  };
+  const markPaid = async (summary: Record<string, unknown>): Promise<SettleResult> => {
+    const { error: paidErr } = await db
+      .from("billing_events")
+      .update({ status: "paid", summary: { ...summary, paid_at: new Date().toISOString() } })
+      .eq("id", pending.id)
+      .eq("status", "settling");
+    if (paidErr) {
+      // The subscription is written (written_at), so a later retry only finishes the settle.
+      console.error("[billing] settle not marked paid", { reference: ev.reference, error: paidErr.message });
+      return "error";
+    }
+    return "settled";
   };
 
   const siteId = pending.site_id as string;
+  const flag = async (reason: string) => {
+    await db.from("site_subscriptions").update({ flagged: reason }).eq("site_id", siteId);
+  };
+
+  if (resumeWritten) {
+    // The earlier run wrote the subscription and then died; its follow-ups may not have run.
+    console.error("[billing] resuming interrupted settle", { reference: ev.reference, siteId });
+    await restoreBillingSuspension(db, siteId);
+    await flag("settle_interrupted_check_billing");
+    return markPaid({ subscription_code: prev.subscription_code ?? null, resumed: true });
+  }
+  // An earlier run created a Paystack subscription it never recorded; it is flagged after the rerun.
+  const orphanCode = pending.status === "settling" ? (prev.subscription_code ?? null) : null;
+
   const interval = plan.interval as Interval;
   const sub = await loadSubscription(db, siteId);
   const paidThrough = sub && ["active", "cancelling", "past_due"].includes(sub.status) ? sub.current_period_end : null;
@@ -86,6 +150,7 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
       });
       newCode = created.subscription_code;
       emailToken = created.email_token;
+      await checkpoint({ claimed_at: claimedAt, subscription_code: newCode });
     } catch (err) {
       problem = "renewal_setup_failed";
       console.error("[billing] create subscription failed", { siteId, error: err instanceof Error ? err.message : "error" });
@@ -94,7 +159,7 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     problem = "card_not_reusable";
   }
 
-  const oldCode = sub?.paystack_subscription_code ?? null;
+  const oldCode = mayStillCharge(sub) ? (sub?.paystack_subscription_code ?? null) : null;
   const { data: oldSecret } = oldCode
     ? await db.from("billing_secrets").select("email_token").eq("site_id", siteId).maybeSingle()
     : { data: null };
@@ -127,10 +192,8 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     await unclaim();
     return "error";
   }
+  await checkpoint({ claimed_at: claimedAt, subscription_code: newCode, written_at: new Date().toISOString() });
 
-  const flag = async (reason: string) => {
-    await db.from("site_subscriptions").update({ flagged: reason }).eq("site_id", siteId);
-  };
   // The payment is real, so a failure here flags the site for follow-up instead of failing the settle.
   const { error: secretErr } = await db
     .from("billing_secrets")
@@ -155,7 +218,11 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     }
     if (!disabled) await flag("old_subscription_not_disabled");
   }
-  return "settled";
+  if (orphanCode && orphanCode !== newCode) {
+    console.error("[billing] interrupted settle left an unrecorded Paystack subscription", { siteId, orphanCode });
+    await flag("orphan_subscription_check_paystack");
+  }
+  return markPaid({ subscription_code: newCode, ...(orphanCode && orphanCode !== newCode ? { orphan_subscription_code: orphanCode } : {}) });
 }
 
 export async function applySubscriptionEvent(db: SupabaseClient, ev: SubEvent): Promise<string> {
@@ -210,7 +277,8 @@ export async function applySubscriptionEvent(db: SupabaseClient, ev: SubEvent): 
         break;
       }
       const stillPaid = !!sub.current_period_end && Date.parse(sub.current_period_end) > now.getTime();
-      patch = stillPaid ? { status: "cancelling" } : { status: "paused", paused_at: now.toISOString() };
+      // grace_ends_at is cleared: a disabled subscription will not be retried (see mayStillCharge).
+      patch = stillPaid ? { status: "cancelling", grace_ends_at: null } : { status: "paused", paused_at: now.toISOString(), grace_ends_at: null };
       break;
     }
   }
