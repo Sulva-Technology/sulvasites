@@ -15,14 +15,16 @@ const NO_STORE = { "Cache-Control": "no-store" };
 
 /** Platform webhook → billing. 5xx makes Paystack retry; everything else is acknowledged. */
 export async function handleBillingWebhook(db: SupabaseClient, event: unknown): Promise<NextResponse> {
-  const ev = parseBillingEvent(event);
+  let kind = "unparsed";
   try {
+    const ev = parseBillingEvent(event);
+    kind = ev.kind;
     if (ev.kind === "ignore") return NextResponse.json({ ok: true, ignored: "event" }, { headers: NO_STORE });
     const result = ev.kind === "first_charge" ? await settleFirstCharge(db, ev) : await applySubscriptionEvent(db, ev);
     if (result === "error") return NextResponse.json({ error: "Billing webhook failed" }, { status: 500, headers: NO_STORE });
     return NextResponse.json({ ok: true, result }, { headers: NO_STORE });
   } catch (err) {
-    console.error("[billing] webhook failed", { kind: ev.kind, error: err instanceof Error ? err.message : "error" });
+    console.error("[billing] webhook failed", { kind, error: err instanceof Error ? err.message : "error" });
     return NextResponse.json({ error: "Billing webhook failed" }, { status: 500, headers: NO_STORE });
   }
 }
@@ -116,21 +118,44 @@ export async function settleFirstCharge(db: SupabaseClient, ev: FirstCharge): Pr
     : await db.from("site_subscriptions").insert({ ...patch, site_id: siteId });
   if (writeErr) {
     console.error("[billing] subscription write failed", writeErr.message);
+    // The Paystack subscription exists already; disable it so the retry does not orphan a live one.
+    if (newCode && emailToken) {
+      await disableSubscription(newCode, emailToken).catch((err) =>
+        console.error("[billing] new subscription not disabled after failed write", { newCode, error: err instanceof Error ? err.message : "error" }),
+      );
+    }
     await unclaim();
     return "error";
   }
 
-  await db
+  const flag = async (reason: string) => {
+    await db.from("site_subscriptions").update({ flagged: reason }).eq("site_id", siteId);
+  };
+  // The payment is real, so a failure here flags the site for follow-up instead of failing the settle.
+  const { error: secretErr } = await db
     .from("billing_secrets")
     .upsert({ site_id: siteId, authorization_code: ev.authorizationCode, email_token: emailToken, updated_at: new Date().toISOString() });
+  if (secretErr) {
+    console.error("[billing] billing secret not saved", { siteId, error: secretErr.message });
+    await flag("billing_secret_not_saved");
+  }
   if (sub?.status === "archived") {
     await db.from("sites").update({ status: "published" }).eq("id", siteId).eq("status", "suspended");
   }
   // Disable the old Paystack subscription only now: the row points at the new code, so its disable webhook is ignored.
-  if (oldCode && oldCode !== newCode && oldSecret?.email_token) {
-    await disableSubscription(oldCode, oldSecret.email_token as string).catch((err) =>
-      console.error("[billing] old subscription not disabled", { oldCode, error: err instanceof Error ? err.message : "error" }),
-    );
+  if (oldCode && oldCode !== newCode) {
+    let disabled = false;
+    if (oldSecret?.email_token) {
+      try {
+        await disableSubscription(oldCode, oldSecret.email_token as string);
+        disabled = true;
+      } catch (err) {
+        console.error("[billing] old subscription not disabled", { oldCode, error: err instanceof Error ? err.message : "error" });
+      }
+    } else {
+      console.error("[billing] old subscription has no stored token", { oldCode });
+    }
+    if (!disabled) await flag("old_subscription_not_disabled");
   }
   return "settled";
 }
@@ -146,7 +171,21 @@ export async function applySubscriptionEvent(db: SupabaseClient, ev: SubEvent): 
     .eq("paystack_subscription_code", ev.subscriptionCode)
     .maybeSingle();
   if (error) return "error";
-  if (!row) return "unknown_subscription";
+  if (!row) {
+    // A paid renewal we cannot attach to a site needs a human; other unknown events are ignored.
+    if (ev.kind === "invoice_paid") {
+      const { error: unkErr } = await db.from("billing_events").insert({
+        event_key: ev.key,
+        kind: "invoice_paid_unknown",
+        site_id: null,
+        amount_kobo: ev.amountKobo,
+        status: "needs_attention",
+        summary: { subscription_code: ev.subscriptionCode },
+      });
+      if (unkErr && unkErr.code !== "23505") return "error";
+    }
+    return "unknown_subscription";
+  }
   const sub = row as SubscriptionRow;
   const now = new Date();
 

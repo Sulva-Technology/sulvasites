@@ -4,7 +4,7 @@ import { platformOrigin } from "@/lib/billing/email.server";
 import { initializeCheckout } from "@/lib/billing/paystackBilling.server";
 import { newBillingReference } from "@/lib/billing/reference";
 import { loadSubscription } from "@/lib/billing/subscriptions.server";
-import { isInterval, isPromoActive, isTier, planId } from "@/lib/marketing/pricing";
+import { isInterval, isPromoActive, isTier, parsePlanId, planId } from "@/lib/marketing/pricing";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { rateLimit } from "@/lib/supabase/requireAdmin.server";
 import { requireSiteRole } from "@/lib/supabase/requireSiteRole.server";
@@ -29,7 +29,9 @@ export async function POST(req: Request) {
   if (!sub || sub.status === "manual") return json({ error: "This site is billed by Sulvatech directly." }, 409);
   if (sub.blocked) return json({ error: "This site is on hold. Please contact Sulvatech." }, 403);
 
-  const id = planId(body.tier, body.interval, isPromoActive());
+  // Launch subscribers keep launch pricing for life, even after the promo ends.
+  const launch = isPromoActive() || (sub.plan_id ? parsePlanId(sub.plan_id)?.launch === true : false);
+  const id = planId(body.tier, body.interval, launch);
   const { data: plan } = await db.from("billing_plans").select("id, price_kobo, paystack_plan_code").eq("id", id).maybeSingle();
   if (!plan?.paystack_plan_code) return json({ error: "Plans are not set up yet. Please try again later." }, 503);
 
