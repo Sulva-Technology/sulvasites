@@ -36,6 +36,8 @@ export type PublicSiteContext = {
   /** Query string that identifies this site to /api/og and /api/icon. */
   siteQuery: string;
   logoUrl: string | undefined;
+  /** Google Search Console META verification value for a custom-domain primary host. */
+  googleVerification?: string;
 };
 
 export type PublicPage =
@@ -47,6 +49,18 @@ function platformDomain() {
     .trim()
     .toLowerCase();
 }
+
+/** Stored META token for a custom domain being verified in Search Console (written by the search cron). */
+const googleVerificationFor = cache(async (host: string): Promise<string | undefined> => {
+  const { data, error } = await supabaseServer()
+    .from("site_search_index")
+    .select("google_token")
+    .eq("host", host)
+    .eq("active", true)
+    .maybeSingle();
+  if (error || !data) return undefined;
+  return (data as { google_token: string | null }).google_token ?? undefined;
+});
 
 // cache() dedupes the DB round-trips between generateMetadata and the page render.
 const resolveBySlug = cache(resolveSiteBySlug);
@@ -80,6 +94,7 @@ export const loadPublicSite = cache(
         proto,
         siteQuery: `hostname=${encodeURIComponent(value)}`,
         logoUrl,
+        googleVerification: reqHost === primary ? await googleVerificationFor(primary) : undefined,
       };
     }
 
@@ -232,6 +247,7 @@ export function buildSiteMetadata(ctx: PublicSiteContext, page: PublicPage): Met
       },
     },
     alternates: canonical ? { canonical } : undefined,
+    verification: ctx.googleVerification ? { google: ctx.googleVerification } : undefined,
   };
 }
 
