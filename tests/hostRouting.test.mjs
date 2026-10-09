@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeHost, rewritePathForHost, siteRefForHost, siteScopedRedirect } from "../src/lib/hostRouting.ts";
+import { normalizeHost, primaryHost, rewritePathForHost, siteRefForHost, siteScopedRedirect } from "../src/lib/hostRouting.ts";
 
 const P = "soothecontrols.site";
 
@@ -75,6 +75,32 @@ test("siteScopedRedirect keeps the back office on the host's site", () => {
   assert.equal(siteScopedRedirect("/dashboard/site-1/content", id), null);
   assert.equal(siteScopedRedirect("/admin/sites/site-10", id), "/admin/sites/site-1");
   assert.equal(siteScopedRedirect("/login", id), null);
+});
+
+test("sitemap and robots rewrite to the site on site hosts, not on the platform", () => {
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/sitemap.xml", P), "/bakery/sitemap.xml");
+  assert.equal(rewritePathForHost("www.client.com", "/robots.txt", P), "/d/client.com/robots.txt");
+  assert.equal(rewritePathForHost("soothecontrols.site", "/sitemap.xml", P), null);
+});
+
+test("IndexNow key file is served by the app on every host", () => {
+  assert.equal(rewritePathForHost("bakery.soothecontrols.site", "/indexnow-key.txt", P), null);
+  assert.equal(rewritePathForHost("client.com", "/indexnow-key.txt", P), null);
+});
+
+test("primaryHost: oldest active custom domain, else the subdomain", () => {
+  assert.equal(primaryHost("bakery", [], P), "bakery.soothecontrols.site");
+  assert.equal(
+    primaryHost(
+      "bakery",
+      [
+        { hostname: "new.com", created_at: "2026-10-02T00:00:00Z" },
+        { hostname: "Old.com", created_at: "2026-10-01T00:00:00Z" },
+      ],
+      P,
+    ),
+    "old.com",
+  );
 });
 
 test("forgot-password is served by the app on every host, like login", () => {

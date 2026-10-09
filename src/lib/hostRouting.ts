@@ -24,9 +24,22 @@ export function isBypassPath(pathname: string) {
     pathname.startsWith("/d/") ||
     pathname.startsWith("/brand/") ||
     pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml"
+    // IndexNow key: one file served on every host. robots.txt / sitemap.xml are per site, so they rewrite.
+    pathname === "/indexnow-key.txt"
   );
+}
+
+/**
+ * The one address a site is canonical on and submitted to search engines under: its oldest active
+ * custom domain, else its platform subdomain.
+ */
+export function primaryHost(
+  slug: string,
+  activeDomains: Array<{ hostname: string; created_at: string }>,
+  platformDomain: string,
+): string {
+  const oldest = [...activeDomains].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))[0];
+  return oldest ? normalizeHost(oldest.hostname) : `${slug}.${platformDomain.trim().toLowerCase()}`;
 }
 
 /** Which site a host serves: `{ slug }` for <slug>.<platform>, `{ hostname }` for a custom domain, null for the platform itself. */
