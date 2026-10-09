@@ -25,9 +25,14 @@ export type Brief = {
   notes: string;
   /** Brand colours in the owner's own words (e.g. "navy and gold"); "" when not stated. */
   colors: string;
+  /** Longer owner-supplied facts (story, prices, hours, FAQs...) from the signup content step; "" when none. */
+  facts: string;
 };
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+/** Cap on Brief.facts: the owner's pasted details rendered as text. */
+export const MAX_FACTS_CHARS = 6000;
 
 const CONTACT_KEYS = ["phone", "email", "whatsapp", "address", "instagram", "facebook", "twitter", "tiktok"] as const;
 
@@ -44,6 +49,7 @@ export function emptyBrief(): Brief {
     shopIntent: null,
     notes: "",
     colors: "",
+    facts: "",
   };
 }
 
@@ -76,6 +82,7 @@ export function normalizeBrief(raw: unknown): Brief {
   b.languages = strList(r.languages, 4, 30);
   b.notes = str(r.notes, 400);
   b.colors = str(r.colors, 80);
+  b.facts = typeof r.facts === "string" ? r.facts.replace(/[ \t]+/g, " ").trim().slice(0, MAX_FACTS_CHARS) : "";
   b.shopIntent = typeof r.shopIntent === "boolean" ? r.shopIntent : null;
   const c = r.contact && typeof r.contact === "object" ? (r.contact as Record<string, unknown>) : {};
   for (const k of CONTACT_KEYS) b.contact[k] = str(c[k], k === "address" ? 200 : 120);
@@ -85,7 +92,7 @@ export function normalizeBrief(raw: unknown): Brief {
 /** Newer non-empty values win; lists are unioned. */
 export function mergeBrief(prev: Brief, next: Brief): Brief {
   const out = emptyBrief();
-  for (const k of ["businessName", "whatTheyDo", "location", "audience", "tone", "notes", "colors"] as const) {
+  for (const k of ["businessName", "whatTheyDo", "location", "audience", "tone", "notes", "colors", "facts"] as const) {
     out[k] = next[k] || prev[k];
   }
   out.services = strList([...next.services, ...prev.services], 8, 80);
@@ -166,6 +173,7 @@ export function briefToText(b: Brief): string {
     b.languages.length && `Languages: ${b.languages.join(", ")}`,
     b.shopIntent !== null && `Wants to sell online: ${b.shopIntent ? "yes" : "no"}`,
     b.notes && `Notes: ${b.notes}`,
+    b.facts && `More facts from the owner:\n${b.facts}`,
   ].filter(Boolean) as string[];
   const c = b.contact;
   const contactBits = CONTACT_KEYS.filter((k) => c[k]).map((k) => `${k}: ${c[k]}`);

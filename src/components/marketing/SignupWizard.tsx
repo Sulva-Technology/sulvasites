@@ -4,21 +4,39 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import ContentStep, { type LogoPick } from "@/components/marketing/ContentStep";
+import type { ColorChoice } from "@/lib/ai/setupPalette";
+import { uploadLogo } from "@/lib/assets";
 import { normalizePhoneNg } from "@/lib/billing/identity";
 import {
   PLAN_INFO, TIERS, TRIAL_DAYS, formatNaira, isInterval, isTier, offeredPlans,
   type Interval, type Tier,
 } from "@/lib/marketing/pricing";
 import type { SignupAnswers } from "@/lib/signup/fallbackSite";
+import { MAX_DETAILS_CHARS } from "@/lib/signup/ownerDetails";
 import { suggestTemplates } from "@/lib/signup/suggest";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { TEMPLATE_META, templateSupportsShop } from "@/templates/meta";
 
-type Step = 1 | 2 | 3 | 4 | 5;
-type Saved = { step: Step; answers: SignupAnswers; templateKey: string; tier: Tier; interval: Interval };
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Saved = {
+  step: Step;
+  answers: SignupAnswers;
+  templateKey: string;
+  tier: Tier;
+  interval: Interval;
+  /** What the owner pasted from their own AI. */
+  detailsText: string;
+  /** Colours read from the logo (or tweaked). */
+  color: ColorChoice | null;
+};
 
 const STORAGE_KEY = "sv-signup";
-const LABELS = ["Your business", "Pick a look", "Pick a plan", "Your account", "Building"];
+const LOGO_KEY = "sv-signup-logo";
+/** Logos above this are kept in memory only (sessionStorage is ~5 MB). */
+const MAX_STORED_LOGO_BYTES = 1_500_000;
+const LABELS = ["Your business", "Pick a look", "Your content", "Pick a plan", "Your account", "Building"];
+const HEX = /^#[0-9a-f]{6}$/i;
 const BUILD_MESSAGES = ["Setting up your site…", "Writing your pages…", "Choosing photos…", "Publishing…"];
 const BLANK_ANSWERS: SignupAnswers = { businessName: "", whatTheyDo: "", city: "", whatsapp: "", sellOnline: false };
 const input = "w-full rounded-2xl bg-white px-4 py-3 ring-1 ring-koi-ink/10 focus:outline-none focus:ring-2 focus:ring-koi-deep";
@@ -38,7 +56,7 @@ function fromParams(params: Params): Partial<Saved> {
 }
 
 function blankState(params: Params): Saved {
-  return { step: 1, answers: { ...BLANK_ANSWERS }, templateKey: "", tier: "business", interval: "monthly", ...fromParams(params) };
+  return { step: 1, answers: { ...BLANK_ANSWERS }, templateKey: "", tier: "business", interval: "monthly", detailsText: "", color: null, ...fromParams(params) };
 }
 
 /** Read stored progress, validating the shape. A saved build step comes back as the plan step (never auto-rebuild). */
@@ -50,9 +68,10 @@ function load(): Saved | null {
     if (!v || typeof v !== "object" || !v.answers || typeof v.answers !== "object") return null;
     const a = v.answers as Partial<SignupAnswers>;
     const str = (x: unknown) => (typeof x === "string" ? x : "");
-    const step = typeof v.step === "number" && v.step >= 1 && v.step <= 5 ? Math.floor(v.step) : 1;
+    const step = typeof v.step === "number" && v.step >= 1 && v.step <= 6 ? Math.floor(v.step) : 1;
+    const c = v.color as Partial<ColorChoice> | null | undefined;
     return {
-      step: (step === 5 ? 3 : step) as Step,
+      step: (step === 6 ? 4 : step) as Step,
       answers: {
         businessName: str(a.businessName),
         whatTheyDo: str(a.whatTheyDo),
@@ -63,7 +82,36 @@ function load(): Saved | null {
       templateKey: typeof v.templateKey === "string" && TEMPLATE_META.some((t) => t.key === v.templateKey) ? v.templateKey : "",
       tier: isTier(v.tier) ? v.tier : "business",
       interval: isInterval(v.interval) ? v.interval : "monthly",
+      detailsText: str(v.detailsText).slice(0, MAX_DETAILS_CHARS),
+      color: c && HEX.test(str(c.accent)) && HEX.test(str(c.accent2)) ? { accent: c.accent!, accent2: c.accent2!, source: c.source === "custom" ? "custom" : "logo" } : null,
     };
+  } catch {
+    return null;
+  }
+}
+
+/** Best effort: keep a small logo across reloads (Files can't go in JSON). */
+function saveLogo(logo: LogoPick | null) {
+  try {
+    if (!logo || logo.file.size > MAX_STORED_LOGO_BYTES) return sessionStorage.removeItem(LOGO_KEY);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        sessionStorage.setItem(LOGO_KEY, JSON.stringify({ name: logo.file.name, type: logo.file.type, data: reader.result }));
+      } catch { /* quota: memory only */ }
+    };
+    reader.readAsDataURL(logo.file);
+  } catch { /* private mode */ }
+}
+async function loadLogo(): Promise<LogoPick | null> {
+  try {
+    const raw = sessionStorage.getItem(LOGO_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as { name?: unknown; type?: unknown; data?: unknown };
+    if (typeof v.name !== "string" || typeof v.type !== "string" || typeof v.data !== "string" || !v.data.startsWith("data:image/")) return null;
+    const blob = await (await fetch(v.data)).blob();
+    const file = new File([blob], v.name, { type: v.type });
+    return { file, previewUrl: URL.createObjectURL(file) };
   } catch {
     return null;
   }
@@ -84,6 +132,8 @@ export default function SignupWizard() {
   const [hasSession, setHasSession] = useState(false);
   const [restored, setRestored] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [logo, setLogoState] = useState<LogoPick | null>(null);
+  const setLogo = (l: LogoPick | null) => { setLogoState(l); saveLogo(l); };
 
   // Restore after mount (never during render) so server and client markup match.
   // The state updates run in promise callbacks, not synchronously in the effect body.
@@ -95,6 +145,7 @@ export default function SignupWizard() {
       if (saved) setS({ ...saved, ...fromParams(paramsRef.current) });
       setRestored(true);
     });
+    void loadLogo().then((l) => { if (live && l) setLogoState(l); });
     void supabaseBrowser().auth.getSession().then(({ data }) => {
       if (live) setHasSession(!!data.session);
     });
@@ -122,14 +173,29 @@ export default function SignupWizard() {
         {error ? <p className="mb-4 rounded-2xl bg-koi-orange/10 px-4 py-3 text-sm text-koi-orange">{error}</p> : null}
         {s.step === 1 ? <BusinessStep s={s} setAnswer={setAnswer} onNext={() => go(2)} setError={setError} /> : null}
         {s.step === 2 ? <LookStep s={s} set={set} onBack={() => go(1)} onNext={() => go(3)} /> : null}
-        {s.step === 3 ? <PlanStep s={s} set={set} onBack={() => go(2)} onNext={() => go(hasSession ? 5 : 4)} /> : null}
-        {s.step === 4 ? <AccountStep onBack={() => go(3)} onDone={() => { setHasSession(true); go(5); }} setError={setError} /> : null}
-        {s.step === 5 ? (
+        {s.step === 3 ? (
+          <ContentStep
+            answers={s.answers}
+            templateKey={s.templateKey}
+            detailsText={s.detailsText}
+            color={s.color}
+            logo={logo}
+            onDetails={(detailsText) => set({ detailsText })}
+            onColor={(color) => set({ color })}
+            onLogo={setLogo}
+            onBack={() => go(2)}
+            onNext={() => go(4)}
+          />
+        ) : null}
+        {s.step === 4 ? <PlanStep s={s} set={set} onBack={() => go(3)} onNext={() => go(hasSession ? 6 : 5)} /> : null}
+        {s.step === 5 ? <AccountStep onBack={() => go(4)} onDone={() => { setHasSession(true); go(6); }} setError={setError} /> : null}
+        {s.step === 6 ? (
           <BuildStep
             s={s}
+            logo={logo}
             onError={setError}
             onDone={(siteId) => {
-              try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+              try { sessionStorage.removeItem(STORAGE_KEY); sessionStorage.removeItem(LOGO_KEY); } catch { /* ignore */ }
               router.push(`/dashboard/${siteId}?welcome=1`);
             }}
           />
@@ -322,7 +388,7 @@ function AccountStep({ onBack, onDone, setError }: { onBack: () => void; onDone:
   );
 }
 
-function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) => void; onError: (msg: string | null) => void }) {
+function BuildStep({ s, logo, onDone, onError }: { s: Saved; logo: LogoPick | null; onDone: (siteId: string) => void; onError: (msg: string | null) => void }) {
   const [msg, setMsg] = useState(0);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -351,11 +417,16 @@ function BuildStep({ s, onDone, onError }: { s: Saved; onDone: (siteId: string) 
         const res = await fetch("/api/signup/build", {
           method: "POST",
           headers: { "content-type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ answers: s.answers, templateKey: s.templateKey, tier: s.tier, interval: s.interval }),
+          body: JSON.stringify({ answers: s.answers, templateKey: s.templateKey, tier: s.tier, interval: s.interval, details: s.detailsText, color: s.color }),
         });
         const body = (await res.json().catch(() => ({}))) as { siteId?: string; error?: string };
         if (!mounted.current) return;
-        if (res.ok && body.siteId) return onDone(body.siteId);
+        if (res.ok && body.siteId) {
+          // The site exists now, so the owner may upload to it. A failed logo never blocks the welcome.
+          if (logo) await uploadLogo(body.siteId, logo.file).catch(() => undefined);
+          if (!mounted.current) return;
+          return onDone(body.siteId);
+        }
         setFailed(true);
         onError(body.error ?? "Something went wrong while building your site.");
       } catch {

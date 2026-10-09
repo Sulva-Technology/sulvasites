@@ -13,7 +13,7 @@ import { listOwnedSites } from "@/lib/billing/subscriptions.server";
 import { TRIAL_DAYS } from "@/lib/marketing/pricing";
 import { clientIp } from "@/lib/shop/requestIp";
 import { shopRateLimit } from "@/lib/shop/rateLimit";
-import { briefFromAnswers, parseSignupBody, personalizeSample, type TrialBuild } from "@/lib/signup/fallbackSite";
+import { briefFromAnswers, finishTrialBuild, parseSignupBody, personalizeSample, type TrialBuild } from "@/lib/signup/fallbackSite";
 import { insertTrialSite, persistTrialSite } from "@/lib/signup/persistTrialSite.server";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { requireUser } from "@/lib/supabase/requireUser.server";
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   }
   const parsed = parseSignupBody(body, isTemplateKey);
   if (!parsed.ok) return json({ error: parsed.error }, 400);
-  const { answers, templateKey, tier, interval } = parsed.value;
+  const { answers, templateKey, tier, interval, details, color } = parsed.value;
 
   const secret = process.env.SIGNUP_SECRET;
   if (!secret) return json({ error: "Signup is not available right now." }, 503);
@@ -136,14 +136,14 @@ export async function POST(req: Request) {
   let build: TrialBuild;
   let usedAi = true;
   try {
-    const result = await withTimeout(buildSite({ state: briefFromAnswers(answers, auth.email), templateOverride: templateKey }), AI_BUDGET_MS);
+    const result = await withTimeout(buildSite({ state: briefFromAnswers(answers, auth.email, details), templateOverride: templateKey }), AI_BUDGET_MS);
     build = { templateKey, profile: result.profile, pages: result.pages, extraPages: result.extraPages };
   } catch (err) {
     usedAi = false;
     console.warn("[signup] AI build failed, using sample content", err instanceof Error ? err.message : "error");
     build = personalizeSample(templateKey, sampleSite(templateKey), answers, auth.email);
   }
-  const warnings = await persistTrialSite(db, siteId, build);
+  const warnings = await persistTrialSite(db, siteId, finishTrialBuild(build, details, color));
 
   if (start.trial) await sendLifecycleEmail(db, siteId, "welcome");
 

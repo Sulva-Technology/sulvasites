@@ -115,7 +115,7 @@ export function buildPlanPrompt(brief: Brief): Prompt {
       '{"templateKey": string, "reason": string, "alternatives": [{"templateKey": string, "reason": string}], "photoCategory": string}',
     "Check silently: templateKey is in the catalogue, shop rule respected, JSON valid.",
   ].join("\n");
-  const user = ["TEMPLATE CATALOGUE", templateCatalogue(), "", "BUSINESS BRIEF", delimitUserData("brief", briefToText(brief), 3000)].join("\n");
+  const user = ["TEMPLATE CATALOGUE", templateCatalogue(), "", "BUSINESS BRIEF", delimitUserData("brief", briefToText(brief), 9000)].join("\n");
   return { system, user };
 }
 
@@ -131,7 +131,7 @@ export function buildProfilePrompt(brief: Brief, templateKey: string): Prompt {
     renderIndustryGuide(industry),
     "",
     "BUSINESS FACTS",
-    delimitUserData("brief", briefToText(brief), 3000),
+    delimitUserData("brief", briefToText(brief), 9000),
     "",
     "Write:",
     `- tagline: <= ${BUDGETS.tagline} characters, 4-9 words, concrete, no full stop.`,
@@ -183,7 +183,7 @@ export function buildPagePrompt(args: {
     renderIndustryGuide(industry),
     "",
     "BUSINESS FACTS (use only these; leave out anything not stated)",
-    delimitUserData("brief", briefToText(brief), 3000),
+    delimitUserData("brief", briefToText(brief), 9000),
     "",
     ...(args.avoid && args.avoid.length
       ? [`Other pages already use these headlines, so do not reuse or paraphrase them: ${args.avoid.map((h) => `"${h}"`).join("; ")}`, ""]

@@ -32,6 +32,7 @@ export async function persistTrialSite(db: SupabaseClient, siteId: string, build
   }
   const socials = Object.fromEntries(Object.entries(p.socials ?? {}).filter(([, v]) => !!v));
   if (Object.keys(socials).length) payload.socials = { instagram: null, facebook: null, twitter: null, tiktok: null, ...socials };
+  if (build.themeColors) payload.theme_colors = { [build.templateKey]: build.themeColors };
   const { error: profileErr } = await db.from("business_profiles").update(payload).eq("site_id", siteId);
   if (profileErr) warnings.push(`profile: ${profileErr.message}`);
 
