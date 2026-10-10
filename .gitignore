@@ -14,3 +14,9 @@ pnpm-debug.log*
 .DS_Store
 .cursor/
 tests/eval/last-assistant-eval*.json
+
+# promo video media (regenerate with promo/*.mjs, promo/beat.py)
+promo/captures/
+promo/out/
+promo/audio/*.wav
+promo/package-lock.json

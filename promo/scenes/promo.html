@@ -1,0 +1,659 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sulva Sites promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0f1f; --deep: #0a4fe0; --sea: #1b8cff; --foam: #7fd0ff; --orange: #ff5a2c; --paper: #f4f7fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  body { font-family: "Inter Tight", system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #fff; }
+  #stage { position: absolute; inset: 0; overflow: hidden; background: var(--ink); }
+  .layer { position: absolute; inset: 0; }
+  .abs { position: absolute; }
+  .serif { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+  .center { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .scene { position: absolute; inset: 0; display: none; }
+  .word { display: inline-block; will-change: transform, opacity; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(120px); }
+  #grain { position: absolute; inset: -50%; opacity: .07; pointer-events: none; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  #vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.45)); }
+
+  /* hook */
+  .search { position: absolute; display: flex; align-items: center; gap: 22px; padding: 0 36px; height: 104px; border-radius: 60px;
+    background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.16); backdrop-filter: blur(20px);
+    font-size: 44px; font-weight: 500; color: rgba(255,255,255,.92); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .caret { display: inline-block; width: 3px; height: 48px; background: var(--sea); margin-left: 4px; vertical-align: middle; }
+  .kinetic { position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; letter-spacing: -0.035em; line-height: .95; }
+
+  /* browser + phone frames */
+  .browser { position: absolute; border-radius: 22px; overflow: hidden; background: #111; box-shadow: 0 60px 120px rgba(0,0,0,.55), 0 0 0 1.5px rgba(255,255,255,.12); }
+  .browser .bar { height: 46px; background: #1a1f2e; display: flex; align-items: center; gap: 9px; padding: 0 18px; }
+  .browser .bar i { width: 13px; height: 13px; border-radius: 50%; background: #3a4155; display: block; }
+  .browser .bar .url { margin-left: 18px; flex: 1; max-width: 460px; height: 28px; border-radius: 14px; background: #262c3d; color: rgba(255,255,255,.55); font-size: 15px; display: flex; align-items: center; padding: 0 14px; }
+  .browser .view { position: absolute; left: 0; right: 0; top: 46px; bottom: 0; overflow: hidden; }
+  .browser .view img, .phone .view img { position: absolute; left: 0; top: 0; width: 100%; display: block; will-change: transform; }
+  .phone { position: absolute; border-radius: 54px; padding: 14px; background: #0b0d12; box-shadow: 0 60px 120px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.14), inset 0 0 0 2px #2a2f3c; }
+  .phone .view { position: relative; width: 100%; height: 100%; border-radius: 42px; overflow: hidden; background: #000; }
+  .phone .notch { position: absolute; left: 50%; top: 26px; width: 30%; height: 30px; transform: translateX(-50%); background: #000; border-radius: 20px; z-index: 2; }
+  .chip { position: absolute; display: inline-flex; align-items: center; gap: 14px; padding: 14px 26px 14px 18px; border-radius: 40px; background: rgba(10,15,31,.78);
+    border: 1.5px solid rgba(255,255,255,.18); backdrop-filter: blur(16px); font-size: 26px; font-weight: 600; white-space: nowrap; }
+  .chip b { width: 14px; height: 14px; border-radius: 50%; background: var(--sea); display: block; box-shadow: 0 0 18px var(--sea); }
+  .chip span { color: rgba(255,255,255,.55); font-weight: 500; }
+  .tile { position: absolute; border-radius: 18px; overflow: hidden; background: #111; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .tile img { width: 100%; display: block; }
+
+  /* editor */
+  .app { position: absolute; border-radius: 26px; background: #fff; overflow: hidden; box-shadow: 0 50px 120px rgba(10,15,31,.25), 0 0 0 1px rgba(10,15,31,.08); color: var(--ink); }
+  .app .top { height: 54px; display: flex; align-items: center; gap: 9px; padding: 0 22px; border-bottom: 1px solid rgba(10,15,31,.08); }
+  .app .top i { width: 13px; height: 13px; border-radius: 50%; background: #e2e6ee; display: block; }
+  .app .top .ttl { margin-left: 16px; font-size: 17px; font-weight: 600; color: rgba(10,15,31,.6); display: flex; align-items: center; gap: 10px; }
+  .panel { position: absolute; padding: 34px; background: #fbfcfe; }
+  .panel h4 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 26px; }
+  .fld { margin-bottom: 30px; }
+  .fld label { display: block; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(10,15,31,.45); margin-bottom: 12px; }
+  .input { height: 64px; border-radius: 16px; border: 2px solid rgba(10,15,31,.12); background: #fff; display: flex; align-items: center; padding: 0 20px; font-size: 26px; font-weight: 600; }
+  .input.focus { border-color: var(--sea); box-shadow: 0 0 0 5px rgba(27,140,255,.15); }
+  .swatches { display: flex; gap: 16px; }
+  .sw { width: 50px; height: 50px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); outline: 3px solid transparent; outline-offset: 4px; }
+  .sw.on { outline-color: var(--ink); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 24px; font-weight: 600; }
+  .toggle { width: 86px; height: 48px; border-radius: 30px; background: #dfe4ec; position: relative; }
+  .toggle i { position: absolute; top: 5px; left: 5px; width: 38px; height: 38px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.2); display: block; }
+  .publish { height: 70px; border-radius: 18px; background: var(--ink); color: #fff; font-size: 26px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .preview { position: absolute; overflow: hidden; }
+  .mini { position: absolute; inset: 0; padding: 30px 40px; }
+  .mini nav { display: flex; align-items: center; gap: 26px; font-size: 16px; font-weight: 600; }
+  .mini nav .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-right: auto; }
+  .mini nav .logo b { width: 22px; height: 22px; border-radius: 7px; display: block; }
+  .mini nav .cta { padding: 10px 18px; border-radius: 20px; color: #fff; }
+  .mini .eyebrow { font-size: 15px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .mini .h { font-weight: 600; letter-spacing: -0.035em; line-height: .95; }
+  .mini .sub { font-size: 20px; line-height: 1.45; font-weight: 500; }
+  .mini .btn { display: inline-flex; padding: 18px 30px; border-radius: 40px; color: #fff; font-size: 20px; font-weight: 700; }
+  .mini .photo { position: absolute; border-radius: 26px; overflow: hidden; }
+  .mini .photo img { position: absolute; }
+  .toast { position: absolute; display: flex; align-items: center; gap: 16px; padding: 18px 26px; border-radius: 20px; background: var(--ink); color: #fff; font-size: 22px; font-weight: 600; box-shadow: 0 30px 60px rgba(10,15,31,.35); white-space: nowrap; }
+  .toast b { width: 34px; height: 34px; border-radius: 50%; background: #22c55e; display: flex; align-items: center; justify-content: center; }
+  #cursor { position: absolute; width: 44px; height: 44px; left: 0; top: 0; z-index: 50; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+  .ripple { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%; border: 4px solid var(--sea); opacity: 0; z-index: 49; }
+
+  /* live */
+  .badge { position: absolute; display: inline-flex; align-items: center; gap: 14px; padding: 16px 28px 16px 20px; border-radius: 40px; background: rgba(255,255,255,.08);
+    border: 1.5px solid rgba(255,255,255,.18); font-size: 28px; font-weight: 600; white-space: nowrap; backdrop-filter: blur(14px); }
+  .badge svg { width: 30px; height: 30px; }
+  .laptop { position: absolute; }
+  .laptop .lid { position: absolute; left: 0; right: 0; top: 0; border-radius: 26px 26px 6px 6px; background: #0b0d12; padding: 16px; box-shadow: 0 0 0 2px rgba(255,255,255,.14), 0 60px 120px rgba(0,0,0,.55); }
+  .laptop .lid .view { position: relative; width: 100%; height: 100%; border-radius: 10px; overflow: hidden; }
+  .laptop .lid .view img { position: absolute; left: 0; top: 0; width: 100%; }
+  .laptop .base { position: absolute; left: -7%; right: -7%; height: 26px; border-radius: 0 0 26px 26px; background: linear-gradient(#2a2f3c, #12151c); }
+
+  /* cta */
+  .pill { position: absolute; display: inline-flex; align-items: center; gap: 18px; border-radius: 60px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bg">
+    <div class="glow" id="g1"></div>
+    <div class="glow" id="g2"></div>
+    <div class="glow" id="g3"></div>
+  </div>
+  <div class="layer" id="cam"></div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+  <div id="flash"></div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const V = Q.get("v") === "1"; // vertical 9:16
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+const CAP = "../captures/";
+const stage = document.getElementById("stage");
+stage.style.width = W + "px"; stage.style.height = H + "px";
+const cam = document.getElementById("cam");
+
+// ---------- helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eOutExpo = (p) => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p));
+const eOutCubic = (p) => 1 - Math.pow(1 - p, 3);
+const eInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const eOutBack = (p) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const eIn = (p) => p * p * p;
+function el(tag, cls, parent, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  (parent || cam).appendChild(e);
+  return e;
+}
+function css(e, o) { for (const k in o) e.style[k] = o[k]; return e; }
+window.pending = [];
+function setSrc(img, src) { if (img.getAttribute("src") !== src) { img.src = src; window.pending.push(img.decode().catch(() => {})); } }
+function show(e, on) { e.style.display = on ? (e.classList.contains("scene") ? "block" : "") : "none"; }
+function tf(e, x, y, s = 1, r = 0, extra = "") { e.style.transform = `translate(${x}px, ${y}px) scale(${s}) rotate(${r}deg) ${extra}`; }
+// "slam" in: scale from big, fade in fast
+function slam(t, at, dur = 0.22) { const p = seg(t, at, at + dur); return { o: clamp(p * 3), s: lerp(1.35, 1, eOutExpo(p)), p }; }
+const MARK = '<svg viewBox="0 0 274 329" width="100%" height="100%"><path fill="currentColor" d="M89 92.5C89 37 126 0 181.5 0S274 37 274 92.5L89 185ZM185 236.5C185 292 148 329 92.5 329S0 292 0 236.5L185 144Z"/></svg>';
+const ICON = {
+  search: '<svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+  blog: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg>',
+  store: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
+  pay: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd0ff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd0ff" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+};
+function browser(parent, url) {
+  const b = el("div", "browser", parent, `<div class="bar"><i></i><i></i><i></i><div class="url">${url}</div></div><div class="view"><img></div>`);
+  return { root: b, img: b.querySelector("img"), url: b.querySelector(".url") };
+}
+function phone(parent) {
+  const p = el("div", "phone", parent, `<div class="view"><div class="notch"></div><img></div>`);
+  return { root: p, img: p.querySelector("img") };
+}
+
+// ---------- background ----------
+const bg = document.getElementById("bg");
+const g1 = document.getElementById("g1"), g2 = document.getElementById("g2"), g3 = document.getElementById("g3");
+css(g1, { width: "900px", height: "900px", background: "#0a4fe0" });
+css(g2, { width: "800px", height: "800px", background: "#1b8cff" });
+css(g3, { width: "600px", height: "600px", background: "#ff5a2c" });
+
+// ================= SCENES =================
+const S = {};
+
+// ---- 1. HOOK 0-4 ----
+S.hook = el("div", "scene");
+const sPill = el("div", "search", S.hook, `${ICON.search}<span id="q"></span><span class="caret"></span>`);
+const qEl = sPill.querySelector("#q"), caretEl = sPill.querySelector(".caret");
+const hookL1 = el("div", "kinetic", S.hook, `<span class="word">Your</span> <span class="word">customers</span><br><span class="word">are</span> <span class="word">searching.</span>`);
+const hookL2 = el("div", "kinetic", S.hook, `<span class="word">Can</span> <span class="word">they</span> <span class="word">find</span><br><span class="word serif" style="color:var(--orange)">you?</span>`);
+const QUERY = "best caterer near me";
+
+// ---- 2. LOGO 4-6 ----
+S.logo = el("div", "scene");
+const burst = el("div", "abs", S.logo);
+css(burst, { left: W / 2 - 700 + "px", top: H / 2 - 700 + "px", width: "1400px", height: "1400px", borderRadius: "50%",
+  background: "radial-gradient(circle, rgba(127,208,255,.9) 0%, rgba(27,140,255,.55) 25%, rgba(10,79,224,.25) 45%, transparent 68%)" });
+const logoGroup = el("div", "abs", S.logo);
+const mark = el("div", "abs", logoGroup, MARK);
+const wordmark = el("div", "abs", logoGroup, `Sulva <span class="serif" style="color:var(--foam);font-size:1.08em">Sites</span>`);
+const tagline = el("div", "abs", logoGroup, `Your business website, <span class="serif" style="color:var(--foam)">live today.</span>`);
+css(mark, { color: "#fff", width: V ? "190px" : "170px", height: V ? "228px" : "204px" });
+css(wordmark, { fontSize: V ? "150px" : "170px", fontWeight: 600, letterSpacing: "-0.035em", whiteSpace: "nowrap", lineHeight: 1 });
+css(tagline, { fontSize: V ? "52px" : "50px", fontWeight: 500, whiteSpace: "nowrap", color: "rgba(255,255,255,.85)", letterSpacing: "-0.02em" });
+
+// ---- 3. MONTAGE 6-14 ----
+S.montage = el("div", "scene");
+const CUTS = [
+  { t: 6.0, k: "t7", m: "dark", name: "Restaurant", tpl: "Tavola", c: "#ff8a4c" },
+  { t: 7.0, k: "t5", m: "light", name: "Beauty & booking", tpl: "Maison", c: "#e2638f" },
+  { t: 8.0, k: "t15", m: "dark", name: "Automotive", tpl: "Marque", c: "#c9d2e3" },
+  { t: 9.0, k: "t6", m: "light", name: "Real estate", tpl: "Estate", c: "#b08d57" },
+  { t: 9.5, k: "t9", m: "light", name: "Fitness", tpl: "Pulse", c: "#d7ff3a" },
+  { t: 10.0, k: "t8", m: "light", name: "Clinic & health", tpl: "Vital", c: "#22c3a6" },
+  { t: 10.5, k: "t13", m: "dark", name: "Fashion shop", tpl: "Mode", c: "#f0e6d8" },
+  { t: 11.0, k: "t11", m: "light", name: "Events", tpl: "Soirée", c: "#f2a7c3" },
+  { t: 11.5, k: "t14", m: "light", name: "Online store", tpl: "Cartly", c: "#1b8cff" },
+  { t: 12.0, k: "t10", m: "light", name: "Education", tpl: "Campus", c: "#ffb020" },
+  { t: 12.5, k: "t16", m: "light", name: "Community", tpl: "Circle", c: "#3b9ad0" },
+];
+const mHead = el("div", "abs", S.montage);
+css(mHead, { fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 0.92 });
+const mBrowser = browser(S.montage, "yourbusiness.com");
+const mPhone = phone(S.montage);
+const mChip = el("div", "chip", S.montage, `<b></b><em style="font-style:normal"></em><span></span>`);
+const mCount = el("div", "abs", S.montage);
+css(mCount, { fontSize: "24px", fontWeight: 600, color: "rgba(255,255,255,.5)", letterSpacing: ".12em", fontVariantNumeric: "tabular-nums" });
+// grid wall
+const wall = el("div", "abs", S.montage);
+const WALL_KEYS = ["t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12","t13","t14","t15","t16","t17"];
+const wallTiles = [];
+const WALL_COLS = V ? 4 : 6, TW = V ? 300 : 300, TH = V ? 600 : 600, GAP = 28;
+for (let i = 0; i < 18; i++) {
+  const key = WALL_KEYS[i % 17];
+  const tile = el("div", "tile", wall, `<img src="${CAP}${key}-mob-${["t4","t7","t13","t15"].includes(key) ? "dark" : "light"}.jpg">`);
+  const col = i % WALL_COLS, row = Math.floor(i / WALL_COLS);
+  css(tile, { width: TW + "px", height: TH + "px", left: col * (TW + GAP) + "px", top: row * (TH + GAP) + (col % 2 ? 140 : 0) + "px" });
+  wallTiles.push(tile);
+}
+const wallCols = WALL_COLS, wallRows = Math.ceil(18 / WALL_COLS);
+const wallW = wallCols * (TW + GAP), wallH = wallRows * (TH + GAP) + 140;
+const wallScrim = el("div", "abs", S.montage);
+css(wallScrim, { inset: 0, background: "radial-gradient(ellipse at center, rgba(10,15,31,.85) 0%, rgba(10,15,31,.55) 45%, rgba(10,15,31,.1) 80%)" });
+const wallText = el("div", "abs", S.montage, `<div style="font-size:${V ? 150 : 170}px;font-weight:600;letter-spacing:-.035em;line-height:.9">17 designs.</div><div class="serif" style="font-size:${V ? 170 : 190}px;line-height:1;color:var(--foam)">Pick yours.</div>`);
+css(wallText, { left: 0, right: 0, textAlign: "center" });
+
+// ---- 4. EDITOR 14-20 ----
+S.editor = el("div", "scene");
+const eHead = el("div", "abs", S.editor);
+css(eHead, { color: "var(--ink)", fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 0.95, whiteSpace: "nowrap" });
+const app = el("div", "app", S.editor, `<div class="top"><i></i><i></i><i></i><div class="ttl"><span style="width:20px;height:24px;display:inline-block;color:var(--ink)">${MARK}</span>Sulva Sites · Editor</div></div>`);
+const panel = el("div", "panel", app, `
+  <h4>Edit your site</h4>
+  <div class="fld"><label>Business name</label><div class="input" id="in"><span id="inText"></span><span class="caret" id="inCaret" style="height:32px"></span></div></div>
+  <div class="fld"><label>Brand colour</label><div class="swatches">
+    <div class="sw" style="background:#1b8cff"></div><div class="sw" style="background:#ff5a2c"></div><div class="sw" style="background:#d6336c"></div><div class="sw" style="background:#10b981"></div><div class="sw" style="background:#7c3aed"></div>
+  </div></div>
+  <div class="fld"><div class="toggle-row"><span>Dark mode</span><div class="toggle" id="tog"><i></i></div></div></div>
+  <div class="publish" id="pub">Publish site</div>`);
+const inBox = panel.querySelector("#in"), inText = panel.querySelector("#inText"), inCaret = panel.querySelector("#inCaret");
+const sws = [...panel.querySelectorAll(".sw")];
+const tog = panel.querySelector("#tog"), togKnob = tog.querySelector("i");
+const pub = panel.querySelector("#pub");
+const preview = el("div", "preview", app);
+const mini = el("div", "mini", preview, `
+  <nav><div class="logo"><b></b><span id="mName">Your business</span></div><span>Services</span><span>Gallery</span><span>About</span><span class="cta">Book now</span></nav>
+  <div class="eyebrow" style="margin-top:${V ? 50 : 70}px">Bridal &amp; soft glam · Lekki</div>
+  <div class="h" id="mH">Your business</div>
+  <div class="sub" id="mSub">Skin-first makeup for brides, events and everyday confidence.</div>
+  <div class="btn" id="mBtn">Book an appointment</div>
+  <div class="photo"><img src="${CAP}t5-desk-light.jpg"></div>`);
+const mName = mini.querySelector("#mName"), mH = mini.querySelector("#mH"), mBtn = mini.querySelector("#mBtn"), mSub = mini.querySelector("#mSub");
+const mLogoDot = mini.querySelector(".logo b"), mNavCta = mini.querySelector("nav .cta"), mEyebrow = mini.querySelector(".eyebrow");
+const mPhoto = mini.querySelector(".photo"), mPhotoImg = mPhoto.querySelector("img");
+const toast = el("div", "toast", S.editor, `<b>${ICON.check}</b>Your site is live`);
+const cursor = el("div", "", S.editor, `<svg viewBox="0 0 24 24" width="44" height="44"><path d="M4 2.5v17.2l4.6-4.4 3 6.7 3.1-1.4-3-6.6h6.4L4 2.5Z" fill="#0a0f1f" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`);
+cursor.id = "cursor";
+const ripple = el("div", "ripple", S.editor);
+const NAME = "Bisi's Beauty Bar";
+
+// ---- 5. LIVE 20-26 ----
+S.live = el("div", "scene");
+const lHead = el("div", "abs", S.live);
+css(lHead, { fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 0.92, whiteSpace: "nowrap" });
+lHead.innerHTML = `Live in<br><span class="serif" style="color:var(--foam);font-size:1.12em">minutes.</span>`;
+const laptop = el("div", "laptop", S.live, `<div class="lid"><div class="view"><img src="${CAP}t5-desk-dark.jpg"></div></div><div class="base"></div>`);
+const lapImg = laptop.querySelector("img"), lapLid = laptop.querySelector(".lid"), lapBase = laptop.querySelector(".base");
+const lPhone = phone(S.live); lPhone.img.src = CAP + "t5-mob-dark.jpg";
+const BADGES = [["blog", "Blog"], ["store", "Online store"], ["pay", "Paystack checkout"], ["globe", "Custom domain"], ["phone", "Mobile-ready"]];
+const badges = BADGES.map(([ic, txt]) => el("div", "badge", S.live, `${ICON[ic]}${txt}`));
+
+// ---- 6. CTA 26-30 ----
+S.cta = el("div", "scene");
+const cHead = el("div", "abs", S.cta, `Start <span class="serif" style="font-size:1.1em">free.</span>`);
+css(cHead, { left: 0, right: 0, textAlign: "center", fontSize: V ? "230px" : "250px", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1 });
+const cUrl = el("div", "pill", S.cta, `sulvasites.sulvatech.com<span style="display:flex">${ICON.arrow}</span>`);
+css(cUrl, { background: "#fff", color: "var(--ink)", fontSize: V ? "50px" : "54px", fontWeight: 700, padding: V ? "26px 40px" : "28px 48px", letterSpacing: "-0.02em", boxShadow: "0 30px 80px rgba(0,0,0,.35)" });
+const cLine = el("div", "abs", S.cta, `7 days free &nbsp;·&nbsp; No card needed &nbsp;·&nbsp; No code`);
+css(cLine, { left: 0, right: 0, textAlign: "center", fontSize: V ? "40px" : "40px", fontWeight: 600, color: "rgba(255,255,255,.88)" });
+const cPromo = el("div", "pill", S.cta, `<span style="font-weight:600">Launch price</span><span style="opacity:.9">from ₦3,500/mo</span>`);
+css(cPromo, { background: "var(--orange)", color: "#fff", fontSize: V ? "38px" : "36px", fontWeight: 600, padding: "16px 34px", boxShadow: "0 20px 50px rgba(255,90,44,.4)" });
+const cLogo = el("div", "abs", S.cta, `<span style="width:40px;height:48px;display:inline-block;vertical-align:middle;margin-right:14px">${MARK}</span><span style="vertical-align:middle">Sulva <span class="serif" style="color:var(--foam);font-size:1.08em;letter-spacing:0">Sites</span></span>`);
+css(cLogo, { left: 0, right: 0, textAlign: "center", fontSize: "44px", fontWeight: 600, letterSpacing: "-0.04em" });
+
+const WATER = "radial-gradient(60% 80% at 75% 35%, rgba(127,208,255,.55), transparent 60%), radial-gradient(80% 90% at 20% 110%, rgba(127,208,255,.6), transparent 55%), linear-gradient(160deg, #0A3FC4 0%, #0A4FE0 35%, #1B8CFF 75%, #4FB6FF 100%)";
+const ALL = [S.hook, S.logo, S.montage, S.editor, S.live, S.cta];
+const flash = document.getElementById("flash");
+
+// ---------- layout constants per orientation ----------
+const L = V ? {
+  pillY: 720, l1Y: 900, l1Size: 118, l2Y: 700, l2Size: 160,
+  mHeadX: 0, mHeadY: 150, mHeadSize: 120,
+  phoneW: 680, phoneH: 1360, phoneX: (1080 - 680) / 2, phoneY: 400,
+  chipY: 1790,
+} : {
+  pillY: 300, l1Y: 470, l1Size: 132, l2Y: 300, l2Size: 200,
+  mHeadX: 110, mHeadY: 330, mHeadSize: 136,
+  bW: 1060, bH: 680, bX: 790, bY: 190, phoneW: 290, phoneH: 600, phoneX: 715, phoneY: 380,
+  chipY: 940,
+};
+
+// ---------- per-frame render ----------
+function render(t) {
+  for (const s of ALL) show(s, false);
+  // camera shake on hits
+  let sx = 0, sy = 0;
+  for (const hit of [4.0, 6.0, 20.0, 26.0]) {
+    const d = t - hit;
+    if (d >= 0 && d < 0.35) { const a = 18 * Math.exp(-d * 14); sx += Math.sin(d * 97) * a; sy += Math.cos(d * 83) * a; }
+  }
+  cam.style.transform = `translate(${sx}px, ${sy}px)`;
+  // flash
+  let fl = 0;
+  for (const hit of [4.0, 6.0, 20.0, 26.0]) { const d = t - hit; if (d >= 0) fl = Math.max(fl, Math.exp(-d * 9) * (hit === 26 || hit === 4 ? 0.85 : 0.45)); }
+  flash.style.opacity = fl;
+
+  // background per scene
+  const light = t >= 14 && t < 20;
+  stage.style.background = light ? "#f4f7fc" : (t >= 26 ? WATER : "#0a0f1f");
+  const drift = (a, sp, ph) => Math.sin(t * sp + ph) * a;
+  tf(g1, W * 0.15 - 450 + drift(120, 0.7, 0), H * 0.25 - 450 + drift(90, 0.5, 1));
+  tf(g2, W * 0.85 - 400 + drift(140, 0.6, 2), H * 0.8 - 400 + drift(100, 0.8, 3));
+  tf(g3, W * 0.7 - 300 + drift(160, 0.9, 4), H * 0.1 - 300 + drift(80, 0.6, 5));
+  g1.style.opacity = light ? 0.18 : (t >= 26 ? 0.25 : 0.55);
+  g2.style.opacity = light ? 0.15 : (t >= 26 ? 0.3 : 0.45);
+  g3.style.opacity = light ? 0.08 : (t < 4 ? 0.0 : t >= 26 ? 0.18 : 0.12);
+  g2.style.background = t >= 26 ? "#7fd0ff" : "#1b8cff";
+
+  if (t < 4) renderHook(t);
+  else if (t < 6) renderLogo(t);
+  else if (t < 14) renderMontage(t);
+  else if (t < 20) renderEditor(t);
+  else if (t < 26) renderLive(t);
+  else renderCta(t);
+}
+
+function renderHook(t) {
+  show(S.hook, true);
+  // search pill
+  const pIn = eOutExpo(seg(t, 0, 0.4));
+  const out = eIn(seg(t, 2.0, 2.3));
+  const pw = V ? 920 : 980;
+  css(sPill, { width: pw + "px", left: (W - pw) / 2 + "px", top: L.pillY + "px", opacity: pIn * (1 - out) });
+  sPill.style.transform = `translateY(${lerp(40, 0, pIn) - out * 160}px) scale(${lerp(0.9, 1, pIn) * (1 - out * 0.1)})`;
+  sPill.style.filter = `blur(${out * 14}px)`;
+  const n = Math.floor(clamp((t - 0.15) / 1.3) * QUERY.length);
+  qEl.textContent = QUERY.slice(0, n);
+  caretEl.style.opacity = (n < QUERY.length || Math.floor(t * 3) % 2 === 0) ? 1 : 0;
+  // line 1 words on beats 0.5, 0.75, 1.0, 1.5
+  css(hookL1, { top: L.l1Y + "px", fontSize: L.l1Size + "px", opacity: 1 - out });
+  hookL1.style.transform = `translateY(${-out * 160}px)`;
+  hookL1.style.filter = `blur(${out * 14}px)`;
+  hookL1.querySelectorAll(".word").forEach((w, i) => {
+    const s = slam(t, [0.5, 0.75, 1.0, 1.5][i]);
+    w.style.opacity = s.o; w.style.transform = `scale(${s.s})`;
+  });
+  // line 2: Can they find you?  beats 2.0, 2.25, 2.5, 3.0
+  css(hookL2, { top: L.l2Y + "px", fontSize: L.l2Size + "px" });
+  const zoom = 1 + eIn(seg(t, 3.2, 4.0)) * 0.25;
+  hookL2.style.transform = `scale(${zoom})`;
+  hookL2.style.filter = `blur(${eIn(seg(t, 3.6, 4.0)) * 10}px)`;
+  hookL2.querySelectorAll(".word").forEach((w, i) => {
+    const s = slam(t, [2.0, 2.25, 2.5, 3.0][i], i === 3 ? 0.35 : 0.22);
+    w.style.opacity = s.o; w.style.transform = `scale(${i === 3 ? lerp(1.8, 1, eOutBack(s.p)) : s.s})`;
+  });
+  hookL2.querySelectorAll(".word")[3].style.fontSize = "1.25em";
+}
+
+function renderLogo(t) {
+  show(S.logo, true);
+  const b = seg(t, 4.0, 4.9);
+  burst.style.opacity = (1 - b) * 0.9;
+  burst.style.transform = `scale(${lerp(0.1, 1.6, eOutExpo(b))})`;
+  const p = seg(t, 4.0, 4.55);
+  const wm = eOutExpo(seg(t, 4.2, 4.75));
+  const tg = eOutCubic(seg(t, 4.6, 5.0));
+  const exit = eIn(seg(t, 5.55, 6.0));
+  const markW = parseFloat(mark.style.width), markH = parseFloat(mark.style.height);
+  const wmW = wordmark.offsetWidth, wmH = wordmark.offsetHeight, tgW = tagline.offsetWidth;
+  if (V) {
+    css(mark, { left: (W - markW) / 2 + "px", top: H / 2 - 380 + "px" });
+    css(wordmark, { left: (W - wmW) / 2 + "px", top: H / 2 - 110 + "px" });
+    css(tagline, { left: (W - tgW) / 2 + "px", top: H / 2 + 80 + "px" });
+  } else {
+    const total = markW + 50 + wmW;
+    css(mark, { left: (W - total) / 2 + "px", top: H / 2 - markH / 2 - 60 + "px" });
+    css(wordmark, { left: (W - total) / 2 + markW + 50 + "px", top: H / 2 - wmH / 2 - 60 + "px" });
+    css(tagline, { left: (W - tgW) / 2 + "px", top: H / 2 + 110 + "px" });
+  }
+  mark.style.transform = `scale(${lerp(2.2, 1, eOutBack(p))})`;
+  mark.style.opacity = clamp(p * 4);
+  wordmark.style.clipPath = `inset(0 ${100 - wm * 100}% 0 0)`;
+  wordmark.style.transform = `translateX(${lerp(-40, 0, wm)}px)`;
+  tagline.style.opacity = tg;
+  tagline.style.transform = `translateY(${lerp(30, 0, tg)}px)`;
+  css(logoGroup, { left: 0, top: 0, width: W + "px", height: H + "px", transformOrigin: `${W / 2}px ${H / 2}px` });
+  logoGroup.style.transform = `scale(${1 + exit * 4})`;
+  logoGroup.style.opacity = 1 - exit;
+  logoGroup.style.filter = `blur(${exit * 16}px)`;
+  // subtle float
+  if (!exit) logoGroup.style.transform = `scale(${1 + seg(t, 4.5, 5.55) * 0.04})`;
+}
+
+function cutAt(t) { let c = null; for (const x of CUTS) if (t >= x.t) c = x; return c; }
+function renderMontage(t) {
+  show(S.montage, true);
+  const inWall = t >= 13.0;
+  const c = cutAt(t);
+  const idx = CUTS.indexOf(c);
+  const next = CUTS[idx + 1];
+  const dur = (next ? next.t : 13.0) - c.t;
+  const local = t - c.t;
+  const pin = eOutExpo(seg(local, 0, 0.18));
+  const dir = idx % 2 ? 1 : -1;
+  // headline
+  const h1 = t < 9.0;
+  if (V) css(mHead, { left: 0, right: 0, textAlign: "center", top: L.mHeadY + "px", fontSize: (h1 ? 140 : 110) + "px" });
+  else css(mHead, { left: L.mHeadX + "px", top: (h1 ? L.mHeadY : L.mHeadY - 30) + "px", fontSize: (h1 ? L.mHeadSize : 112) + "px", width: "600px" });
+  const hs = slam(t, h1 ? 6.0 : 9.0, 0.25);
+  mHead.innerHTML = h1 ? `<span style="color:var(--foam)">17</span> designs.` : (V ? `Every kind of<br><span class="serif" style="color:var(--foam);font-size:1.15em">business.</span>` : `Every<br>kind of<br><span class="serif" style="color:var(--foam);font-size:1.15em">business.</span>`);
+  mHead.style.opacity = hs.o * (1 - seg(t, 12.85, 13.0));
+  mHead.style.transform = `scale(${hs.s})`;
+  mHead.style.transformOrigin = V ? "50% 50%" : "0% 50%";
+  // devices
+  const vis = !inWall;
+  show(mBrowser.root, vis && !V); show(mPhone.root, vis); show(mChip, vis); show(mCount, vis && !V);
+  if (vis) {
+    const scroll = (lerp(0, 1, local / Math.max(dur, 0.5))) ;
+    if (!V) {
+      css(mBrowser.root, { left: L.bX + "px", top: L.bY + "px", width: L.bW + "px", height: L.bH + "px" });
+      const bimg = `${CAP}${c.k}-desk-${c.m}.jpg`;
+      setSrc(mBrowser.img, bimg);
+      mBrowser.url.textContent = c.tpl.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "") + ".com.ng";
+      mBrowser.img.style.transform = `translateY(${-scroll * 900 * (L.bW / 1440)}px)`;
+      mBrowser.root.style.transform = `perspective(2200px) rotateY(${-8}deg) translateX(${(1 - pin) * dir * 60}px) scale(${lerp(1.06, 1, pin)})`;
+    }
+    const pimg = `${CAP}${c.k}-mob-${c.m}.jpg`;
+    setSrc(mPhone.img, pimg);
+    css(mPhone.root, { left: L.phoneX + "px", top: L.phoneY + "px", width: L.phoneW + "px", height: L.phoneH + "px" });
+    mPhone.img.style.transform = `translateY(${-scroll * (V ? 700 : 340)}px)`;
+    mPhone.root.style.transform = V
+      ? `translateY(${(1 - pin) * 60}px) scale(${lerp(1.05, 1, pin)}) rotate(${dir * (1 - pin) * 2}deg)`
+      : `translateY(${(1 - pin) * -50 * dir}px) rotate(${-4 + (1 - pin) * dir * 3}deg)`;
+    mChip.querySelector("b").style.background = c.c; mChip.querySelector("b").style.boxShadow = `0 0 18px ${c.c}`;
+    mChip.querySelector("em").textContent = c.name;
+    mChip.querySelector("span").textContent = c.tpl;
+    const cw = mChip.offsetWidth;
+    css(mChip, { left: (V ? (W - cw) / 2 : L.bX + 40) + "px", top: L.chipY + "px" });
+    mChip.style.transform = `translateY(${(1 - pin) * 24}px)`; mChip.style.opacity = pin;
+    mCount.textContent = String(idx + 1).padStart(2, "0") + " / 17";
+    css(mCount, { left: L.mHeadX + "px", top: "900px" });
+  }
+  // wall 13-14
+  show(wall, inWall); show(wallScrim, inWall); show(wallText, inWall);
+  if (inWall) {
+    const p = eOutExpo(seg(t, 13.0, 13.5));
+    const exit = eIn(seg(t, 13.7, 14.0));
+    css(wall, { left: (W - wallW) / 2 + "px", top: (H - wallH) / 2 + "px", width: wallW + "px", height: wallH + "px", transformOrigin: "50% 50%" });
+    wall.style.transform = `perspective(2400px) rotateX(${18}deg) rotateZ(${-10}deg) scale(${lerp(1.5, V ? 1.0 : 0.95, p)}) translateY(${-seg(t, 13, 14) * 120 + exit * -900}px)`;
+    wallTiles.forEach((tile, i) => { tile.style.opacity = clamp((t - 13.0 - (i % 6) * 0.03) * 8); });
+    wallScrim.style.opacity = p;
+    const ts = slam(t, 13.0, 0.3);
+    css(wallText, { top: (H / 2 - (V ? 160 : 170)) + "px" });
+    wallText.style.opacity = ts.o * (1 - exit);
+    wallText.style.transform = `scale(${ts.s * (1 + exit * 0.3)})`;
+    wall.style.opacity = 1 - exit * 0.6;
+  }
+}
+
+function rectIn(elm) { const r = elm.getBoundingClientRect(), s = stage.getBoundingClientRect(); return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }; }
+function renderEditor(t) {
+  show(S.editor, true);
+  // headline
+  const h1 = t < 17.0;
+  eHead.innerHTML = h1 ? `Make it <span class="serif" style="color:var(--deep);font-size:1.12em">yours.</span>` : `No code. <span class="serif" style="color:var(--deep);font-size:1.12em">No stress.</span>`;
+  const hs = slam(t, h1 ? 14.0 : 17.0, 0.25);
+  if (V) css(eHead, { left: 0, right: 0, textAlign: "center", top: "120px", fontSize: "120px" });
+  else css(eHead, { left: "110px", top: "54px", fontSize: "110px" });
+  eHead.style.opacity = hs.o; eHead.style.transform = `scale(${hs.s})`; eHead.style.transformOrigin = V ? "50% 50%" : "0 50%";
+  // app window
+  const ain = eOutExpo(seg(t, 14.0, 14.45));
+  const aout = eIn(seg(t, 19.75, 20.0));
+  const A = V ? { x: 50, y: 330, w: 980, h: 1500 } : { x: 110, y: 205, w: 1700, h: 840 };
+  css(app, { left: A.x + "px", top: A.y + "px", width: A.w + "px", height: A.h + "px" });
+  app.style.transform = `translateY(${(1 - ain) * 120 + aout * -60}px) scale(${lerp(0.96, 1, ain) * (1 + aout * 0.08)})`;
+  app.style.opacity = clamp(ain * 2) * (1 - aout);
+  if (V) { css(panel, { left: 0, top: "54px", width: "100%", height: "560px", padding: "30px 40px" }); css(preview, { left: 0, top: "614px", right: 0, bottom: 0 }); }
+  else { css(panel, { left: 0, top: "54px", width: "460px", bottom: 0 }); css(preview, { left: "460px", top: "54px", right: 0, bottom: 0 }); }
+  if (V) { panel.querySelectorAll(".fld").forEach((f) => (f.style.marginBottom = "22px")); }
+  // typing
+  const n = Math.floor(clamp((t - 15.0) / 1.45) * NAME.length);
+  const typed = NAME.slice(0, n);
+  const focused = t >= 14.5 && t < 16.8;
+  inBox.classList.toggle("focus", focused);
+  inText.textContent = t < 15.0 ? "" : typed;
+  inText.style.color = "";
+  inCaret.style.display = focused && (Math.floor(t * 3) % 2 === 0 || (t > 15 && t < 16.5)) ? "inline-block" : "none";
+  if (t < 14.5) { inText.textContent = "Your business"; inText.style.color = "rgba(10,15,31,.3)"; }
+  mName.textContent = n ? typed : "Your business";
+  mH.textContent = n ? typed : "Your business";
+  // colour: blue -> orange at 17.0 -> rose at 17.5
+  const colours = ["#1b8cff", "#ff5a2c", "#d6336c"];
+  const ci = t >= 17.5 ? 2 : t >= 17.0 ? 1 : 0;
+  sws.forEach((s, i) => s.classList.toggle("on", i === [0, 1, 2][ci]));
+  const accent = colours[ci];
+  // dark at 18.0
+  const dk = eInOut(seg(t, 18.0, 18.3));
+  tog.style.background = dk > 0.5 ? "var(--ink)" : "#dfe4ec";
+  togKnob.style.transform = `translateX(${dk * 38}px)`;
+  const bgc = `rgb(${lerp(255, 18, dk)}, ${lerp(250, 14, dk)}, ${lerp(247, 18, dk)})`;
+  const fg = dk > 0.5 ? "#fff" : "#1b1418";
+  preview.style.background = bgc;
+  mini.style.color = fg;
+  mSub.style.color = dk > 0.5 ? "rgba(255,255,255,.7)" : "rgba(27,20,24,.65)";
+  mEyebrow.style.color = accent;
+  mBtn.style.background = accent; mNavCta.style.background = accent; mLogoDot.style.background = accent;
+  const pulse = (at) => { const d = t - at; return d >= 0 && d < 0.3 ? 1 + 0.06 * Math.sin(d / 0.3 * Math.PI) : 1; };
+  mBtn.style.transform = `scale(${pulse(17.0) * pulse(17.5)})`;
+  // mini layout
+  if (V) {
+    css(mH, { fontSize: n > 12 ? "92px" : "100px", marginTop: "18px", maxWidth: "860px" });
+    css(mSub, { marginTop: "22px", maxWidth: "800px" }); css(mBtn, { marginTop: "26px" });
+    css(mPhoto, { left: "40px", right: "40px", bottom: "36px", height: "330px" });
+    css(mPhotoImg, { width: "1500px", left: "-520px", top: "-200px" });
+  } else {
+    css(mH, { fontSize: "92px", marginTop: "18px", maxWidth: "620px" });
+    css(mSub, { marginTop: "24px", maxWidth: "520px" }); css(mBtn, { marginTop: "30px" });
+    css(mPhoto, { right: "40px", top: "100px", width: "520px", bottom: "40px" });
+    css(mPhotoImg, { width: "1700px", left: "-760px", top: "-175px" });
+  }
+  // publish 19.0
+  const done = t >= 19.05;
+  pub.innerHTML = done ? `${ICON.check} Live` : "Publish site";
+  pub.style.background = done ? "#16a34a" : "var(--ink)";
+  pub.style.transform = `scale(${pulse(19.0)})`;
+  const ts = eOutBack(seg(t, 19.1, 19.4));
+  const tw = toast.offsetWidth;
+  const pr = rectIn(preview);
+  css(toast, { left: pr.x + pr.w / 2 - tw / 2 + "px", top: (pr.y + 30) + "px", opacity: clamp(ts * 3) * (1 - aout) });
+  toast.style.transform = `translateY(${(1 - ts) * -40}px) scale(${lerp(0.8, 1, ts)})`;
+  // cursor path
+  const target = (elm, dx = 0.5, dy = 0.5) => { const r = rectIn(elm); return [r.x + r.w * dx, r.y + r.h * dy]; };
+  const K = [
+    [14.0, [W + 60, H * 0.7]],
+    [14.45, target(inBox, 0.6, 0.55)],
+    [15.0, target(inBox, 0.6, 0.55)],
+    [15.2, target(inBox, 0.9, 1.4)],
+    [16.6, target(inBox, 0.9, 1.4)],
+    [16.95, target(sws[1], 0.55, 0.55)],
+    [17.05, target(sws[1], 0.55, 0.55)],
+    [17.45, target(sws[2], 0.55, 0.55)],
+    [17.55, target(sws[2], 0.55, 0.55)],
+    [17.95, target(tog, 0.5, 0.55)],
+    [18.4, target(tog, 0.5, 0.55)],
+    [18.95, target(pub, 0.5, 0.55)],
+    [20.0, target(pub, 0.5, 0.55)],
+  ];
+  let pos = K[0][1];
+  for (let i = 0; i < K.length - 1; i++) {
+    if (t >= K[i][0] && t <= K[i + 1][0]) { const p = eInOut(seg(t, K[i][0], K[i + 1][0])); pos = [lerp(K[i][1][0], K[i + 1][1][0], p), lerp(K[i][1][1], K[i + 1][1][1], p)]; }
+  }
+  if (t > K[K.length - 1][0]) pos = K[K.length - 1][1];
+  let cs = 1;
+  for (const at of [14.5, 17.0, 17.5, 18.0, 19.0]) { const d = t - at; if (d >= -0.05 && d < 0.12) cs = 0.82; }
+  css(cursor, { transform: `translate(${pos[0] - 8}px, ${pos[1] - 4}px) scale(${cs})`, opacity: 1 - aout });
+  let ro = 0, rs = 0.3;
+  for (const at of [14.5, 17.0, 17.5, 18.0, 19.0]) { const d = t - at; if (d >= 0 && d < 0.4) { ro = 1 - d / 0.4; rs = lerp(0.3, 1.4, d / 0.4); } }
+  css(ripple, { left: pos[0] + "px", top: pos[1] + "px", opacity: ro, transform: `scale(${rs})` });
+}
+
+function renderLive(t) {
+  show(S.live, true);
+  const hs = slam(t, 20.0, 0.3);
+  const push = eIn(seg(t, 24.0, 25.5));
+  const out = eIn(seg(t, 25.5, 26.0));
+  if (V) css(lHead, { left: 0, right: 0, textAlign: "center", top: "120px", fontSize: "140px" });
+  else css(lHead, { left: "110px", top: "200px", fontSize: "150px" });
+  lHead.style.opacity = hs.o * (1 - out); lHead.style.transform = `scale(${hs.s})`; lHead.style.transformOrigin = V ? "50% 50%" : "0 50%";
+  const din = eOutExpo(seg(t, 20.0, 20.5));
+  const scroll = seg(t, 20.2, 25.5);
+  // laptop
+  const LP = V ? { x: 60, y: 560, w: 960, h: 600 } : { x: 760, y: 170, w: 1000, h: 625 };
+  css(laptop, { left: LP.x + "px", top: LP.y + "px", width: LP.w + "px", height: LP.h + 26 + "px" });
+  css(lapLid, { height: LP.h + "px" }); css(lapBase, { top: LP.h + "px" });
+  lapImg.style.transform = `translateY(${-eInOut(scroll) * 1500 * (LP.w / 1440)}px)`;
+  laptop.style.transform = `translateY(${(1 - din) * 140}px) scale(${(1 + push * 0.12) * lerp(0.92, 1, din)})`;
+  laptop.style.opacity = clamp(din * 2) * (1 - out);
+  laptop.style.filter = `blur(${out * 12}px)`;
+  // phone
+  const PP = V ? { x: 640, y: 900, w: 360, h: 740 } : { x: 1560, y: 360, w: 300, h: 620 };
+  css(lPhone.root, { left: PP.x + "px", top: PP.y + "px", width: PP.w + "px", height: PP.h + "px" });
+  const pin = eOutExpo(seg(t, 20.25, 20.75));
+  lPhone.img.style.transform = `translateY(${-eInOut(scroll) * (V ? 900 : 760)}px)`;
+  lPhone.root.style.transform = `translateY(${(1 - pin) * 200}px) rotate(${lerp(10, 4, pin)}deg) scale(${1 + push * 0.18})`;
+  lPhone.root.style.opacity = clamp(pin * 2) * (1 - out);
+  lPhone.root.style.filter = `blur(${out * 12}px)`;
+  // badges
+  badges.forEach((b, i) => {
+    const at = 21.0 + i * 0.5;
+    const p = eOutBack(seg(t, at, at + 0.3));
+    let x, y;
+    if (V) { const row = i < 3 ? 0 : 1; const items = row ? badges.slice(3) : badges.slice(0, 3); const tw = items.reduce((s, e) => s + e.offsetWidth + 18, -18); let off = 0; for (const e of items) { if (e === b) break; off += e.offsetWidth + 18; } x = (W - tw) / 2 + off; y = 1700 + row * 96; }
+    else { x = 110 + (i % 2) * 0; y = 560 + i * 90; }
+    if (!V) { x = 110; y = 600 + i * 86; }
+    css(b, { left: x + "px", top: y + "px", opacity: clamp(p * 2) * (1 - out) });
+    b.style.transform = `translateX(${(1 - p) * -40}px) scale(${lerp(0.7, 1, p)})`;
+  });
+  if (!V) { lHead.style.top = "150px"; }
+}
+
+function renderCta(t) {
+  show(S.cta, true);
+  const fadeOut = seg(t, 29.55, 30.0);
+  const hs = slam(t, 26.0, 0.35);
+  const fin = t >= 29.0 ? 1 + 0.05 * Math.exp(-(t - 29) * 6) * Math.sin((t - 29) * 30) : 1;
+  css(cHead, { top: (V ? 560 : 170) + "px" });
+  cHead.style.opacity = hs.o; cHead.style.transform = `scale(${hs.s * fin})`;
+  const u = eOutBack(seg(t, 26.5, 26.85));
+  const uw = cUrl.offsetWidth;
+  css(cUrl, { left: (W - uw) / 2 + "px", top: (V ? 900 : 480) + "px", opacity: clamp(u * 2) });
+  const glint = t >= 29.0 ? 1 + 0.08 * Math.exp(-(t - 29) * 5) : 1;
+  cUrl.style.transform = `translateY(${(1 - u) * 40}px) scale(${lerp(0.7, 1, u) * glint})`;
+  const l = eOutCubic(seg(t, 27.0, 27.35));
+  css(cLine, { top: (V ? 1080 : 650) + "px", opacity: l });
+  cLine.style.transform = `translateY(${(1 - l) * 30}px)`;
+  const pp = eOutBack(seg(t, 27.5, 27.8));
+  const pw = cPromo.offsetWidth;
+  css(cPromo, { left: (W - pw) / 2 + "px", top: (V ? 1200 : 750) + "px", opacity: clamp(pp * 2) });
+  cPromo.style.transform = `scale(${lerp(0.6, 1, pp)}) rotate(${lerp(-6, -1.5, pp)}deg)`;
+  const lg = eOutCubic(seg(t, 28.0, 28.4));
+  css(cLogo, { top: (V ? 1700 : 935) + "px", opacity: lg });
+  stage.style.filter = `brightness(${1 - fadeOut})`;
+  if (t < 29.55) stage.style.filter = "";
+}
+
+window.render = render;
+window.ready = (async () => {
+  await document.fonts.ready;
+  const imgs = new Set();
+  for (const c of CUTS) { imgs.add(`${CAP}${c.k}-desk-${c.m}.jpg`); imgs.add(`${CAP}${c.k}-mob-${c.m}.jpg`); }
+  await Promise.all([...imgs].map((src) => new Promise((res) => { const i = new Image(); i.onload = i.onerror = res; i.src = src; })));
+  await Promise.all([...document.images].map((i) => i.complete ? 0 : new Promise((r) => (i.onload = i.onerror = r))));
+  return true;
+})();
+render(+(Q.get("t") || 0));
+</script>
+</body>
+</html>
