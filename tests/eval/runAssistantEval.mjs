@@ -1,4 +1,5 @@
 // Run against the live models with `npm run eval:assistant` (loads keys from .env.local). `-- --delay=0` turns pacing off.
+// Set AI_MODEL_ASSISTANT=openrouter:<model> to score the tool-calling path; unset, it scores the free-tier JSON path.
 //   npm run eval:assistant                          (all cases)
 //   npm run eval:assistant -- phone hours           (only these ids)
 //   npm run eval:assistant -- --gemini              (one provider only, to compare them:
@@ -7,10 +8,7 @@
 // Exits 1 when fewer than 85% of cases pass. Each run makes one model call per case.
 import { writeFileSync } from "node:fs";
 
-import { extractJson } from "../../src/lib/ai/groq.server.ts";
-import { aiChatWithInfo } from "../../src/lib/ai/llm.server.ts";
-import { SAMPLING } from "../../src/lib/ai/prompts/rules.ts";
-import { buildAssistantPrompt, parseAssistantOutput } from "../../src/lib/ai/siteAssistant.ts";
+import { runAssistantTurn } from "../../src/lib/ai/agent/run.server.ts";
 import { CASES, checkCase, fixtureSite } from "./assistantCases.mjs";
 
 const PASS_BAR = 0.85;
@@ -50,11 +48,18 @@ for (const c of cases) {
   let served = "";
   const started = Date.now();
   try {
-    const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage: c.focusPage });
-    const reply = await aiChatWithInfo({ system, user, json: true, ...SAMPLING.assistant }, { env });
-    const text = reply.text;
-    served = `${reply.provider}:${reply.model}`;
-    result = parseAssistantOutput(extractJson(text), snapshot, c.request);
+    // The same code the API route runs: tool calling when AI_MODEL_ASSISTANT is an OpenRouter model, else JSON.
+    const { meta, ...answer } = await runAssistantTurn({
+      snapshot,
+      messages,
+      focusPage: c.focusPage,
+      readEnv: { snapshot, traffic: async () => null },
+      deadline: Date.now() + 55_000,
+      env,
+      skipProductPhotos: true,
+    });
+    served = `${meta.path}${meta.fellBack ? "(fallback)" : ""} ${meta.provider}:${meta.model}`;
+    result = answer;
     problems = checkCase(c, result);
   } catch (e) {
     problems = [`error: ${e instanceof Error ? e.message : String(e)}`];
@@ -68,7 +73,7 @@ const passed = rows.filter((r) => r.pass).length;
 const rate = passed / rows.length;
 const avg = rows.reduce((t, r) => t + r.seconds, 0) / rows.length;
 const firstChoice = soloProvider ?? Object.keys(KEYS).find((p) => env[KEYS[p]]);
-const fellBack = rows.filter((r) => r.served && !r.served.startsWith(firstChoice)).length;
+const fellBack = rows.filter((r) => r.served && !r.served.includes(` ${firstChoice}:`)).length;
 console.log(`\n${passed}/${rows.length} passed (${Math.round(rate * 100)}%), average ${avg.toFixed(1)}s per answer`);
 if (fellBack) console.log(`Note: ${fellBack} answers came from a fallback provider, not ${firstChoice}.`);
 const out = new URL(`./last-assistant-eval${soloProvider ? `-${soloProvider}` : ""}.json`, import.meta.url);

@@ -2,14 +2,25 @@
 // Gemini first, then OpenRouter (Inkling, with Nemotron as its own fallback), then Groq as the
 // last resort; each only when its key is set. Every one is on a free tier, so when one runs out
 // of quota the next answers. AI_PROVIDERS=openrouter,gemini changes the order of the first two.
+//
+// Per-task models (paid credits): AI_MODEL_ASSISTANT is tried first for the "Ask AI" assistant and
+// AI_MODEL_SMALL for small rewrites, each as "provider:model" (e.g. "openrouter:anthropic/claude-…",
+// "gemini:gemini-3.8-flash"; no prefix means OpenRouter). The free chain above still answers when the
+// per-task model fails or rests. An OpenRouter AI_MODEL_ASSISTANT also turns on native tool calling
+// for the assistant (AI_ASSISTANT_TOOLS=off keeps the JSON-in-text path) and lets it see attached
+// images (AI_ASSISTANT_VISION=off makes it rely on a vision model's notes instead).
 // Relative imports only (Node test runner).
+import type { ToolChatRequest } from "./agent/openaiTools.ts";
+import type { ToolTurn } from "./agent/types.ts";
 import { geminiChat, geminiConfigured, geminiModel, geminiTimeout } from "./gemini.server.ts";
 import { GroqError, groqChat, type GroqChatOptions, type GroqDeps } from "./groq.server.ts";
 import {
   DEFAULT_TIMEOUT_MS as OPENROUTER_TIMEOUT_MS,
   openRouterChat,
+  openRouterChatWith,
   openRouterConfigured,
   openRouterModel,
+  openRouterToolChat,
   openRouterVisionChat,
   openRouterVisionModel,
 } from "./openrouter.server.ts";
@@ -17,6 +28,62 @@ import { isCooling, noteFailure, noteSuccess } from "./providerHealth.ts";
 
 export type AiProvider = "gemini" | "openrouter" | "groq";
 export type AiChatResult = { text: string; provider: AiProvider; model: string };
+export type AiTask = NonNullable<GroqChatOptions["task"]>;
+export type TaskModel = { provider: AiProvider; model: string };
+
+const TASK_ENV: Record<AiTask, string> = { assistant: "AI_MODEL_ASSISTANT", small: "AI_MODEL_SMALL" };
+
+/** The per-task model from env, or null when unset or its provider has no key. */
+export function taskModel(task: AiTask, env: Env = process.env): TaskModel | null {
+  const raw = (env[TASK_ENV[task]] ?? "").trim();
+  if (!raw) return null;
+  const m = raw.match(/^(gemini|openrouter|groq):(.+)$/i);
+  const provider = (m ? m[1]!.toLowerCase() : "openrouter") as AiProvider;
+  const model = (m ? m[2]! : raw).trim();
+  if (!model) return null;
+  const configured = provider === "gemini" ? geminiConfigured(env) : provider === "openrouter" ? openRouterConfigured(env) : Boolean(env.GROQ_API_KEY);
+  return configured ? { provider, model } : null;
+}
+
+const healthKey = (t: TaskModel) => `${t.provider}:${t.model}`;
+
+/** Runs one text completion on a specific per-task model. */
+function runTaskModel(t: TaskModel, opts: GroqChatOptions, deps: GroqDeps, env: Env): Promise<string> {
+  if (t.provider === "openrouter") return openRouterChatWith(t.model, null, opts, deps);
+  if (t.provider === "gemini") return geminiChat(opts, { ...deps, env: { ...env, GEMINI_MODEL: t.model } });
+  return groqChat(opts, { ...deps, env: { ...env, GROQ_MODEL: t.model, GROQ_FALLBACK_MODEL: t.model } });
+}
+
+/** The model the assistant's native tool-calling loop uses, or null to use the JSON-in-text path. */
+export function toolCallingModel(env: Env = process.env): TaskModel | null {
+  if (env.AI_ASSISTANT_TOOLS === "off") return null;
+  const t = taskModel("assistant", env);
+  return t?.provider === "openrouter" ? t : null;
+}
+
+/** True when the tool-calling model is shown attached images directly. */
+export function assistantSeesImages(env: Env = process.env): boolean {
+  return toolCallingModel(env) !== null && env.AI_ASSISTANT_VISION !== "off";
+}
+
+/**
+ * One tool-calling turn on the assistant's model. Throws (not_configured, or the provider's error)
+ * so the caller can fall back to the JSON-in-text path; a model that just failed rests briefly.
+ */
+export async function aiToolChat(req: ToolChatRequest, deps: GroqDeps = {}): Promise<ToolTurn & { provider: AiProvider; model: string }> {
+  const env = deps.env ?? process.env;
+  const t = toolCallingModel(env);
+  if (!t) throw new GroqError("not_configured", "No tool-calling model is configured. Set AI_MODEL_ASSISTANT to an OpenRouter model.");
+  if (isCooling(healthKey(t))) throw new GroqError("rate_limited", "The assistant model is resting after a failure.", 429);
+  try {
+    const turn = await openRouterToolChat(t.model, req, deps);
+    noteSuccess(healthKey(t));
+    return { ...turn, provider: t.provider, model: t.model };
+  } catch (e) {
+    noteFailure(healthKey(t), e);
+    throw e;
+  }
+}
 
 type Env = Record<string, string | undefined>;
 type Step = {
@@ -86,6 +153,24 @@ export async function aiChatWithInfo(opts: GroqChatOptions, deps: GroqDeps = {})
   const budget = opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : Number(env.OPENROUTER_TIMEOUT_MS) > 0 ? Number(env.OPENROUTER_TIMEOUT_MS) : OPENROUTER_TIMEOUT_MS;
   const deadline = Date.now() + budget;
   let lastError: unknown = null;
+
+  // The task's own model goes first; the free chain below is the fallback.
+  const task = opts.task ? taskModel(opts.task, env) : null;
+  if (task && !isCooling(healthKey(task), now)) {
+    const nextUp = steps.length > 0 || groq;
+    // Leave the free chain a fair share of the budget when this one fails.
+    const timeoutMs = nextUp ? Math.max(MIN_CALL_MS, Math.round(budget * 0.6)) : budget;
+    try {
+      const text = await runTaskModel(task, { ...opts, timeoutMs }, deps, env);
+      noteSuccess(healthKey(task));
+      return { text, provider: task.provider, model: task.model };
+    } catch (e) {
+      noteFailure(healthKey(task), e);
+      if (!nextUp) throw e;
+      lastError = e;
+      console.error(`${task.provider}:${task.model} failed (${describe(e)}); trying the free AI providers.`);
+    }
+  }
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!;
     const isLast = i === steps.length - 1 && !groq;

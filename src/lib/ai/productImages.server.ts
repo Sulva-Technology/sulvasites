@@ -7,6 +7,7 @@ import { extractJson } from "./groq.server.ts";
 import { aiVisionChat, visionConfigured } from "./llm.server.ts";
 import { isAllowedProductImageUrl, type ImageChoice } from "./shopAssistant.ts";
 import type { AssistantAction } from "./siteAssistant.ts";
+import type { Attachment, AttachmentKind } from "./agent/types.ts";
 import { STOCK_PHOTOS, hintWords, photoUrl } from "../stockPhotos.ts";
 
 type Env = Record<string, string | undefined>;
@@ -189,29 +190,38 @@ export async function pickWithVision(
 
 // ---------- the whole step ----------
 
-/** What the vision model sees in photos the owner attached, one sentence each. Empty when vision is unavailable. */
-export async function describeOwnerPhotos(photos: string[], deps: ImageDeps = {}): Promise<string[]> {
+const DESCRIBE: Record<AttachmentKind, string> = {
+  photo: "a photo: say what it shows (for a product: the item, its colour, material and any readable text, brand or size)",
+  logo: "a logo: describe its shapes and any text, and list its main colours as hex codes, most prominent first",
+  document: "a document (e.g. a menu or price list): copy out its key text, including item names and prices exactly as printed",
+};
+
+/**
+ * What a vision model sees in each attachment, in order ("" when it could not tell). Empty when vision
+ * is unavailable. Used when the main model cannot see images itself.
+ */
+export async function describeAttachments(attachments: Attachment[], deps: ImageDeps = {}): Promise<string[]> {
   const env = deps.env ?? process.env;
-  if (!photos.length || !visionConfigured(env)) return [];
+  if (!attachments.length || !visionConfigured(env)) return [];
   try {
     const reply = await aiVisionChat(
       {
         system:
-          "You describe product photos for a shop owner who is adding items to their online store. For each photo, in order, say what the item is, its colour, material and any readable text, brand or size, in one or two plain sentences. " +
-          'Say only what you can see; never guess a price. Reply with one JSON object only: {"photos":[{"description":"..."}]}.',
-        user: `${photos.length} photo${photos.length === 1 ? "" : "s"} follow, in order.`,
-        images: photos,
+          "You describe files a small-business owner attached for their website assistant. Describe each one, in order, in one to three plain sentences, as its kind asks. " +
+          'Say only what you can see; never guess a price or a fact that is not visible. Reply with one JSON object only: {"files":[{"description":"..."}]}.',
+        user: attachments.map((a, i) => `File ${i + 1} is ${DESCRIBE[a.kind]}.`).join("\n"),
+        images: attachments.map((a) => a.url),
         temperature: 0.1,
         reasoningEffort: "low",
-        maxTokens: 2000,
+        maxTokens: 3000,
         timeoutMs: VISION_TIMEOUT_MS,
       },
       { env, fetch: deps.fetch },
     );
-    const list = (extractJson(reply) as { photos?: unknown }).photos;
-    return Array.isArray(list) ? list.map((p) => (isRecord(p) ? text(p.description, 300) : "")) : [];
+    const list = (extractJson(reply) as { files?: unknown }).files;
+    return Array.isArray(list) ? list.map((p, i) => (isRecord(p) ? text(p.description, attachments[i]?.kind === "document" ? 1500 : 400) : "")) : [];
   } catch (e) {
-    console.error("Describing owner photos failed:", e instanceof Error ? e.message : e);
+    console.error("Describing attachments failed:", e instanceof Error ? e.message : e);
     return [];
   }
 }
@@ -221,17 +231,22 @@ export async function describeOwnerPhotos(photos: string[], deps: ImageDeps = {}
  * otherwise real photos found by what the product is and confirmed by the vision model.
  * Stops starting new work once `deadline` (ms since epoch) is near so the request still finishes.
  */
-export async function enrichProductImages(actions: AssistantAction[], deadline: number, deps: ImageDeps = {}): Promise<void> {
+export async function enrichProductImages(
+  actions: AssistantAction[],
+  deadline: number,
+  deps: ImageDeps = {},
+  attachments: Attachment[] = [],
+): Promise<void> {
   const now = deps.now ?? Date.now;
   const queue = actions.filter((a): a is Extract<AssistantAction, { type: "add_product" }> => a.type === "add_product");
   const used = new Set<string>();
 
   const work = queue.slice(0, MAX_PRODUCTS);
   for (const a of queue) {
-    if (a.product.photo) {
-      const n = a.product.photo;
-      a.imageOptions = [{ url: `upload:${n}`, thumb: `upload:${n}`, alt: a.product.name, credit: null, source: "upload", why: "Your photo" }];
-    }
+    // Only a file really attached (already in the site's storage) can be the product photo.
+    const file = a.product.photo ? attachments[a.product.photo - 1] : undefined;
+    if (!file) a.product.photo = null;
+    else a.imageOptions = [{ url: file.url, thumb: file.url, alt: a.product.name, credit: null, source: "upload", why: "Your photo" }];
   }
 
   let next = 0;

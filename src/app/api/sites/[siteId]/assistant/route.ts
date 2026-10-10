@@ -1,26 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+import { blogLabelFor } from "@/lib/blog/blogPath";
 import { parseOverview, type Overview } from "@/lib/insights/overview";
-import { extractJson } from "@/lib/ai/groq.server";
+import { cleanAttachments } from "@/lib/ai/agent/attachments";
+import { AssistantOutputError, runAssistantTurn } from "@/lib/ai/agent/run.server";
 import { aiErrorResponse } from "@/lib/ai/http.server";
-import { aiChat } from "@/lib/ai/llm.server";
-import { describeOwnerPhotos, enrichProductImages } from "@/lib/ai/productImages.server";
-import { cleanOwnerPhotos, shopFromRows, type ShopSnapshot } from "@/lib/ai/shopAssistant";
-import { SAMPLING } from "@/lib/ai/prompts/rules";
+import { shopFromRows, type ShopSnapshot } from "@/lib/ai/shopAssistant";
 import {
-  buildAssistantPrompt,
   PROFILE_COLUMNS,
   USAGE_CHAT,
   USAGE_COUNTED,
   chatAllowanceFor,
-  effortFor,
   monthStartIso,
   monthlyLimitFor,
   normalizeAssistantMessages,
-  parseAssistantOutput,
   profileFromRow,
   usageFeatureFor,
+  type BlogSnapshot,
   type SiteSnapshot,
   type SnapshotPage,
 } from "@/lib/ai/siteAssistant";
@@ -59,11 +56,11 @@ async function usedThisMonth(siteId: string, feature: string = USAGE_COUNTED): P
 }
 
 /**
- * Last 30 days of visitor numbers, read with the caller's own session so insights_overview applies
- * its owner/admin check. Null when insights are unavailable (e.g. migration 011 not run); the
+ * Visitor numbers for the last `days` days, read with the caller's own session so insights_overview
+ * applies its owner/admin check. Null when insights are unavailable (e.g. migration 011 not run); the
  * assistant then says so instead of guessing.
  */
-async function loadTraffic(req: Request, siteId: string): Promise<Overview | null> {
+async function loadTraffic(req: Request, siteId: string, days: number): Promise<Overview | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const token = (req.headers.get("authorization") ?? "").replace(/^bearer\s+/i, "").trim();
@@ -73,7 +70,7 @@ async function loadTraffic(req: Request, siteId: string): Promise<Overview | nul
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const { data, error } = await db.rpc("insights_overview", { p_site: siteId, p_days: 30 });
+    const { data, error } = await db.rpc("insights_overview", { p_site: siteId, p_days: days });
     if (error) {
       console.error("insights_overview failed for the assistant:", error.message);
       return null;
@@ -108,6 +105,28 @@ async function loadShop(siteId: string): Promise<ShopSnapshot | null> {
     variants: (vars.data ?? []) as Record<string, unknown>[],
     total: prods.count ?? undefined,
   });
+}
+
+/** The site's posts for the prompt. Null when the blog table cannot be read (migration 017 not run). */
+async function loadBlog(siteId: string, templateKey: string): Promise<BlogSnapshot | null> {
+  const { data, error } = await supabaseService()
+    .from("blog_posts")
+    .select("title, slug, status")
+    .eq("site_id", siteId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    console.error("blog load failed for the assistant:", error.message);
+    return null;
+  }
+  return {
+    label: blogLabelFor(templateKey),
+    posts: ((data ?? []) as Array<{ title: string; slug: string; status: string }>).map((r) => ({
+      title: r.title,
+      slug: r.slug,
+      status: r.status === "published" ? "published" : "draft",
+    })),
+  };
 }
 
 async function loadSnapshot(siteId: string): Promise<SiteSnapshot | null> {
@@ -186,7 +205,7 @@ export async function POST(req: Request, ctx: Ctx) {
     return json({ error: "Send a message first." }, 400);
   }
   const focusPage = typeof b.focusPage === "string" ? b.focusPage.slice(0, 80) : undefined;
-  const photos = cleanOwnerPhotos(b.photos);
+  const attachments = cleanAttachments(b.attachments, siteId, process.env.NEXT_PUBLIC_SUPABASE_URL);
 
   const limit = effectiveAiLimit(auth.role, await loadSubscription(supabaseService(), siteId), monthlyLimitFor(auth.role, process.env));
   const used = await usedThisMonth(siteId);
@@ -208,44 +227,21 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   try {
-    const [snapshot, traffic, shop] = await Promise.all([loadSnapshot(siteId), loadTraffic(req, siteId), loadShop(siteId)]);
+    const [snapshot, shop] = await Promise.all([loadSnapshot(siteId), loadShop(siteId)]);
     if (!snapshot) return json({ error: "Site not found." }, 404);
-    snapshot.traffic = traffic;
     snapshot.shop = shop;
-
-    // The main model is text-only: a vision model looks at attached photos and the main model reads its notes.
-    let photoNotes: string[] = [];
-    if (photos.length) {
-      const seen = await describeOwnerPhotos(photos);
-      photoNotes = photos.map((_, i) => seen[i] || "(the photo could not be analysed; ask the owner what the product is)");
-    }
+    snapshot.blog = await loadBlog(siteId, snapshot.templateKey);
 
     // The whole request must end inside maxDuration: the model gets most of it, photo search the rest.
-    const budgetEnd = startedAt + 55_000;
-    const lastMessage = messages[messages.length - 1]!.content;
-    const { system, user } = buildAssistantPrompt({ snapshot, messages, focusPage, photoNotes });
-    const text = await aiChat({
-      system,
-      user,
-      json: true,
-      ...SAMPLING.assistant,
-      reasoningEffort: effortFor(lastMessage),
-      timeoutMs: Math.max(15_000, Math.min(38_000, budgetEnd - Date.now() - 12_000)),
+    const { meta, ...result } = await runAssistantTurn({
+      snapshot,
+      messages,
+      focusPage,
+      attachments,
+      readEnv: { snapshot, traffic: (days) => loadTraffic(req, siteId, days) },
+      deadline: startedAt + 55_000,
     });
-
-    let raw: unknown;
-    try {
-      raw = extractJson(text);
-    } catch {
-      return json({ error: "The AI gave a garbled answer. Please try again." }, 422);
-    }
-    const ownerText = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
-    const result = parseAssistantOutput(raw, snapshot, ownerText);
-    // An owner photo can only be used when that many were really attached.
-    for (const a of result.actions) {
-      if (a.type === "add_product" && a.product.photo && a.product.photo > photos.length) a.product.photo = null;
-    }
-    await enrichProductImages(result.actions, budgetEnd - 1500);
+    console.info(`assistant turn: ${meta.path}${meta.fellBack ? " (fell back)" : ""} via ${meta.provider ?? "?"}:${meta.model ?? "?"}, ${result.actions.length} proposal(s)`);
 
     // Only an answer that proposes a change uses up the allowance; advice and "I didn't get that" are free.
     const feature = usageFeatureFor(result);
@@ -257,6 +253,7 @@ export async function POST(req: Request, ctx: Ctx) {
     const usedNow = (used ?? 0) + (feature === USAGE_COUNTED ? 1 : 0);
     return json({ ...result, usage: { used: usedNow, limit } satisfies Usage });
   } catch (e) {
+    if (e instanceof AssistantOutputError) return json({ error: "The AI gave a muddled answer. Please send your message again." }, 422);
     return aiErrorResponse(e);
   }
 }

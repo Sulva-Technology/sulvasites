@@ -4,7 +4,8 @@
 // Relative imports only (Node test runner).
 import { GroqError } from "./groq.server.ts";
 
-export type HealthProvider = "gemini" | "openrouter" | "groq";
+/** A provider ("gemini") or one per-task model on it ("openrouter:anthropic/…"), each resting on its own. */
+export type HealthProvider = string;
 
 const RATE_LIMIT_DEFAULT_MS = 30_000;
 const RATE_LIMIT_MAX_MS = 300_000;

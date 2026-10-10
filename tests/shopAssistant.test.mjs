@@ -25,7 +25,9 @@ import {
   shopFromRows,
   uniqueProductSlug,
 } from "../src/lib/ai/shopAssistant.ts";
-import { assistantFacts, buildAssistantPrompt, effortFor, parseAssistantOutput } from "../src/lib/ai/siteAssistant.ts";
+import { buildAssistantPrompt } from "../src/lib/ai/agent/prompt.ts";
+import { parseAssistantOutput } from "../src/lib/ai/agent/writeTools.ts";
+import { assistantFacts, effortFor } from "../src/lib/ai/siteAssistant.ts";
 
 const shop = () =>
   shopFromRows({
@@ -223,10 +225,10 @@ test("prompt shows the shop, the product rules and attached-photo notes", () => 
   const { system, user } = buildAssistantPrompt({
     snapshot: snap(),
     messages: [{ role: "user", content: "add this" }],
-    photoNotes: ["A red leather handbag with a gold clasp"],
+    attachments: [{ kind: "photo", note: "A red leather handbag with a gold clasp" }],
   });
   assert.match(user, /PRODUCT id=p1 "Ankara Dress"/);
-  assert.match(user, /1\. A red leather handbag/);
+  assert.match(user, /1\. photo: A red leather handbag/);
   assert.match(system, /PRODUCTS:/);
   assert.match(system, /never guess or estimate one/);
   assert.match(system, /imageQuery/);
@@ -345,10 +347,17 @@ test("enrich: vision-confirmed photos, owner photo, and graceful fallback", asyn
     ["api.pexels.com", pexels],
     ["openrouter.ai", () => orReply({ picks: [{ image: 1, why: "Matches the item" }] })],
   ]);
-  await enrichProductImages(actions, Date.now() + 60_000, { env: orEnv, fetch: f });
+  const attached = [{ kind: "photo", url: "https://proj.supabase.co/storage/v1/object/public/site-assets/s/assistant/1-bag.jpg" }];
+  await enrichProductImages(actions, Date.now() + 60_000, { env: orEnv, fetch: f }, attached);
   assert.equal(actions[0].imageOptions[0].why, "Matches the item");
   assert.equal(actions[2].imageOptions[0].source, "upload");
-  assert.equal(actions[2].imageOptions[0].url, "upload:1");
+  assert.equal(actions[2].imageOptions[0].url, attached[0].url);
+
+  // A photo number with nothing attached is dropped instead of pointing nowhere.
+  const missing = productActions(1);
+  missing[0].product.photo = 2;
+  await enrichProductImages(missing, 0, { env: orEnv, fetch: f }, attached);
+  assert.equal(missing[0].product.photo, null);
   // The same photo is not suggested for two products.
   assert.notEqual(actions[0].imageOptions[0]?.url, actions[1].imageOptions[0]?.url);
 

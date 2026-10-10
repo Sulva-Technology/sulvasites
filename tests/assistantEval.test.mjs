@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parseAssistantOutput } from "../src/lib/ai/siteAssistant.ts";
+import { parseAssistantOutput } from "../src/lib/ai/agent/writeTools.ts";
 import { validatePageData } from "../src/lib/pageSchema.ts";
 import { CASES, checkCase, fixtureSite } from "./eval/assistantCases.mjs";
 

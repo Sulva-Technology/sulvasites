@@ -1,3 +1,4 @@
+import { ATTACHMENT_BUCKET, ATTACHMENT_MAX_BYTES, ATTACHMENT_TYPES, attachmentFolder } from "@/lib/ai/agent/attachments";
 import { supabaseBrowser, getAuthenticatedClient } from "@/lib/supabase/browser";
 
 /**
@@ -104,5 +105,30 @@ export async function uploadSiteImage(siteId: string, file: File): Promise<strin
     meta: { originalFilename: file.name, kind: "image" },
   });
 
+  return getPublicAssetUrl(path);
+}
+
+/**
+ * Uploads a file attached in the "Ask AI" panel to <siteId>/assistant/ and returns its public URL.
+ * Same bucket and checks as the dashboard uploads; the assistant only proposes using it.
+ */
+export async function uploadAssistantAttachment(siteId: string, file: File): Promise<string> {
+  if (!ATTACHMENT_TYPES.includes(file.type)) throw new Error("Please attach a JPG, PNG or WebP picture.");
+  if (file.size > ATTACHMENT_MAX_BYTES) throw new Error("That picture is too big. Pictures must be 10 MB or smaller.");
+
+  const supabase = await getAuthenticatedClient();
+  const path = `${attachmentFolder(siteId)}${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeFilename(file.name)}`;
+  const { error } = await supabase.storage.from(ATTACHMENT_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+  if (error) {
+    if (/bucket not found/i.test(error.message)) throw new Error("Photo storage isn't set up yet. Please contact Sulvatech support.");
+    throw new Error("Your picture couldn't be uploaded. Check your connection and try again.");
+  }
+  await supabase.from("assets").insert({
+    site_id: siteId,
+    path,
+    mime_type: file.type || null,
+    size_bytes: file.size || null,
+    meta: { originalFilename: file.name, kind: "assistant" },
+  });
   return getPublicAssetUrl(path);
 }

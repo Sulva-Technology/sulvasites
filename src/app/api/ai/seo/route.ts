@@ -77,6 +77,7 @@ export async function POST(req: Request) {
       system,
       user,
       json: true,
+      task: "small",
       ...SAMPLING.seo,
     });
 

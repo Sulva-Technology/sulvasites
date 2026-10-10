@@ -1,7 +1,6 @@
 // Applies (and undoes) an approved "Ask AI" proposal from the browser, under the signed-in user's
 // own permissions (RLS). Only content changes: a live page stays live, a draft stays a draft.
 import { createExtraPage, listExtraPages } from "@/lib/extraPages";
-import { uploadSiteImage } from "@/lib/assets";
 import { validatePageData, type PageData, type Section } from "@/lib/pageSchema";
 import { slugify } from "@/lib/slugify";
 import { ensureShopEnabled } from "@/lib/shop/autoEnable";
@@ -14,6 +13,7 @@ import {
   profileUpdatePayload,
   type AssistantAction,
   type ProfileFields,
+  uniquePostSlug,
 } from "./siteAssistant";
 import {
   STANDARD_VARIANT,
@@ -33,14 +33,13 @@ export type UndoRecord =
   | { kind: "profile"; before: ProfileFields; after: ProfileFields }
   | { kind: "product"; id: string; categoryId: string | null }
   | { kind: "product_update"; id: string; prev: Record<string, unknown>; next: Record<string, unknown>; categoryId: string | null }
-  | { kind: "stock"; changes: Array<{ variantId: string; created: boolean; before: number | null; after: number | null }> };
+  | { kind: "stock"; changes: Array<{ variantId: string; created: boolean; before: number | null; after: number | null }> }
+  | { kind: "blog_post"; id: string; title: string; body: string; published: boolean };
 
 /** Choices made in the panel that are not part of the proposal itself. */
 export type ApplyOptions = {
   /** Which suggested photo to use for a new product; null = none. Defaults to the first. */
   imageIndex?: number | null;
-  /** Photos the owner attached, by 1-based number, for products that use "upload:N". */
-  photoFiles?: Record<number, File>;
 };
 
 export type ApplyResult = { ok: true; key: string; undo: UndoRecord } | { ok: false; error: string };
@@ -115,32 +114,26 @@ async function resolveCategory(db: Db, siteId: string, name: string): Promise<{ 
   return { id: ins.data.id as string, created: true };
 }
 
-async function productImage(siteId: string, action: Extract<AssistantAction, { type: "add_product" }>, opts: ApplyOptions) {
+async function productImage(action: Extract<AssistantAction, { type: "add_product" }>, opts: ApplyOptions) {
   const index = opts.imageIndex === undefined ? 0 : opts.imageIndex;
   const choice = index === null ? undefined : action.imageOptions[index];
   if (!choice) return [];
-  let url = choice.url;
-  if (choice.source === "upload") {
-    const n = Number(choice.url.replace("upload:", ""));
-    const file = opts.photoFiles?.[n];
-    if (!file) throw new Error("Your photo is no longer attached. Attach it again or pick a suggested photo.");
-    url = await uploadSiteImage(siteId, file);
-  } else {
-    const host = (() => {
-      try {
-        return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
-      } catch {
-        return "";
-      }
-    })();
-    if (!isAllowedProductImageUrl(url, host ? [host] : [])) return [];
-  }
-  return [{ url, alt: action.product.name }];
+  // Owner photos are already in the site's storage (uploaded when attached); older chats used "upload:N".
+  if (choice.url.startsWith("upload:")) throw new Error("Your photo is no longer attached. Attach it again or pick a suggested photo.");
+  const host = (() => {
+    try {
+      return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+    } catch {
+      return "";
+    }
+  })();
+  if (!isAllowedProductImageUrl(choice.url, host ? [host] : [])) return [];
+  return [{ url: choice.url, alt: action.product.name }];
 }
 
 async function applyAddProduct(siteId: string, action: Extract<AssistantAction, { type: "add_product" }>, opts: ApplyOptions): Promise<ApplyResult> {
   const db = await getAuthenticatedClient();
-  const images = await productImage(siteId, action, opts);
+  const images = await productImage(action, opts);
 
   const existing = await db.from("products").select("slug").eq("site_id", siteId);
   if (existing.error) return { ok: false, error: existing.error.message };
@@ -250,26 +243,52 @@ async function applySetStock(siteId: string, action: Extract<AssistantAction, { 
   return { ok: true, key: action.productId, undo: { kind: "stock", changes: done } };
 }
 
-export async function applyAssistantAction(siteId: string, action: AssistantAction, opts: ApplyOptions = {}): Promise<ApplyResult> {
-  if (action.type === "update_profile") return applyProfile(siteId, action);
-  if (action.type === "add_product") return applyAddProduct(siteId, action, opts);
-  if (action.type === "update_product") return applyUpdateProduct(siteId, action);
-  if (action.type === "set_stock") return applySetStock(siteId, action);
+async function applyBlogPost(siteId: string, action: Extract<AssistantAction, { type: "add_blog_post" }>): Promise<ApplyResult> {
+  const db = await getAuthenticatedClient();
+  const { post } = action;
+  // Another post may have taken the address since the suggestion.
+  const existing = await db.from("blog_posts").select("slug").eq("site_id", siteId);
+  if (existing.error) return { ok: false, error: existing.error.message };
+  const slugs = (existing.data ?? []).map((r) => (r as { slug: string }).slug);
+  const slug = slugs.includes(post.slug) ? uniquePostSlug(post.title, slugs) : post.slug;
+  const { data, error } = await db
+    .from("blog_posts")
+    .insert({
+      site_id: siteId,
+      slug,
+      title: post.title,
+      excerpt: post.excerpt,
+      body: post.body,
+      tags: post.tags,
+      status: post.publish ? "published" : "draft",
+      published_at: post.publish ? new Date().toISOString() : null,
+      seo_title: post.seoTitle,
+      seo_description: post.seoDescription,
+    })
+    .select("id")
+    .single();
+  if (error) return { ok: false, error: (error as { code?: string }).code === "23505" ? "Another post already uses this web address. Ask me again." : error.message };
+  const id = data.id as string;
+  return { ok: true, key: id, undo: { kind: "blog_post", id, title: post.title, body: post.body, published: post.publish } };
+}
 
-  if (action.type === "add_page") {
-    const valid = validatePageData(action.data);
-    if (!valid.ok) return { ok: false, error: valid.error ?? "Invalid page." };
-    let created;
-    try {
-      created = await createExtraPage(siteId, action.key, action.data);
-    } catch {
-      // The key may have been taken since the suggestion; pick the next free one and retry once.
-      const keys = (await listExtraPages(siteId)).map((p) => p.key);
-      created = await createExtraPage(siteId, uniquePageKey(action.key, keys), action.data);
-    }
-    return { ok: true, key: created.key, undo: { kind: "new_page", id: created.id, written: action.data } };
+async function applyAddPage(siteId: string, action: Extract<AssistantAction, { type: "add_page" }>): Promise<ApplyResult> {
+  const valid = validatePageData(action.data);
+  if (!valid.ok) return { ok: false, error: valid.error ?? "Invalid page." };
+  let created;
+  try {
+    created = await createExtraPage(siteId, action.key, action.data);
+  } catch {
+    // The key may have been taken since the suggestion; pick the next free one and retry once.
+    const keys = (await listExtraPages(siteId)).map((p) => p.key);
+    created = await createExtraPage(siteId, uniquePageKey(action.key, keys), action.data);
   }
+  return { ok: true, key: created.key, undo: { kind: "new_page", id: created.id, written: action.data } };
+}
 
+type PageEdit = Extract<AssistantAction, { type: "edit_section" | "add_section" | "remove_section" | "move_section" | "set_seo" }>;
+
+async function applyPageEdit(siteId: string, action: PageEdit): Promise<ApplyResult> {
   const supabase = await getAuthenticatedClient();
   const table = tableFor(action.pageKind);
   const { data: row, error } = await supabase
@@ -312,68 +331,119 @@ export async function applyAssistantAction(siteId: string, action: AssistantActi
   return { ok: true, key: action.page, undo: { kind: "page", table, id: row.id as string, prev: current, written: next } };
 }
 
+type ActionType = AssistantAction["type"];
+type Applier<K extends ActionType> = (siteId: string, action: Extract<AssistantAction, { type: K }>, opts: ApplyOptions) => Promise<ApplyResult>;
+
+/**
+ * The applier for every proposal type (see agent/writeTools.ts for the validators). Typed over all
+ * AssistantAction types, so a new write tool without an applier fails the type check.
+ */
+const APPLIERS: { [K in ActionType]: Applier<K> } = {
+  edit_section: applyPageEdit,
+  add_section: applyPageEdit,
+  remove_section: applyPageEdit,
+  move_section: applyPageEdit,
+  set_seo: applyPageEdit,
+  update_profile: applyProfile,
+  add_page: applyAddPage,
+  add_blog_post: applyBlogPost,
+  add_product: applyAddProduct,
+  update_product: applyUpdateProduct,
+  set_stock: applySetStock,
+};
+
+export async function applyAssistantAction(siteId: string, action: AssistantAction, opts: ApplyOptions = {}): Promise<ApplyResult> {
+  const apply = APPLIERS[action.type] as Applier<ActionType>;
+  return apply(siteId, action as never, opts);
+}
+
+type Undoer<K extends UndoRecord["kind"]> = (siteId: string, undo: Extract<UndoRecord, { kind: K }>) => Promise<UndoResult>;
+
 /** Reverses an applied proposal, but only if nobody has changed that content since. */
 export async function undoAssistantAction(siteId: string, undo: UndoRecord): Promise<UndoResult> {
+  const run = UNDOERS[undo.kind] as Undoer<UndoRecord["kind"]>;
+  return run(siteId, undo as never);
+}
+
+async function undoProfile(siteId: string, undo: Extract<UndoRecord, { kind: "profile" }>): Promise<UndoResult> {
   const supabase = await getAuthenticatedClient();
+  const { data: row, error } = await supabase.from("business_profiles").select(PROFILE_COLUMNS).eq("site_id", siteId).maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  const current = profileFromRow(row as Record<string, unknown> | null);
+  for (const [f, v] of Object.entries(undo.after)) {
+    if ((current[f as keyof ProfileFields] ?? "") !== v) return { ok: false, error: UNDO_STALE };
+  }
+  const { error: updateError } = await supabase
+    .from("business_profiles")
+    .update(profileUpdatePayload(row as Record<string, unknown> | null, undo.before))
+    .eq("site_id", siteId);
+  return updateError ? { ok: false, error: updateError.message } : { ok: true };
+}
 
-  if (undo.kind === "profile") {
-    const { data: row, error } = await supabase.from("business_profiles").select(PROFILE_COLUMNS).eq("site_id", siteId).maybeSingle();
+/** Deletes a category the assistant created, once no product uses it any more. */
+async function dropCreatedCategory(db: Db, siteId: string, categoryId: string | null) {
+  if (!categoryId) return;
+  const left = await db.from("products").select("id", { count: "exact", head: true }).eq("category_id", categoryId).eq("site_id", siteId);
+  if (!left.error && (left.count ?? 0) === 0) await db.from("product_categories").delete().eq("id", categoryId).eq("site_id", siteId);
+}
+
+async function undoNewProduct(siteId: string, undo: Extract<UndoRecord, { kind: "product" }>): Promise<UndoResult> {
+  const supabase = await getAuthenticatedClient();
+  const { error } = await supabase.from("products").delete().eq("id", undo.id).eq("site_id", siteId);
+  if (error) return { ok: false, error: error.message };
+  await dropCreatedCategory(supabase, siteId, undo.categoryId);
+  return { ok: true };
+}
+
+async function undoProductUpdate(siteId: string, undo: Extract<UndoRecord, { kind: "product_update" }>): Promise<UndoResult> {
+  const supabase = await getAuthenticatedClient();
+  const { data: row, error } = await supabase.from("products").select("*").eq("id", undo.id).eq("site_id", siteId).maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!row) return { ok: false, error: "That product no longer exists." };
+  for (const [k, v] of Object.entries(undo.next)) {
+    const cur = (row as Record<string, unknown>)[k] ?? null;
+    if (!same(typeof cur === "string" && /^\d+$/.test(cur) ? Number(cur) : cur, v ?? null)) return { ok: false, error: UNDO_STALE };
+  }
+  const { error: writeError } = await supabase.from("products").update(undo.prev).eq("id", undo.id).eq("site_id", siteId);
+  if (writeError) return { ok: false, error: writeError.message };
+  await dropCreatedCategory(supabase, siteId, undo.categoryId);
+  return { ok: true };
+}
+
+async function undoBlogPost(siteId: string, undo: Extract<UndoRecord, { kind: "blog_post" }>): Promise<UndoResult> {
+  const supabase = await getAuthenticatedClient();
+  const { data: row, error } = await supabase.from("blog_posts").select("title, body, status").eq("id", undo.id).eq("site_id", siteId).maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!row) return { ok: true };
+  const r = row as { title: string; body: string; status: string };
+  if (r.title !== undo.title || r.body !== undo.body) return { ok: false, error: UNDO_STALE };
+  if (!undo.published && r.status === "published") {
+    return { ok: false, error: "This post has been published since, so I won't delete it. Unpublish it from the blog first." };
+  }
+  const { error: deleteError } = await supabase.from("blog_posts").delete().eq("id", undo.id).eq("site_id", siteId);
+  return deleteError ? { ok: false, error: deleteError.message } : { ok: true };
+}
+
+async function undoStock(siteId: string, undo: Extract<UndoRecord, { kind: "stock" }>): Promise<UndoResult> {
+  const supabase = await getAuthenticatedClient();
+  for (const c of [...undo.changes].reverse()) {
+    const { data: v, error } = await supabase.from("product_variants").select("stock").eq("id", c.variantId).eq("site_id", siteId).maybeSingle();
     if (error) return { ok: false, error: error.message };
-    const current = profileFromRow(row as Record<string, unknown> | null);
-    for (const [f, v] of Object.entries(undo.after)) {
-      if ((current[f as keyof ProfileFields] ?? "") !== v) return { ok: false, error: UNDO_STALE };
-    }
-    const { error: updateError } = await supabase
-      .from("business_profiles")
-      .update(profileUpdatePayload(row as Record<string, unknown> | null, undo.before))
-      .eq("site_id", siteId);
-    return updateError ? { ok: false, error: updateError.message } : { ok: true };
+    if (!v) continue;
+    const cur = (v as { stock: number | null }).stock;
+    if ((cur === null ? null : Number(cur)) !== c.after) return { ok: false, error: UNDO_STALE };
+    const w = c.created
+      ? await supabase.from("product_variants").delete().eq("id", c.variantId).eq("site_id", siteId)
+      : await supabase.from("product_variants").update({ stock: c.before }).eq("id", c.variantId).eq("site_id", siteId);
+    if (w.error) return { ok: false, error: w.error.message };
   }
+  return { ok: true };
+}
 
-  if (undo.kind === "product") {
-    const { error } = await supabase.from("products").delete().eq("id", undo.id).eq("site_id", siteId);
-    if (error) return { ok: false, error: error.message };
-    if (undo.categoryId) {
-      const left = await supabase.from("products").select("id", { count: "exact", head: true }).eq("category_id", undo.categoryId).eq("site_id", siteId);
-      if (!left.error && (left.count ?? 0) === 0) await supabase.from("product_categories").delete().eq("id", undo.categoryId).eq("site_id", siteId);
-    }
-    return { ok: true };
-  }
-
-  if (undo.kind === "product_update") {
-    const { data: row, error } = await supabase.from("products").select("*").eq("id", undo.id).eq("site_id", siteId).maybeSingle();
-    if (error) return { ok: false, error: error.message };
-    if (!row) return { ok: false, error: "That product no longer exists." };
-    for (const [k, v] of Object.entries(undo.next)) {
-      const cur = (row as Record<string, unknown>)[k] ?? null;
-      if (!same(typeof cur === "string" && /^\d+$/.test(cur) ? Number(cur) : cur, v ?? null)) return { ok: false, error: UNDO_STALE };
-    }
-    const { error: writeError } = await supabase.from("products").update(undo.prev).eq("id", undo.id).eq("site_id", siteId);
-    if (writeError) return { ok: false, error: writeError.message };
-    if (undo.categoryId) {
-      const left = await supabase.from("products").select("id", { count: "exact", head: true }).eq("category_id", undo.categoryId).eq("site_id", siteId);
-      if (!left.error && (left.count ?? 0) === 0) await supabase.from("product_categories").delete().eq("id", undo.categoryId).eq("site_id", siteId);
-    }
-    return { ok: true };
-  }
-
-  if (undo.kind === "stock") {
-    for (const c of [...undo.changes].reverse()) {
-      const { data: v, error } = await supabase.from("product_variants").select("stock").eq("id", c.variantId).eq("site_id", siteId).maybeSingle();
-      if (error) return { ok: false, error: error.message };
-      if (!v) continue;
-      const cur = (v as { stock: number | null }).stock;
-      if ((cur === null ? null : Number(cur)) !== c.after) return { ok: false, error: UNDO_STALE };
-      const w = c.created
-        ? await supabase.from("product_variants").delete().eq("id", c.variantId).eq("site_id", siteId)
-        : await supabase.from("product_variants").update({ stock: c.before }).eq("id", c.variantId).eq("site_id", siteId);
-      if (w.error) return { ok: false, error: w.error.message };
-    }
-    return { ok: true };
-  }
-
+async function undoPage(siteId: string, undo: Extract<UndoRecord, { kind: "page" | "new_page" }>): Promise<UndoResult> {
+  const supabase = await getAuthenticatedClient();
   const table = undo.kind === "new_page" ? "extra_pages" : undo.table;
-  const { data: row, error } = await supabase.from(table).select("id, data, status").eq("id", undo.id).maybeSingle();
+  const { data: row, error } = await supabase.from(table).select("id, data, status").eq("id", undo.id).eq("site_id", siteId).maybeSingle();
   if (error) return { ok: false, error: error.message };
   if (!row) return undo.kind === "new_page" ? { ok: true } : { ok: false, error: "That page no longer exists." };
   if (!same(row.data, undo.written)) return { ok: false, error: UNDO_STALE };
@@ -383,7 +453,18 @@ export async function undoAssistantAction(siteId: string, undo: UndoRecord): Pro
 
   const { error: writeError } =
     undo.kind === "new_page"
-      ? await supabase.from("extra_pages").delete().eq("id", undo.id)
-      : await supabase.from(table).update({ data: undo.prev }).eq("id", undo.id);
+      ? await supabase.from("extra_pages").delete().eq("id", undo.id).eq("site_id", siteId)
+      : await supabase.from(table).update({ data: undo.prev }).eq("id", undo.id).eq("site_id", siteId);
   return writeError ? { ok: false, error: writeError.message } : { ok: true };
 }
+
+/** The undo for every kind of applied change, typed over all UndoRecord kinds. */
+const UNDOERS: { [K in UndoRecord["kind"]]: Undoer<K> } = {
+  profile: undoProfile,
+  product: undoNewProduct,
+  product_update: undoProductUpdate,
+  blog_post: undoBlogPost,
+  stock: undoStock,
+  page: undoPage,
+  new_page: undoPage,
+};

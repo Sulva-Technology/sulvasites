@@ -1,29 +1,18 @@
-// "Ask AI" site assistant: prompt building and turning model output into safe, reviewable edit
-// proposals. Pure (no I/O); the API route does the model call and the client applies approved
-// proposals with the user's own session (RLS). Relative imports only (Node test runner).
+// "Ask AI" site assistant: the site snapshot, proposal types and the validators and renderers they
+// use. Pure (no I/O). The prompts, the tool registry and the agent loop live in ./agent/; the client
+// applies approved proposals with the user's own session (RLS). Relative imports only (Node test runner).
+import { excerptOf, htmlToText, slugifyTitle } from "../blog/blogPath.ts";
+import { sanitizePostHtml } from "../blog/sanitize.ts";
 import { defaultSection, type PageData, type SeoData, type Section } from "../pageSchema.ts";
-import { slugify } from "../slugify.ts";
-import {
-  PAGE_STARTERS,
-  buildPresetPageData,
-  getPagePresets,
-  labelForPageKey,
-  uniquePageKey,
-  type PagePreset,
-} from "../../templates/pagePresets.ts";
+import { PAGE_STARTERS, getPagePresets, labelForPageKey, type PagePreset } from "../../templates/pagePresets.ts";
 import { hasTraffic, shareOf, type Overview } from "../insights/overview.ts";
 import { formatNaira } from "../shop/money.ts";
 import { emptyBrief, verifyContact, type BriefContact } from "./brief.ts";
-import { BUDGETS, buildSystemPrompt, delimitTranscript, delimitUserData, detectLocale } from "./prompts/rules.ts";
+import { BUDGETS } from "./prompts/rules.ts";
 import { clampSection, cleanCopyField, copyFacts, dedupeSection, fitSentence, type CopyFacts } from "./quality.ts";
 import { sanitizeHtml } from "./rewrite.ts";
 import {
-  MAX_PRODUCT_ACTIONS,
-  describeProduct,
   renderShop,
-  shapeNewProduct,
-  shapeProductUpdate,
-  shapeStockUpdate,
   type ImageChoice,
   type ProductDraft,
   type ProductFields,
@@ -72,10 +61,32 @@ export type SiteSnapshot = {
   traffic?: Overview | null;
   /** The shop's products, categories and stock; absent when the shop tables are unavailable. */
   shop?: ShopSnapshot | null;
+  /** The site's blog posts (newest first); absent when the blog table is unavailable. */
+  blog?: BlogSnapshot | null;
+};
+
+export type BlogSnapshot = {
+  /** Nav label of the blog, e.g. "Blog" or "Journal". */
+  label: string;
+  posts: Array<{ title: string; slug: string; status: "draft" | "published" }>;
+};
+
+/** A blog post the assistant wrote, ready to insert into blog_posts. */
+export type BlogPostDraft = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  /** Sanitised article HTML. */
+  body: string;
+  tags: string[];
+  seoTitle: string;
+  seoDescription: string;
+  /** Publish on apply (the owner asked for it to go live); otherwise saved as a draft. */
+  publish: boolean;
 };
 
 type ActionBase = { id: string; summary: string };
-type PageRef = { page: string; pageKind: "core" | "extra"; pageLabel: string; pageLive: boolean };
+export type PageRef = { page: string; pageKind: "core" | "extra"; pageLabel: string; pageLive: boolean };
 
 export type AssistantAction =
   | (ActionBase & PageRef & { type: "edit_section"; sectionIndex: number; before: Section; after: Section })
@@ -85,6 +96,7 @@ export type AssistantAction =
   | (ActionBase & PageRef & { type: "set_seo"; before: SeoData; after: SeoData })
   | (ActionBase & { type: "update_profile"; before: ProfileFields; after: ProfileFields })
   | (ActionBase & { type: "add_page"; key: string; label: string; data: PageData })
+  | (ActionBase & { type: "add_blog_post"; post: BlogPostDraft })
   | (ActionBase & { type: "add_product"; product: ProductDraft; categoryIsNew: boolean; imageOptions: ImageChoice[] })
   | (ActionBase & { type: "update_product"; productId: string; productName: string; before: ProductFields; after: ProductFields; categoryIsNew: boolean })
   | (ActionBase & { type: "set_stock"; productId: string; productName: string; changes: StockChange[] });
@@ -98,14 +110,18 @@ export const isProductAction = (type: unknown): boolean =>
 export type AssistantResult = { reply: string; actions: AssistantAction[] };
 
 export const MAX_MESSAGES = 16;
-export const MAX_MESSAGE_CHARS = 2000;
+/** Long enough for an owner to paste a whole article for the blog. */
+export const MAX_MESSAGE_CHARS = 8000;
 export const MAX_ACTIONS = 6;
-const MAX_REPLY_CHARS = 2500;
+export const MAX_REPLY_CHARS = 2500;
 const MAX_LIST_ITEMS = 12;
 const MAX_FIELD_CHARS = 3000;
-const SNAPSHOT_BUDGET = 28000;
+export const MAX_BLOG_POSTS = 3;
+const MAX_POST_BODY_CHARS = 60000;
+const MIN_POST_WORDS = 60;
+export const SNAPSHOT_BUDGET = 28000;
 
-const SECTION_LABEL_FOR: Record<Section["type"], string> = {
+export const SECTION_LABEL_FOR: Record<Section["type"], string> = {
   hero: "banner", services: "services", richtext: "text", values: "why us", contact_card: "contact",
   backed_by: "logos", use_cases: "projects", gallery: "photos", testimonials: "reviews", faq: "FAQ", team: "team",
 };
@@ -164,7 +180,7 @@ export function normalizeAssistantMessages(v: unknown): AssistantMessage[] {
   return out;
 }
 
-function isRecord(v: unknown): v is Record<string, unknown> {
+export function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
 
@@ -334,24 +350,76 @@ export function shapeProfileUpdate(
   return Object.keys(after).length ? { before, after } : null;
 }
 
-function isSectionType(v: unknown): v is Section["type"] {
+export function isSectionType(v: unknown): v is Section["type"] {
   return typeof v === "string" && (SECTION_TYPES as string[]).includes(v);
 }
 
-function clip(v: unknown, max: number): string {
+export function clip(v: unknown, max: number): string {
   return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "";
 }
 
-function pageLabel(templateKey: string, key: string): string {
+export function pageLabel(templateKey: string, key: string): string {
   if (key === "home") return "Home";
   if (key === "about") return "About";
   if (key === "contact") return "Contact";
   return labelForPageKey(templateKey, key);
 }
 
+/** "slug", or "slug-2", "slug-3"… when taken. */
+export function uniquePostSlug(title: string, taken: string[]): string {
+  const base = slugifyTitle(title).slice(0, 74).replace(/-+$/g, "") || "post";
+  const used = new Set(taken);
+  let slug = base;
+  for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
+  return slug;
+}
+
+function cleanTags(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  for (const x of v) {
+    const t = typeof x === "string" ? x.replace(/[#,]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 40) : "";
+    if (t && !out.some((o) => o.toLowerCase() === t.toLowerCase())) out.push(t);
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
+/**
+ * Validates a proposed blog post: safe HTML only, the same quality gate as page copy (no invented
+ * numbers, emails or banned phrases), a real article length, and a web address no other post uses.
+ */
+export function shapeBlogPost(raw: Record<string, unknown>, facts: CopyFacts, takenSlugs: string[]): BlogPostDraft | null {
+  const title = fitSentence(cleanCopyField(clip(raw.title, 300), "title", facts), 160);
+  if (!title) return null;
+  const html = sanitizePostHtml(typeof raw.body === "string" ? raw.body.slice(0, MAX_POST_BODY_CHARS) : "");
+  const body = sanitizePostHtml(cleanCopyField(html, "body", facts));
+  if (htmlToText(body).split(" ").filter(Boolean).length < MIN_POST_WORDS) return null;
+  const written = fitSentence(cleanCopyField(clip(raw.excerpt, 600), "excerpt", facts), 200);
+  return {
+    title,
+    slug: uniquePostSlug(title, takenSlugs),
+    excerpt: excerptOf(written, body, 200),
+    body,
+    tags: cleanTags(raw.tags),
+    seoTitle: fitSentence(cleanCopyField(clip(raw.seoTitle, 200), "title", facts), BUDGETS.seoTitle),
+    seoDescription: fitSentence(cleanCopyField(clip(raw.seoDescription, 400), "description", facts), BUDGETS.seoDescription),
+    publish: raw.publish === true,
+  };
+}
+
+/** The blog for the prompt: label, address and existing posts (so the assistant doesn't repeat one). */
+export function renderBlog(blog: BlogSnapshot | null | undefined): string {
+  if (!blog) return "BLOG: not available right now.";
+  const count = blog.posts.length ? `${blog.posts.length} post(s)` : "no posts yet";
+  const head = `BLOG "${blog.label}" at /blog: ${count}. The "${blog.label}" link joins the site menu once a post is published.`;
+  const rows = blog.posts.slice(0, 50).map((p) => `  - ${JSON.stringify(p.title)} (/blog/${p.slug}, ${p.status === "published" ? "live" : "draft"})`);
+  return [head, ...rows].join("\n");
+}
+
 // ---------- prompt ----------
 
-const SECTION_SHAPES = [
+export const SECTION_SHAPES = [
   '{"type":"hero","headline":string,"subtext":string,"ctaText":string,"ctaHref":string}',
   '{"type":"services","items":[{"title":string,"desc":string}]}',
   '{"type":"values","items":[{"title":string,"desc":string}]}',
@@ -365,23 +433,8 @@ const SECTION_SHAPES = [
   '{"type":"contact_card","showForm":boolean,"mapLink":string}',
 ];
 
-const ACTION_SHAPE = `{
-  "reply": string,
-  "actions": [
-    { "type": "edit_section", "page": page key, "section": section number, "content": full section JSON with your new text, "summary": string },
-    { "type": "add_section", "page": page key, "position": section number to insert before (or -1 for the end), "content": full section JSON, "summary": string },
-    { "type": "remove_section", "page": page key, "section": section number, "summary": string },
-    { "type": "move_section", "page": page key, "section": section number, "to": new section number, "summary": string },
-    { "type": "set_seo", "page": page key, "title": string, "description": string, "summary": string },
-    { "type": "update_profile", "fields": { only the business details to change, e.g. "phone": string, "hours": string }, "summary": string },
-    { "type": "add_page", "name": string, "layout": layout key, "sections": [full section JSON, ...], "summary": string },
-    { "type": "add_product", "name": string, "price": number in naira, "compareAtPrice": number|null, "description": string, "category": string, "stock": number (only for a product with no options), "variants": [{ "options": { "Size": "M", "Colour": "Red" }, "stock": number, "price": number }], "featured": boolean, "imageQuery": string, "photo": number, "summary": string },
-    { "type": "update_product", "productId": id from the SHOP block, "newName": string, "description": string, "price": number, "compareAtPrice": number|null, "category": string, "active": boolean, "featured": boolean, "summary": string },
-    { "type": "set_stock", "productId": id from the SHOP block, "changes": [{ "variantId": id from the SHOP block or null when the product has no options, "stock": number }], "summary": string }
-  ]
-}`;
 
-function renderPage(p: SnapshotPage, templateKey: string, full: boolean): string {
+export function renderPage(p: SnapshotPage, templateKey: string, full: boolean): string {
   const head = `PAGE "${p.key}" — ${pageLabel(templateKey, p.key)} (${p.status === "published" ? "live" : "draft"})`;
   const seo = `seo: ${JSON.stringify(p.data.seo ?? { title: "", description: "" })}`;
   const sections = (p.data.sections ?? []).map((s, i) => {
@@ -393,13 +446,13 @@ function renderPage(p: SnapshotPage, templateKey: string, full: boolean): string
 }
 
 /** Site content for the prompt: the page in focus first and in full, others in full while the budget lasts. */
-export function renderSnapshot(snapshot: SiteSnapshot, focusPage?: string): string {
+export function renderSnapshot(snapshot: SiteSnapshot, focusPage?: string, budget: number = SNAPSHOT_BUDGET): string {
   const pages = [...snapshot.pages].sort((a, b) => (a.key === focusPage ? -1 : b.key === focusPage ? 1 : 0));
   const parts: string[] = [];
   let used = 0;
   for (const p of pages) {
     let text = renderPage(p, snapshot.templateKey, true);
-    if (used + text.length > SNAPSHOT_BUDGET) text = renderPage(p, snapshot.templateKey, false);
+    if (used + text.length > budget) text = renderPage(p, snapshot.templateKey, false);
     used += text.length;
     parts.push(text);
   }
@@ -437,83 +490,21 @@ export function renderTraffic(traffic: Overview | null | undefined): string {
   return lines.filter(Boolean).join("\n");
 }
 
-function layoutOptions(templateKey: string): PagePreset[] {
+export function layoutOptions(templateKey: string): PagePreset[] {
   const seen = new Set<string>();
   return [...getPagePresets(templateKey), ...PAGE_STARTERS].filter((p) => !seen.has(p.key) && seen.add(p.key));
 }
 
-export function buildAssistantPrompt(args: {
-  snapshot: SiteSnapshot;
-  messages: AssistantMessage[];
-  focusPage?: string;
-  /** What the vision model saw in each photo the owner attached, in order (photo 1 first). */
-  photoNotes?: string[];
-}): { system: string; user: string } {
-  const { snapshot, messages, focusPage, photoNotes = [] } = args;
-  const p = snapshot.profile;
-  const layouts = layoutOptions(snapshot.templateKey)
-    .map((l) => `${l.key} (${l.label}: ${l.sections.join(", ")})`)
-    .join("; ");
-
-  const system = buildSystemPrompt({
-    task:
-      "You are the owner's website assistant. Read their latest message and either answer it, or propose concrete edits to their site as actions. " +
-      "The owner reviews every action and taps Apply, so propose real, finished copy, not placeholders. " +
-      "If they ask a question or for advice, answer in reply and add actions only when there is a clear improvement to make.",
-    locale: detectLocale(p.address, p.phone, p.description, snapshot.businessName),
-    preserveLinks: true,
-    outputNote: `Shape: ${ACTION_SHAPE}`,
-    extraRules: [
-      "reply is plain text for the owner, no markdown. For a change: say what you propose in a few short sentences and that they can review and apply it. For a question or advice: answer it properly, as a sharp consultant would, with specifics. Use short lines or '1.' lists when it helps. Never claim a change is already made.",
-      "Ground every opinion in this owner's data: the TRAFFIC and SHOP blocks and their pages. Cite real numbers (a page's views, a best seller, a product with no photo or no stock, a price that sits oddly against the others) instead of generic tips. When the data shows a clear next step, suggest it and offer to draft it.",
-      `At most ${MAX_ACTIONS} site actions (pages, sections, SEO, business details) plus up to ${MAX_PRODUCT_ACTIONS} product actions. Use an empty actions array when no edit is needed or the request is unclear; then ask the short question you need in reply.`,
-      "PRODUCTS: the owner can add and manage shop products by chatting. add_product when they ask to add, list or upload products, including a whole pasted list or catalogue (add every product in one answer, up to " + MAX_PRODUCT_ACTIONS + "). The price MUST be a figure the owner typed; never guess or estimate one. If a product has no stated price, do not propose it: ask for the missing prices in reply, naming each product. The same goes for stock counts: use only numbers the owner gave, and 0 for sold out.",
-      "add_product copy: description is 1 to 3 persuasive sentences built only from what the owner told you (material, size, use, who it is for), no invented specs or claims. category must be one of the existing categories exactly as listed in SHOP when one fits, otherwise a short new name. variants: only for options the owner mentioned (sizes, colours), each with its stock when given. Never re-add a product already in SHOP; use update_product or set_stock for those.",
-      "imageQuery: 2 to 4 plain words a stock-photo site would tag the right picture with, naming the object and its colour or material (e.g. \"red leather handbag\", \"ankara print dress\"), no brand names. The server searches real photos with it and a vision model picks the best match, so be specific about the object, not the business. If the owner attached photos, set photo to that photo's number to use their own picture for the product.",
-      "update_product and set_stock: copy productId and variantId exactly from the SHOP block. Hide a product with active:false rather than deleting it.",
-      "edit_section: 'page' is a page key shown as PAGE \"key\", 'section' is the [number] shown before the section. 'content' is the whole section with the same type; keep every image url, link and href exactly as given.",
-      "You may add or remove items in lists of services, values, FAQs and testimonials. Keep team members, gallery images, logos and project items in the same count and order.",
-      "add_section: for a section the page does not have yet. Prefer inserting before a contact_card section.",
-      "remove_section and move_section: only when the owner asks to remove, hide, delete or move a section. Section numbers always refer to the page as shown, before any of your other actions.",
-      `update_profile: for the business name, tagline, description, address, phone, WhatsApp, email, social links (${SOCIAL_FIELDS.filter((f) => f !== "hours").join(", ")}) and opening hours. These show in the header, footer and contact blocks of every page, so change them here, never by editing page text. Use "" to clear a field. Copy phone numbers, emails, handles and addresses exactly as the owner typed them; never guess one. hours is one line per row, e.g. "Mon–Fri · 9:00–18:00\\nSat · 10:00–16:00".`,
-      "set_seo: title at most " + BUDGETS.seoTitle + " characters, description at most " + BUDGETS.seoDescription + " characters, both specific to that page.",
-      `add_page: only when the owner asks for a new page. 'layout' is one of: ${layouts}. 'sections' are the layout's sections filled with real copy (hero first, contact_card last). Leave image urls empty.`,
-      "Questions about visitors, traffic, popular pages, referrers or devices: answer from the TRAFFIC block in reply, naming the page and its numbers; '/' is the Home page and '/p/<key>' are the other pages. Never invent or estimate numbers. If TRAFFIC says not available or no visits, say exactly that and leave actions empty. Only 90 days of history are kept.",
-      "Only edit what the owner asked for. Do not rewrite other sections or pages unprompted.",
-      "Section JSON shapes: " + SECTION_SHAPES.join(" | "),
-    ],
-  });
-
-  const last = messages[messages.length - 1];
-  const history = messages.slice(0, -1);
-  const user = [
-    "Current site content:",
-    delimitUserData("site", renderSnapshot(snapshot, focusPage), SNAPSHOT_BUDGET + 4000),
-    "Shop:\n" + delimitUserData("shop", renderShop(snapshot.shop), 16000),
-    "Site traffic:\n" + delimitUserData("traffic", renderTraffic(snapshot.traffic), 4000),
-    photoNotes.length
-      ? "Photos the owner attached to their latest message (a vision model described them; photo N is the Nth):\n" +
-        delimitUserData("photos", photoNotes.map((n, i) => `${i + 1}. ${n}`).join("\n"), 4000)
-      : "",
-    focusPage ? `The owner is currently looking at page "${focusPage}". "This page" means that page.` : "",
-    history.length ? "Earlier conversation:\n" + delimitTranscript(history, 5000) : "",
-    "Owner's latest message:",
-    delimitUserData("request", last?.content ?? "", MAX_MESSAGE_CHARS),
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-  return { system, user };
-}
 
 // ---------- parsing ----------
 
-function findPage(snapshot: SiteSnapshot, key: unknown): SnapshotPage | null {
+export function findPage(snapshot: SiteSnapshot, key: unknown): SnapshotPage | null {
   if (typeof key !== "string") return null;
   const k = key.trim().toLowerCase();
   return snapshot.pages.find((p) => p.key === k) ?? null;
 }
 
-function pageRef(snapshot: SiteSnapshot, page: SnapshotPage): PageRef {
+export function pageRef(snapshot: SiteSnapshot, page: SnapshotPage): PageRef {
   return {
     page: page.key,
     pageKind: page.kind,
@@ -522,143 +513,10 @@ function pageRef(snapshot: SiteSnapshot, page: SnapshotPage): PageRef {
   };
 }
 
-function sameJson(a: unknown, b: unknown): boolean {
+export function sameJson(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/**
- * Turns the model's JSON into validated actions. Anything malformed, pointing at a page or
- * section that does not exist, or making no change is dropped rather than shown to the owner.
- */
-export function parseAssistantOutput(raw: unknown, snapshot: SiteSnapshot, ownerText = ""): AssistantResult {
-  const facts = assistantFacts(snapshot, ownerText);
-  const obj = isRecord(raw) ? raw : {};
-  const reply = typeof obj.reply === "string" ? obj.reply.replace(/[*_`#]+/g, "").trim().slice(0, MAX_REPLY_CHARS) : "";
-  const rawActions = Array.isArray(obj.actions) ? obj.actions.slice(0, (MAX_ACTIONS + MAX_PRODUCT_ACTIONS) * 2) : [];
-  const actions: AssistantAction[] = [];
-  const takenKeys = snapshot.pages.map((p) => p.key);
-  const editedSections = new Set<string>();
-  const takenSlugs = (snapshot.shop?.products ?? []).map((x) => x.slug);
-  const takenNames = (snapshot.shop?.products ?? []).map((x) => x.name.trim().toLowerCase());
-  const touchedProducts = new Set<string>();
-  let productCount = 0;
-
-  for (const a of rawActions) {
-    if (!isRecord(a)) continue;
-    const forShop = isProductAction(a.type);
-    if (forShop ? productCount >= MAX_PRODUCT_ACTIONS : actions.length - productCount >= MAX_ACTIONS) continue;
-    const summary = clip(a.summary, 160);
-    const id = `a${actions.length + 1}`;
-
-    if (a.type === "edit_section") {
-      const page = findPage(snapshot, a.page);
-      const index = Number(a.section);
-      const before = page?.data.sections?.[index];
-      if (!page || !Number.isInteger(index) || !before) continue;
-      const slot = `${page.key}:${index}`;
-      if (editedSections.has(slot)) continue;
-      if (isRecord(a.content) && a.content.type !== undefined && a.content.type !== before.type) continue;
-      const after = polishSection(shapeEditedSection(before, a.content), before, facts);
-      if (sameJson(before, after)) continue;
-      editedSections.add(slot);
-      actions.push({ id, type: "edit_section", ...pageRef(snapshot, page), sectionIndex: index, before, after, summary: summary || `Update a ${before.type} section` });
-    } else if (a.type === "add_section") {
-      const page = findPage(snapshot, a.page);
-      const content = isRecord(a.content) ? a.content : null;
-      if (!page || !content || !isSectionType(content.type)) continue;
-      const section = polishSection(shapeNewSection(content.type, content), null, facts);
-      if (sameJson(section, defaultSection(content.type))) continue;
-      const len = page.data.sections?.length ?? 0;
-      const pos = Number(a.position);
-      const position = Number.isInteger(pos) && pos >= 0 && pos <= len ? pos : len;
-      actions.push({ id, type: "add_section", ...pageRef(snapshot, page), position, section, summary: summary || `Add a ${content.type} section` });
-    } else if (a.type === "remove_section" || a.type === "move_section") {
-      const page = findPage(snapshot, a.page);
-      const index = Number(a.section);
-      const before = page?.data.sections?.[index];
-      if (!page || !Number.isInteger(index) || !before) continue;
-      const slot = `${page.key}:${index}`;
-      if (editedSections.has(slot)) continue;
-      const label = SECTION_LABEL_FOR[before.type];
-      if (a.type === "remove_section") {
-        editedSections.add(slot);
-        actions.push({ id, type: "remove_section", ...pageRef(snapshot, page), sectionIndex: index, before, summary: summary || `Remove the ${label} section` });
-      } else {
-        const last = page.data.sections.length - 1;
-        const to = Math.min(Math.max(Number(a.to), 0), last);
-        if (!Number.isInteger(to) || to === index) continue;
-        editedSections.add(slot);
-        actions.push({ id, type: "move_section", ...pageRef(snapshot, page), sectionIndex: index, to, before, summary: summary || `Move the ${label} section` });
-      }
-    } else if (a.type === "update_profile") {
-      if (actions.some((x) => x.type === "update_profile")) continue;
-      const fields = isRecord(a.fields) ? a.fields : a;
-      const change = shapeProfileUpdate(fields, snapshot.profile, ownerText, facts);
-      if (!change) continue;
-      const names = Object.keys(change.after).map((f) => profileFieldLabel(f).toLowerCase());
-      actions.push({ id, type: "update_profile", ...change, summary: summary || `Update ${names.join(", ")}` });
-    } else if (a.type === "set_seo") {
-      const page = findPage(snapshot, a.page);
-      if (!page) continue;
-      const before = { title: page.data.seo?.title ?? "", description: page.data.seo?.description ?? "" };
-      const title = fitSentence(cleanCopyField(clip(a.title, 200), "title", facts), BUDGETS.seoTitle);
-      const description = fitSentence(cleanCopyField(clip(a.description, 400), "description", facts), BUDGETS.seoDescription);
-      const after = { title: title || before.title, description: description || before.description };
-      if (sameJson(before, after)) continue;
-      actions.push({ id, type: "set_seo", ...pageRef(snapshot, page), before, after, summary: summary || "Improve search title and description" });
-    } else if (a.type === "add_page") {
-      const label = clip(a.name, 40);
-      const base = slugify(label);
-      if (!label || !base) continue;
-      const key = uniquePageKey(base, takenKeys);
-      const layouts = layoutOptions(snapshot.templateKey);
-      const layout = layouts.find((l) => l.key === a.layout) ?? layouts.find((l) => l.key === "page")!;
-      const fromModel = Array.isArray(a.sections)
-        ? a.sections
-            .filter((s): s is Record<string, unknown> => isRecord(s) && isSectionType(s.type))
-            .slice(0, 10)
-            .map((s) => polishSection(shapeNewSection(s.type as Section["type"], s), null, facts))
-        : [];
-      const data: PageData =
-        fromModel.length > 0
-          ? { seo: { title: label, description: "" }, sections: fromModel }
-          : buildPresetPageData({ ...layout, label, headline: label });
-      takenKeys.push(key);
-      actions.push({ id, type: "add_page", key, label, data, summary: summary || `Add a "${label}" page` });
-    } else if (a.type === "add_product") {
-      if (!snapshot.shop) continue;
-      const made = shapeNewProduct(a, snapshot.shop, ownerText, facts, takenSlugs, takenNames);
-      if (!made) continue;
-      takenSlugs.push(made.product.slug);
-      takenNames.push(made.product.name.toLowerCase());
-      productCount++;
-      actions.push({ id, type: "add_product", product: made.product, categoryIsNew: made.categoryIsNew, imageOptions: [], summary: summary || describeProduct(made.product) });
-    } else if (a.type === "update_product") {
-      if (!snapshot.shop) continue;
-      const change = shapeProductUpdate(a, snapshot.shop, ownerText, facts);
-      if (!change || touchedProducts.has(`u:${change.product.id}`)) continue;
-      touchedProducts.add(`u:${change.product.id}`);
-      productCount++;
-      actions.push({
-        id, type: "update_product", productId: change.product.id, productName: change.product.name,
-        before: change.before, after: change.after, categoryIsNew: change.categoryIsNew,
-        summary: summary || `Update “${change.product.name}”`,
-      });
-    } else if (a.type === "set_stock") {
-      if (!snapshot.shop) continue;
-      const change = shapeStockUpdate(a, snapshot.shop, ownerText);
-      if (!change || touchedProducts.has(`s:${change.product.id}`)) continue;
-      touchedProducts.add(`s:${change.product.id}`);
-      productCount++;
-      actions.push({ id, type: "set_stock", productId: change.product.id, productName: change.product.name, changes: change.changes, summary: summary || `Update stock for “${change.product.name}”` });
-    }
-  }
-
-  const fallbackReply = actions.length
-    ? "Here is what I suggest. Review each change and tap Apply on the ones you like."
-    : "I could not work out a change to make. Could you tell me a bit more about what you want?";
-  return { reply: reply || fallbackReply, actions };
-}
 
 // ---------- business_profiles row mapping (shared by the API route and the browser apply) ----------
 

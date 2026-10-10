@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import { buildAssistantPrompt } from "../src/lib/ai/agent/prompt.ts";
+import { preloadReads } from "../src/lib/ai/agent/readTools.ts";
+import { parseAssistantOutput } from "../src/lib/ai/agent/writeTools.ts";
 import {
-  buildAssistantPrompt,
   monthStartIso,
   monthlyLimitFor,
   normalizeAssistantMessages,
-  parseAssistantOutput,
   shapeEditedSection,
   shapeNewSection,
 } from "../src/lib/ai/siteAssistant.ts";
@@ -328,11 +329,69 @@ test("renderTraffic says so when there is no data or insights are unavailable", 
   assert.match(renderTraffic(parseOverview({ days: 30, totals: { views: 0 } })), /no visits recorded/);
 });
 
-test("the assistant prompt carries the traffic block and the rule to use it", () => {
-  const { system, user } = buildAssistantPrompt({
-    snapshot: { ...snapshot(), traffic: null },
-    messages: [{ role: "user", content: "what page was visited the most?" }],
-  });
+test("the assistant prompt carries the traffic block and the rule to use it", async () => {
+  const ask = "what page was visited the most?";
+  const preloaded = await preloadReads({ snapshot: snapshot(), traffic: async () => null }, ask);
+  const { system, user } = buildAssistantPrompt({ snapshot: snapshot(), messages: [{ role: "user", content: ask }], preloaded });
   assert.match(user, /TRAFFIC: not available/);
   assert.match(system, /TRAFFIC block/);
+});
+
+// ---------- blog posts ----------
+
+const article = (words = 120) =>
+  `<h1>Ignored heading</h1><p>${Array.from({ length: words }, (_, i) => (i % 9 === 0 ? "learning" : "students")).join(" ")}.</p>` +
+  `<script>alert(1)</script><p onclick="x()">Second <a href="javascript:alert(1)">para</a>.</p>`;
+
+const withBlog = (posts = []) => ({ ...snapshot(), blog: { label: "Blog", posts } });
+
+test("add_blog_post becomes a safe draft post with a fresh address", () => {
+  const out = parseAssistantOutput(
+    {
+      reply: "Here is a post.",
+      actions: [{ type: "add_blog_post", title: "Study tips for exams", excerpt: "How to revise well.", body: article(), tags: ["Study", "study", "#Exams"], summary: "New post" }],
+    },
+    withBlog([{ title: "Older post", slug: "study-tips-for-exams", status: "published" }]),
+    "write a post about study tips",
+  );
+  assert.equal(out.actions.length, 1);
+  const a = out.actions[0];
+  assert.equal(a.type, "add_blog_post");
+  assert.equal(a.post.slug, "study-tips-for-exams-2");
+  assert.equal(a.post.publish, false);
+  assert.deepEqual(a.post.tags, ["Study", "Exams"]);
+  assert.ok(!/<script|onclick|javascript:|<h1/i.test(a.post.body));
+  assert.match(a.post.body, /<h2>/);
+});
+
+test("add_blog_post publishes only when asked, skips thin and repeated posts", () => {
+  const out = parseAssistantOutput(
+    {
+      actions: [
+        { type: "add_blog_post", title: "Go live", body: article(), publish: true },
+        { type: "add_blog_post", title: "Too short", body: "<p>Just a few words.</p>" },
+        { type: "add_blog_post", title: "Older post", body: article() },
+      ],
+    },
+    withBlog([{ title: "Older post", slug: "older-post", status: "draft" }]),
+    "publish it",
+  );
+  assert.deepEqual(out.actions.map((a) => a.post.title), ["Go live"]);
+  assert.equal(out.actions[0].post.publish, true);
+});
+
+test("add_blog_post is dropped when the blog is unavailable", () => {
+  const out = parseAssistantOutput({ actions: [{ type: "add_blog_post", title: "Hi", body: article() }] }, snapshot(), "");
+  assert.equal(out.actions.length, 0);
+});
+
+test("the prompt tells the assistant about the blog", () => {
+  const { system, user } = buildAssistantPrompt({
+    snapshot: withBlog([{ title: "Welcome", slug: "welcome", status: "published" }]),
+    messages: [{ role: "user", content: "can you add blog posts for me?" }],
+  });
+  assert.match(system, /add_blog_post/);
+  assert.match(system, /never say the site has no blog/);
+  assert.match(user, /BLOG "Blog" at \/blog/);
+  assert.match(user, /Welcome/);
 });

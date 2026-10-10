@@ -32,6 +32,8 @@ export type GroqChatOptions = {
   timeoutMs?: number;
   /** OpenRouter vision calls only: image URLs or data URLs shown to the model with the user text. */
   images?: string[];
+  /** Which per-task model to try first (llm.server.ts): AI_MODEL_ASSISTANT or AI_MODEL_SMALL. */
+  task?: "assistant" | "small";
 };
 
 export type GroqDeps = {

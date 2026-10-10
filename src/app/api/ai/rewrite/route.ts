@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       system,
       user,
       json: true,
+      task: "small",
       ...(action === "translate" ? SAMPLING.translate : SAMPLING.rewrite),
     });
 
