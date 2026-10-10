@@ -368,10 +368,11 @@ function AccountStep({ onBack, onDone, setError }: { onBack: () => void; onDone:
     return (
       <form onSubmit={verify}>
         <h1 className="text-2xl font-semibold">Check your email</h1>
-        <p className="mt-1 text-sm text-koi-ink/60">We sent a 6-digit code to {email}.</p>
-        <input required inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={`${input} mt-6 text-center text-2xl tracking-[0.5em]`} />
+        <p className="mt-1 text-sm text-koi-ink/60">We sent a code to {email}.</p>
+        {/* Code length follows the Supabase "Email OTP Length" setting (6–10 digits). */}
+        <input required inputMode="numeric" autoComplete="one-time-code" placeholder="Enter code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))} className={`${input} mt-6 text-center text-2xl tracking-[0.3em]`} />
         <button type="button" onClick={resend} className="mt-3 text-sm text-koi-deep">Send a new code</button>
-        <Nav onBack={() => setPhase("form")} next={busy ? "Checking…" : "Verify and build my site"} disabled={busy || code.length !== 6} />
+        <Nav onBack={() => setPhase("form")} next={busy ? "Checking…" : "Verify and build my site"} disabled={busy || code.length < 6} />
       </form>
     );
   }
