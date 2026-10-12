@@ -6,11 +6,13 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT5 } from "../ctx";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const TIMES = ["Morning", "Afternoon", "Evening"];
 
 /** "Book your appointment": dark info panel + booking request form (service list from the site). */
 export default function T5ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, serviceNames } = useT5();
   const formRef = useRef<HTMLFormElement>(null);
   const socials = (profile.socials || {}) as Record<string, unknown>;
@@ -31,11 +33,11 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
       <div className="t5-container">
         <div className="t5-booking t5-reveal" id="contact">
           <div className="t5-booking-side">
-            <span className="t5-eyebrow">Reservations</span>
+            <span className="t5-eyebrow">{fit ? "Reservations" : "Contact"}</span>
             <h2 className="t5-title">
-              Book your <em style={{ color: "inherit" }}>appointment</em>
+              {fit ? "Book your " : "Get in "}<em style={{ color: "inherit" }}>{fit ? "appointment" : "touch"}</em>
             </h2>
-            <p className="t5-lead">Send a request and we&apos;ll confirm your time within a few hours.</p>
+            <p className="t5-lead">{fit ? "Send a request and we'll confirm your time within a few hours." : "Send a message and we'll get back to you."}</p>
             <div className="t5-contact-list">
               {profile.whatsapp ? (
                 <a className="t5-contact-item" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
@@ -97,7 +99,7 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
                   <option value="Not sure yet">Not sure yet — advise me</option>
                 </select>
               </label>
-              <div className="t5-form-row">
+              {fit ? (<div className="t5-form-row">
                 <label className="t5-field">
                   <span>Preferred date</span>
                   <input className="t5-input" name="date" type="date" required />
@@ -113,7 +115,7 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
                     ))}
                   </div>
                 </div>
-              </div>
+              </div>) : null}
               <div className="t5-form-row">
                 <label className="t5-field">
                   <span>Name</span>
@@ -126,12 +128,12 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
               </div>
               <label className="t5-field">
                 <span>Notes</span>
-                <textarea className="t5-input" name="notes" rows={3} placeholder="Occasion, location, inspiration…" />
+                <textarea className="t5-input" name="notes" rows={3} placeholder={fit ? "Occasion, location, inspiration…" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t5-btn t5-btn-rose">
-                Request booking
+                {fit ? "Request booking" : "Send message"}
               </button>
-              <p className="t5-fineprint">Your appointment is confirmed once we reply. A booking fee may apply.</p>
+              {fit ? <p className="t5-fineprint">Your appointment is confirmed once we reply. A booking fee may apply.</p> : null}
               <InboxStatus state={inbox.state} />
             </form>
           ) : null}

@@ -8,6 +8,7 @@ import { initials, pad2, useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { bookHref, useT5 } from "../ctx";
 import { IconArrow, IconCalendar, IconSparkle } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 function Photo({ src, fallback }: { src?: string; fallback: string }) {
   return src ? (
@@ -58,6 +59,7 @@ export default function T5Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT5();
   const { photos, profile, serviceNames, valueTitles, pageKind, pageLabel } = ctx;
   const { set } = useSectionEditor(section, sectionIndex);
@@ -85,7 +87,7 @@ export default function T5Hero({
   const award = (
     <span className="t5-award">
       <IconSparkle size={14} />
-      {profile.tagline || "Loved by clients across the city"}
+      {profile.tagline || (fit ? "Loved by clients across the city" : profile.business_name)}
     </span>
   );
 
@@ -103,7 +105,7 @@ export default function T5Hero({
           <div className="t5-phone-screen">
             <Photo src={photos[1]?.url ?? photos[0]?.url} fallback={mono} />
             <div className="t5-scan">
-              <span>Consultation in progress…</span>
+              <span>{fit ? "Consultation in progress…" : "Here to help…"}</span>
               <i />
             </div>
           </div>

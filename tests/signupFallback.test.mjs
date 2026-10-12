@@ -51,5 +51,5 @@ test("three distinct real template suggestions", () => {
     assert.equal(new Set(s).size, 3);
     for (const k of s) assert.ok(TEMPLATE_KEYS.includes(k), k);
   }
-  assert.deepEqual(suggestTemplates({ businessName: "", whatTheyDo: "", city: "", whatsapp: "", sellOnline: false }), ["t1", "t5", "t14"]);
+  assert.deepEqual(suggestTemplates({ businessName: "", whatTheyDo: "", city: "", whatsapp: "", sellOnline: false }), ["t1", "t3", "t4"]);
 });

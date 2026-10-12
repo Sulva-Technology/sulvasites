@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { joinHref, useT16 } from "../ctx";
 import { IconArrow, ServiceIcon } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -23,6 +24,7 @@ export default function T16Services({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT16();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -38,8 +40,8 @@ export default function T16Services({
       <div className="t16-container">
         <header className="t16-center-head t16-reveal">
           <p className="t16-kicker">Departments</p>
-          <h2 className="t16-h2">Ways to serve and grow</h2>
-          <p className="t16-head-note">Teams and programmes that care for the whole person and the whole community.</p>
+          <h2 className="t16-h2">{fit ? "Ways to serve and grow" : "What we offer"}</h2>
+          <p className="t16-head-note">{fit ? "Teams and programmes that care for the whole person and the whole community." : "Ask us about any of these."}</p>
         </header>
 
         <ul className="t16-depts" data-count={items.length}>
@@ -68,7 +70,7 @@ export default function T16Services({
                   />
                 ) : null}
                 <a className="t16-textlink" href={joinHref(ctx)} aria-label={`Get involved with ${t || "this department"}`}>
-                  Get involved <IconArrow size={15} />
+                  {fit ? "Get involved" : "Ask about this"} <IconArrow size={15} />
                 </a>
               </li>
             );

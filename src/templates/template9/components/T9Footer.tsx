@@ -9,6 +9,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, joinHref, useT9 } from "../ctx";
 import { IconArrow, IconBolt, IconPhone } from "../icons";
 import T9Hours from "./T9Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -21,6 +22,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Red diagonal call-to-action band (skipped where the page already has the form) + black footer with a giant wordmark. */
 export default function T9Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT9();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, hours } = ctx;
   const editor = useInlineEditor();
@@ -38,7 +40,7 @@ export default function T9Footer({ logoUrl }: { logoUrl: string | null }) {
             </h2>
             <div className="t9-actions">
               <a className="t9-btn t9-btn-dark" href={joinHref(ctx)}>
-                Start free trial <IconArrow size={18} />
+                {fit ? "Start free trial" : "Get in touch"} <IconArrow size={18} />
               </a>
               {profile.phone ? (
                 <a className="t9-btn t9-btn-outline-light" href={buildTelLink(profile.phone)}>

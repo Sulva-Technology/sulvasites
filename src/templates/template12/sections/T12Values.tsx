@@ -3,6 +3,7 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { ValuesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -13,6 +14,7 @@ const HINTS = [
 
 /** Values as a numbered process on a charcoal band: big stencil numbers on an orange rail. */
 export default function T12Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Editor: the real items untouched (one blank step when empty). Visitors: titled items only.
@@ -29,7 +31,7 @@ export default function T12Values({ section, sectionIndex }: { section: ValuesSe
           <p className="t12-label t12-kicker">
             <span className="t12-kicker-sq" aria-hidden="true" /> How it works
           </p>
-          <h2 className="t12-h2">From first call to finished job</h2>
+          <h2 className="t12-h2">{fit ? "From first call to finished job" : "How it works"}</h2>
         </header>
 
         <ol className="t12-process" data-count={items.length} data-cols={items.length <= 4 ? items.length : 3}>

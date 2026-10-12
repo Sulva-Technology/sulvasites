@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, enquireHref, hoursOf, useT15 } from "../ctx";
 import { IconArrow, IconPhone } from "../icons";
 import { T15Mark } from "./T15Header";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -20,6 +21,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Glass "let's talk" panel (skipped where the page already has the enquiry form) + quiet footer. */
 export default function T15Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT15();
   const { baseUrl, navPages, profile, pageKind, pageHasForm } = ctx;
   const editor = useInlineEditor();
@@ -35,9 +37,11 @@ export default function T15Footer({ logoUrl }: { logoUrl: string | null }) {
           <div className="t15-container">
             <div className="t15-cta t15-glass t15-reveal">
               <span className="t15-cta-glow" aria-hidden="true" />
-              <h2 className="t15-h2">Ready when you are. Let&apos;s talk.</h2>
+              <h2 className="t15-h2">{fit ? "Found the one? Let's talk." : "Ready when you are. Let's talk."}</h2>
               <p className="t15-cta-lead">
-                Ask a question, book a visit or tell us what you&apos;re looking for — we&apos;ll come back to you personally.
+                {fit
+                  ? "Ask about a car, book a private viewing or tell us what you're looking for — we'll come back to you personally."
+                  : "Ask a question, book a visit or tell us what you're looking for — we'll come back to you personally."}
               </p>
               <div className="t15-actions t15-actions-center">
                 <a className="t15-btn t15-btn-solid t15-btn-lg" href={enquireHref(ctx)}>
@@ -110,7 +114,7 @@ export default function T15Footer({ logoUrl }: { logoUrl: string | null }) {
 
             {hours.length ? (
               <div>
-                <p className="t15-footer-h">Showroom hours</p>
+                <p className="t15-footer-h">{fit ? "Showroom hours" : "Opening hours"}</p>
                 <ul className="t15-footer-hours">
                   {hours.map((h) => (
                     <li key={h}>{h}</li>

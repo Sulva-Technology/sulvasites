@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, planHref, useT11 } from "../ctx";
 import { Confetti, IconArrow, IconChat, IconSparkle, Mesh } from "../icons";
 import T11Hours from "./T11Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -20,6 +21,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Gradient "got something to celebrate?" invite (skipped where the page already has the form) + plum footer. */
 export default function T11Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT11();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, hours } = ctx;
   const editor = useInlineEditor();
@@ -38,11 +40,11 @@ export default function T11Footer({ logoUrl }: { logoUrl: string | null }) {
               <span className="t11-invite-kicker">
                 <IconSparkle size={14} /> You&apos;re invited
               </span>
-              <h2 className="t11-invite-title">Got something to celebrate?</h2>
-              <p>Share the occasion, the date and roughly how many guests, and let&apos;s start planning.</p>
+              <h2 className="t11-invite-title">{fit ? "Got something to celebrate?" : "Ready to get started?"}</h2>
+              <p>{fit ? "Share the occasion, the date and roughly how many guests, and let's start planning." : "Tell us what you need and we'll get back to you."}</p>
               <div className="t11-actions t11-actions-center">
                 <a className="t11-btn t11-btn-peach t11-btn-lg" href={planHref(ctx)}>
-                  Plan your event <IconArrow size={18} />
+                  {fit ? "Plan your event" : "Get in touch"} <IconArrow size={18} />
                 </a>
                 {profile.whatsapp ? (
                   <a className="t11-btn t11-btn-glass t11-btn-lg" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">

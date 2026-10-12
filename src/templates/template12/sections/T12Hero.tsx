@@ -21,6 +21,7 @@ import {
   IconPhone,
   IconPin,
 } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type Photo = { url: string; alt: string };
 
@@ -30,6 +31,7 @@ type Photo = { url: string; alt: string };
  * Does nothing while inline editing.
  */
 function QuoteMiniForm({ editing }: { editing: boolean }) {
+  const fit = useFitsIndustry();
   const { baseUrl, services } = useT12();
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -53,8 +55,8 @@ function QuoteMiniForm({ editing }: { editing: boolean }) {
     <form className="t12-qcard t12-reveal" onSubmit={onSubmit} aria-label="Request a quote">
       <Hazard className="t12-qcard-stripe" />
       <div className="t12-qcard-head">
-        <p className="t12-label">Quote request</p>
-        <h2 className="t12-qcard-title">Tell us about the job</h2>
+        <p className="t12-label">{fit ? "Quote request" : "Get in touch"}</p>
+        <h2 className="t12-qcard-title">{fit ? "Tell us about the job" : "Tell us what you need"}</h2>
       </div>
       <label className="t12-field">
         <span>Your name</span>
@@ -80,9 +82,9 @@ function QuoteMiniForm({ editing }: { editing: boolean }) {
         </label>
       ) : null}
       <button type="submit" className="t12-btn t12-btn-block t12-btn-lg">
-        Continue to quote <IconArrow size={18} />
+        {fit ? "Continue to quote" : "Continue"} <IconArrow size={18} />
       </button>
-      <p className="t12-qcard-note">Next: add the job details on our contact page.</p>
+      <p className="t12-qcard-note">{fit ? "Next: add the job details on our contact page." : "Next: add the details on our contact page."}</p>
     </form>
   );
 }
@@ -119,6 +121,7 @@ export default function T12Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { photos, profile, pageKind, pageLabel, hours, baseUrl, credentials, pageHasCredentials } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -126,7 +129,7 @@ export default function T12Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Request a quote");
+  const ctaText = section.ctaText || (enabled ? "" : fit ? "Request a quote" : "Get in touch");
   const city = cityOf(profile.address);
   const svcHref = servicesHref(ctx);
 
@@ -206,7 +209,7 @@ export default function T12Hero({
         ? { key: "mail", icon: <IconMail size={22} />, label: "Email", value: profile.email, href: buildEmailLink(profile.email), ext: false }
         : null,
       profile.address
-        ? { key: "visit", icon: <IconPin size={22} />, label: "Yard / office", value: profile.address, href: directionsHref(profile.address), ext: true }
+        ? { key: "visit", icon: <IconPin size={22} />, label: fit ? "Yard / office" : "Visit", value: profile.address, href: directionsHref(profile.address), ext: true }
         : null,
     ].filter((t): t is NonNullable<typeof t> => !!t);
 

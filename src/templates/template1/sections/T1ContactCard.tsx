@@ -5,9 +5,11 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import { useT1 } from "../ctx";
 import { IconArrow } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Office details + map on a grey side panel; consultation request form on the right. */
 export default function T1ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, serviceNames } = useT1();
 
   const inbox = useInboxForm();
@@ -25,10 +27,10 @@ export default function T1ContactCard({ section }: { section: ContactCardSection
           <div>
             <span className="t1-over">Contact</span>
             <h2 className="t1-h2">
-              Book a <em>consultation</em>
+              {fit ? <>Book a <em>consultation</em></> : <>Get in <em>touch</em></>}
             </h2>
           </div>
-          <p className="t1-lead">Tell us about your organisation and what you&apos;d like to achieve. We respond within one business day.</p>
+          <p className="t1-lead">{fit ? "Tell us about your organisation and what you'd like to achieve. We respond within one business day." : "Tell us what you need and we'll get back to you."}</p>
         </div>
 
         <div className="t1-contact t1-reveal">

@@ -3,12 +3,14 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Member results on a black slanted band: each quote is set big beside an oversized red
  * outline number; the first quote leads at display size.
  */
 export default function T9Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((t) => t.quote?.trim())) return null;
   const title = section.title || "Real results";
@@ -25,7 +27,7 @@ export default function T9Testimonials({ section, sectionIndex }: { section: Tes
       <div className="t9-container">
         <header className="t9-head t9-head-split t9-reveal">
           <div>
-            <span className="t9-kicker">Member stories</span>
+            <span className="t9-kicker">{fit ? "Member stories" : "Reviews"}</span>
             <EditableText as="h2" className="t9-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
           </div>
         </header>

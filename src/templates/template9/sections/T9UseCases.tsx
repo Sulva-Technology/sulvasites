@@ -5,12 +5,14 @@ import type { UseCasesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { joinHref, useT9 } from "../ctx";
 import { IconArrow, IconDumbbell } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Use cases as "Programmes / who it's for" panels: dark photo tiles with a slanted bottom,
  * condensed title over the image, then text and a link to the trial form.
  */
 export default function T9UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT9();
   const { photos } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -83,7 +85,7 @@ export default function T9UseCases({ section, sectionIndex }: { section: UseCase
                   <a className="t9-textlink" href={it.linkHref || joinHref(ctx, it.title)}>
                     <EditableText
                       as="span"
-                      value={it.linkText || (enabled ? "" : "Start free trial")}
+                      value={it.linkText || (enabled ? "" : fit ? "Start free trial" : "Ask about this")}
                       placeholder="Start free trial"
                       onCommit={(next) => setItem("items", items, idx, { linkText: next })}
                     />

@@ -3,9 +3,11 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { ValuesSection } from "@/lib/pageSchema";
 import { toRoman, useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Principles as a ruled list with italic roman numerals. */
 export default function T17Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   const items = enabled
     ? section.items?.length
@@ -17,7 +19,7 @@ export default function T17Values({ section, sectionIndex }: { section: ValuesSe
     <section className="t17-section t17-tint">
       <div className="t17-container">
         <div className="t17-rule-head t17-reveal">
-          <h2 className="t17-kicker">What readers can expect</h2>
+          <h2 className="t17-kicker">{fit ? "What readers can expect" : "What you can expect"}</h2>
         </div>
         <ul className="t17-values">
           {items.map((it, i) => (

@@ -10,6 +10,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { planHref, useT11 } from "../ctx";
 import { Confetti, IconArrow, IconClose, IconMenu, IconPhone, IconSparkle, Mesh } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -23,6 +24,7 @@ export default function T11Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT11();
   const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -109,7 +111,7 @@ export default function T11Header({
             <div className="t11-header-end">
               <ModeToggle mode={mode} onToggle={toggleMode} className="t11-icon-btn" />
               <a href={planHref(ctx)} className="t11-btn t11-btn-sm t11-hide-sm">
-                Plan your event
+                {fit ? "Plan your event" : "Get in touch"}
               </a>
               <button
                 ref={burgerRef}
@@ -156,7 +158,7 @@ export default function T11Header({
           <div className="t11-drawer-foot t11-container">
             {hours[0] ? <p className="t11-drawer-hours">{hours.slice(0, 2).join(" · ")}</p> : null}
             <a className="t11-btn t11-btn-peach t11-btn-block" href={planHref(ctx)} onClick={() => setOpen(false)}>
-              Plan your event <IconArrow size={18} />
+              {fit ? "Plan your event" : "Get in touch"} <IconArrow size={18} />
             </a>
             {profile.phone ? (
               <a className="t11-drawer-phone" href={buildTelLink(profile.phone)}>

@@ -7,9 +7,11 @@ import type { FAQSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { enquireHref, useT15 } from "../ctx";
 import { IconArrow, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Heading and an "ask us anything" note beside a glass accordion. All answers open while editing. */
 export default function T15FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT15();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
@@ -28,7 +30,7 @@ export default function T15FAQ({ section, sectionIndex }: { section: FAQSection;
         <header className="t15-faq-head t15-reveal">
           <p className="t15-eyebrow">FAQ</p>
           <EditableText as="h2" className="t15-h2" value={title} placeholder="Good to know" onCommit={(next) => set({ title: next })} />
-          <p className="t15-muted">Can&apos;t find your answer? Ask us about any car, viewing or service.</p>
+          <p className="t15-muted">{fit ? "Can't find your answer? Ask us about any car, viewing or service." : "Can't find your answer? Ask us anything."}</p>
           <a className="t15-textlink" href={enquireHref(ctx)}>
             Ask a question <IconArrow size={15} />
           </a>

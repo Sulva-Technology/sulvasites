@@ -8,6 +8,7 @@ import T8Hours from "../components/T8Hours";
 import { directionsHref, useT8 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const PATIENT = ["New patient", "Returning patient"];
 const TIMES = ["Morning", "Afternoon", "Evening"];
@@ -18,6 +19,7 @@ const TIMES = ["Morning", "Afternoon", "Evening"];
  * the visit, or prefills the message when the site lists no services.
  */
 export default function T8ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind, serviceNames } = useT8();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -54,12 +56,14 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
       <div className="t8-container">
         <div className="t8-book" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
           <div className="t8-book-card t8-reveal">
-            <span className="t8-eyebrow t8-eyebrow-light">Appointments</span>
-            <h2 className="t8-h2">Book a visit</h2>
+            <span className="t8-eyebrow t8-eyebrow-light">{fit ? "Appointments" : "Contact"}</span>
+            <h2 className="t8-h2">{fit ? "Book a visit" : "Get in touch"}</h2>
             <p className="t8-book-lead">
-              {section.showForm
-                ? "Tell us why you'd like to come in and when suits you. For anything urgent, please call."
-                : "Call, message or email us to arrange an appointment."}
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
+                  ? "Tell us why you'd like to come in and when suits you. For anything urgent, please call."
+                  : "Call, message or email us to arrange an appointment."}
             </p>
 
             <div className="t8-book-rows">
@@ -112,13 +116,13 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
             >
               <InboxHoneypot />
               <div className="t8-form-title">
-                <h3 className="t8-h3">Appointment request</h3>
+                <h3 className="t8-h3">{fit ? "Appointment request" : "Send a message"}</h3>
                 <small>Fields marked * are required</small>
               </div>
 
               {serviceNames.length ? (
                 <label className="t8-field">
-                  <span>Reason for visit</span>
+                  <span>{fit ? "Reason for visit" : "I need"}</span>
                   <select className="t8-input" name="service" defaultValue="">
                     <option value="" disabled>
                       Choose a service
@@ -133,7 +137,7 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
                 </label>
               ) : null}
 
-              <fieldset className="t8-field t8-fieldset">
+              {fit ? (<fieldset className="t8-field t8-fieldset">
                 <legend>I am a</legend>
                 <div className="t8-chips">
                   {PATIENT.map((p, i) => (
@@ -143,7 +147,7 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset>) : null}
 
               <div className="t8-form-row">
                 <label className="t8-field">
@@ -179,12 +183,12 @@ export default function T8ContactCard({ section }: { section: ContactCardSection
               </label>
               <label className="t8-field">
                 <span>Message</span>
-                <textarea className="t8-input" name="message" rows={3} placeholder="Anything we should know before your visit?" />
+                <textarea className="t8-input" name="message" rows={3} placeholder={fit ? "Anything we should know before your visit?" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t8-btn t8-btn-block">
-                Request appointment <IconArrow size={16} />
+                {fit ? "Request appointment" : "Send message"} <IconArrow size={16} />
               </button>
-              <p className="t8-fineprint">Please don&apos;t include detailed medical information in this form.</p>
+              {fit ? <p className="t8-fineprint">Please don&apos;t include detailed medical information in this form.</p> : null}
               <InboxStatus state={inbox.state} />
             </form>
           ) : mapEmbedUrl ? (

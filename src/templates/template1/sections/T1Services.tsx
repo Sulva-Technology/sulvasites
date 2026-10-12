@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { useT1 } from "../ctx";
 import { IconArrow, SERVICE_ICONS } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK = [
   { title: "Strategy & planning", desc: "Clarify priorities and build a practical roadmap your team can execute." },
@@ -14,6 +15,7 @@ const FALLBACK = [
 
 /** Services in a ruled grid with an accent bar on hover. */
 export default function T1Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { baseUrl } = useT1();
   const { setItem } = useSectionEditor(section, sectionIndex);
   const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
@@ -31,7 +33,7 @@ export default function T1Services({ section, sectionIndex }: { section: Service
               Services built around <em>your goals</em>
             </h2>
           </div>
-          <p className="t1-lead">Each engagement is scoped to your situation, with clear deliverables and senior people involved throughout.</p>
+          <p className="t1-lead">{fit ? "Each engagement is scoped to your situation, with clear deliverables and senior people involved throughout." : "Tell us what you need and we will help you find the right fit."}</p>
         </div>
 
         <div className="t1-services t1-reveal">

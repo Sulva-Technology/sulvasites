@@ -5,12 +5,14 @@ import type { UseCasesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { bookHref, useT8 } from "../ctx";
 import { IconArrow, serviceIcon } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Use cases as "Who we care for" cards (families, children, seniors…): photo or icon header,
  * text, and a link that opens the booking form with that topic preselected.
  */
 export default function T8UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { photos } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -31,7 +33,7 @@ export default function T8UseCases({ section, sectionIndex }: { section: UseCase
       <div className="t8-container">
         <header className="t8-head t8-head-split t8-reveal">
           <div>
-            <span className="t8-eyebrow">Care for every stage</span>
+            <span className="t8-eyebrow">{fit ? "Care for every stage" : "Ways we help"}</span>
             <EditableText as="h2" className="t8-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
           </div>
           {description || enabled ? (

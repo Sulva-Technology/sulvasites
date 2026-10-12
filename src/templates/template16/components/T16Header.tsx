@@ -10,6 +10,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { joinHref, useT16 } from "../ctx";
 import { IconArrow, IconChat, IconCircles, IconClose, IconMenu } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -39,6 +40,7 @@ export default function T16Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT16();
   const { baseUrl, navPages, profile, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -135,7 +137,7 @@ export default function T16Header({
               </a>
             ) : null}
             <a href={joinHref(ctx)} className="t16-btn t16-btn-solid t16-btn-sm t16-hide-sm">
-              Join now
+              {fit ? "Join now" : "Contact us"}
             </a>
             <button
               ref={burgerRef}
@@ -183,7 +185,7 @@ export default function T16Header({
                 <ModeToggle mode={mode} onToggle={toggleMode} className="t16-icon-btn" />
               </div>
               <a className="t16-btn t16-btn-solid t16-btn-lg t16-btn-block" href={joinHref(ctx)} onClick={() => setOpen(false)}>
-                Become a member <IconArrow size={18} />
+                {fit ? "Become a member" : "Get in touch"} <IconArrow size={18} />
               </a>
               {profile.whatsapp ? (
                 <a className="t16-btn t16-btn-wa t16-btn-lg t16-btn-block" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">

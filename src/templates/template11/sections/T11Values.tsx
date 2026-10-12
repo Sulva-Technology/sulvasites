@@ -3,6 +3,7 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { ValuesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -13,6 +14,7 @@ const HINTS = [
 
 /** Values as "How it works": big gradient step numbers joined by a dotted line (a column on phones). */
 export default function T11Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Editor: the real items (one blank step when empty). Visitors: titled items only.
@@ -29,7 +31,7 @@ export default function T11Values({ section, sectionIndex }: { section: ValuesSe
         <header className="t11-head t11-head-center t11-reveal">
           <span className="t11-kicker">How it works</span>
           <h2 className="t11-h2">
-            From first idea to <span className="t11-hl">last dance</span>
+            {fit ? <>From first idea to <span className="t11-hl">last dance</span></> : <>From first call to <span className="t11-hl">done</span></>}
           </h2>
         </header>
 

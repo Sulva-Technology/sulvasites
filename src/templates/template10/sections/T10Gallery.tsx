@@ -3,12 +3,14 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { GallerySection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * "Campus life": rounded photos in a bento grid whose layout is picked from the photo count
  * (1–6+), so rows never leave holes; captions sit on small pills. Hidden for visitors when empty.
  */
 export default function T10Gallery({ section, sectionIndex }: { section: GallerySection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, set } = useSectionEditor(section, sectionIndex);
   const title = section.title || (enabled ? "" : "Life on campus");
   const real = (section.images ?? []).filter((img) => img.url);
@@ -25,7 +27,7 @@ export default function T10Gallery({ section, sectionIndex }: { section: Gallery
       <div className="t10-container">
         <header className="t10-head t10-head-split t10-reveal">
           <div>
-            <span className="t10-kicker">Campus life</span>
+            <span className="t10-kicker">{fit ? "Campus life" : "Gallery"}</span>
             <EditableText as="h2" className="t10-h2" value={title} placeholder="Gallery title" onCommit={(next) => set({ title: next })} />
           </div>
         </header>

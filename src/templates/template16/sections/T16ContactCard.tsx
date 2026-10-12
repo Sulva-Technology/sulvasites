@@ -7,6 +7,7 @@ import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inb
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { directionsHref, hoursOf, useT16 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * "Let's connect": icon rows (and meeting times) beside a rounded join form, or a map when the
@@ -20,6 +21,7 @@ export default function T16ContactCard({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { profile, pageKind, circles } = useT16();
   const formRef = useRef<HTMLFormElement>(null);
   const hours = hoursOf(profile);
@@ -67,10 +69,12 @@ export default function T16ContactCard({
       <div className="t16-container">
         <div className="t16-connect" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
           <div className="t16-connect-info t16-reveal">
-            <p className="t16-kicker">{section.showForm ? "Join us" : "Visit"}</p>
+            <p className="t16-kicker">{!fit ? "Contact" : section.showForm ? "Join us" : "Visit"}</p>
             <h2 className="t16-h2">{section.showForm ? "Let's connect." : "Come as you are."}</h2>
             <p className="t16-lead">
-              {section.showForm
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
                 ? "Whether you want to join, partner with us or you're simply curious — we'd love to hear from you."
                 : "Call, message or email us, or just come along — there's always a seat for you."}
             </p>
@@ -97,7 +101,7 @@ export default function T16ContactCard({
             </div>
             {hours.length > 0 && pageKind !== "contact" ? (
               <div className="t16-connect-hours">
-                <small>When we meet</small>
+                <small>{fit ? "When we meet" : "Opening hours"}</small>
                 <ul>
                   {hours.map((h) => (
                     <li key={h}>{h}</li>
@@ -125,7 +129,7 @@ export default function T16ContactCard({
                 <input className="t16-input" name="email" type="email" autoComplete="email" />
               </label>
               <label className="t16-field">
-                <span>{circles.length ? "Circle you'd like to join" : "Subject"}</span>
+                <span>{circles.length ? (fit ? "Circle you'd like to join" : "I'm interested in") : "Subject"}</span>
                 <select className="t16-input" name={circles.length ? "circle" : "subject"} defaultValue="">
                   {circles.length ? (
                     <>
@@ -138,9 +142,9 @@ export default function T16ContactCard({
                     </>
                   ) : (
                     <>
-                      <option value="">Membership enquiry</option>
-                      <option value="Partnership">Partnership proposal</option>
-                      <option value="General">General question</option>
+                      <option value="">{fit ? "Membership enquiry" : "General question"}</option>
+                      {fit ? (<><option value="Partnership">Partnership proposal</option>
+                      <option value="General">General question</option></>) : <option value="Partnership">Partnership</option>}
                     </>
                   )}
                 </select>

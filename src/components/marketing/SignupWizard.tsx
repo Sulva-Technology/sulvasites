@@ -16,6 +16,7 @@ import type { SignupAnswers } from "@/lib/signup/fallbackSite";
 import { MAX_DETAILS_CHARS } from "@/lib/signup/ownerDetails";
 import { suggestTemplates } from "@/lib/signup/suggest";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { businessFitsTemplate } from "@/lib/templateFit";
 import { TEMPLATE_META, templateSupportsShop } from "@/templates/meta";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -270,12 +271,35 @@ function LookStep({ s, set, onBack, onNext }: { s: Saved; set: (p: Partial<Saved
           );
         })}
       </div>
+      <MismatchNote s={s} best={suggested[0]} onSwitch={(k) => set({ templateKey: k })} />
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         <button type="button" onClick={() => setShowAll((v) => !v)} className="text-koi-deep">{showAll ? "Show our picks" : `See all ${TEMPLATE_META.length}`}</button>
         {s.templateKey ? <a href={`/templates/${s.templateKey}`} target="_blank" rel="noopener" className="text-koi-deep">Preview full site ↗</a> : null}
       </div>
       <Nav onBack={onBack} next="Next" disabled={!s.templateKey} />
     </form>
+  );
+}
+
+/** A design picked for another industry: say so plainly and offer the closest fit. */
+function MismatchNote({ s, best, onSwitch }: { s: Saved; best?: string; onSwitch: (key: string) => void }) {
+  const picked = TEMPLATE_META.find((t) => t.key === s.templateKey);
+  const profile = { business_name: s.answers.businessName, tagline: s.answers.whatTheyDo };
+  if (!picked || businessFitsTemplate(profile, picked.key)) return null;
+  const fit = best && best !== picked.key && businessFitsTemplate(profile, best) ? TEMPLATE_META.find((t) => t.key === best) : undefined;
+  return (
+    <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200">
+      <p>
+        <b>{picked.name}</b> was made for {picked.category.toLowerCase()} businesses. Your words, photos and pages will still be about
+        your business, and its {picked.category.toLowerCase()} labels switch to plain ones.
+        {fit ? <> For the closest fit, try <b>{fit.name}</b> ({fit.category}).</> : null}
+      </p>
+      {fit ? (
+        <button type="button" onClick={() => onSwitch(fit.key)} className="mt-2 font-medium text-koi-deep">
+          Use {fit.name} instead
+        </button>
+      ) : null}
+    </div>
   );
 }
 

@@ -4,9 +4,11 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT2 } from "../ctx";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** "Say hello": big email + details on the left, boxed form with hard shadow on the right. */
 export default function T2ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile } = useT2();
 
   const inbox = useInboxForm();
@@ -63,7 +65,7 @@ export default function T2ContactCard({ section }: { section: ContactCardSection
             onSubmit={inbox.onSubmit}
           >
             <InboxHoneypot />
-            <span className="t2-kicker">Pitch us</span>
+            <span className="t2-kicker">{fit ? "Pitch us" : "Send a message"}</span>
             <div className="t2-form-row">
               <label className="t2-field">
                 <span>Name</span>

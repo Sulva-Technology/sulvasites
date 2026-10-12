@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { planReadiness, syncPaystackPlans } from "@/lib/billing/paystackPlans";
 import { DAY_MS } from "@/lib/billing/subscriptionState";
 import { restoreBillingSuspension, SUB_COLUMNS, type SubscriptionRow } from "@/lib/billing/subscriptions.server";
 import { isTier, monthlyEquivalentKobo, type Interval } from "@/lib/marketing/pricing";
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   const stuckBefore = new Date(Date.now() - STUCK_SETTLE_MS).toISOString();
   const [subs, plans, domains, attention] = await Promise.all([
     db.from("site_subscriptions").select(SUB_COLUMNS).neq("status", "manual").order("created_at", { ascending: false }).limit(2000),
-    db.from("billing_plans").select("id, price_kobo, interval"),
+    db.from("billing_plans").select("id, price_kobo, interval, paystack_plan_code"),
     db.from("domain_requests").select("*").neq("status", "rejected").order("created_at", { ascending: false }),
     // Payments a human must look at: unmatched renewals, amount mismatches, settles that never finished.
     db
@@ -68,7 +69,20 @@ export async function GET(req: Request) {
     business_name: e.site_id ? (nameBy.get(e.site_id as string) ?? null) : null,
     subscription_code: ((e.summary as { subscription_code?: string } | null)?.subscription_code as string | undefined) ?? null,
   }));
-  return json({ rows, mrrKobo, domainRequests: domains.data ?? [], attentionEvents: events });
+  return json({ rows, mrrKobo, domainRequests: domains.data ?? [], attentionEvents: events, setup: billingSetup(plans.data) });
+}
+
+/** What billing still needs before owners can pay: the Paystack key mode, plans in the database, the webhook URL. */
+function billingSetup(plans: Array<{ id: string; price_kobo: number | string; paystack_plan_code: string | null }> | null) {
+  const secret = process.env.PAYSTACK_SECRET_KEY ?? "";
+  const origin = (process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "").replace(/\/$/, "");
+  return {
+    paystackMode: !secret ? "missing" : secret.startsWith("sk_live_") ? "live" : "test",
+    cron: !!process.env.CRON_SECRET,
+    plansTableFound: plans !== null,
+    plans: planReadiness(plans ?? []),
+    webhookUrl: origin ? `${origin}/api/paystack/webhook` : null,
+  };
 }
 
 export async function POST(req: Request) {
@@ -92,6 +106,23 @@ export async function POST(req: Request) {
     if (typeof b.notes === "string") patch.notes = b.notes.slice(0, 2000);
     const { error } = await db.from("domain_requests").update(patch).eq("id", b.id);
     return error ? json({ error: error.message }, 500) : json({ ok: true });
+  }
+
+  if (b.action === "sync_plans") {
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    if (!secret) return json({ error: "PAYSTACK_SECRET_KEY is not set in Vercel." }, 503);
+    let rows;
+    try {
+      rows = await syncPaystackPlans(secret);
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : "Could not reach Paystack." }, 502);
+    }
+    const { error } = await db.from("billing_plans").upsert(rows, { onConflict: "id" });
+    if (error) {
+      const missingTable = /billing_plans/.test(error.message) && /exist|schema cache/i.test(error.message);
+      return json({ error: missingTable ? "The billing tables are missing. Run supabase/migrations/019_billing.sql first." : error.message }, 500);
+    }
+    return json({ ok: true, plans: planReadiness(rows) });
   }
 
   const siteId = typeof b.siteId === "string" ? b.siteId : "";

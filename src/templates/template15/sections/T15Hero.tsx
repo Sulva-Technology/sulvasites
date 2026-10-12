@@ -8,6 +8,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { chipTone, cityOf, directionsHref, enquireHref, hoursOf, specChips, useT15 } from "../ctx";
 import { IconArrow, IconArrowUpRight, IconChat, IconClock, IconMail, IconPhone, IconPin, IconWheel } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Short spec chips ("1987", "V8", "Available") — sold / under-offer chips get their own tone. */
 export function T15Chips({ chips, className }: { chips: string[]; className?: string }) {
@@ -41,6 +42,7 @@ export default function T15Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT15();
   const { photos, video, featured, profile, pageKind, pageLabel, baseUrl, pageHasCollection } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -122,7 +124,7 @@ export default function T15Hero({
         ? { key: "mail", icon: <IconMail size={20} />, label: "Email", value: profile.email, href: buildEmailLink(profile.email), ext: false }
         : null,
       profile.address
-        ? { key: "visit", icon: <IconPin size={20} />, label: "Visit", value: profile.address, href: directionsHref(profile.address), ext: true }
+        ? { key: "visit", icon: <IconPin size={20} />, label: fit ? "Showroom" : "Visit", value: profile.address, href: directionsHref(profile.address), ext: true }
         : null,
     ].filter((t): t is NonNullable<typeof t> => !!t);
 
@@ -162,7 +164,7 @@ export default function T15Hero({
                   <span className="t15-tile-ico">
                     <IconClock size={20} />
                   </span>
-                  <small>Opening hours</small>
+                  <small>{fit ? "Showroom hours" : "Opening hours"}</small>
                   <ul>
                     {hours.map((h) => (
                       <li key={h}>{h}</li>
@@ -248,7 +250,7 @@ export default function T15Hero({
             {cta("t15-btn t15-btn-glass t15-btn-glass-strong t15-btn-lg")}
             {pageHasCollection && section.ctaHref !== "#collection" ? (
               <a className="t15-btn t15-btn-outline t15-btn-lg" href="#collection">
-                See what we offer
+                {fit ? "View the collection" : "See what we offer"}
               </a>
             ) : profile.phone ? (
               <a className="t15-btn t15-btn-outline t15-btn-lg" href={buildTelLink(profile.phone)}>

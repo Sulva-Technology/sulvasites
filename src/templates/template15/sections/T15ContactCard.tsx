@@ -7,6 +7,7 @@ import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inb
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { directionsHref, hoursOf, useT15 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * "Make an enquiry": a glass panel with contact rows and showroom hours beside the enquiry form
@@ -20,6 +21,7 @@ export default function T15ContactCard({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { profile, pageKind, vehicles } = useT15();
   const formRef = useRef<HTMLFormElement>(null);
   const hours = hoursOf(profile);
@@ -59,11 +61,11 @@ export default function T15ContactCard({
         <div className="t15-enquire" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
           <div className="t15-enquire-info t15-glass t15-reveal">
             <p className="t15-eyebrow">{section.showForm ? "Enquiries" : "Visit"}</p>
-            <h2 className="t15-h2">{section.showForm ? "Make an enquiry" : "Come and see us in person"}</h2>
+            <h2 className="t15-h2">{section.showForm ? "Make an enquiry" : fit ? "Come and see them in person" : "Come and see us in person"}</h2>
             <p className="t15-muted">
               {section.showForm
-                ? "Ask a question, book a visit, or tell us what you're looking for."
-                : "Call, message or email to book a visit."}
+                ? fit ? "Ask about a car, book a viewing or a test drive, or tell us what you're looking for." : "Ask a question, book a visit, or tell us what you're looking for."
+                : fit ? "Call, message or email to book a private viewing." : "Call, message or email to book a visit."}
             </p>
             <div className="t15-rows">
               {profile.phone ? (
@@ -88,19 +90,19 @@ export default function T15ContactCard({
                 mapHref ? (
                   <a className="t15-row" href={mapHref} target="_blank" rel="noreferrer">
                     <span className="t15-row-ico"><IconPin /></span>
-                    <span><small>Visit</small>{profile.address}</span>
+                    <span><small>{fit ? "Showroom" : "Visit"}</small>{profile.address}</span>
                   </a>
                 ) : (
                   <div className="t15-row">
                     <span className="t15-row-ico"><IconPin /></span>
-                    <span><small>Visit</small>{profile.address}</span>
+                    <span><small>{fit ? "Showroom" : "Visit"}</small>{profile.address}</span>
                   </div>
                 )
               ) : null}
             </div>
             {hours.length > 0 && pageKind !== "contact" ? (
               <div className="t15-enquire-hours">
-                <small>Opening hours</small>
+                <small>{fit ? "Showroom hours" : "Opening hours"}</small>
                 <ul>
                   {hours.map((h) => (
                     <li key={h}>{h}</li>
@@ -115,7 +117,7 @@ export default function T15ContactCard({
               <InboxHoneypot />
               {vehicles.length ? (
                 <label className="t15-field">
-                  <span>Interested in</span>
+                  <span>{fit ? "Car you're interested in" : "Interested in"}</span>
                   <select className="t15-input" name="vehicle" defaultValue="">
                     <option value="">Not sure yet / something else</option>
                     {vehicles.map((v) => (
@@ -146,7 +148,7 @@ export default function T15ContactCard({
                   className="t15-input"
                   name="message"
                   rows={4}
-                  placeholder="Tell us what you're looking for, or ask us anything…"
+                  placeholder={fit ? "A viewing, a test drive, a part-exchange, or the car you're searching for…" : "Tell us what you're looking for, or ask us anything…"}
                 />
               </label>
               <button type="submit" disabled={inbox.sending} className="t15-btn t15-btn-solid t15-btn-lg t15-btn-block">

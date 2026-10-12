@@ -5,6 +5,7 @@ import type { ValuesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { useT8 } from "../ctx";
 import { IconCheck, IconCross } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const FALLBACK = [
@@ -15,6 +16,7 @@ const FALLBACK = [
 
 /** Values as a "Why patients choose us" checklist beside a rounded photo panel. */
 export default function T8Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { photos } = useT8();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -45,7 +47,7 @@ export default function T8Values({ section, sectionIndex }: { section: ValuesSec
           <div className="t8-why-body">
             <header className="t8-head t8-reveal">
               <span className="t8-eyebrow">Our approach</span>
-              <h2 className="t8-h2">Why patients choose us</h2>
+              <h2 className="t8-h2">{fit ? "Why patients choose us" : "Why choose us"}</h2>
             </header>
             <ul className="t8-checklist">
               {items.map((v, idx) => (

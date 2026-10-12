@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { enquireHref, useT15 } from "../ctx";
 import { IconArrow, ServiceIcon } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -23,6 +24,7 @@ export default function T15Services({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT15();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -38,7 +40,7 @@ export default function T15Services({
       <div className="t15-container">
         <header className="t15-head t15-reveal">
           <p className="t15-eyebrow">Services</p>
-          <h2 className="t15-h2">Everything your car needs</h2>
+          <h2 className="t15-h2">{fit ? "Everything your car needs" : "How we can help"}</h2>
         </header>
 
         <ul className="t15-services" data-count={items.length}>

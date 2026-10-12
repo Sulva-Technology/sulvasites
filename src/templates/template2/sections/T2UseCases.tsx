@@ -4,6 +4,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { UseCasesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { useT2 } from "../ctx";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK: UseCasesSection["items"] = [
   { title: "Rebuilding a heritage brand", description: "Describe the project: the brief, the idea and what it changed." },
@@ -13,6 +14,7 @@ const FALLBACK: UseCasesSection["items"] = [
 
 /** Use cases as a front page: lead story with image + numbered story list. */
 export default function T2UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { baseUrl, photos } = useT2();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Selected stories";
@@ -55,7 +57,7 @@ export default function T2UseCases({ section, sectionIndex }: { section: UseCase
                 <span aria-hidden="true">01</span>
               )}
             </div>
-            <span className="t2-kicker">Lead story</span>
+            <span className="t2-kicker">{fit ? "Lead story" : "Featured"}</span>
             <EditableText as="h3" className="t2-h3" value={lead.title} placeholder="Title" onCommit={(next) => setItem("items", items, 0, { title: next })} />
             <EditableText as="p" className="t2-deck" value={lead.description} placeholder="Summary" multiline onCommit={(next) => setItem("items", items, 0, { description: next })} />
             <div>{readLink(lead, 0)}</div>

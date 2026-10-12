@@ -9,6 +9,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import T9Hours from "../components/T9Hours";
 import { cityOf, directionsHref, joinHref, useT9 } from "../ctx";
 import { IconArrow, IconChat, IconClock, IconDumbbell, IconMail, IconPhone, IconPin, IconStar } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Scrolling band of class names (static when motion is off or reduced). */
 export function T9Marquee({ items }: { items: string[] }) {
@@ -56,6 +57,7 @@ export default function T9Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT9();
   const { photos, profile, pageKind, pageLabel, hours, baseUrl, classNames } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -63,7 +65,7 @@ export default function T9Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Start free trial");
+  const ctaText = section.ctaText || (enabled ? "" : fit ? "Start free trial" : "Get in touch");
   const city = cityOf(profile.address);
 
   const title = (cls: string, as: "h1" | "h2" = "h1") => (

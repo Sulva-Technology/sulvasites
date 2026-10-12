@@ -6,6 +6,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
 import { useT1 } from "../ctx";
 import { IconArrow, IconCheck } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Decorative diagonal ribbons, coloured from the theme accent. */
 function Ribbons() {
@@ -76,6 +77,7 @@ export default function T1Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { baseUrl, photos, profile, valueTitles, serviceNames, pageKind, pageLabel } = useT1();
   const { set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Clear advice. Measurable results.";
@@ -152,7 +154,7 @@ export default function T1Hero({
       <section className="t1-hero t1-hero-contact">
         <div className="t1-container t1-contact-hero t1-reveal">
           <span className="t1-pill">
-            <span>Usually replies within one business day</span>
+            <span>{fit ? "Usually replies within one business day" : "We reply as soon as we can"}</span>
           </span>
           <h1 className="t1-h1 t1-hero-title">
             {strong} {soft}

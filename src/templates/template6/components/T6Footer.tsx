@@ -7,6 +7,7 @@ import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext"
 import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { propertiesHref, useT6 } from "../ctx";
 import { IconArrow, IconBuilding } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, short: string, label: string]> = [
   ["instagram", "IG", "Instagram"],
@@ -17,6 +18,7 @@ const SOCIALS: Array<[key: string, short: string, label: string]> = [
 
 /** Closing call-to-action band + footer. */
 export default function T6Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT6();
   const { baseUrl, navPages, profile } = ctx;
   const editor = useInlineEditor();
@@ -30,13 +32,13 @@ export default function T6Footer({ logoUrl }: { logoUrl: string | null }) {
     <>
       <section className="t6-cta">
         <div className="t6-cta-inner">
-          <h2 className="t6-h2">Ready to find your next property?</h2>
+          <h2 className="t6-h2">{fit ? "Ready to find your next property?" : "Ready to get started?"}</h2>
           <div className="t6-hero-actions">
             <Link className="t6-btn t6-btn-light" href={propertiesHref(ctx)}>
-              Browse properties <IconArrow />
+              {fit ? "Browse properties" : "See what we offer"} <IconArrow />
             </Link>
             <Link className="t6-btn t6-btn-glass" href={`${baseUrl}/contact`}>
-              Talk to an agent
+              {fit ? "Talk to an agent" : "Talk to us"}
             </Link>
           </div>
         </div>
@@ -139,7 +141,7 @@ export default function T6Footer({ logoUrl }: { logoUrl: string | null }) {
                     onCommit={(next) => editor?.updateProfileField?.("address", next)}
                   />
                 ) : (
-                  <span>By appointment</span>
+                  <span>{fit ? "By appointment" : "Get in touch"}</span>
                 )}
               </div>
             </div>

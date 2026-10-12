@@ -7,6 +7,7 @@ import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
 import T7Hours from "../components/T7Hours";
 import { cityOf, directionsHref, menuHref, reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconClock, IconMail, IconPhone, IconPin, Ornament } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 function Photo({ src, alt, fallback, eager }: { src?: string; alt?: string; fallback: string; eager?: boolean }) {
   return src ? (
@@ -36,13 +37,14 @@ export default function T7Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT7();
   const { photos, profile, pageKind, pageLabel, hours } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
 
   const headline = section.headline || "Good food, warm rooms, long tables";
   const subtext = section.subtext || profile.tagline || "";
-  const ctaText = section.ctaText || "Reserve a table";
+  const ctaText = section.ctaText || (fit ? "Reserve a table" : "Get in touch");
   const mono = initials(profile.business_name);
   const city = cityOf(profile.address);
 

@@ -8,9 +8,11 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildTelLink } from "@/templates/shared/links";
 import { planHref, useT11 } from "../ctx";
 import { Confetti, IconArrow, IconPhone, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** "Good to know": heading and a gradient help card beside a pill accordion. All answers open while editing. */
 export default function T11FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT11();
   const { profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -31,11 +33,11 @@ export default function T11FAQ({ section, sectionIndex }: { section: FAQSection;
           <EditableText as="h2" className="t11-h2" value={title} placeholder="Good to know" onCommit={(next) => set({ title: next })} />
           <div className="t11-help">
             <Confetti set="card" />
-            <p className="t11-help-title">Still deciding?</p>
+            <p className="t11-help-title">{fit ? "Still deciding?" : "Still have questions?"}</p>
             <p>Tell us what you have in mind and ask anything — no question is too small.</p>
             <div className="t11-actions">
               <a className="t11-btn t11-btn-peach t11-btn-sm" href={planHref(ctx)}>
-                Plan your event <IconArrow size={15} />
+                {fit ? "Plan your event" : "Get in touch"} <IconArrow size={15} />
               </a>
               {profile.phone ? (
                 <a className="t11-btn t11-btn-glass t11-btn-sm" href={buildTelLink(profile.phone)}>

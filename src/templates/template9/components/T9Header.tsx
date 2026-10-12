@@ -11,6 +11,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { joinHref, useT9 } from "../ctx";
 import { IconArrow, IconBolt, IconClose, IconMenu, IconPhone } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -24,6 +25,7 @@ export default function T9Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT9();
   const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -109,7 +111,7 @@ export default function T9Header({
           <div className="t9-header-end">
             <ModeToggle mode={mode} onToggle={toggleMode} className="t9-icon-btn" />
             <a href={joinHref(ctx)} className="t9-btn t9-btn-sm t9-hide-sm">
-              Start free trial
+              {fit ? "Start free trial" : "Get in touch"}
             </a>
             <button
               ref={burgerRef}
@@ -153,7 +155,7 @@ export default function T9Header({
           <div className="t9-drawer-foot t9-container">
             {hours[0] ? <p className="t9-drawer-hours">{hours.slice(0, 2).join(" · ")}</p> : null}
             <a className="t9-btn t9-btn-block" href={joinHref(ctx)} onClick={() => setOpen(false)}>
-              Start free trial <IconArrow size={18} />
+              {fit ? "Start free trial" : "Get in touch"} <IconArrow size={18} />
             </a>
             {profile.phone ? (
               <a className="t9-btn t9-btn-outline t9-btn-block" href={buildTelLink(profile.phone)}>

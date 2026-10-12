@@ -8,9 +8,11 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildTelLink } from "@/templates/shared/links";
 import { quoteHref, useT12 } from "../ctx";
 import { Hazard, IconArrow, IconPhone, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Heading and a charcoal "need a hand?" card beside a square accordion. All answers open while editing. */
 export default function T12FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -35,10 +37,10 @@ export default function T12FAQ({ section, sectionIndex }: { section: FAQSection;
           <div className="t12-help t12-dark">
             <Hazard className="t12-help-stripe" />
             <p className="t12-help-title">Need a hand?</p>
-            <p>Tell us about the job and ask anything — we&apos;re happy to talk it through.</p>
+            <p>{fit ? "Tell us about the job and ask anything — we're happy to talk it through." : "Ask us anything — we're happy to talk it through."}</p>
             <div className="t12-actions">
               <a className="t12-btn t12-btn-sm" href={quoteHref(ctx)}>
-                Get a quote <IconArrow size={15} />
+                {fit ? "Get a quote" : "Get in touch"} <IconArrow size={15} />
               </a>
               {profile.phone ? (
                 <a className="t12-btn t12-btn-outline-light t12-btn-sm" href={buildTelLink(profile.phone)}>

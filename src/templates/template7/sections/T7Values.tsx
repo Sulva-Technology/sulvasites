@@ -4,6 +4,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { ValuesSection } from "@/lib/pageSchema";
 import { toRoman, useSectionEditor } from "@/templates/shared/edit";
 import { KITCHEN_ICONS, Ornament } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const FALLBACK = [
@@ -14,6 +15,7 @@ const FALLBACK = [
 
 /** Values as "Our kitchen" principles on a dark band, each with a small line icon. */
 export default function T7Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Placeholders only while editing; visitors see real principles only.
@@ -33,7 +35,7 @@ export default function T7Values({ section, sectionIndex }: { section: ValuesSec
             <span>Principles</span>
             <i aria-hidden="true" />
           </span>
-          <h2 className="t7-h2">Our kitchen</h2>
+          <h2 className="t7-h2">{fit ? "Our kitchen" : "How we work"}</h2>
         </header>
 
         <div className="t7-principles" data-count={Math.min(items.length, 4)}>

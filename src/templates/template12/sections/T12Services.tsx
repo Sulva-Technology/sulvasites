@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { quoteHref, useT12 } from "../ctx";
 import { IconArrow, TradeIcon } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -26,6 +27,7 @@ export default function T12Services({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -77,7 +79,7 @@ export default function T12Services({
                   />
                 ) : null}
                 <a className="t12-textlink" href={quoteHref(ctx, { service: t })} aria-label={`Get a quote for ${t || "this service"}`}>
-                  Get a quote <IconArrow size={16} />
+                  {fit ? "Get a quote" : "Get in touch"} <IconArrow size={16} />
                 </a>
               </li>
             );

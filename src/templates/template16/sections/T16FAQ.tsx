@@ -6,9 +6,11 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { FAQSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { IconChevron } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Centred heading over an accordion of rounded cards; the round chevron turns solid when open. All open while editing. */
 export default function T16FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(null);
   if (!enabled && !section.items?.some((it) => it.question?.trim())) return null;
@@ -26,7 +28,7 @@ export default function T16FAQ({ section, sectionIndex }: { section: FAQSection;
         <header className="t16-center-head t16-reveal">
           <p className="t16-kicker">Support</p>
           <EditableText as="h2" className="t16-h2" value={title} placeholder="Frequently asked questions" onCommit={(next) => set({ title: next })} />
-          <p className="t16-head-note">Everything you need to know before joining.</p>
+          <p className="t16-head-note">{fit ? "Everything you need to know before joining." : "Everything you need to know."}</p>
         </header>
 
         <div className="t16-faq t16-reveal">

@@ -5,9 +5,11 @@ import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inb
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { firstName, useT17 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** "Write to me": contact lines beside a letter-style form (or a map when the form is off). */
 export default function T17ContactCard({ section, anchor }: { section: ContactCardSection; sectionIndex?: number; anchor?: boolean }) {
+  const fit = useFitsIndustry();
   const { profile } = useT17();
   const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
@@ -30,7 +32,7 @@ export default function T17ContactCard({ section, anchor }: { section: ContactCa
         <div className="t17-contact-info t17-reveal">
           <p className="t17-kicker">Correspondence</p>
           <h2 className="t17-h2">Write to {firstName(profile.business_name)}.</h2>
-          <p className="t17-lead">Questions, pitches, collaborations or simply a hello. Every message is read.</p>
+          <p className="t17-lead">{fit ? "Questions, pitches, collaborations or simply a hello. Every message is read." : "Questions or simply a hello. Every message is read."}</p>
           <ul className="t17-lines">
             {rows.map((r) => (
               <li key={r.key}>
@@ -66,9 +68,18 @@ export default function T17ContactCard({ section, anchor }: { section: ContactCa
               <span>Subject</span>
               <select name="subject" defaultValue="">
                 <option value="">Just saying hello</option>
-                <option value="Collaboration">Collaboration or commission</option>
-                <option value="Speaking">Speaking or interview</option>
-                <option value="Feedback">Feedback on a post</option>
+                {fit ? (
+                  <>
+                    <option value="Collaboration">Collaboration or commission</option>
+                    <option value="Speaking">Speaking or interview</option>
+                    <option value="Feedback">Feedback on a post</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Question">A question</option>
+                    <option value="Partnership">Partnership</option>
+                  </>
+                )}
               </select>
             </label>
             <label className="t17-field">

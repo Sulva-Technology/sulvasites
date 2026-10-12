@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { applyHref, useT10 } from "../ctx";
 import { IconArrow, Scribble, SUBJECT_ICONS } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -17,6 +18,7 @@ const TONES = ["blue", "sun", "navy"] as const;
 
 /** Programmes as rounded cards: subject icon, level chip (from order), title, description and "Enquire". */
 export default function T10Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -42,7 +44,7 @@ export default function T10Services({ section, sectionIndex }: { section: Servic
               </span>
             </h2>
           </div>
-          <p className="t10-head-note">Pick a programme to enquire about it, or ask us to help you choose the right fit.</p>
+          <p className="t10-head-note">{fit ? "Pick a programme to enquire about it, or ask us to help you choose the right fit." : "Pick one to ask about it, or ask us to help you choose."}</p>
         </header>
 
         <div className="t10-programmes" data-count={items.length}>

@@ -6,6 +6,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import type { NavPage } from "@/templates/registry";
 import { buildEmailLink, buildTelLink, navPageHref } from "@/templates/shared/links";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -33,6 +34,7 @@ export default function T3Footer({
   baseUrl: string;
   navPages?: NavPage[];
 }) {
+  const fit = useFitsIndustry();
   const editor = useInlineEditor();
   const navLabels = ((socials as Record<string, unknown>).nav_labels as Record<string, string>) || {};
   const footerLabels = ((socials as Record<string, unknown>).footer_labels as Record<string, string>) || {};
@@ -54,7 +56,7 @@ export default function T3Footer({
                 onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
               />
             ) : (
-              <p className="t3-footer-tagline">Let&apos;s make something worth remembering.</p>
+              <p className="t3-footer-tagline">{fit ? "Let's make something worth remembering." : "Let's talk."}</p>
             )}
           </div>
 

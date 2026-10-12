@@ -8,6 +8,7 @@ import T10Hours from "../components/T10Hours";
 import { directionsHref, useT10 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const INTENTS: Array<{ value: string; label: string; key: string }> = [
   { key: "apply", value: "Apply / enrol", label: "Apply / enrol" },
@@ -22,6 +23,7 @@ const FOR_WHO = ["My child", "Myself", "Someone else"];
  * `?service=` the programme (or prefills the message when the site lists no programmes).
  */
 export default function T10ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind, programmes } = useT10();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -102,9 +104,13 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
       <div className="t10-container">
         <div className="t10-apply" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
           <div className="t10-apply-info t10-reveal">
-            <span className="t10-kicker t10-kicker-light">{section.showForm ? "Admissions" : "Visit"}</span>
+            <span className="t10-kicker t10-kicker-light">{!fit ? "Contact" : section.showForm ? "Admissions" : "Visit"}</span>
             <h2 className="t10-h2">
-              {section.showForm ? (
+              {!fit ? (
+                <>
+                  Get in <em>touch</em>
+                </>
+              ) : section.showForm ? (
                 <>
                   Apply or <em>book a visit</em>
                 </>
@@ -115,7 +121,9 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
               )}
             </h2>
             <p className="t10-apply-lead">
-              {section.showForm
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
                 ? "Tell us a little about the learner and what you're looking for. Prefer to talk? Call or message us."
                 : "Call, message or drop by — we'd love to show you around."}
             </p>
@@ -140,7 +148,7 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
                 <small>* required</small>
               </div>
 
-              <fieldset className="t10-field t10-fieldset">
+              {fit ? (<fieldset className="t10-field t10-fieldset">
                 <legend>I&apos;d like to</legend>
                 <div className="t10-chips">
                   {INTENTS.map((it, i) => (
@@ -150,13 +158,13 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset>) : null}
 
               {programmes.length ? (
                 <label className="t10-field">
-                  <span>Programme</span>
+                  <span>{fit ? "Programme" : "I'm interested in"}</span>
                   <select className="t10-input" name="service" defaultValue="">
-                    <option value="">Choose a programme</option>
+                    <option value="">{fit ? "Choose a programme" : "Choose one"}</option>
                     {programmes.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -167,7 +175,7 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
                 </label>
               ) : null}
 
-              <fieldset className="t10-field t10-fieldset">
+              {fit ? (<fieldset className="t10-field t10-fieldset">
                 <legend>Who is it for?</legend>
                 <div className="t10-chips">
                   {FOR_WHO.map((w, i) => (
@@ -177,7 +185,7 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset>) : null}
 
               <div className="t10-form-row">
                 <label className="t10-field">
@@ -195,7 +203,7 @@ export default function T10ContactCard({ section }: { section: ContactCardSectio
               </label>
               <label className="t10-field">
                 <span>Message</span>
-                <textarea className="t10-input" name="message" rows={3} placeholder="Age or year group, preferred start date, any questions…" />
+                <textarea className="t10-input" name="message" rows={3} placeholder={fit ? "Age or year group, preferred start date, any questions…" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t10-btn t10-btn-block t10-btn-lg">
                 Send enquiry <IconArrow size={18} />

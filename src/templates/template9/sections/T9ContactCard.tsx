@@ -8,6 +8,7 @@ import T9Hours from "../components/T9Hours";
 import { directionsHref, useT9 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const GOALS = ["Get stronger", "Lose weight", "Get fitter", "Move better"];
 const LEVELS = ["New to training", "Some experience", "Train regularly"];
@@ -18,6 +19,7 @@ const LEVELS = ["New to training", "Some experience", "Train regularly"];
  * class select, or prefills the message when the site lists no classes.
  */
 export default function T9ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind, classNames } = useT9();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -90,9 +92,13 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
       <div className="t9-container">
         <div className="t9-join" data-form={section.showForm} data-map={!section.showForm && !!mapEmbedUrl}>
           <div className="t9-join-info t9-reveal">
-            <span className="t9-kicker">{section.showForm ? "Free trial" : "Visit"}</span>
+            <span className="t9-kicker">{!fit ? "Contact" : section.showForm ? "Free trial" : "Visit"}</span>
             <h2 className="t9-h2">
-              {section.showForm ? (
+              {!fit ? (
+                <>
+                  Get in <em>touch</em>
+                </>
+              ) : section.showForm ? (
                 <>
                   Start your <em>free trial</em>
                 </>
@@ -103,7 +109,9 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
               )}
             </h2>
             <p className="t9-join-lead">
-              {section.showForm
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
                 ? "Tell us what you're training for and how much experience you have. Prefer to talk? Call or message us."
                 : "Call, message or drop in — we'll show you around."}
             </p>
@@ -124,15 +132,15 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
             >
               <InboxHoneypot />
               <div className="t9-form-title">
-                <h3>Claim your trial</h3>
+                <h3>{fit ? "Claim your trial" : "Send a message"}</h3>
                 <small>* required</small>
               </div>
 
               {classNames.length ? (
                 <label className="t9-field">
-                  <span>Class or plan</span>
+                  <span>{fit ? "Class or plan" : "I'm interested in"}</span>
                   <select className="t9-input" name="service" defaultValue="">
-                    <option value="">Choose a class</option>
+                    <option value="">{fit ? "Choose a class" : "Choose one"}</option>
                     {classNames.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -143,6 +151,7 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
                 </label>
               ) : null}
 
+              {fit ? (<>
               <fieldset className="t9-field t9-fieldset">
                 <legend>Main goal</legend>
                 <div className="t9-chips">
@@ -166,6 +175,7 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
                   ))}
                 </div>
               </fieldset>
+              </>) : null}
 
               <div className="t9-form-row">
                 <label className="t9-field">
@@ -183,10 +193,10 @@ export default function T9ContactCard({ section }: { section: ContactCardSection
               </label>
               <label className="t9-field">
                 <span>Message</span>
-                <textarea className="t9-input" name="message" rows={3} placeholder="Injuries, schedule, anything we should know?" />
+                <textarea className="t9-input" name="message" rows={3} placeholder={fit ? "Injuries, schedule, anything we should know?" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t9-btn t9-btn-block t9-btn-lg">
-                Request free trial <IconArrow size={18} />
+                {fit ? "Request free trial" : "Send message"} <IconArrow size={18} />
               </button>
               <InboxStatus state={inbox.state} />
             </form>

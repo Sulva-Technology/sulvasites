@@ -6,6 +6,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildWhatsAppLink } from "@/templates/shared/links";
 import { circleMeta, joinHref, useT16 } from "../ctx";
 import { IconArrow, IconCircles } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Communities: tall 3:4 photo cards (covers borrowed from the gallery), the name with its fee on
@@ -21,6 +22,7 @@ export default function T16UseCases({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT16();
   const { photos, profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -114,12 +116,12 @@ export default function T16UseCases({
                 )}
                 {enabled ? (
                   <span className="t16-circle-join">
-                    <span>{it.linkText || "Join this circle"}</span>
+                    <span>{it.linkText || (fit ? "Join this circle" : "Ask about this")}</span>
                     <IconArrow size={16} />
                   </span>
                 ) : (
                   <a className="t16-circle-join" href={href} aria-label={`Join ${it.title}`}>
-                    <span>{it.linkText || "Join this circle"}</span>
+                    <span>{it.linkText || (fit ? "Join this circle" : "Ask about this")}</span>
                     <IconArrow size={16} />
                   </a>
                 )}

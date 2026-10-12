@@ -7,11 +7,13 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/sha
 import { useT6 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const INTERESTS = ["Buy", "Rent", "Sell", "Invest"];
 
 /** "Book a private viewing": dark contact card + enquiry form (prefilled from the hero search). */
 export default function T6ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile } = useT6();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -67,7 +69,7 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
               {profile.whatsapp ? (
                 <a className="t6-contact-row" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
                   <span className="t6-contact-ico"><IconChat /></span>
-                  <span><small>WhatsApp</small>Chat with an agent</span>
+                  <span><small>WhatsApp</small>{fit ? "Chat with an agent" : "Chat with us"}</span>
                 </a>
               ) : null}
               {profile.email ? (
@@ -98,7 +100,7 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
               onSubmit={inbox.onSubmit}
             >
               <InboxHoneypot />
-              <div className="t6-field">
+              {fit ? (<div className="t6-field">
                 <span>I&apos;m interested in</span>
                 <div className="t6-chips" role="radiogroup">
                   {INTERESTS.map((i) => (
@@ -108,7 +110,7 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
                     </label>
                   ))}
                 </div>
-              </div>
+              </div>) : null}
               <div className="t6-form-row">
                 <label className="t6-field">
                   <span>Full name</span>
@@ -125,7 +127,7 @@ export default function T6ContactCard({ section }: { section: ContactCardSection
                   <input className="t6-input" name="email" type="email" placeholder="you@email.com" />
                 </label>
                 <label className="t6-field">
-                  <span>Preferred viewing date</span>
+                  <span>{fit ? "Preferred viewing date" : "Preferred date"}</span>
                   <input className="t6-input" name="date" type="date" />
                 </label>
               </div>

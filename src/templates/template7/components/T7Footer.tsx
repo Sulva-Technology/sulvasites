@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconCutlery, IconPhone, Ornament } from "../icons";
 import T7Hours from "./T7Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -18,6 +19,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Closing "join us" band (hidden on the contact page, which has the form) + footer. */
 export default function T7Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT7();
   const { baseUrl, navPages, profile, photos, pageKind, hours } = ctx;
   const editor = useInlineEditor();
@@ -36,11 +38,11 @@ export default function T7Footer({ logoUrl }: { logoUrl: string | null }) {
           ) : null}
           <div className="t7-container t7-band-inner t7-reveal">
             <Ornament size={14} />
-            <h2 className="t7-h2">Join us at the table</h2>
+            <h2 className="t7-h2">{fit ? "Join us at the table" : "Ready when you are"}</h2>
             {hours[0] ? <p className="t7-band-note">{hours.slice(0, 2).join("  /  ")}</p> : null}
             <div className="t7-actions">
               <a className="t7-btn t7-btn-cream" href={reserveHref(ctx)}>
-                Reserve a table <IconArrow size={16} />
+                {fit ? "Reserve a table" : "Get in touch"} <IconArrow size={16} />
               </a>
               {ctx.shop ? (
                 <a className="t7-btn t7-btn-glass" href={shopHref(baseUrl)}>

@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { applyHref, directionsHref, useT10 } from "../ctx";
 import { IconArrow, IconCalendar, IconCap, Scribble } from "../icons";
 import T10Hours from "./T10Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -20,6 +21,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Sunflower "ready to start?" card (skipped where the page already has the form) + navy footer. */
 export default function T10Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, hours } = ctx;
   const editor = useInlineEditor();
@@ -42,11 +44,11 @@ export default function T10Footer({ logoUrl }: { logoUrl: string | null }) {
                     <Scribble className="t10-scribble" />
                   </span>
                 </h2>
-                <p>Send an enquiry, book a visit or ask us anything — we&apos;re happy to help you choose.</p>
+                <p>{fit ? "Send an enquiry, book a visit or ask us anything — we're happy to help you choose." : "Send a message or ask us anything — we're happy to help."}</p>
               </div>
               <div className="t10-actions">
                 <a className="t10-btn t10-btn-navy" href={applyHref(ctx)}>
-                  Apply now <IconArrow size={18} />
+                  {fit ? "Apply now" : "Get in touch"} <IconArrow size={18} />
                 </a>
                 <a className="t10-btn t10-btn-outline-navy" href={applyHref(ctx, { intent: "visit" })}>
                   <IconCalendar size={17} /> Book a visit

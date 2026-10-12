@@ -5,12 +5,14 @@ import type { UseCasesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { quoteHref, useT12 } from "../ctx";
 import { IconArrow, IconHelmet } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Use cases as "Projects": square cards with a cover borrowed from the site's gallery (else a
  * blueprint panel), a "Project 01" plate, title, description and a quote link.
  */
 export default function T12UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { photos } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -49,7 +51,7 @@ export default function T12UseCases({ section, sectionIndex }: { section: UseCas
         <ul className="t12-projects" data-count={items.length}>
           {items.map((it, idx) => {
             const cover = photos.length ? photos[(idx + 1) % photos.length] : null;
-            const linkText = it.linkText || (enabled ? "" : "Start a similar project");
+            const linkText = it.linkText || (enabled ? "" : fit ? "Start a similar project" : "Ask about this");
             return (
               <li key={idx} className="t12-project t12-reveal">
                 <div className="t12-project-cover" data-photo={!!cover}>

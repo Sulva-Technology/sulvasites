@@ -8,9 +8,11 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildTelLink } from "@/templates/shared/links";
 import { bookHref, useT8 } from "../ctx";
 import { IconArrow, IconPhone, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Prominent FAQ: heading + help card beside a rounded accordion. All answers open while editing. */
 export default function T8FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -31,7 +33,7 @@ export default function T8FAQ({ section, sectionIndex }: { section: FAQSection; 
           <EditableText as="h2" className="t8-h2" value={title} placeholder="FAQ title" onCommit={(next) => set({ title: next })} />
           <div className="t8-help">
             <p className="t8-help-title">Still have a question?</p>
-            <p className="t8-muted">Our team is happy to help before you book.</p>
+            <p className="t8-muted">{fit ? "Our team is happy to help before you book." : "We are happy to help."}</p>
             <div className="t8-help-actions">
               {profile.phone ? (
                 <a className="t8-btn t8-btn-sm" href={buildTelLink(profile.phone)}>
@@ -39,7 +41,7 @@ export default function T8FAQ({ section, sectionIndex }: { section: FAQSection; 
                 </a>
               ) : null}
               <a className="t8-textlink" href={bookHref(ctx)}>
-                Book a visit <IconArrow size={15} />
+                {fit ? "Book a visit" : "Get in touch"} <IconArrow size={15} />
               </a>
             </div>
           </div>

@@ -7,6 +7,7 @@ import type { FAQSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { useT4 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK = [
   { question: "How long does setup take?", answer: "Most people are up and running in under five minutes." },
@@ -15,6 +16,7 @@ const FALLBACK = [
 
 /** FAQ with a sticky aside ("still have questions?") and accordion cards. */
 export default function T4FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { baseUrl } = useT4();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
@@ -32,7 +34,7 @@ export default function T4FAQ({ section, sectionIndex }: { section: FAQSection; 
           <EditableText as="h2" className="t4-h2" value={title} placeholder="FAQ title" onCommit={(next) => set({ title: next })} />
           <div className="t4-help">
             <b>Still have questions?</b>
-            <span className="t4-muted">Our team is happy to help — usually within a few hours.</span>
+            <span className="t4-muted">{fit ? "Our team is happy to help — usually within a few hours." : "Ask us anything — we are happy to help."}</span>
             <a className="t4-textlink" href={`${baseUrl}/contact`}>
               Contact us <IconArrow size={16} />
             </a>

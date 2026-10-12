@@ -4,6 +4,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { ServicesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { SERVICE_ICONS } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK = [
   { title: "Buy a home", desc: "Shortlists matched to your brief, accompanied viewings and help through every document." },
@@ -13,6 +14,7 @@ const FALLBACK = [
 ];
 
 export default function T6Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { setItem } = useSectionEditor(section, sectionIndex);
   const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
     title: it.title || FALLBACK[i % FALLBACK.length].title,
@@ -25,7 +27,7 @@ export default function T6Services({ section, sectionIndex }: { section: Service
         <div className="t6-head t6-reveal">
           <div>
             <span className="t6-kicker">What we do</span>
-            <h2 className="t6-h2">Every step of your property journey</h2>
+            <h2 className="t6-h2">{fit ? "Every step of your property journey" : "How we can help"}</h2>
           </div>
         </div>
 

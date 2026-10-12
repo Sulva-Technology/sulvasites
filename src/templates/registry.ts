@@ -1,9 +1,11 @@
-import type { ComponentType, ReactNode } from "react";
+import { createElement, type ComponentType, type ReactNode } from "react";
 
 import type { BlogData } from "@/lib/blog/types";
 import type { PageData, PageKey } from "@/lib/pageSchema";
 import type { ShopData, ShopView } from "@/lib/shop/types";
 import type { SiteData } from "@/lib/siteResolver.server";
+import { businessFitsTemplate } from "@/lib/templateFit";
+import { TemplateFitProvider } from "@/templates/shared/fit";
 import Template1 from "@/templates/template1/Template1";
 import Template2 from "@/templates/template2/Template2";
 import Template3 from "@/templates/template3/Template3";
@@ -71,6 +73,16 @@ export const TEMPLATES: Record<string, ComponentType<TemplateProps>> = {
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES);
 
+/** Each design renders inside a provider saying whether the business fits its industry (neutral wording when not). */
+const FITTED: Record<string, ComponentType<TemplateProps>> = Object.fromEntries(
+  Object.entries(TEMPLATES).map(([key, Template]) => {
+    const Fitted = (props: TemplateProps) =>
+      createElement(TemplateFitProvider, { fits: businessFitsTemplate(props.profile, key) }, createElement(Template, props));
+    Fitted.displayName = `Fitted(${key})`;
+    return [key, Fitted];
+  }),
+);
+
 export function getTemplate(key: string): ComponentType<TemplateProps> | null {
-  return TEMPLATES[key] ?? null;
+  return FITTED[key] ?? null;
 }

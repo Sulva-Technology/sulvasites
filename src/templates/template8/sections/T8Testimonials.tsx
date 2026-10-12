@@ -4,11 +4,13 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
 import { IconQuote } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK_QUOTE = "Add a few words from a patient — how they felt and what made the visit easy.";
 
 /** Patient stories as soft cards on a mint band, each with an initials avatar. */
 export default function T8Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((t) => t.quote?.trim())) return null;
   const title = section.title || "What our patients say";
@@ -24,7 +26,7 @@ export default function T8Testimonials({ section, sectionIndex }: { section: Tes
     <section className="t8-section t8-tint t8-stories-section">
       <div className="t8-container">
         <header className="t8-head t8-head-center t8-reveal">
-          <span className="t8-eyebrow">Patient stories</span>
+          <span className="t8-eyebrow">{fit ? "Patient stories" : "Reviews"}</span>
           <EditableText as="h2" className="t8-h2" value={title} placeholder="Section title" onCommit={(next) => set({ title: next })} />
         </header>
 

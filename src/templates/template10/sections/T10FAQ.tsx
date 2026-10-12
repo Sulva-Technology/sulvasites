@@ -8,9 +8,11 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildTelLink } from "@/templates/shared/links";
 import { applyHref, useT10 } from "../ctx";
 import { IconCalendar, IconPhone, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** "Admissions questions": heading and a help card beside a rounded accordion. All answers open while editing. */
 export default function T10FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -31,7 +33,7 @@ export default function T10FAQ({ section, sectionIndex }: { section: FAQSection;
           <EditableText as="h2" className="t10-h2" value={title} placeholder="Admissions questions" onCommit={(next) => set({ title: next })} />
           <div className="t10-help">
             <p className="t10-help-title">Still have a question?</p>
-            <p>Come and see us, or talk to the admissions team.</p>
+            <p>{fit ? "Come and see us, or talk to the admissions team." : "Come and see us, or send us a message."}</p>
             <div className="t10-actions">
               <a className="t10-btn t10-btn-sm" href={applyHref(ctx, { intent: "visit" })}>
                 <IconCalendar size={15} /> Book a visit

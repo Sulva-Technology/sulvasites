@@ -4,6 +4,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { UseCasesSection } from "@/lib/pageSchema";
 import { toRoman, useSectionEditor } from "@/templates/shared/edit";
 import { bookHref, useT5 } from "../ctx";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK: UseCasesSection["items"] = [
   { title: "The Everyday", description: "A fresh, natural look for dinners, meetings and moments you want to feel your best." },
@@ -13,6 +14,7 @@ const FALLBACK: UseCasesSection["items"] = [
 
 /** Use cases as arched "package" cards; the middle one is highlighted. */
 export default function T5UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT5();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Signature packages";
@@ -45,7 +47,7 @@ export default function T5UseCases({ section, sectionIndex }: { section: UseCase
         <div className="t5-packages">
           {items.map((it, idx) => (
             <article key={idx} className="t5-package t5-reveal" data-highlight={idx === highlight}>
-              {idx === highlight ? <span className="t5-package-tag">Most loved</span> : null}
+              {idx === highlight ? <span className="t5-package-tag">{fit ? "Most loved" : "Featured"}</span> : null}
               <span className="t5-package-num">{toRoman(idx + 1)}.</span>
               <EditableText
                 as="h3"

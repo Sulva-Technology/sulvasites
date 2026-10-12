@@ -4,6 +4,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import type { ValuesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { IconCheck, Scribble } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -14,6 +15,7 @@ const HINTS = [
 
 /** Values as "Why learners choose us": a sticky heading beside rounded cards with sunflower check badges. */
 export default function T10Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
   // Editor: the real items (one blank card when empty). Visitors: titled items only.
@@ -36,7 +38,7 @@ export default function T10Values({ section, sectionIndex }: { section: ValuesSe
               <Scribble className="t10-scribble" />
             </span>
           </h2>
-          <p className="t10-muted">The things we care about in every class, every day.</p>
+          <p className="t10-muted">{fit ? "The things we care about in every class, every day." : "The things we care about, every day."}</p>
         </header>
 
         <ul className="t10-values" data-count={items.length} data-odd={items.length % 2 === 1}>

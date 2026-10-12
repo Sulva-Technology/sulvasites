@@ -4,6 +4,7 @@ import type { ContactCardSection } from "@/lib/pageSchema";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { T3ArrowIcon, T3Index } from "../ui";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 export default function T3ContactCard({
   section,
@@ -20,6 +21,7 @@ export default function T3ContactCard({
     whatsapp: string | null;
   };
 }) {
+  const fit = useFitsIndustry();
   const inbox = useInboxForm();
   const mapEmbedUrl = (() => {
     const link = section.mapLink?.trim();
@@ -41,7 +43,7 @@ export default function T3ContactCard({
         <div className="t3-reveal">
           <T3Index n={n} label="Contact" />
           <h2 className="t3-display t3-contact-title" style={{ marginTop: 24 }}>
-            Have a project <em>in mind?</em>
+            {fit ? <>Have a project <em>in mind?</em></> : <>Let&apos;s <em>talk.</em></>}
           </h2>
           {profile.email ? (
             <a className="t3-mail" href={buildEmailLink(profile.email)}>

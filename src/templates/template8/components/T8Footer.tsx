@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { bookHref, directionsHref, useT8 } from "../ctx";
 import { IconArrow, IconCalendar, IconCross, IconPhone } from "../icons";
 import T8Hours from "./T8Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -19,6 +20,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Closing booking band (skipped where the page already has the form) + mint footer. */
 export default function T8Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, hours } = ctx;
   const editor = useInlineEditor();
@@ -36,16 +38,16 @@ export default function T8Footer({ logoUrl }: { logoUrl: string | null }) {
                 <IconCalendar size={26} />
               </span>
               <div className="t8-band-text">
-                <h2 className="t8-h2">Ready to book your visit?</h2>
+                <h2 className="t8-h2">{fit ? "Ready to book your visit?" : "Ready to get started?"}</h2>
                 <p>
                   {hours[0]
                     ? `Open ${hours.slice(0, 2).join(" · ")}`
-                    : "Send an appointment request or give us a call."}
+                    : fit ? "Send an appointment request or give us a call." : "Send us a message or give us a call."}
                 </p>
               </div>
               <div className="t8-actions">
                 <a className="t8-btn t8-btn-light" href={bookHref(ctx)}>
-                  Book appointment <IconArrow size={16} />
+                  {fit ? "Book appointment" : "Get in touch"} <IconArrow size={16} />
                 </a>
                 {profile.phone ? (
                   <a className="t8-btn t8-btn-glass" href={buildTelLink(profile.phone)}>

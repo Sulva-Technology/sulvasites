@@ -5,6 +5,7 @@ import type { ValuesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { useT6 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK = [
   { title: "Location first", desc: "We focus on areas with delivered roads, power and water — not promises." },
@@ -15,6 +16,7 @@ const FALLBACK = [
 
 /** Values shown as a numbered process on a dark band. */
 export default function T6Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { baseUrl } = useT6();
   const { setItem } = useSectionEditor(section, sectionIndex);
   const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
@@ -27,9 +29,9 @@ export default function T6Values({ section, sectionIndex }: { section: ValuesSec
       <div className="t6-container t6-process">
         <div className="t6-process-head t6-reveal">
           <span className="t6-kicker">Why work with us</span>
-          <h2 className="t6-h2">What we check before you commit</h2>
+          <h2 className="t6-h2">{fit ? "What we check before you commit" : "What you can expect"}</h2>
           <p className="t6-lead">
-            Property rewards diligence over speed. Here is how we protect every client on every deal.
+            {fit ? "Property rewards diligence over speed. Here is how we protect every client on every deal." : "Clear answers and honest work, every time."}
           </p>
           <div>
             <a className="t6-btn t6-btn-light" href={`${baseUrl}/contact`}>

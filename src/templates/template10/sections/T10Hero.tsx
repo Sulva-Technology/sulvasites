@@ -21,6 +21,7 @@ import {
   IconSpark,
   Scribble,
 } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type Photo = { url: string; alt: string };
 
@@ -71,6 +72,7 @@ export default function T10Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { photos, profile, pageKind, pageLabel, hours, baseUrl, highlights } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -78,7 +80,7 @@ export default function T10Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Apply now");
+  const ctaText = section.ctaText || (enabled ? "" : fit ? "Apply now" : "Get in touch");
   const city = cityOf(profile.address);
 
   const title = (cls: string, as: "h1" | "h2" = "h1") => {
@@ -111,7 +113,7 @@ export default function T10Hero({
   );
   const visit = (cls = "t10-btn t10-btn-outline t10-btn-lg") => (
     <a className={cls} href={applyHref(ctx, { intent: "visit" })}>
-      <IconCalendar size={17} /> Book a visit
+      <IconCalendar size={17} /> {fit ? "Book a visit" : "Visit us"}
     </a>
   );
 
@@ -159,7 +161,7 @@ export default function T10Hero({
   if (variant === "contact") {
     const tiles = [
       profile.phone
-        ? { key: "call", icon: <IconPhone size={22} />, label: "Call the office", value: profile.phone, href: buildTelLink(profile.phone), ext: false }
+        ? { key: "call", icon: <IconPhone size={22} />, label: fit ? "Call the office" : "Call us", value: profile.phone, href: buildTelLink(profile.phone), ext: false }
         : null,
       profile.whatsapp
         ? { key: "wa", icon: <IconChat size={22} />, label: "WhatsApp", value: "Message us", href: buildWhatsAppLink(profile.whatsapp), ext: true }
@@ -176,7 +178,7 @@ export default function T10Hero({
       <section className="t10-hero t10-hero-contact">
         <div className="t10-container">
           <div className="t10-contact-head t10-reveal">
-            <span className="t10-chip">Contact &amp; admissions</span>
+            <span className="t10-chip">{fit ? "Contact & admissions" : "Contact"}</span>
             {title("t10-h1")}
             {lead}
           </div>

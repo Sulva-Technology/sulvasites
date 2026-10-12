@@ -14,6 +14,7 @@ import T3Team from "./T3Team";
 import T3Testimonials from "./T3Testimonials";
 import T3UseCases from "./T3UseCases";
 import T3Values from "./T3Values";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Renders every section type on any page (home/about/contact/extra), so a
@@ -39,6 +40,7 @@ export default function T3Sections({
   navPages?: NavPage[];
   baseUrl?: string;
 }) {
+  const fit = useFitsIndustry();
   const sections = (pageData.sections || []).filter(
     (s): s is NonNullable<typeof s> => s != null && s.type != null,
   );
@@ -46,9 +48,9 @@ export default function T3Sections({
   let counter = 0;
   // Hero secondary button jumps to the first services/work section on this page, if any.
   const secondary = sections.some((s) => s.type === "services")
-    ? { href: "#services", label: "What I do" }
+    ? { href: "#services", label: fit ? "What I do" : "What we do" }
     : sections.some((s) => s.type === "use_cases")
-      ? { href: "#work", label: "See the work" }
+      ? { href: "#work", label: fit ? "See the work" : "See more" }
       : null;
 
   return (

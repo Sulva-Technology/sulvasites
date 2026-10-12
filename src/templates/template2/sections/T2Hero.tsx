@@ -5,6 +5,7 @@ import type { HeroSection } from "@/lib/pageSchema";
 import { initials, pad2, useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
 import { useT2 } from "../ctx";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 function Photo({ src, alt, fallback }: { src?: string; alt?: string; fallback: string }) {
   return src ? (
@@ -34,6 +35,7 @@ export default function T2Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { baseUrl, photos, profile, contents, pageKind, pageLabel } = useT2();
   const { set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Ideas, made visible";
@@ -87,7 +89,7 @@ export default function T2Hero({
     return (
       <section className="t2-hero t2-hero-letters">
         <div className="t2-container t2-letters t2-reveal">
-          <span className="t2-kicker">Letters to the studio</span>
+          <span className="t2-kicker">{fit ? "Letters to the studio" : "Get in touch"}</span>
           {title("t2-display")}
           {deck("t2-standfirst")}
           {lines.length ? (
@@ -150,7 +152,7 @@ export default function T2Hero({
       <div className="t2-container t2-cover-inner">
         <div className="t2-cover-issue">
           <span>Issue Nº {String(year).slice(2)}</span>
-          <span>{profile.tagline || "The independent edition"}</span>
+          <span>{profile.tagline || (fit ? "The independent edition" : profile.business_name)}</span>
         </div>
 
         <div className="t2-cover-main t2-reveal">

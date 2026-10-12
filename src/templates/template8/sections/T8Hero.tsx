@@ -21,11 +21,13 @@ import {
   IconPhone,
   IconPin,
 } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const OTHER = "__other__";
 
 /** "Book an appointment" card: pick a reason for the visit, continue to the contact form. */
 function AppointmentCard() {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { serviceNames, profile, hours, baseUrl } = ctx;
   const editor = useInlineEditor();
@@ -47,15 +49,15 @@ function AppointmentCard() {
           <IconCalendar size={20} />
         </span>
         <div>
-          <h2 className="t8-appt-title">Book an appointment</h2>
-          <p>Choose a reason for your visit to get started.</p>
+          <h2 className="t8-appt-title">{fit ? "Book an appointment" : "Get in touch"}</h2>
+          <p>{fit ? "Choose a reason for your visit to get started." : "Choose what you need to get started."}</p>
         </div>
       </div>
 
       {serviceNames.length ? (
         <form className="t8-appt-form" onSubmit={onSubmit}>
           <label className="t8-field">
-            <span>Reason for visit</span>
+            <span>{fit ? "Reason for visit" : "I need"}</span>
             <select
               className="t8-input"
               name="service"
@@ -80,7 +82,7 @@ function AppointmentCard() {
         </form>
       ) : (
         <a className="t8-btn t8-btn-block" href={bookHref(ctx)}>
-          Request an appointment <IconArrow size={16} />
+          {fit ? "Request an appointment" : "Send a message"} <IconArrow size={16} />
         </a>
       )}
 
@@ -138,13 +140,14 @@ export default function T8Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { photos, profile, pageKind, pageLabel, hours, baseUrl } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
 
   const headline = section.headline || profile.business_name;
   const subtext = section.subtext || profile.tagline || "";
-  const ctaText = section.ctaText || "Book an appointment";
+  const ctaText = section.ctaText || (fit ? "Book an appointment" : "Get in touch");
   const city = cityOf(profile.address);
 
   const title = (cls: string, as: "h1" | "h2" = "h1") => (
@@ -215,7 +218,7 @@ export default function T8Hero({
     return (
       <section className="t8-hero t8-hero-contact">
         <div className="t8-container">
-          <div className="t8-alert t8-reveal" role="note">
+          {fit ? (<div className="t8-alert t8-reveal" role="note">
             <span className="t8-alert-ico" aria-hidden="true">
               <IconAlert size={20} />
             </span>
@@ -231,7 +234,7 @@ export default function T8Hero({
                 </span>
               </a>
             ) : null}
-          </div>
+          </div>) : null}
 
           <div className="t8-contact-grid">
             <div className="t8-contact-text t8-reveal">
@@ -294,7 +297,7 @@ export default function T8Hero({
                 <p className="t8-muted">Call or send a request and we&apos;ll let you know when we can see you.</p>
               )}
               <a className="t8-btn t8-btn-block" href={bookHref(ctx)}>
-                Request an appointment <IconArrow size={16} />
+                {fit ? "Request an appointment" : "Send a message"} <IconArrow size={16} />
               </a>
             </aside>
           </div>

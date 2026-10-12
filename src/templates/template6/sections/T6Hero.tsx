@@ -8,6 +8,7 @@ import { initials, pad2, useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink } from "@/templates/shared/links";
 import { propertiesHref, useT6 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const MODES = ["Buy", "Rent", "Sell"] as const;
 const TYPES = ["Any type", "Apartment", "Terrace", "Duplex", "Detached house", "Land", "Commercial"];
@@ -42,6 +43,7 @@ export default function T6Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT6();
   const { photos, profile, listings, pageKind, pageLabel, baseUrl } = ctx;
   const { set } = useSectionEditor(section, sectionIndex);
@@ -115,7 +117,7 @@ export default function T6Hero({
       <section className="t6-hero t6-hero-contact">
         <div className="t6-container t6-contact-hero">
           <div className="t6-reveal">
-            <span className="t6-caption">Visit the office</span>
+            <span className="t6-caption">{fit ? "Visit the office" : "Get in touch"}</span>
             <h1 className="t6-h1 t6-address-title">{profile.address || headline}</h1>
             {lead}
             <ul className="t6-office">
@@ -131,15 +133,17 @@ export default function T6Hero({
                   <a href={buildEmailLink(profile.email)}>{profile.email}</a>
                 </li>
               ) : null}
-              <li>
-                <span>Hours</span>
-                <b>Mon–Sat, 9:00–18:00</b>
-              </li>
+              {fit ? (
+                <li>
+                  <span>Hours</span>
+                  <b>Mon–Sat, 9:00–18:00</b>
+                </li>
+              ) : null}
             </ul>
           </div>
           <figure className="t6-plate t6-reveal">
             <Plate src={photos[2]?.url ?? photos[0]?.url} alt={photos[2]?.alt} fallback={mono} />
-            <figcaption>Private viewings by appointment.</figcaption>
+            <figcaption>{fit ? "Private viewings by appointment." : profile.business_name}</figcaption>
           </figure>
         </div>
       </section>
@@ -219,9 +223,9 @@ export default function T6Hero({
           <figure className="t6-plate">
             <Plate src={photos[1]?.url} alt={photos[1]?.alt} fallback={pad2(1)} />
             <figcaption>
-              <b>New listing.</b> {titles[0]} — {photos[1]?.alt || "available now for viewings."}{" "}
+              <b>{fit ? "New listing." : "Featured."}</b> {titles[0]} — {photos[1]?.alt || (fit ? "available now for viewings." : "ask us about it.")}{" "}
               <a className="t6-textlink" href={propertiesHref(ctx)}>
-                See all {titles.length} listings
+                {fit ? `See all ${titles.length} listings` : "See all"}
               </a>
             </figcaption>
           </figure>

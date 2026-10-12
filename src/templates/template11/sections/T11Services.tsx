@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { planHref, useT11 } from "../ctx";
 import { Barcode, IconArrow, IconSparkle } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -20,6 +21,7 @@ const TONES = ["violet", "peach", "plum"] as const;
  * tear line with punched notches, and a stub with "Enquire" (prefills the enquiry form).
  */
 export default function T11Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT11();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -39,7 +41,7 @@ export default function T11Services({ section, sectionIndex }: { section: Servic
           <h2 className="t11-h2">
             Pick your <span className="t11-hl">package</span>
           </h2>
-          <p className="t11-head-note">Choose a package to start an enquiry, or tell us about your idea and we&apos;ll shape one around it.</p>
+          <p className="t11-head-note">{fit ? "Choose a package to start an enquiry, or tell us about your idea and we'll shape one around it." : "Choose one to ask about it, or tell us what you need."}</p>
         </header>
 
         <div className="t11-packages" data-count={items.length}>

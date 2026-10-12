@@ -8,6 +8,7 @@ import T12Hours from "../components/T12Hours";
 import { directionsHref, useT12 } from "../ctx";
 import { Hazard, IconArrow, IconChat, IconMail, IconPhone, IconPin } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * "Request a quote": a charcoal panel with contact rows and working hours beside a square quote
@@ -23,6 +24,7 @@ export default function T12ContactCard({
   sectionIndex?: number;
   anchor?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind, services } = useT12();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -122,12 +124,12 @@ export default function T12ContactCard({
         mapHref ? (
           <a className="t12-row" href={mapHref} target="_blank" rel="noreferrer">
             <span className="t12-row-ico"><IconPin /></span>
-            <span><small>Yard / office</small>{profile.address}</span>
+            <span><small>{fit ? "Yard / office" : "Visit"}</small>{profile.address}</span>
           </a>
         ) : (
           <div className="t12-row">
             <span className="t12-row-ico"><IconPin /></span>
-            <span><small>Yard / office</small>{profile.address}</span>
+            <span><small>{fit ? "Yard / office" : "Visit"}</small>{profile.address}</span>
           </div>
         )
       ) : null}
@@ -143,11 +145,11 @@ export default function T12ContactCard({
             <p className="t12-label t12-kicker">
               <span className="t12-kicker-sq" aria-hidden="true" /> {section.showForm ? "Quotes" : "Contact"}
             </p>
-            <h2 className="t12-h2">{section.showForm ? "Request a quote" : "Talk to us"}</h2>
+            <h2 className="t12-h2">{section.showForm && fit ? "Request a quote" : "Talk to us"}</h2>
             <p className="t12-quote-lead">
               {section.showForm
-                ? "Tell us what needs doing and where. Prefer to talk? Call or message us."
-                : "Call, message or email — tell us about the job and we'll take it from there."}
+                ? fit ? "Tell us what needs doing and where. Prefer to talk? Call or message us." : "Tell us what you need. Prefer to talk? Call or message us."
+                : fit ? "Call, message or email — tell us about the job and we'll take it from there." : "Call, message or email — we'll take it from there."}
             </p>
             {rows}
             {hours.length > 0 && pageKind !== "contact" ? (
@@ -166,7 +168,7 @@ export default function T12ContactCard({
             >
               <InboxHoneypot />
               <div className="t12-form-title">
-                <h3>Job details</h3>
+                <h3>{fit ? "Job details" : "Send a message"}</h3>
                 <small>* required</small>
               </div>
 
@@ -202,12 +204,12 @@ export default function T12ContactCard({
                 <input className="t12-input" name="email" type="email" autoComplete="email" />
               </label>
               <label className="t12-field">
-                <span>About the job</span>
+                <span>{fit ? "About the job" : "Message"}</span>
                 <textarea
                   className="t12-input"
                   name="message"
                   rows={4}
-                  placeholder="What needs doing, where the property is, and when you'd like it done…"
+                  placeholder={fit ? "What needs doing, where the property is, and when you'd like it done…" : "How can we help?"}
                 />
               </label>
               <button type="submit" disabled={inbox.sending} className="t12-btn t12-btn-block t12-btn-lg">

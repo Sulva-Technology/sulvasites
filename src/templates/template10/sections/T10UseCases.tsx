@@ -5,12 +5,14 @@ import type { UseCasesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { applyHref, useT10 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Use cases as "Pathways": numbered stops joined by a dashed route — a row on wide screens,
  * a vertical trail on phones — each with a title, description and link to the enquiry form.
  */
 export default function T10UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -68,7 +70,7 @@ export default function T10UseCases({ section, sectionIndex }: { section: UseCas
                 <a className="t10-textlink" href={it.linkHref || applyHref(ctx, { service: it.title })}>
                   <EditableText
                     as="span"
-                    value={it.linkText || (enabled ? "" : "Ask about this pathway")}
+                    value={it.linkText || (enabled ? "" : fit ? "Ask about this pathway" : "Ask about this")}
                     placeholder="Ask about this pathway"
                     onCommit={(next) => setItem("items", items, idx, { linkText: next })}
                   />

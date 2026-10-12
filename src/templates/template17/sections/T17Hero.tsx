@@ -8,6 +8,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import T17Subscribe from "../components/T17Subscribe";
 import { blogHref, useT17 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * Heroes, one per page kind:
@@ -18,6 +19,7 @@ import { IconArrow } from "../icons";
  * Later heroes on a page render as a ruled call-to-action.
  */
 export default function T17Hero({ section, sectionIndex, primary }: { section: HeroSection; sectionIndex?: number; primary?: boolean }) {
+  const fit = useFitsIndustry();
   const ctx = useT17();
   const { profile, pageKind, pageLabel, baseUrl, photos, blog } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -113,7 +115,7 @@ export default function T17Hero({ section, sectionIndex, primary }: { section: H
     <section className="t17-hero t17-hero-home">
       <div className="t17-container">
         <div className="t17-issue t17-reveal">
-          <span>{count > 0 ? `${count} ${count === 1 ? "story" : "stories"} so far` : "Notes & essays"}</span>
+          <span>{count > 0 ? `${count} ${count === 1 ? "story" : "stories"} so far` : fit ? "Notes & essays" : "News & updates"}</span>
           <span>{profile.address ? profile.address.split(",").slice(-1)[0]!.trim() : "Independent"}</span>
         </div>
         <div className="t17-hero-home-grid">

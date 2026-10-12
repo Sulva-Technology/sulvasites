@@ -8,9 +8,11 @@ import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { buildTelLink } from "@/templates/shared/links";
 import { joinHref, useT9 } from "../ctx";
 import { IconArrow, IconPhone, IconPlus } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** FAQ: giant sticky heading with a help box beside a numbered, hard-edged accordion. All answers open while editing. */
 export default function T9FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT9();
   const { profile } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
@@ -31,7 +33,7 @@ export default function T9FAQ({ section, sectionIndex }: { section: FAQSection; 
           <EditableText as="h2" className="t9-h2" value={title} placeholder="FAQ title" onCommit={(next) => set({ title: next })} />
           <div className="t9-help">
             <p className="t9-help-title">Still got questions?</p>
-            <p>Talk to the team before your first session.</p>
+            <p>{fit ? "Talk to the team before your first session." : "We are happy to help."}</p>
             <div className="t9-actions">
               {profile.phone ? (
                 <a className="t9-btn t9-btn-sm" href={buildTelLink(profile.phone)}>
@@ -39,7 +41,7 @@ export default function T9FAQ({ section, sectionIndex }: { section: FAQSection; 
                 </a>
               ) : null}
               <a className="t9-textlink" href={joinHref(ctx)}>
-                Start free trial <IconArrow size={15} />
+                {fit ? "Start free trial" : "Get in touch"} <IconArrow size={15} />
               </a>
             </div>
           </div>

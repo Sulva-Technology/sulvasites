@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, quoteHref, useT12 } from "../ctx";
 import { Hazard, IconArrow, IconHelmet, IconPhone } from "../icons";
 import T12Hours from "./T12Hours";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["facebook", "Facebook"],
@@ -20,6 +21,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** Orange "start your project" call band (skipped where the page already has the quote form) + charcoal footer. */
 export default function T12Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, hours } = ctx;
   const editor = useInlineEditor();
@@ -35,12 +37,12 @@ export default function T12Footer({ logoUrl }: { logoUrl: string | null }) {
           <div className="t12-container t12-callband-inner t12-reveal">
             <div>
               <p className="t12-label t12-callband-kicker">Next step</p>
-              <h2 className="t12-callband-title">Got a job that needs doing?</h2>
-              <p className="t12-callband-note">Tell us what you need and where — we&apos;ll get back to you to talk it through.</p>
+              <h2 className="t12-callband-title">{fit ? "Got a job that needs doing?" : "Ready to get started?"}</h2>
+              <p className="t12-callband-note">{fit ? "Tell us what you need and where — we'll get back to you to talk it through." : "Tell us what you need — we'll get back to you to talk it through."}</p>
             </div>
             <div className="t12-actions">
               <a className="t12-btn t12-btn-ink t12-btn-lg" href={quoteHref(ctx)}>
-                Request a quote <IconArrow size={18} />
+                {fit ? "Request a quote" : "Get in touch"} <IconArrow size={18} />
               </a>
               {profile.phone ? (
                 <a className="t12-btn t12-btn-outline-ink t12-btn-lg" href={buildTelLink(profile.phone)}>

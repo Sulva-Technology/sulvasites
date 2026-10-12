@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { bookHref, useT8 } from "../ctx";
 import { IconArrow, serviceIcon } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const FALLBACK = [
@@ -15,6 +16,7 @@ const FALLBACK = [
 
 /** Treatments as rounded icon cards; each card's link opens the booking form with that service preselected. */
 export default function T8Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -31,11 +33,11 @@ export default function T8Services({ section, sectionIndex }: { section: Service
       <div className="t8-container">
         <header className="t8-head t8-head-split t8-reveal">
           <div>
-            <span className="t8-eyebrow">Treatments &amp; services</span>
+            <span className="t8-eyebrow">{fit ? "Treatments & services" : "Services"}</span>
             <h2 className="t8-h2">How we can help</h2>
           </div>
           <a className="t8-textlink" href={bookHref(ctx)}>
-            Book an appointment <IconArrow size={16} />
+            {fit ? "Book an appointment" : "Get in touch"} <IconArrow size={16} />
           </a>
         </header>
 

@@ -10,6 +10,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { bookHref, cityOf, directionsHref, useT8 } from "../ctx";
 import { IconArrow, IconClock, IconClose, IconCross, IconMenu, IconPhone, IconPin } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -23,6 +24,7 @@ export default function T8Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT8();
   const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -137,7 +139,7 @@ export default function T8Header({
           <div className="t8-header-end">
             <ModeToggle mode={mode} onToggle={toggleMode} className="t8-icon-btn" />
             <a href={bookHref(ctx)} className="t8-btn t8-btn-sm t8-hide-sm">
-              Book appointment
+              {fit ? "Book appointment" : "Get in touch"}
             </a>
             <button
               type="button"
@@ -191,7 +193,7 @@ export default function T8Header({
             ) : null}
             <div className="t8-drawer-foot">
               <a className="t8-btn t8-btn-block" href={bookHref(ctx)} onClick={() => setOpen(false)}>
-                Book appointment <IconArrow size={16} />
+                {fit ? "Book appointment" : "Get in touch"} <IconArrow size={16} />
               </a>
               {profile.phone ? (
                 <a className="t8-btn t8-btn-ghost t8-btn-block" href={buildTelLink(profile.phone)}>

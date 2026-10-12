@@ -5,6 +5,7 @@ import type { ServicesSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
 import { reserveHref, shopHref, splitPrice, useT7 } from "../ctx";
 import { IconArrow, Ornament } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 // Placeholder hints shown on empty fields while editing (never saved).
 const HINTS = [
@@ -17,6 +18,7 @@ const HINTS = [
  * running to the price (parsed from "Name · ₦0,000") or a small ornament.
  */
 export default function T7Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const ctx = useT7();
   const { enabled, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
@@ -36,10 +38,10 @@ export default function T7Services({ section, sectionIndex }: { section: Service
           <header className="t7-head t7-head-center">
             <span className="t7-rule-label">
               <i aria-hidden="true" />
-              <span>From the kitchen</span>
+              <span>{fit ? "From the kitchen" : "What we offer"}</span>
               <i aria-hidden="true" />
             </span>
-            <h2 className="t7-h2">The Menu</h2>
+            <h2 className="t7-h2">{fit ? "The Menu" : "Our services"}</h2>
           </header>
 
           <ul className="t7-menu" data-single={single}>
@@ -86,7 +88,7 @@ export default function T7Services({ section, sectionIndex }: { section: Service
               </a>
             ) : null}
             <a className={ctx.shop ? "t7-btn t7-btn-ghost" : "t7-btn"} href={reserveHref(ctx)}>
-              Reserve a table {ctx.shop ? null : <IconArrow size={16} />}
+              {fit ? "Reserve a table" : "Get in touch"} {ctx.shop ? null : <IconArrow size={16} />}
             </a>
           </div>
         </div>

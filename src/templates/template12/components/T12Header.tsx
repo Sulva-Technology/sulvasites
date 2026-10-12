@@ -10,6 +10,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { quoteHref, useT12 } from "../ctx";
 import { Hazard, IconArrow, IconClock, IconClose, IconHelmet, IconMenu, IconPhone } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -27,6 +28,7 @@ export default function T12Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT12();
   const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -146,7 +148,7 @@ export default function T12Header({
           <div className="t12-header-end">
             <ModeToggle mode={mode} onToggle={toggleMode} className="t12-icon-btn" />
             <a href={quoteHref(ctx)} className="t12-btn t12-btn-sm t12-hide-sm">
-              Get a quote
+              {fit ? "Get a quote" : "Get in touch"}
             </a>
             <button
               ref={burgerRef}
@@ -195,7 +197,7 @@ export default function T12Header({
           <div className="t12-drawer-foot t12-container">
             {hours[0] ? <p className="t12-drawer-hours">{hours.slice(0, 2).join(" · ")}</p> : null}
             <a className="t12-btn t12-btn-block t12-btn-lg" href={quoteHref(ctx)} onClick={() => setOpen(false)}>
-              Get a quote <IconArrow size={18} />
+              {fit ? "Get a quote" : "Get in touch"} <IconArrow size={18} />
             </a>
             {profile.phone ? (
               <a className="t12-btn t12-btn-outline-light t12-btn-block" href={buildTelLink(profile.phone)}>

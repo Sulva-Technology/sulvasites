@@ -8,12 +8,14 @@ import T7Hours from "../components/T7Hours";
 import { directionsHref, useT7 } from "../ctx";
 import { IconArrow, IconChat, IconMail, IconPhone, IconPin, Ornament } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const GUESTS = ["1", "2", "3", "4", "5", "6", "7", "8", "9+"];
 const OCCASIONS = ["Just dinner", "Birthday", "Anniversary", "Business", "Private dining", "Other"];
 
 /** "Book a table": dark details card (contact, hours, map) beside a reservation request form. */
 export default function T7ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind } = useT7();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -46,13 +48,15 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
         <div className="t7-reserve" data-form={section.showForm}>
           <div className="t7-reserve-card t7-reveal">
             <span className="t7-eyebrow t7-eyebrow-light">
-              <Ornament /> Reservations
+              <Ornament /> {fit ? "Reservations" : "Contact"}
             </span>
-            <h2 className="t7-h2">Book a table</h2>
+            <h2 className="t7-h2">{fit ? "Book a table" : "Get in touch"}</h2>
             <p className="t7-reserve-lead">
-              {section.showForm
-                ? "Tell us when you'd like to come and how many you'll be. Send a request and we'll get back to you."
-                : "Get in touch to book a table or ask about larger groups."}
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
+                  ? "Tell us when you'd like to come and how many you'll be. Send a request and we'll get back to you."
+                  : "Get in touch to book a table or ask about larger groups."}
             </p>
 
             <div className="t7-reserve-rows">
@@ -105,10 +109,10 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
             >
               <InboxHoneypot />
               <div className="t7-form-title">
-                <span className="t7-h3">Reservation request</span>
+                <span className="t7-h3">{fit ? "Reservation request" : "Send a message"}</span>
                 <small>All fields marked * are required</small>
               </div>
-              <div className="t7-form-row t7-form-row-3">
+              {fit ? (<div className="t7-form-row t7-form-row-3">
                 <label className="t7-field">
                   <span>Date *</span>
                   <input className="t7-input" name="date" type="date" required />
@@ -125,7 +129,7 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
                     ))}
                   </select>
                 </label>
-              </div>
+              </div>) : null}
               <div className="t7-form-row">
                 <label className="t7-field">
                   <span>Name *</span>
@@ -141,18 +145,18 @@ export default function T7ContactCard({ section }: { section: ContactCardSection
                   <span>Email</span>
                   <input className="t7-input" name="email" type="email" autoComplete="email" />
                 </label>
-                <label className="t7-field">
+                {fit ? (<label className="t7-field">
                   <span>Occasion</span>
                   <select className="t7-input" name="occasion" defaultValue={OCCASIONS[0]}>
                     {OCCASIONS.map((o) => (
                       <option key={o}>{o}</option>
                     ))}
                   </select>
-                </label>
+                </label>) : null}
               </div>
               <label className="t7-field">
                 <span>Notes</span>
-                <textarea className="t7-input" name="message" rows={3} placeholder="Allergies, high chair, seating preference…" />
+                <textarea className="t7-input" name="message" rows={3} placeholder={fit ? "Allergies, high chair, seating preference…" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t7-btn t7-btn-block">
                 Request a table <IconArrow size={16} />

@@ -16,7 +16,14 @@ type AttentionEvent = {
   id: string; kind: string; status: string; amount_kobo: number | null; created_at: string;
   site_id: string | null; slug: string | null; business_name: string | null; subscription_code: string | null;
 };
-type Data = { rows: Row[]; mrrKobo: number; domainRequests: Domain[]; attentionEvents?: AttentionEvent[] };
+type Setup = {
+  paystackMode: "live" | "test" | "missing";
+  cron: boolean;
+  plansTableFound: boolean;
+  plans: { ready: number; total: number; missing: string[] };
+  webhookUrl: string | null;
+};
+type Data = { rows: Row[]; mrrKobo: number; domainRequests: Domain[]; attentionEvents?: AttentionEvent[]; setup?: Setup };
 
 const ORDER = ["past_due", "trialing", "paused", "cancelling", "active", "archived"];
 const d = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : "—");
@@ -65,6 +72,8 @@ export default function AdminBillingPage() {
         <p className="text-sm">MRR <span className="text-xl font-semibold">{formatNaira(data.mrrKobo / 100)}</span></p>
       </div>
       {error ? <Notice kind="error">{error}</Notice> : null}
+
+      {data.setup ? <SetupCard setup={data.setup} onSync={() => act({ action: "sync_plans" })} /> : null}
 
       {flagged.length ? (
         <section className={cardCls}>
@@ -150,5 +159,53 @@ export default function AdminBillingPage() {
         ))}
       </section>
     </div>
+  );
+}
+
+/** Everything owners need before they can pay, with the one step that can be done from here. */
+function SetupCard({ setup, onSync }: { setup: Setup; onSync: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const plansOk = setup.plans.ready === setup.plans.total;
+  const allOk = setup.paystackMode !== "missing" && setup.plansTableFound && plansOk && setup.cron;
+  return (
+    <section className={cardCls}>
+      <h2 className="font-medium">Payments setup {allOk ? "· ready" : "· needs attention"}</h2>
+      <ul className="mt-3 space-y-2 text-sm">
+        <Step ok={setup.paystackMode !== "missing"}>
+          Paystack key:{" "}
+          {setup.paystackMode === "missing" ? "PAYSTACK_SECRET_KEY is not set in Vercel." : setup.paystackMode === "live" ? "live mode." : "test mode (no real money). Switch to the sk_live_ key to take payments, then set up plans again."}
+        </Step>
+        <Step ok={setup.plansTableFound}>
+          Billing tables: {setup.plansTableFound ? "found." : "missing. Run supabase/migrations/019_billing.sql in the Supabase SQL editor."}
+        </Step>
+        <Step ok={plansOk}>
+          Plans: {setup.plans.ready} of {setup.plans.total} ready in Paystack.
+          {!plansOk && setup.paystackMode !== "missing" && setup.plansTableFound ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => { setBusy(true); await onSync(); setBusy(false); }}
+              className="ml-2 rounded-full bg-koi-ink px-3 py-1 text-white disabled:opacity-50"
+            >
+              {busy ? "Setting up…" : "Set up plans now"}
+            </button>
+          ) : null}
+        </Step>
+        <Step ok={setup.cron}>Daily billing job: {setup.cron ? "CRON_SECRET is set." : "set CRON_SECRET in Vercel so trials end and renewals are checked."}</Step>
+        <Step ok={!!setup.webhookUrl}>
+          Paystack webhook: in Paystack → Settings → API Keys &amp; Webhooks, set the webhook URL to{" "}
+          <code className="rounded bg-koi-paper px-1">{setup.webhookUrl ?? "<NEXT_PUBLIC_SITE_ORIGIN>/api/paystack/webhook"}</code>. Payments are only confirmed through it.
+        </Step>
+      </ul>
+    </section>
+  );
+}
+
+function Step({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-2">
+      <span aria-hidden className={ok ? "text-koi-deep" : "text-koi-orange"}>{ok ? "✓" : "•"}</span>
+      <span>{children}</span>
+    </li>
   );
 }

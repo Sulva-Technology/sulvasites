@@ -7,6 +7,7 @@ import { blogHref, firstName, SUBSCRIBE_ID, useT17 } from "../ctx";
 import { IconRss } from "../icons";
 import T17Subscribe from "./T17Subscribe";
 import { T17Wordmark } from "./T17Header";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -19,6 +20,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 
 /** The ink-dark subscribe band on every page, then a quiet footer: wordmark, links, contact, socials. */
 export default function T17Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT17();
   const { baseUrl, navPages, profile, blog } = ctx;
   const socials = (profile.socials || {}) as Record<string, unknown>;
@@ -34,7 +36,7 @@ export default function T17Footer({ logoUrl }: { logoUrl: string | null }) {
           <div>
             <p className="t17-kicker t17-kicker-band">The newsletter</p>
             <h2 className="t17-band-title">
-              New writing from {firstName(name)}, <em>straight to your inbox.</em>
+              {fit ? `New writing from ${firstName(name)}, ` : `News from ${name}, `}<em>straight to your inbox.</em>
             </h2>
             <p className="t17-band-lead">No spam, no noise. Just new posts when they&apos;re ready. Unsubscribe any time.</p>
           </div>

@@ -7,6 +7,7 @@ import type { UseCasesSection } from "@/lib/pageSchema";
 import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { useT4 } from "../ctx";
 import { IconArrow } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const FALLBACK: UseCasesSection["items"] = [
   { title: "For busy individuals", description: "Plan once and let the app handle the rest — reminders, updates and everything in between." },
@@ -16,6 +17,7 @@ const FALLBACK: UseCasesSection["items"] = [
 
 /** Use cases as tabs: list on the left, detail panel on the right. */
 export default function T4UseCases({ section, sectionIndex }: { section: UseCasesSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { baseUrl } = useT4();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [active, setActive] = useState(0);
@@ -33,7 +35,7 @@ export default function T4UseCases({ section, sectionIndex }: { section: UseCase
     <section className="t4-section t4-soft-bg">
       <div className="t4-container">
         <div className="t4-head t4-reveal">
-          <span className="t4-label">Use cases</span>
+          <span className="t4-label">{fit ? "Use cases" : "Ways we help"}</span>
           <EditableText as="h2" className="t4-h2" value={title} placeholder="Section title" style={{ marginTop: 12 }} onCommit={(next) => set({ title: next })} />
           {description || enabled ? (
             <EditableText

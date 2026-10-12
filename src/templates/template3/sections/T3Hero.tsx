@@ -9,6 +9,7 @@ import type { NavPage, TemplateProps } from "@/templates/registry";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { initials, pad2, useSectionEditor } from "../edit";
 import { T3ArrowIcon } from "../ui";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 export type T3PageKind = "home" | "about" | "contact" | "extra";
 export type T3HeroData = {
@@ -78,6 +79,7 @@ export default function T3Hero({
   navPages?: NavPage[];
   baseUrl?: string;
 }) {
+  const fit = useFitsIndustry();
   const { enabled, set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Thoughtful work, made to last";
   const subtext =
@@ -129,7 +131,7 @@ export default function T3Hero({
                   {i < words.length - 2 ? ", " : i === words.length - 2 ? " and " : " "}
                 </span>
               ))}
-              <span className="t3-highlight-tail">to every project, from first call to final hand-off.</span>
+              <span className="t3-highlight-tail">{fit ? "to every project, from first call to final hand-off." : "to everything we do."}</span>
             </p>
             {lead}
             <div className="t3-hero-actions">
@@ -148,7 +150,7 @@ export default function T3Hero({
             </div>
             <figcaption>
               <b>{businessName}</b>
-              <span>{profile?.address || profile?.tagline || "Independent practice"}</span>
+              <span>{profile?.address || profile?.tagline || (fit ? "Independent practice" : profile?.business_name)}</span>
             </figcaption>
           </figure>
         </div>
@@ -283,7 +285,7 @@ export default function T3Hero({
                 )}
                 <div className="t3-window-card">
                   <b>{list[0]}</b>
-                  <span>{shot?.alt || profile?.tagline || "Case study"}</span>
+                  <span>{shot?.alt || profile?.tagline || (fit ? "Case study" : profile?.business_name)}</span>
                 </div>
               </div>
             </div>

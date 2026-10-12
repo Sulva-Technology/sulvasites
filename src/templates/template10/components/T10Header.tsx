@@ -10,6 +10,7 @@ import { ModeToggle } from "@/templates/shared/colorMode";
 import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { applyHref, useT10 } from "../ctx";
 import { IconArrow, IconCalendar, IconCap, IconClose, IconMenu, IconPhone } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -23,6 +24,7 @@ export default function T10Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT10();
   const { baseUrl, navPages, profile, hours, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -108,7 +110,7 @@ export default function T10Header({
           <div className="t10-header-end">
             <ModeToggle mode={mode} onToggle={toggleMode} className="t10-icon-btn" />
             <a href={applyHref(ctx)} className="t10-btn t10-btn-sm t10-hide-sm">
-              Apply now
+              {fit ? "Apply now" : "Get in touch"}
             </a>
             <button
               ref={burgerRef}
@@ -152,7 +154,7 @@ export default function T10Header({
           <div className="t10-drawer-foot t10-container">
             {hours[0] ? <p className="t10-drawer-hours">{hours.slice(0, 2).join(" · ")}</p> : null}
             <a className="t10-btn t10-btn-sun t10-btn-block" href={applyHref(ctx)} onClick={() => setOpen(false)}>
-              Apply now <IconArrow size={18} />
+              {fit ? "Apply now" : "Get in touch"} <IconArrow size={18} />
             </a>
             <a
               className="t10-btn t10-btn-ghost-light t10-btn-block"

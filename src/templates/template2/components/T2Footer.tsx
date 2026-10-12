@@ -6,6 +6,7 @@ import EditableText from "@/components/inline-editor/EditableText";
 import { useInlineEditor } from "@/components/inline-editor/InlineEditorContext";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/templates/shared/links";
 import { useT2 } from "../ctx";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string]> = [
   ["instagram", "Instagram"],
@@ -15,6 +16,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
 ];
 
 export default function T2Footer() {
+  const fit = useFitsIndustry();
   const { baseUrl, navPages, profile } = useT2();
   const editor = useInlineEditor();
   const socials = (profile.socials || {}) as Record<string, unknown>;
@@ -38,7 +40,7 @@ export default function T2Footer() {
                 onCommit={(next) => editor?.updateProfileField?.("tagline", next)}
               />
             ) : (
-              <p className="t2-footer-tag">Stories, work and ideas worth sharing.</p>
+              fit ? <p className="t2-footer-tag">Stories, work and ideas worth sharing.</p> : null
             )}
           </div>
 

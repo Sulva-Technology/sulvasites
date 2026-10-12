@@ -363,7 +363,7 @@ export const INDUSTRIES: Record<string, IndustryGuide> = {
     category: "Blog & publication",
     photoCategory: "creative",
     keywords: [
-      "blog", "blogger", "blogging", "newsletter", "substack", "writer", "author", "columnist", "journalist", "journal", "magazine", "publication",
+      "blog", "blogger", "blogging", "vlogger", "vlog", "content creator", "creator", "influencer", "youtuber", "storyteller", "newsletter", "substack", "writer", "author", "columnist", "journalist", "journal", "magazine", "publication",
       "online magazine", "digital magazine", "essays", "essayist", "poet", "poetry", "thought leader", "thought leadership", "commentary",
       "news site", "news blog", "food blog", "travel blog", "lifestyle blog", "book reviews", "storyteller", "personal blog",
     ],

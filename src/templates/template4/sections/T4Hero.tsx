@@ -8,6 +8,7 @@ import { pad2, useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { useT4 } from "../ctx";
 import { FEATURE_ICONS, IconArrow, IconCheck } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Spotlight beam + grid rails + crosshair marks behind a hero. */
 function Stage() {
@@ -51,6 +52,7 @@ export default function T4Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const { baseUrl, featureNames, valueTitles, profile, pageKind, pageLabel } = useT4();
   const { set } = useSectionEditor(section, sectionIndex);
   const [copied, setCopied] = useState<string | null>(null);
@@ -155,7 +157,7 @@ export default function T4Hero({
               ))}
               <div className="t4-term-line t4-term-ok">
                 <span className="t4-term-prompt">✓</span>
-                <span>We usually reply within one business day.</span>
+                <span>{fit ? "We usually reply within one business day." : "We reply as soon as we can."}</span>
               </div>
               <div className="t4-term-line">
                 <span className="t4-term-prompt">$</span>
@@ -222,7 +224,7 @@ export default function T4Hero({
             <div className="t4-product-head">
               <span className="t4-logo" />
               <b>{profile.business_name}</b>
-              <small>All systems ready</small>
+              <small>{fit ? "All systems ready" : "Here to help"}</small>
             </div>
             <ul>
               {features.map((f, i) => {

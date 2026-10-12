@@ -8,6 +8,7 @@ import T11Hours from "../components/T11Hours";
 import { directionsHref, useT11 } from "../ctx";
 import { Confetti, IconArrow, IconChat, IconMail, IconPhone, IconPin, Mesh } from "../icons";
 import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inbox";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /**
  * "Let's plan your event": a plum invitation card with contact rows and opening hours beside an
@@ -15,6 +16,7 @@ import { InboxHoneypot, InboxStatus, useInboxForm } from "@/templates/shared/inb
  * (or prefills the message when the site lists no packages).
  */
 export default function T11ContactCard({ section }: { section: ContactCardSection }) {
+  const fit = useFitsIndustry();
   const { profile, hours, pageKind, packages } = useT11();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -89,9 +91,13 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
           <div className="t11-plan-info t11-reveal">
             <Mesh className="t11-mesh-plan" />
             <Confetti set="card" />
-            <span className="t11-kicker t11-kicker-light">{section.showForm ? "Enquiries" : "Visit"}</span>
+            <span className="t11-kicker t11-kicker-light">{!fit ? "Contact" : section.showForm ? "Enquiries" : "Visit"}</span>
             <h2 className="t11-h2">
-              {section.showForm ? (
+              {!fit ? (
+                <>
+                  Get in <span className="t11-hl-light">touch</span>
+                </>
+              ) : section.showForm ? (
                 <>
                   Let&apos;s plan your <span className="t11-hl-light">event</span>
                 </>
@@ -102,7 +108,9 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
               )}
             </h2>
             <p className="t11-plan-lead">
-              {section.showForm
+              {!fit
+                ? "Send a message and we'll get back to you."
+                : section.showForm
                 ? "Share the occasion, a date and a rough guest count. Prefer to talk? Call or message us."
                 : "Call, message or drop by — we'd love to hear about your celebration."}
             </p>
@@ -123,15 +131,15 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
             >
               <InboxHoneypot />
               <div className="t11-form-title">
-                <h3>Event enquiry</h3>
+                <h3>{fit ? "Event enquiry" : "Send a message"}</h3>
                 <small>* required</small>
               </div>
 
               {packages.length ? (
                 <label className="t11-field">
-                  <span>Package / event type</span>
+                  <span>{fit ? "Package / event type" : "I'm interested in"}</span>
                   <select className="t11-input" name="service" defaultValue="">
-                    <option value="">Choose a package</option>
+                    <option value="">{fit ? "Choose a package" : "Choose one"}</option>
                     {packages.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -142,7 +150,7 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
                 </label>
               ) : null}
 
-              <div className="t11-form-row">
+              {fit ? (<div className="t11-form-row">
                 <label className="t11-field">
                   <span>Event date</span>
                   <input className="t11-input" name="date" type="date" />
@@ -151,7 +159,7 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
                   <span>Guests (approx.)</span>
                   <input className="t11-input" name="guests" type="number" min={1} inputMode="numeric" />
                 </label>
-              </div>
+              </div>) : null}
               <div className="t11-form-row">
                 <label className="t11-field">
                   <span>Your name *</span>
@@ -167,8 +175,8 @@ export default function T11ContactCard({ section }: { section: ContactCardSectio
                 <input className="t11-input" name="email" type="email" autoComplete="email" />
               </label>
               <label className="t11-field">
-                <span>Tell us about it</span>
-                <textarea className="t11-input" name="message" rows={3} placeholder="The occasion, the venue (if you have one), the vibe…" />
+                <span>{fit ? "Tell us about it" : "Message"}</span>
+                <textarea className="t11-input" name="message" rows={3} placeholder={fit ? "The occasion, the venue (if you have one), the vibe…" : "How can we help?"} />
               </label>
               <button type="submit" disabled={inbox.sending} className="t11-btn t11-btn-block t11-btn-lg">
                 Send enquiry <IconArrow size={18} />

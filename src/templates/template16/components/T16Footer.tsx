@@ -8,6 +8,7 @@ import { buildEmailLink, buildTelLink, buildWhatsAppLink, navPageHref } from "@/
 import { directionsHref, hoursOf, joinHref, useT16 } from "../ctx";
 import { IconArrow, IconChat } from "../icons";
 import { T16Mark } from "./T16Header";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const SOCIALS: Array<[key: string, label: string, short: string]> = [
   ["instagram", "Instagram", "IG"],
@@ -20,6 +21,7 @@ const SOCIALS: Array<[key: string, label: string, short: string]> = [
 
 /** Deep-blue "ready to join?" panel (skipped where the page already has the join form) + four-column footer. */
 export default function T16Footer({ logoUrl }: { logoUrl: string | null }) {
+  const fit = useFitsIndustry();
   const ctx = useT16();
   const { baseUrl, navPages, profile, pageKind, pageHasForm, circles } = ctx;
   const editor = useInlineEditor();
@@ -36,24 +38,24 @@ export default function T16Footer({ logoUrl }: { logoUrl: string | null }) {
             <div className="t16-cta t16-reveal">
               <span className="t16-cta-glow" aria-hidden="true" />
               <h2 className="t16-h2">
-                Ready to belong?
+                {fit ? "Ready to belong?" : "Ready to get started?"}
                 <br />
-                <span className="t16-cta-soft">Join {profile.business_name}.</span>
+                <span className="t16-cta-soft">{fit ? "Join" : "Talk to"} {profile.business_name}.</span>
               </h2>
               <p className="t16-cta-lead">
-                Become part of a community that grows together — we&apos;ll welcome you personally and help you find your place.
+                {fit ? "Become part of a community that grows together — we'll welcome you personally and help you find your place." : "Tell us what you need — we'll get back to you personally."}
               </p>
               <div className="t16-actions t16-actions-center">
                 {profile.whatsapp ? (
                   <a className="t16-btn t16-btn-white t16-btn-lg" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
-                    <IconChat size={16} /> Join via WhatsApp
+                    <IconChat size={16} /> {fit ? "Join via WhatsApp" : "Chat on WhatsApp"}
                   </a>
                 ) : null}
                 <a className={`t16-btn ${profile.whatsapp ? "t16-btn-onblue" : "t16-btn-white"} t16-btn-lg`} href={joinHref(ctx)}>
-                  Become a member <IconArrow size={18} />
+                  {fit ? "Become a member" : "Get in touch"} <IconArrow size={18} />
                 </a>
               </div>
-              <p className="t16-cta-note">Personal welcome · No pressure · Leave any time</p>
+              {fit ? <p className="t16-cta-note">Personal welcome · No pressure · Leave any time</p> : null}
             </div>
           </div>
         </section>
@@ -115,7 +117,7 @@ export default function T16Footer({ logoUrl }: { logoUrl: string | null }) {
               </div>
             ) : hours.length ? (
               <div>
-                <p className="t16-footer-h">When we meet</p>
+                <p className="t16-footer-h">{fit ? "When we meet" : "Opening hours"}</p>
                 <ul className="t16-footer-hours">
                   {hours.map((h) => (
                     <li key={h}>{h}</li>
@@ -137,7 +139,7 @@ export default function T16Footer({ logoUrl }: { logoUrl: string | null }) {
               </div>
               {profile.whatsapp ? (
                 <a className="t16-btn t16-btn-wa t16-btn-block t16-footer-wa" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
-                  <IconChat size={16} /> Join via WhatsApp
+                  <IconChat size={16} /> {fit ? "Join via WhatsApp" : "Chat on WhatsApp"}
                 </a>
               ) : null}
             </div>

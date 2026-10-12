@@ -22,11 +22,13 @@ import {
   IconTicket,
   Mesh,
 } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type Photo = { url: string; alt: string };
 
 /** The tilted photo "ticket": photo on the left, perforated stub with the host's name on the right. */
 function TicketCard({ photo, name, city }: { photo?: Photo; name: string; city: string }) {
+  const fit = useFitsIndustry();
   return (
     // The wrapper casts the shadow: the ticket's punched notches are a CSS mask, which would clip it.
     <div className="t11-ticket-wrap">
@@ -42,7 +44,7 @@ function TicketCard({ photo, name, city }: { photo?: Photo; name: string; city: 
           )}
         </div>
         <div className="t11-ticket-stub">
-          <span className="t11-ticket-label">Admit all</span>
+          <span className="t11-ticket-label">{fit ? "Admit all" : "Welcome"}</span>
           <span className="t11-ticket-name">{name}</span>
           {city ? (
             <span className="t11-ticket-meta">
@@ -58,6 +60,7 @@ function TicketCard({ photo, name, city }: { photo?: Photo; name: string; city: 
 
 /** Round "let's celebrate" sticker that slowly spins (decorative). */
 function SpinSticker({ className }: { className?: string }) {
+  const fit = useFitsIndustry();
   return (
     <span className={`t11-spin ${className ?? ""}`} aria-hidden="true">
       <svg viewBox="0 0 120 120" focusable="false">
@@ -65,7 +68,7 @@ function SpinSticker({ className }: { className?: string }) {
           <path id="t11-spin-path" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0" />
         </defs>
         <text>
-          <textPath href="#t11-spin-path">LET&apos;S CELEBRATE ✦ LET&apos;S CELEBRATE ✦</textPath>
+          <textPath href="#t11-spin-path">{fit ? "LET'S CELEBRATE ✦ LET'S CELEBRATE ✦" : "GET IN TOUCH ✦ GET IN TOUCH ✦"}</textPath>
         </text>
       </svg>
       <span className="t11-spin-core">
@@ -93,6 +96,7 @@ export default function T11Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT11();
   const { photos, profile, pageKind, pageLabel, hours, baseUrl, packages } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -100,7 +104,7 @@ export default function T11Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Plan your event");
+  const ctaText = section.ctaText || (enabled ? "" : fit ? "Plan your event" : "Get in touch");
   const city = cityOf(profile.address);
   const pkgHref = packagesHref(ctx);
 

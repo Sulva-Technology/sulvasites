@@ -10,6 +10,7 @@ import type { PageKey } from "@/lib/pageSchema";
 import { ModeToggle } from "@/templates/shared/colorMode";
 import { bookHref, useT5 } from "../ctx";
 import { IconCalendar, IconInstagram, IconMenu } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -22,6 +23,7 @@ export default function T5Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT5();
   const { baseUrl, navPages, profile, mode, toggleMode } = ctx;
   const editor = useInlineEditor();
@@ -61,7 +63,7 @@ export default function T5Header({
   return (
     <>
       <div className="t5-announce">
-        By appointment only · <Link href={bookHref(ctx)}>Reserve your spot</Link>
+        {fit ? "By appointment only · " : "Questions? "}<Link href={bookHref(ctx)}>{fit ? "Reserve your spot" : "Send us a message"}</Link>
       </div>
 
       <header className="t5-header" data-scrolled={scrolled}>
@@ -91,7 +93,7 @@ export default function T5Header({
                     style={{ display: "inline" }}
                   />
                 </span>
-                <span className="t5-brand-sub">Beauty studio</span>
+                {fit ? <span className="t5-brand-sub">Beauty studio</span> : null}
               </>
             )}
           </Link>
@@ -135,7 +137,7 @@ export default function T5Header({
       ) : null}
 
       <div className="t5-bookbar">
-        <span>Ready for your appointment?</span>
+        <span>{fit ? "Ready for your appointment?" : "Ready to get started?"}</span>
         <Link className="t5-btn t5-btn-rose" href={bookHref(ctx)}>
           Book now
         </Link>

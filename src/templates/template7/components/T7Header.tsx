@@ -11,6 +11,7 @@ import { buildTelLink, navPageHref } from "@/templates/shared/links";
 import { reserveHref, shopHref, useT7 } from "../ctx";
 import { IconArrow, IconBag, IconClose, IconCutlery, IconMenu, IconPhone } from "../icons";
 import { useBag } from "../shop/useBag";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 type NavItem = { id: string; href: string; label: string; active: boolean; coreKey?: PageKey };
 
@@ -24,6 +25,7 @@ export default function T7Header({
   currentPage: PageKey | null;
   currentExtraKey?: string | null;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT7();
   const { baseUrl, navPages, profile, hours, mode, toggleMode, shop, openCart, pageKind } = ctx;
   const { count, ready } = useBag();
@@ -116,7 +118,7 @@ export default function T7Header({
               </button>
             ) : null}
             <a href={shop ? shopHref(baseUrl) : reserveHref(ctx)} className="t7-btn t7-btn-sm t7-hide-sm">
-              {shop ? "Order online" : "Reserve"}
+              {shop ? "Order online" : fit ? "Reserve" : "Contact"}
             </a>
             <button
               type="button"
@@ -164,7 +166,7 @@ export default function T7Header({
                 </Link>
               ) : null}
               <a className={shop ? "t7-btn t7-btn-ghost" : "t7-btn"} href={reserveHref(ctx)} onClick={() => setOpen(false)}>
-                Reserve a table {shop ? null : <IconArrow size={16} />}
+                {fit ? "Reserve a table" : "Get in touch"} {shop ? null : <IconArrow size={16} />}
               </a>
               {profile.phone ? (
                 <a className="t7-btn t7-btn-ghost" href={buildTelLink(profile.phone)}>

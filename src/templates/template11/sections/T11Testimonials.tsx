@@ -3,11 +3,13 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { useSectionEditor } from "@/templates/shared/edit";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 const TONES = ["peach", "lilac", "butter", "rose"] as const;
 
 /** Guest & client words as sticky notes: pastel squares, washi tape and a gentle alternating tilt. */
 export default function T11Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
+  const fit = useFitsIndustry();
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((t) => t.quote?.trim())) return null;
   const title = section.title || (enabled ? "" : "Kind words");
@@ -23,7 +25,7 @@ export default function T11Testimonials({ section, sectionIndex }: { section: Te
     <section className="t11-section t11-notes-section">
       <div className="t11-container">
         <header className="t11-head t11-head-center t11-reveal">
-          <span className="t11-kicker">Guest book</span>
+          <span className="t11-kicker">{fit ? "Guest book" : "Reviews"}</span>
           <EditableText as="h2" className="t11-h2" value={title} placeholder="Kind words" onCommit={(next) => set({ title: next })} />
         </header>
 

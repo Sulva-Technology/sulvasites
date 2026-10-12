@@ -8,6 +8,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { buildEmailLink, buildTelLink, buildWhatsAppLink } from "@/templates/shared/links";
 import { cityOf, directionsHref, hoursOf, joinHref, splitHeadline, useT16 } from "../ctx";
 import { IconArrow, IconArrowUpRight, IconChat, IconCircles, IconClock, IconMail, IconPhone, IconPin } from "../icons";
+import { useFitsIndustry } from "@/templates/shared/fit";
 
 /** Headline with its accent phrase in serif italic (plain text while editing). */
 export function T16Title({
@@ -56,6 +57,7 @@ export default function T16Hero({
   sectionIndex?: number;
   primary?: boolean;
 }) {
+  const fit = useFitsIndustry();
   const ctx = useT16();
   const { photos, profile, pageKind, pageLabel, baseUrl, pageHasCircles, heroStats } = ctx;
   const { enabled, set } = useSectionEditor(section, sectionIndex);
@@ -63,7 +65,7 @@ export default function T16Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Become a member");
+  const ctaText = section.ctaText || (enabled ? "" : fit ? "Become a member" : "Get in touch");
   const city = cityOf(profile.address);
 
   const title = (cls: string, as: "h1" | "h2" = "h1") => (
@@ -169,7 +171,7 @@ export default function T16Hero({
                   <span className="t16-ico-tile">
                     <IconClock size={20} />
                   </span>
-                  <small>When we meet</small>
+                  <small>{fit ? "When we meet" : "Opening hours"}</small>
                   <ul className="t16-tile-hours">
                     {hours.map((h) => (
                       <li key={h}>{h}</li>
