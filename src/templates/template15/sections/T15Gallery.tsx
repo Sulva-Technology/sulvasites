@@ -23,7 +23,7 @@ function Media({ img, eager }: { img: Item; eager?: boolean }) {
  */
 export default function T15Gallery({ section, sectionIndex }: { section: GallerySection; sectionIndex?: number }) {
   const { enabled, set } = useSectionEditor(section, sectionIndex);
-  const title = section.title || (enabled ? "" : "Behind the machines");
+  const title = section.title || (enabled ? "" : "Gallery");
   const real = (section.images ?? []).filter((img) => img.url);
   if (!enabled && real.length === 0) return null;
   const images: Item[] = enabled

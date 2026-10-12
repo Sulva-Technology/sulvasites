@@ -122,7 +122,7 @@ export default function T15Hero({
         ? { key: "mail", icon: <IconMail size={20} />, label: "Email", value: profile.email, href: buildEmailLink(profile.email), ext: false }
         : null,
       profile.address
-        ? { key: "visit", icon: <IconPin size={20} />, label: "Showroom", value: profile.address, href: directionsHref(profile.address), ext: true }
+        ? { key: "visit", icon: <IconPin size={20} />, label: "Visit", value: profile.address, href: directionsHref(profile.address), ext: true }
         : null,
     ].filter((t): t is NonNullable<typeof t> => !!t);
 
@@ -162,7 +162,7 @@ export default function T15Hero({
                   <span className="t15-tile-ico">
                     <IconClock size={20} />
                   </span>
-                  <small>Showroom hours</small>
+                  <small>Opening hours</small>
                   <ul>
                     {hours.map((h) => (
                       <li key={h}>{h}</li>
@@ -248,7 +248,7 @@ export default function T15Hero({
             {cta("t15-btn t15-btn-glass t15-btn-glass-strong t15-btn-lg")}
             {pageHasCollection && section.ctaHref !== "#collection" ? (
               <a className="t15-btn t15-btn-outline t15-btn-lg" href="#collection">
-                View the collection
+                See what we offer
               </a>
             ) : profile.phone ? (
               <a className="t15-btn t15-btn-outline t15-btn-lg" href={buildTelLink(profile.phone)}>

@@ -36,12 +36,17 @@ import {
   placeOwnerImages,
   type ImageRef,
 } from "./setupPhotos.ts";
-import { isTemplateKey, resolveTemplateChoice, type TemplateChoice } from "./templateChoice.ts";
+import { industryFor, isTemplateKey, resolveTemplateChoice, type TemplateChoice } from "./templateChoice.ts";
 
 export const MAX_REPAIR_ROUNDS = 2;
 
 export type { ChatFn };
-export type BuilderDeps = { chat?: ChatFn; onProgress?: (stage: string) => void };
+export type BuilderDeps = {
+  chat?: ChatFn;
+  onProgress?: (stage: string) => void;
+  /** Epoch ms. AI calls still running then are abandoned and the pages left are written from the brief. */
+  deadline?: number;
+};
 
 export type SitePlan = {
   brief: Brief;
@@ -136,7 +141,7 @@ export async function planSite(
     alternatives: choice.alternatives,
     photoCategory: choice.photoCategory,
     source: choice.source,
-    pages: getPageJobs(choice.templateKey).map((j) => ({ key: j.key, label: j.label, kind: j.kind })),
+    pages: getPageJobs(choice.templateKey, brief).map((j) => ({ key: j.key, label: j.label, kind: j.kind })),
   };
 }
 
@@ -152,9 +157,9 @@ export function rehydratePlan(raw: unknown): SitePlan {
     templateKey,
     reason: typeof r.reason === "string" ? r.reason.slice(0, 200) : "",
     alternatives: [],
-    photoCategory: category === "general" && r.photoCategory !== "general" ? getIndustry(templateKey).photoCategory : category,
+    photoCategory: category === "general" && r.photoCategory !== "general" ? industryFor(brief, templateKey).photoCategory : category,
     source: "user",
-    pages: getPageJobs(templateKey).map((j) => ({ key: j.key, label: j.label, kind: j.kind })),
+    pages: getPageJobs(templateKey, brief).map((j) => ({ key: j.key, label: j.label, kind: j.kind })),
   };
 }
 
@@ -197,7 +202,7 @@ export async function writeProfile(plan: SitePlan, deps: BuilderDeps = {}): Prom
 
 export async function writePage(plan: SitePlan, key: string, deps: BuilderDeps = {}, avoid: string[] = []): Promise<PageResult> {
   const chat = deps.chat ?? aiChat;
-  const job = getPageJobs(plan.templateKey).find((j) => j.key === key);
+  const job = getPageJobs(plan.templateKey, plan.brief).find((j) => j.key === key);
   if (!job) throw new Error(`Unknown page '${key}' for this template.`);
   return generatePage(job, plan, chat, avoid);
 }
@@ -205,7 +210,7 @@ export async function writePage(plan: SitePlan, key: string, deps: BuilderDeps =
 async function generatePage(job: PageJob, plan: SitePlan, chat: ChatFn, avoid: string[]): Promise<PageResult> {
   const { brief, templateKey } = plan;
   const base: Prompt = buildPagePrompt({ brief, templateKey, job, avoid });
-  const defaults = { ctaText: fitSentence(getIndustry(templateKey).ctas[0] ?? "Get in touch", B.heroCta) };
+  const defaults = { ctaText: fitSentence(industryFor(brief, templateKey).ctas[0] ?? "Get in touch", B.heroCta) };
 
   let prompt = base;
   let best: { draft: ReturnType<typeof parsePageOutput>; score: number } | null = null;
@@ -263,7 +268,7 @@ export type FinishOptions = {
 };
 
 export function finishSite(plan: SitePlan, profile: SiteProfile, results: PageResult[], opts: FinishOptions = {}): BuildResult {
-  const jobs = getPageJobs(plan.templateKey);
+  const jobs = getPageJobs(plan.templateKey, plan.brief);
   const labels = Object.fromEntries(jobs.map((j) => [j.key, j.label]));
   const extraKeys = jobs.filter((j) => j.kind === "extra").map((j) => j.key);
   const byKey: Record<string, PageData> = {};
@@ -339,12 +344,33 @@ export function patientChat(chat: ChatFn, sleep: (ms: number) => Promise<void> =
   };
 }
 
+const OUT_OF_TIME = "AI time budget used up";
+
+/**
+ * Stops waiting on the AI at the deadline. The pipeline treats that like any upstream failure, so
+ * pages already written keep the AI copy and the rest get plain copy from the owner's own brief.
+ */
+export function withDeadline(chat: ChatFn, deadline: number): ChatFn {
+  return (opts) => {
+    const left = deadline - Date.now();
+    if (left <= 0) return Promise.reject(new Error(OUT_OF_TIME));
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(OUT_OF_TIME)), left);
+      chat(opts).then(
+        (v) => { clearTimeout(t); resolve(v); },
+        (e) => { clearTimeout(t); reject(e); },
+      );
+    });
+  };
+}
+
 export async function buildSite(
   input: { messages?: unknown; state?: unknown; templateOverride?: string | null },
   deps: BuilderDeps = {},
 ): Promise<BuildResult> {
   const progress = deps.onProgress ?? (() => {});
-  deps = { ...deps, chat: patientChat(deps.chat ?? aiChat) };
+  const patient = patientChat(deps.chat ?? aiChat);
+  deps = { ...deps, chat: deps.deadline ? withDeadline(patient, deps.deadline) : patient };
   progress("plan");
   const plan = await planSite(input, deps);
   progress("profile");
@@ -367,4 +393,16 @@ export async function buildSite(
   }
   progress("finish");
   return finishSite(plan, profile, results);
+}
+
+/**
+ * The whole site written from the owner's own words with no AI call, for when the AI is down.
+ * Never another business's sample content: every page names this business and what it does.
+ */
+export function buildSiteOffline(input: { state?: unknown; templateOverride?: string | null }): Promise<BuildResult> {
+  return buildSite(input, {
+    chat: async () => {
+      throw new Error("AI unavailable");
+    },
+  });
 }

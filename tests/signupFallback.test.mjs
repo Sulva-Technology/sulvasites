@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { briefFromAnswers, parseSignupBody, personalizeSample } from "../src/lib/signup/fallbackSite.ts";
+import { briefFromAnswers, parseSignupBody } from "../src/lib/signup/fallbackSite.ts";
+import { buildSiteOffline } from "../src/lib/ai/siteBuilder.ts";
 import { suggestTemplates } from "../src/lib/signup/suggest.ts";
 import { TEMPLATE_KEYS } from "../src/lib/ai/templateChoice.ts";
 
@@ -29,23 +30,18 @@ test("brief carries the answers", () => {
   assert.equal(b.shopIntent, true);
 });
 
-test("sample content gets the owner's name and contacts", () => {
-  const sample = {
-    profile: { business_name: "Ada \"Okafor\"", tagline: "x", description: "y" },
-    pages: {
-      home: { sections: [{ type: "hero", headline: "Welcome to Ada \"Okafor\"" }] },
-      about: { sections: [] },
-      contact: { sections: [] },
-    },
-  };
-  const built = personalizeSample("t1", sample, { ...answers, whatsapp: "+2348031234567" }, "bola@example.com");
-  assert.equal(built.templateKey, "t1");
-  assert.equal(built.pages.home.sections[0].headline, "Welcome to Bola's Bakes");
-  assert.equal(built.profile.business_name, "Bola's Bakes");
-  assert.equal(built.profile.whatsapp, "+2348031234567");
-  assert.equal(built.profile.email, "bola@example.com");
-  assert.deepEqual(built.extraPages, []);
-  assert.equal(sample.pages.home.sections[0].headline, "Welcome to Ada \"Okafor\"", "input not mutated");
+test("without AI the site is written from the answers, not the template's sample business", async () => {
+  const owner = { ...answers, whatsapp: "+2348031234567" };
+  for (const key of ["t1", "t15", "t5"]) {
+    const built = await buildSiteOffline({ state: briefFromAnswers(owner, "bola@example.com"), templateOverride: key });
+    const text = JSON.stringify(built.pages);
+    assert.equal(built.profile.business_name, "Bola's Bakes");
+    assert.equal(built.profile.whatsapp, "+2348031234567");
+    assert.equal(built.profile.email, "bola@example.com");
+    assert.match(text, /cakes and pastries/i);
+    assert.doesNotMatch(text, /automotive legends|Ferrari|collector cars|showroom/i, `${key}: sample business leaked`);
+    assert.match(built.pages.home.sections.find((x) => x.type === "hero").headline, /cakes and pastries/i);
+  }
 });
 
 test("three distinct real template suggestions", () => {

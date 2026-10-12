@@ -93,7 +93,8 @@ test("plan stage extracts a brief from a raw paragraph transcript", async () => 
 });
 
 test("write stage: valid first answer needs no repair; AI image urls are never trusted", async () => {
-  const plan = rehydratePlan({ templateKey: "t8", brief });
+  // A clinic on the clinic design: other businesses get pages for their own industry instead of "Doctors".
+  const plan = rehydratePlan({ templateKey: "t8", brief: { ...brief, whatTheyDo: "Family clinic and pharmacy" } });
   const s = stub();
   const r = await writePage(plan, "doctors", { chat: s.chat });
   assert.equal(r.repairRounds, 0);

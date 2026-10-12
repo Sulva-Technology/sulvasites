@@ -3,7 +3,7 @@ import { TEMPLATE_META } from "../../templates/meta.ts";
 import { normalizeCategory } from "../stockPhotos.ts";
 import type { PhotoCategory } from "../stockPhotoData.ts";
 import type { Brief } from "./brief.ts";
-import { INDUSTRIES, getIndustry } from "./prompts/industries.ts";
+import { GENERIC_INDUSTRY, INDUSTRIES, getIndustry, type IndustryGuide } from "./prompts/industries.ts";
 
 export type TemplateChoice = {
   templateKey: string;
@@ -47,6 +47,23 @@ export function scoreTemplates(brief: Brief): KeywordScore[] {
     }
     return { key, score, matched };
   });
+}
+
+/**
+ * The writing guide for this business on this template. The template decides the layout; the words
+ * follow what the business does, so a tech firm on the Automotive design is written as a tech firm,
+ * never as a car dealer. Keeps the template's own guide when it matches, when the brief says too
+ * little to judge, or for shop templates (their pages and rules are built around the cart).
+ */
+export function industryFor(brief: Brief, templateKey: string): IndustryGuide {
+  const own = getIndustry(templateKey);
+  if (own.shop || own === GENERIC_INDUSTRY || (!brief.whatTheyDo && !brief.services.length)) return own;
+  const scores = scoreTemplates(brief);
+  if ((scores.find((s) => s.key === templateKey)?.score ?? 0) > 0) return own;
+  const best = scores
+    .filter((s) => s.score > 0 && !isShop(s.key))
+    .sort((a, b) => b.score - a.score || TEMPLATE_KEYS.indexOf(a.key) - TEMPLATE_KEYS.indexOf(b.key))[0];
+  return best ? getIndustry(best.key) : GENERIC_INDUSTRY;
 }
 
 function allowedByShop(key: string, brief: Brief, scores: KeywordScore[]): boolean {
@@ -105,7 +122,7 @@ export function resolveTemplateChoice(raw: unknown, brief: Brief, override?: str
       templateKey: override,
       reason: "Template chosen by you.",
       alternatives: [],
-      photoCategory: r.photoCategory !== undefined && pc !== "general" ? pc : getIndustry(override).photoCategory,
+      photoCategory: r.photoCategory !== undefined && pc !== "general" ? pc : industryFor(brief, override).photoCategory,
       source: "user",
     };
   }

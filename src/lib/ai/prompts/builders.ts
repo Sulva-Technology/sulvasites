@@ -3,6 +3,7 @@ import { TEMPLATE_META } from "../../../templates/meta.ts";
 import { PHOTO_CATEGORIES } from "../../stockPhotoData.ts";
 import { briefToText, type Brief, type ChatMessage } from "../brief.ts";
 import type { PageJob } from "../pagePlans.ts";
+import { industryFor } from "../templateChoice.ts";
 import { getIndustry, renderIndustryGuide } from "./industries.ts";
 import {
   BUDGETS,
@@ -122,7 +123,7 @@ export function buildPlanPrompt(brief: Brief): Prompt {
 // ---------- profile ----------
 
 export function buildProfilePrompt(brief: Brief, templateKey: string): Prompt {
-  const industry = getIndustry(templateKey);
+  const industry = industryFor(brief, templateKey);
   const system = buildSystemPrompt({
     task: "Write the short profile text (tagline and description) for a small business website.",
     locale: localeFor(brief),
@@ -157,10 +158,12 @@ export function buildPagePrompt(args: {
   avoid?: string[];
 }): Prompt {
   const { brief, templateKey, job } = args;
-  const industry = getIndustry(templateKey);
+  const industry = industryFor(brief, templateKey);
   const types = modelSectionsOf(job);
-  const extraRules: string[] = [];
-  if (industry.shop) {
+  const extraRules: string[] = [
+    "The website design is only a layout. Write about what THIS business does, from the business facts. Never borrow products, services, examples or wording from any other industry.",
+  ];
+  if (getIndustry(templateKey).shop) {
     extraRules.push(
       "This is an online-shop site. Never invent products, product names, prices, discounts, stock levels or reviews. Write about categories and how ordering works. The owner adds real products later in the Shop tab.",
     );

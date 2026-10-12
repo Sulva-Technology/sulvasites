@@ -1,7 +1,9 @@
 // Which pages a template gets and which sections each page holds. Pure; relative imports only.
+import type { Brief } from "./brief.ts";
 import type { SectionType } from "./prompts/industries.ts";
 import { getIndustry } from "./prompts/industries.ts";
-import { getPagePresets } from "../../templates/pagePresets.ts";
+import { industryFor } from "./templateChoice.ts";
+import { getPagePresets, type PagePreset } from "../../templates/pagePresets.ts";
 
 export type PageJob = {
   key: string;
@@ -40,7 +42,26 @@ const CORE: Array<Omit<PageJob, "kind" | "heroHref">> = [
   },
 ];
 
-export function getPageJobs(templateKey: string): PageJob[] {
+/** Extra pages for a business no industry guide fits. */
+const GENERIC_EXTRAS: PagePreset[] = [
+  { key: "services", label: "Services", headline: "What we offer", sections: ["hero", "services", "use_cases", "faq", "contact_card"] },
+];
+
+/**
+ * The template's recommended extra pages, or, when the business is in another industry than the
+ * template was designed for, that industry's pages (a tech firm on the Automotive design gets
+ * "Features", not "Cars for sale").
+ */
+function extraPresets(templateKey: string, brief?: Brief): PagePreset[] {
+  if (!brief) return getPagePresets(templateKey);
+  const guide = industryFor(brief, templateKey);
+  if (guide === getIndustry(templateKey)) return getPagePresets(templateKey);
+  const own = getPagePresets(guide.key);
+  return own.length ? own : GENERIC_EXTRAS;
+}
+
+/** Pages to write. Pass the brief so extra pages follow the business, not just the design. */
+export function getPageJobs(templateKey: string, brief?: Brief): PageJob[] {
   const shop = !!getIndustry(templateKey).shop;
   const finish = (job: Omit<PageJob, "kind" | "heroHref">, kind: PageJob["kind"]): PageJob => ({
     ...job,
@@ -48,7 +69,7 @@ export function getPageJobs(templateKey: string): PageJob[] {
     heroHref: !shop && job.sections.includes("contact_card") ? "#contact" : "",
   });
   const jobs = CORE.map((j) => finish(j, "core"));
-  for (const p of getPagePresets(templateKey)) {
+  for (const p of extraPresets(templateKey, brief)) {
     jobs.push(
       finish(
         {

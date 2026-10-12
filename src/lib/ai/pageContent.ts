@@ -5,10 +5,10 @@ import { validatePageData } from "../pageSchema.ts";
 import type { Brief } from "./brief.ts";
 import type { PageJob } from "./pagePlans.ts";
 import { modelSectionsOf } from "./prompts/builders.ts";
-import { getIndustry } from "./prompts/industries.ts";
 import { BUDGETS as B, ITEM_COUNTS } from "./prompts/rules.ts";
 import { isModelSection, type ModelSectionType } from "./prompts/sections.ts";
 import { fitSentence, sanitizeRichHtml, stripTags } from "./quality.ts";
+import { industryFor } from "./templateChoice.ts";
 
 type Rec = Record<string, unknown>;
 
@@ -164,7 +164,7 @@ function nameOf(b: Brief) {
 
 function offersOf(b: Brief, templateKey: string, count: number): string[] {
   const own = b.services.map((x) => cap(fitSentence(x, B.serviceTitle)));
-  const generic = getIndustry(templateKey).fallbackOffers;
+  const generic = industryFor(b, templateKey).fallbackOffers;
   const all = [...own];
   for (const g of generic) if (all.length < count && !all.some((o) => o.toLowerCase() === g.toLowerCase())) all.push(g);
   return all.slice(0, Math.max(count, Math.min(own.length, 6)));
@@ -177,7 +177,7 @@ function whatLine(b: Brief) {
 
 export function fallbackSection(type: ModelSectionType, job: PageJob, brief: Brief, templateKey: string): Section {
   const name = nameOf(brief);
-  const g = getIndustry(templateKey);
+  const g = industryFor(brief, templateKey);
   switch (type) {
     case "hero": {
       const headline =

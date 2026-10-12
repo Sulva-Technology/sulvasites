@@ -18,7 +18,7 @@ const SOCIALS: Array<[key: string, label: string]> = [
   ["linkedin", "LinkedIn"],
 ];
 
-/** Glass "find your next car" panel (skipped where the page already has the enquiry form) + quiet footer. */
+/** Glass "let's talk" panel (skipped where the page already has the enquiry form) + quiet footer. */
 export default function T15Footer({ logoUrl }: { logoUrl: string | null }) {
   const ctx = useT15();
   const { baseUrl, navPages, profile, pageKind, pageHasForm } = ctx;
@@ -35,9 +35,9 @@ export default function T15Footer({ logoUrl }: { logoUrl: string | null }) {
           <div className="t15-container">
             <div className="t15-cta t15-glass t15-reveal">
               <span className="t15-cta-glow" aria-hidden="true" />
-              <h2 className="t15-h2">Found the one? Let&apos;s talk.</h2>
+              <h2 className="t15-h2">Ready when you are. Let&apos;s talk.</h2>
               <p className="t15-cta-lead">
-                Ask about a car, book a private viewing or tell us what you&apos;re looking for — we&apos;ll come back to you personally.
+                Ask a question, book a visit or tell us what you&apos;re looking for — we&apos;ll come back to you personally.
               </p>
               <div className="t15-actions t15-actions-center">
                 <a className="t15-btn t15-btn-solid t15-btn-lg" href={enquireHref(ctx)}>

@@ -26,7 +26,7 @@ export default function T15UseCases({
   const { photos } = ctx;
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((it) => it.title?.trim())) return null;
-  const title = section.title || (enabled ? "" : "The collection");
+  const title = section.title || (enabled ? "" : "What we offer");
   const description = section.description || "";
   // Editor: the real items untouched (one blank card when empty). Visitors: titled items only.
   const items = enabled

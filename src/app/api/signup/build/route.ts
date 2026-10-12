@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { isTemplateKey } from "@/lib/ai/templateChoice";
-import { buildSite } from "@/lib/ai/siteBuilder";
+import { buildSite, buildSiteOffline, type BuildResult } from "@/lib/ai/siteBuilder";
 import { sendLifecycleEmail } from "@/lib/billing/email.server";
 import { businessKey, isDisposableEmail, normalizeEmail } from "@/lib/billing/identity";
 import { canStartSite, evaluateTrialSignup } from "@/lib/billing/signupGuard";
@@ -13,11 +13,10 @@ import { listOwnedSites } from "@/lib/billing/subscriptions.server";
 import { TRIAL_DAYS } from "@/lib/marketing/pricing";
 import { clientIp } from "@/lib/shop/requestIp";
 import { shopRateLimit } from "@/lib/shop/rateLimit";
-import { briefFromAnswers, finishTrialBuild, parseSignupBody, personalizeSample, type TrialBuild } from "@/lib/signup/fallbackSite";
+import { briefFromAnswers, finishTrialBuild, parseSignupBody } from "@/lib/signup/fallbackSite";
 import { insertTrialSite, persistTrialSite } from "@/lib/signup/persistTrialSite.server";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { requireUser } from "@/lib/supabase/requireUser.server";
-import { sampleSite } from "@/templates/sampleSite";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -133,16 +132,19 @@ export async function POST(req: Request) {
     return json({ error: "Signup is not available right now." }, 503);
   }
 
-  let build: TrialBuild;
+  // Pages the AI finishes inside the budget keep its copy; the rest are written from the owner's answers.
+  // Never the template's sample business: that published car dealers' stock under a tech firm's name.
+  const input = { state: briefFromAnswers(answers, auth.email, details), templateOverride: templateKey };
+  let result: BuildResult;
   let usedAi = true;
   try {
-    const result = await withTimeout(buildSite({ state: briefFromAnswers(answers, auth.email, details), templateOverride: templateKey }), AI_BUDGET_MS);
-    build = { templateKey, profile: result.profile, pages: result.pages, extraPages: result.extraPages };
+    result = await withTimeout(buildSite(input, { deadline: Date.now() + AI_BUDGET_MS }), AI_BUDGET_MS + 5_000);
   } catch (err) {
     usedAi = false;
-    console.warn("[signup] AI build failed, using sample content", err instanceof Error ? err.message : "error");
-    build = personalizeSample(templateKey, sampleSite(templateKey), answers, auth.email);
+    console.warn("[signup] AI build failed, writing the site from the owner's answers", err instanceof Error ? err.message : "error");
+    result = await buildSiteOffline(input);
   }
+  const build = { templateKey, profile: result.profile, pages: result.pages, extraPages: result.extraPages };
   const warnings = await persistTrialSite(db, siteId, finishTrialBuild(build, details, color));
 
   if (start.trial) await sendLifecycleEmail(db, siteId, "welcome");
