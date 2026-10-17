@@ -54,6 +54,8 @@ export default function MarketingShell({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-2 text-sm">
             <Link href="/signup">Start free trial</Link>
             <Link href="/login">Sign in</Link>
+            <Link href="/terms">Terms &amp; refunds</Link>
+            <Link href="/privacy">Privacy</Link>
           </div>
         </div>
         <p className="pb-8 text-center text-xs text-koi-ink/50">© {new Date().getFullYear()} Sulvatech</p>

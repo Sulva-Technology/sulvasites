@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function SitePaused({ name }: { name: string }) {
   return (
     <main
@@ -13,7 +15,7 @@ export default function SitePaused({ name }: { name: string }) {
         <h1 style={{ fontSize: 28, lineHeight: 1.2, margin: "12px 0" }}>{name} is taking a short break</h1>
         <p style={{ color: "rgba(10,15,31,.7)", margin: 0 }}>Please check back soon.</p>
         <p style={{ marginTop: 28, fontSize: 13 }}>
-          <a href="/login" style={{ color: "#0a4fe0" }}>Site owner? Sign in to reactivate</a>
+          <Link href="/login" style={{ color: "#0a4fe0" }}>Site owner? Sign in to reactivate</Link>
         </p>
       </div>
     </main>

@@ -8,6 +8,8 @@ export function platformEntries(base: string): Array<{ url: string; priority: nu
     { url: `${base}/templates`, priority: 0.9 },
     { url: `${base}/start`, priority: 0.6 },
     { url: `${base}/signup`, priority: 0.6 },
+    { url: `${base}/terms`, priority: 0.3 },
+    { url: `${base}/privacy`, priority: 0.3 },
     ...TEMPLATE_META.map((t) => ({ url: `${base}/templates/${t.key}`, priority: 0.7 })),
   ];
 }
