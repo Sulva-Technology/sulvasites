@@ -81,8 +81,7 @@ export default function T3Hero({
   const { enabled, set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Thoughtful work, made to last";
   const subtext =
-    section.subtext ||
-    "Write a clear, benefit-focused description of what you do, who you help, and what outcomes people can expect.";
+    section.subtext || profile?.tagline || "";
   const ctaText = section.ctaText || "Start a project";
   const [head, tail] = splitLastWord(headline);
   const { photos, highlights, projects } = heroData;
@@ -129,7 +128,7 @@ export default function T3Hero({
                   {i < words.length - 2 ? ", " : i === words.length - 2 ? " and " : " "}
                 </span>
               ))}
-              <span className="t3-highlight-tail">to every project, from first call to final hand-off.</span>
+              <span className="t3-highlight-tail">to every project.</span>
             </p>
             {lead}
             <div className="t3-hero-actions">
@@ -170,7 +169,7 @@ export default function T3Hero({
           <div className="t3-hero-copy t3-reveal">
             <span className="t3-status">
               <i aria-hidden="true" />
-              Replying within a day
+              Open to new enquiries
             </span>
             {title("t3-display t3-hero-title")}
             {lead}

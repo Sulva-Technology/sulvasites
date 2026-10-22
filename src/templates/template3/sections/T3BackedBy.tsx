@@ -24,7 +24,7 @@ export default function T3BackedBy({
 }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Trusted by";
-  const logos = section.logos?.length ? section.logos : FALLBACK.map((name) => ({ name, url: null }));
+  const logos = section.logos?.length ? section.logos : FALLBACK.map(() => ({ name: "", url: null }));
 
   const renderItem = (l: { name: string; url: string | null }, idx: number) => (
     <span key={idx} className="t3-marquee-item">

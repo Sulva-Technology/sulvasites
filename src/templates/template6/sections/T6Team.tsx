@@ -12,8 +12,8 @@ export default function T6Team({ section, sectionIndex }: { section: TeamSection
   const subtitle = section.subtitle || "";
   const members = (section.members?.length ? section.members : [{ name: "", role: "", bio: "" }]).map((m) => ({
     ...m,
-    name: m.name || "Agent name",
-    role: m.role || "Property advisor",
+    name: m.name || "",
+    role: m.role || "",
     bio: m.bio || "",
   }));
 
@@ -52,14 +52,14 @@ export default function T6Team({ section, sectionIndex }: { section: TeamSection
                 as="h3"
                 className="t6-h3"
                 value={m.name}
-                placeholder="Name"
+                placeholder="Agent name"
                 onCommit={(next) => setItem("members", members, idx, { name: next })}
               />
               <EditableText
                 as="span"
                 className="t6-muted"
                 value={m.role}
-                placeholder="Role"
+                placeholder="Property advisor"
                 style={{ fontSize: 14, fontWeight: 500 }}
                 onCommit={(next) => setItem("members", members, idx, { role: next })}
               />

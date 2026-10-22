@@ -17,10 +17,10 @@ export default function T2UseCases({ section, sectionIndex }: { section: UseCase
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Selected stories";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
   const [lead, ...rest] = items;
   const leadPhoto = photos[1] ?? photos[0];
@@ -56,8 +56,8 @@ export default function T2UseCases({ section, sectionIndex }: { section: UseCase
               )}
             </div>
             <span className="t2-kicker">Lead story</span>
-            <EditableText as="h3" className="t2-h3" value={lead.title} placeholder="Title" onCommit={(next) => setItem("items", items, 0, { title: next })} />
-            <EditableText as="p" className="t2-deck" value={lead.description} placeholder="Summary" multiline onCommit={(next) => setItem("items", items, 0, { description: next })} />
+            <EditableText as="h3" className="t2-h3" value={lead.title} placeholder={FALLBACK[0].title} onCommit={(next) => setItem("items", items, 0, { title: next })} />
+            <EditableText as="p" className="t2-deck" value={lead.description} placeholder={FALLBACK[0].description} multiline onCommit={(next) => setItem("items", items, 0, { description: next })} />
             <div>{readLink(lead, 0)}</div>
           </article>
 
@@ -67,12 +67,12 @@ export default function T2UseCases({ section, sectionIndex }: { section: UseCase
                 <article key={i} className="t2-story t2-reveal">
                   <span className="t2-story-num">{i + 2}</span>
                   <div>
-                    <EditableText as="h3" className="t2-h3" value={it.title} placeholder="Title" onCommit={(next) => setItem("items", items, i + 1, { title: next })} />
+                    <EditableText as="h3" className="t2-h3" value={it.title} placeholder={FALLBACK[(i + 1) % FALLBACK.length].title} onCommit={(next) => setItem("items", items, i + 1, { title: next })} />
                     <EditableText
                       as="p"
                       className="t2-muted"
                       value={it.description}
-                      placeholder="Summary"
+                      placeholder={FALLBACK[(i + 1) % FALLBACK.length].description}
                       multiline
                       onCommit={(next) => setItem("items", items, i + 1, { description: next })}
                     />

@@ -18,10 +18,10 @@ export default function T6UseCases({ section, sectionIndex }: { section: UseCase
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Featured properties";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
 
   return (
@@ -70,14 +70,14 @@ export default function T6UseCases({ section, sectionIndex }: { section: UseCase
                     as="h3"
                     className="t6-h3"
                     value={it.title}
-                    placeholder="Property title"
+                    placeholder={FALLBACK[idx % FALLBACK.length].title}
                     onCommit={(next) => setItem("items", items, idx, { title: next })}
                   />
                   <EditableText
                     as="p"
                     className="t6-muted"
                     value={it.description}
-                    placeholder="Property description"
+                    placeholder={FALLBACK[idx % FALLBACK.length].description}
                     multiline
                     onCommit={(next) => setItem("items", items, idx, { description: next })}
                   />

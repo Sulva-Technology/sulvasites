@@ -14,7 +14,7 @@ function isImageUrl(url: string | null | undefined): url is string {
 export default function T4BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
   const { set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Trusted by fast-moving teams";
-  const logos = section.logos?.length ? section.logos : FALLBACK.map((name) => ({ name, url: null }));
+  const logos = section.logos?.length ? section.logos : FALLBACK.map(() => ({ name: "", url: null }));
 
   return (
     <section className="t4-logos">

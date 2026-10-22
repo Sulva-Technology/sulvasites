@@ -17,10 +17,10 @@ export default function T5UseCases({ section, sectionIndex }: { section: UseCase
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Signature packages";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
   const highlight = items.length >= 3 ? 1 : -1;
 
@@ -51,14 +51,14 @@ export default function T5UseCases({ section, sectionIndex }: { section: UseCase
                 as="h3"
                 className="t5-h3"
                 value={it.title}
-                placeholder="Package name"
+                placeholder={FALLBACK[idx % FALLBACK.length].title}
                 onCommit={(next) => setItem("items", items, idx, { title: next })}
               />
               <EditableText
                 as="p"
                 className="t5-muted"
                 value={it.description}
-                placeholder="What's included"
+                placeholder={FALLBACK[idx % FALLBACK.length].description}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { description: next })}
               />

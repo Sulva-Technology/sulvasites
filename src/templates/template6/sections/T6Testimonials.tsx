@@ -5,7 +5,7 @@ import { useRef } from "react";
 import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
-import { IconArrow, IconArrowLeft, IconStar } from "../icons";
+import { IconArrow, IconArrowLeft } from "../icons";
 
 const FALLBACK_QUOTE =
   "From the first viewing to getting our keys, everything was clear and on time. We never felt rushed or left guessing.";
@@ -16,9 +16,9 @@ export default function T6Testimonials({ section, sectionIndex }: { section: Tes
   const rowRef = useRef<HTMLDivElement>(null);
   const title = section.title || "What our clients say";
   const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Client name",
-    role: t.role || "Homeowner",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
@@ -52,15 +52,10 @@ export default function T6Testimonials({ section, sectionIndex }: { section: Tes
         <div className="t6-reviews t6-reveal" ref={rowRef}>
           {items.map((t, idx) => (
             <figure key={idx} className="t6-review" style={{ margin: 0 }}>
-              <div className="t6-stars" aria-label="5 out of 5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <IconStar key={i} />
-                ))}
-              </div>
               <EditableText
                 as="blockquote"
                 value={t.quote}
-                placeholder="Quote"
+                placeholder={FALLBACK_QUOTE}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { quote: next })}
               />
@@ -72,7 +67,7 @@ export default function T6Testimonials({ section, sectionIndex }: { section: Tes
                   <EditableText
                     as="div"
                     value={t.name}
-                    placeholder="Name"
+                    placeholder="Client name"
                     style={{ fontWeight: 600 }}
                     onCommit={(next) => setItem("items", items, idx, { name: next })}
                   />
@@ -80,7 +75,7 @@ export default function T6Testimonials({ section, sectionIndex }: { section: Tes
                     <EditableText
                       as="span"
                       value={t.role}
-                      placeholder="Role"
+                      placeholder="Homeowner"
                       onCommit={(next) => setItem("items", items, idx, { role: next })}
                     />
                     {t.company ? `, ${t.company}` : null}

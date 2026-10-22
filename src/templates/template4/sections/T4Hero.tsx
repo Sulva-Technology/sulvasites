@@ -56,10 +56,9 @@ export default function T4Hero({
   const [copied, setCopied] = useState<string | null>(null);
   const headline = section.headline || "The simpler way to get it done";
   const subtext =
-    section.subtext ||
-    "Everything you need in one place — set up in minutes, loved by the people who use it every day.";
+    section.subtext || profile.tagline || "";
   const ctaText = section.ctaText || "Get started";
-  const features = (featureNames.length ? featureNames : ["Fast setup", "Smart reminders", "Live tracking", "Secure payments"]).slice(0, 4);
+  const features = (featureNames.length ? featureNames : ["Simple to start", "Easy to use", "Help when you need it"]).slice(0, 4);
 
   const title = (cls: string) => (
     <EditableText as="h1" className={cls} value={headline} placeholder="Hero headline" multiline onCommit={(next) => set({ headline: next })} />
@@ -155,7 +154,7 @@ export default function T4Hero({
               ))}
               <div className="t4-term-line t4-term-ok">
                 <span className="t4-term-prompt">✓</span>
-                <span>We usually reply within one business day.</span>
+                <span>Send us a message and we will reply.</span>
               </div>
               <div className="t4-term-line">
                 <span className="t4-term-prompt">$</span>

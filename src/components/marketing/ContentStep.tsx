@@ -7,7 +7,7 @@ import { choiceFromLogo, type ColorChoice } from "@/lib/ai/setupPalette";
 import { MAX_SETUP_FILE_BYTES } from "@/lib/ai/setupPhotos";
 import { extractLogoColors } from "@/lib/logoColors";
 import type { SignupAnswers } from "@/lib/signup/fallbackSite";
-import { MAX_DETAILS_CHARS, buildDetailsPrompt, detailsSummary, parseDetails } from "@/lib/signup/ownerDetails";
+import { MAX_DETAILS_CHARS, buildDetailsPrompt, detailsGaps, detailsSummary, parseDetails } from "@/lib/signup/ownerDetails";
 
 export type LogoPick = { file: File; previewUrl: string };
 
@@ -76,7 +76,7 @@ export default function ContentStep(p: Props) {
           placeholder="Paste the whole answer here, including the { … } block"
           className="mt-1 w-full rounded-2xl bg-white px-4 py-3 font-mono text-xs ring-1 ring-koi-ink/10 focus:outline-none focus:ring-2 focus:ring-koi-deep"
         />
-        <DetailsStatus parsed={parsed} />
+        <DetailsStatus parsed={parsed} templateKey={p.templateKey} />
       </section>
 
       <div className="mt-8 flex items-center justify-between gap-3">
@@ -111,7 +111,7 @@ function PromptBox({ prompt }: { prompt: string }) {
   );
 }
 
-function DetailsStatus({ parsed }: { parsed: ReturnType<typeof parseDetails> }) {
+function DetailsStatus({ parsed, templateKey }: { parsed: ReturnType<typeof parseDetails>; templateKey: string }) {
   if (parsed.kind === "empty") return null;
   if (parsed.kind === "text") {
     return (
@@ -121,10 +121,20 @@ function DetailsStatus({ parsed }: { parsed: ReturnType<typeof parseDetails> }) 
     );
   }
   const found = detailsSummary(parsed.details);
+  const gaps = detailsGaps(parsed.details, templateKey);
   return (
-    <p className="mt-2 rounded-2xl bg-koi-deep/5 px-4 py-2 text-xs text-koi-ink/80">
-      <span className="font-medium text-koi-deep">Got it.</span> {found.length ? `We found ${found.join(", ")}.` : "We'll use what you gave us."}
-    </p>
+    <div className="mt-2 rounded-2xl bg-koi-deep/5 px-4 py-2 text-xs text-koi-ink/80">
+      <p>
+        <span className="font-medium text-koi-deep">Got it.</span> {found.length ? `We found ${found.join(", ")}.` : "We'll use what you gave us."}
+      </p>
+      {gaps.length ? (
+        <p className="mt-1 text-koi-ink/65">
+          Still missing: {gaps.join(", ")}. Ask your AI to add them and paste the new answer, or add them later in your dashboard.
+        </p>
+      ) : (
+        <p className="mt-1 text-koi-ink/65">That covers everything this design shows.</p>
+      )}
+    </div>
   );
 }
 

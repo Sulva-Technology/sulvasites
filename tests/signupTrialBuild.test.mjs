@@ -149,3 +149,13 @@ test("draftFromDetails without details leaves every slot to the generic fallback
     assert.ok(draftFromDetails(job, null, brief, "t5").slots.every((s) => s === null));
   }
 });
+
+test("pasted opening hours become one row per line in the profile", async () => {
+  const { finishTrialBuild, hoursLines } = await import("../src/lib/signup/fallbackSite.ts");
+  assert.equal(hoursLines("Mon-Fri 9am-6pm, Sat 10am-4pm; Sun closed"), "Mon-Fri 9am-6pm\nSat 10am-4pm\nSun closed");
+  assert.equal(hoursLines("Mon-Fri 9am-6pm, 7pm on Fridays"), "Mon-Fri 9am-6pm, 7pm on Fridays");
+  const built = finishTrialBuild(await offlineBuild("t7"), details, null);
+  assert.equal(built.profile.socials.hours, "Mon-Sat 9am-6pm");
+  const none = finishTrialBuild(await offlineBuild("t7", { kind: "empty" }), { kind: "empty" }, null);
+  assert.equal(none.profile.socials.hours, undefined);
+});

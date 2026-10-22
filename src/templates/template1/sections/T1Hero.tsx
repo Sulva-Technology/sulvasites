@@ -80,11 +80,10 @@ export default function T1Hero({
   const { set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Clear advice. Measurable results.";
   const subtext =
-    section.subtext ||
-    `${profile.business_name} partners with organisations to solve complex problems, strengthen operations and grow with confidence.`;
+    section.subtext || profile.tagline || "";
   const ctaText = section.ctaText || "Book a consultation";
   const photo = photos[0];
-  const points = (valueTitles.length ? valueTitles : ["Senior-led engagements", "Transparent pricing", "Proven methods"]).slice(0, 3);
+  const points = (valueTitles.length ? valueTitles : ["Clear communication", "Easy to reach", "Built around you"]).slice(0, 3);
   const checklist = (serviceNames.length ? serviceNames : ["Strategy & planning", "Operations", "Advisory"]).slice(0, 4);
 
   const strong = (
@@ -152,7 +151,7 @@ export default function T1Hero({
       <section className="t1-hero t1-hero-contact">
         <div className="t1-container t1-contact-hero t1-reveal">
           <span className="t1-pill">
-            <span>Usually replies within one business day</span>
+            <span>We&apos;d love to hear from you</span>
           </span>
           <h1 className="t1-h1 t1-hero-title">
             {strong} {soft}

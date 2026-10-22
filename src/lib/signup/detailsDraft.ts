@@ -105,13 +105,16 @@ function values(d: OwnerDetails): Section | null {
 }
 
 function useCases(job: PageJob, d: OwnerDetails): Section | null {
-  if (!d.projects.length) return null;
+  // No projects: the home page highlights the owner's own services rather than generic industry ones.
+  const fromServices = !d.projects.length && job.key === "home";
+  const list = fromServices ? d.services.map((s) => ({ title: s.name, description: s.description })) : d.projects;
+  if (!list.length) return null;
   const max = job.kind === "core" ? ITEM_COUNTS.use_cases[1] : 6;
   return {
     type: "use_cases",
-    title: fitSentence(job.key === "home" ? "Recent work" : (job.headline ?? job.label), B.sectionTitle),
+    title: fitSentence(job.key !== "home" ? (job.headline ?? job.label) : fromServices ? "How we can help" : "Recent work", B.sectionTitle),
     description: fitSentence(d.whatWeDo, B.useCasesIntro),
-    items: d.projects.slice(0, max).map((p) => ({
+    items: list.slice(0, max).map((p) => ({
       title: fitSentence(p.title, B.useCaseTitle),
       description: fitSentence(sentence(p.description) || `Ask us about ${lower(p.title)}.`, B.useCaseDesc),
       linkText: "Enquire",

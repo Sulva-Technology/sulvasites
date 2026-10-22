@@ -17,9 +17,9 @@ export default function T5FAQ({ section, sectionIndex }: { section: FAQSection; 
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
   const title = section.title || "Booking policies & FAQ";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    question: it.question || FALLBACK[i % FALLBACK.length].question,
-    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    question: it.question || "",
+    answer: it.answer || "",
   }));
 
   return (
@@ -35,14 +35,14 @@ export default function T5FAQ({ section, sectionIndex }: { section: FAQSection; 
             return (
               <div key={idx} className="t5-faq-item" data-open={isOpen}>
                 <button type="button" className="t5-faq-q" aria-expanded={isOpen} onClick={() => !enabled && setOpen(isOpen ? null : idx)}>
-                  <EditableText as="h3" value={it.question} placeholder="Question" onCommit={(next) => setItem("items", items, idx, { question: next })} />
+                  <EditableText as="h3" value={it.question} placeholder={FALLBACK[idx % FALLBACK.length].question} onCommit={(next) => setItem("items", items, idx, { question: next })} />
                   <span className="t5-faq-sign" aria-hidden="true">
                     +
                   </span>
                 </button>
                 <div className="t5-faq-a">
                   <div>
-                    <EditableText as="p" value={it.answer} placeholder="Answer" multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
+                    <EditableText as="p" value={it.answer} placeholder={FALLBACK[idx % FALLBACK.length].answer} multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
                   </div>
                 </div>
               </div>

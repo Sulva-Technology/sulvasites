@@ -11,9 +11,9 @@ export default function T2Testimonials({ section, sectionIndex }: { section: Tes
   const { set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "In their words";
   const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Client name",
-    role: t.role || "Client",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
@@ -29,12 +29,12 @@ export default function T2Testimonials({ section, sectionIndex }: { section: Tes
         <div className="t2-quotes">
           {items.map((t, idx) => (
             <figure key={idx} className="t2-quote t2-reveal">
-              <EditableText as="blockquote" value={t.quote} placeholder="Quote" multiline onCommit={(next) => setItem("items", items, idx, { quote: next })} />
+              <EditableText as="blockquote" value={t.quote} placeholder={FALLBACK_QUOTE} multiline onCommit={(next) => setItem("items", items, idx, { quote: next })} />
               <figcaption>
-                <EditableText as="span" value={t.name} placeholder="Name" style={{ color: "inherit" }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
+                <EditableText as="span" value={t.name} placeholder="Client name" style={{ color: "inherit" }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
                 {" — "}
                 <span>
-                  <EditableText as="span" value={t.role} placeholder="Role" onCommit={(next) => setItem("items", items, idx, { role: next })} />
+                  <EditableText as="span" value={t.role} placeholder="Client" onCommit={(next) => setItem("items", items, idx, { role: next })} />
                   {t.company ? `, ${t.company}` : null}
                 </span>
               </figcaption>

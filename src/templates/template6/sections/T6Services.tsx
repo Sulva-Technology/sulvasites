@@ -14,9 +14,9 @@ const FALLBACK = [
 
 export default function T6Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
   const { setItem } = useSectionEditor(section, sectionIndex);
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    title: it.title || "",
+    desc: it.desc || "",
   }));
 
   return (
@@ -42,14 +42,14 @@ export default function T6Services({ section, sectionIndex }: { section: Service
                   as="h3"
                   className="t6-h3"
                   value={s.title}
-                  placeholder="Service title"
+                  placeholder={FALLBACK[idx % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
                 />
                 <EditableText
                   as="p"
                   className="t6-muted"
                   value={s.desc}
-                  placeholder="Service description"
+                  placeholder={FALLBACK[idx % FALLBACK.length].desc}
                   multiline
                   onCommit={(next) => setItem("items", items, idx, { desc: next })}
                 />

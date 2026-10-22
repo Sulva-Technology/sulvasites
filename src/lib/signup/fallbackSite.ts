@@ -81,6 +81,16 @@ export type TrialBuild = {
   themeColors?: Record<string, string>;
 };
 
+/** "Mon-Fri 9am-6pm, Sat 10am-4pm" → one row per line, as the templates' hours panels show them. */
+export function hoursLines(hours: string): string {
+  return hours
+    .split(/\r?\n|;|,(?=\s*[A-Za-z])/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .join("\n");
+}
+
 /**
  * Last touches on any trial build: the owner's real reviews, team, FAQs and partners
  * go into the pages, their tagline and contacts into the profile, and logo colours become the theme.
@@ -111,6 +121,7 @@ export function finishTrialBuild(build: TrialBuild, details: ParsedDetails, colo
           facebook: c.facebook || p.socials.facebook,
           twitter: c.x || p.socials.twitter,
           tiktok: c.tiktok || p.socials.tiktok,
+          ...(d.openingHours ? { hours: hoursLines(d.openingHours) } : {}),
         },
       },
     };

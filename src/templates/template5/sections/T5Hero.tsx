@@ -65,8 +65,7 @@ export default function T5Hero({
   const days = useSyncExternalStore(noSubscribe, clientDays, () => NO_DAYS);
   const headline = section.headline || "Soft glam, made for you";
   const subtext =
-    section.subtext ||
-    "Polished, skin-first beauty for weddings, events and every day — in a calm studio where you feel looked after.";
+    section.subtext || profile.tagline || "";
   const ctaText = section.ctaText || "Book an appointment";
   const mono = initials(profile.business_name);
   const services = (serviceNames.length ? serviceNames : ["Bridal glam", "Soft glam", "Brows & lashes", "Skin prep"]).slice(0, 5);
@@ -82,12 +81,13 @@ export default function T5Hero({
       <EditableText as="span" value={ctaText} placeholder="CTA" onCommit={(next) => set({ ctaText: next })} />
     </a>
   );
-  const award = (
+  // The owner's own tagline only; no invented praise when there is none.
+  const award = profile.tagline ? (
     <span className="t5-award">
       <IconSparkle size={14} />
-      {profile.tagline || "Loved by clients across the city"}
+      {profile.tagline}
     </span>
-  );
+  ) : null;
 
   const variant = primary ? pageKind : "plain";
 

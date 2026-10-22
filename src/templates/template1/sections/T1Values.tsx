@@ -17,9 +17,9 @@ const FALLBACK = [
 export default function T1Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
   const { baseUrl, profile } = useT1();
   const { setItem } = useSectionEditor(section, sectionIndex);
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    title: it.title || "",
+    desc: it.desc || "",
   }));
 
   return (
@@ -30,7 +30,7 @@ export default function T1Values({ section, sectionIndex }: { section: ValuesSec
             Why {profile.business_name}
           </span>
           <h2 className="t1-h2">A partner you can rely on</h2>
-          <p className="t1-lead">We measure success by the outcomes we deliver for our clients — and the relationships that last.</p>
+          <p className="t1-lead">What you can expect when you work with us.</p>
           <div>
             <a className="t1-btn t1-btn-white" href={`${baseUrl}/about`}>
               About us <IconArrow />
@@ -41,12 +41,12 @@ export default function T1Values({ section, sectionIndex }: { section: ValuesSec
           {items.map((v, idx) => (
             <div key={idx} className="t1-why-item t1-reveal">
               <span className="t1-why-num">{pad2(idx + 1)}</span>
-              <EditableText as="h3" className="t1-h3" value={v.title} placeholder="Value" onCommit={(next) => setItem("items", items, idx, { title: next })} />
+              <EditableText as="h3" className="t1-h3" value={v.title} placeholder={FALLBACK[idx % FALLBACK.length].title} onCommit={(next) => setItem("items", items, idx, { title: next })} />
               <EditableText
                 as="p"
                 className="t1-muted"
                 value={v.desc}
-                placeholder="Description"
+                placeholder={FALLBACK[idx % FALLBACK.length].desc}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />

@@ -14,9 +14,9 @@ export default function T5Testimonials({ section, sectionIndex }: { section: Tes
   const [active, setActive] = useState(0);
   const title = section.title || "Kind words";
   const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Happy client",
-    role: t.role || "Bride",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
@@ -40,14 +40,14 @@ export default function T5Testimonials({ section, sectionIndex }: { section: Tes
                 <EditableText
                   as="blockquote"
                   value={t.quote}
-                  placeholder="Quote"
+                  placeholder={FALLBACK_QUOTE}
                   multiline
                   onCommit={(next) => setItem("items", items, idx, { quote: next })}
                 />
                 <figcaption className="t5-quote-by">
-                  <EditableText as="span" value={t.name} placeholder="Name" onCommit={(next) => setItem("items", items, idx, { name: next })} />
+                  <EditableText as="span" value={t.name} placeholder="Happy client" onCommit={(next) => setItem("items", items, idx, { name: next })} />
                   {" — "}
-                  <EditableText as="span" value={t.role} placeholder="Role" onCommit={(next) => setItem("items", items, idx, { role: next })} />
+                  <EditableText as="span" value={t.role} placeholder="Bride" onCommit={(next) => setItem("items", items, idx, { role: next })} />
                 </figcaption>
               </figure>
             ))}

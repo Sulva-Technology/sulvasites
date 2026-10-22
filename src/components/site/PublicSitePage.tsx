@@ -14,6 +14,7 @@ import {
 } from "@/lib/publicSite.server";
 import { loadPublicShop } from "@/lib/shop/loadPublicShop.server";
 import { loadPublicBlog } from "@/lib/blog/load.server";
+import { publicPage } from "@/lib/publicContent";
 import { templateIsBlogFirst, templateSupportsShop } from "@/templates/meta";
 import { InboxSiteProvider } from "@/templates/shared/inbox";
 import { getTemplate } from "@/templates/registry";
@@ -41,12 +42,13 @@ export default async function PublicSitePage({
   // sites without items (or before migration 009) render their own page content unchanged.
   const items = await loadBusinessItems(siteData.site.id);
   const mergeOpts = { templateKey: siteData.site.template_key, homeTeaser: navPages.length > 0 };
+  // Then blank items and empty sections are dropped, so a template's editor demo copy never reaches visitors.
   const pages = {
-    home: mergeBusinessData(siteData.pages.home, items, { ...mergeOpts, pageKey: "home" }),
-    about: mergeBusinessData(siteData.pages.about, items, { ...mergeOpts, pageKey: "about" }),
-    contact: mergeBusinessData(siteData.pages.contact, items, { ...mergeOpts, pageKey: "contact" }),
+    home: publicPage(mergeBusinessData(siteData.pages.home, items, { ...mergeOpts, pageKey: "home" })),
+    about: publicPage(mergeBusinessData(siteData.pages.about, items, { ...mergeOpts, pageKey: "about" })),
+    contact: publicPage(mergeBusinessData(siteData.pages.contact, items, { ...mergeOpts, pageKey: "contact" })),
   };
-  const pageOverride = page.kind === "extra" ? mergeBusinessData(page.data, items, { ...mergeOpts, pageKey: null }) : undefined;
+  const pageOverride = page.kind === "extra" ? publicPage(mergeBusinessData(page.data, items, { ...mergeOpts, pageKey: null })) : undefined;
 
   const schemaId =
     page.kind === "extra"

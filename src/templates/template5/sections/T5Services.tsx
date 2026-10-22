@@ -16,9 +16,9 @@ const FALLBACK = [
 export default function T5Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
   const ctx = useT5();
   const { setItem } = useSectionEditor(section, sectionIndex);
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    title: it.title || "",
+    desc: it.desc || "",
   }));
 
   return (
@@ -29,7 +29,7 @@ export default function T5Services({ section, sectionIndex }: { section: Service
           <h2 className="t5-title">
             Services &amp; <em>treatments</em>
           </h2>
-          <p className="t5-lead">Every appointment begins with a consultation so your look is made for you.</p>
+          <p className="t5-lead">Choose a service and we&apos;ll help you plan your look.</p>
         </div>
 
         <div className="t5-menu t5-reveal">
@@ -40,7 +40,7 @@ export default function T5Services({ section, sectionIndex }: { section: Service
                   as="h3"
                   className="t5-h3"
                   value={s.title}
-                  placeholder="Service"
+                  placeholder={FALLBACK[idx % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
                 />
                 <span className="t5-menu-dots" aria-hidden="true" />
@@ -51,7 +51,7 @@ export default function T5Services({ section, sectionIndex }: { section: Service
               <EditableText
                 as="p"
                 value={s.desc}
-                placeholder="Description"
+                placeholder={FALLBACK[idx % FALLBACK.length].desc}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />

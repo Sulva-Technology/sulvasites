@@ -67,7 +67,14 @@ export type SiteProfile = {
   phone: string | null;
   email: string | null;
   whatsapp: string | null;
-  socials: { instagram: string | null; facebook: string | null; twitter: string | null; tiktok: string | null };
+  socials: {
+    instagram: string | null;
+    facebook: string | null;
+    twitter: string | null;
+    tiktok: string | null;
+    /** Opening hours, one line per row (templates with an hours panel read it). */
+    hours?: string | null;
+  };
 };
 
 export type PageResult = {

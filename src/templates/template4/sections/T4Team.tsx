@@ -10,8 +10,8 @@ export default function T4Team({ section, sectionIndex }: { section: TeamSection
   const subtitle = section.subtitle || "";
   const members = (section.members?.length ? section.members : [{ name: "", role: "", bio: "" }]).map((m) => ({
     ...m,
-    name: m.name || "Team member",
-    role: m.role || "Role",
+    name: m.name || "",
+    role: m.role || "",
     bio: m.bio || "",
   }));
 
@@ -44,7 +44,7 @@ export default function T4Team({ section, sectionIndex }: { section: TeamSection
                   <span aria-hidden="true">{initials(m.name)}</span>
                 )}
               </div>
-              <EditableText as="h3" className="t4-h3" value={m.name} placeholder="Name" onCommit={(next) => setItem("members", members, idx, { name: next })} />
+              <EditableText as="h3" className="t4-h3" value={m.name} placeholder="Team member" onCommit={(next) => setItem("members", members, idx, { name: next })} />
               <EditableText as="span" className="t4-muted" value={m.role} placeholder="Role" style={{ fontSize: 14 }} onCommit={(next) => setItem("members", members, idx, { role: next })} />
               {m.bio || enabled ? (
                 <EditableText as="p" className="t4-muted" value={m.bio} placeholder="Short bio" multiline onCommit={(next) => setItem("members", members, idx, { bio: next })} />

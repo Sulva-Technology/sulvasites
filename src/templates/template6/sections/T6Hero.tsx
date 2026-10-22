@@ -49,11 +49,10 @@ export default function T6Hero({
 
   const headline = section.headline || "Find a home that fits the life you want";
   const subtext =
-    section.subtext ||
-    `${profile.business_name} helps you buy, sell and rent with verified listings, honest advice and a team that knows every neighbourhood.`;
+    section.subtext || profile.tagline || "";
   const ctaText = section.ctaText || "Browse properties";
   const mono = initials(profile.business_name);
-  const titles = listings.length ? listings : ["Four-bedroom family home", "Modern city apartment", "Serviced plot"];
+  const titles = listings.length ? listings : ["Homes for sale", "Homes to rent", "Land and plots"];
 
   const title = (cls: string) => (
     <EditableText as="h1" className={cls} value={headline} placeholder="Hero headline" multiline onCommit={(next) => set({ headline: next })} />
@@ -80,11 +79,12 @@ export default function T6Hero({
   const variant = primary ? pageKind : "plain";
 
   if (variant === "about") {
+    // Only facts we know: no founding year is stored, and the city comes from the real address.
+    const city = profile.address?.split(",").slice(-1)[0]?.trim() || "";
     const facts = [
-      { k: "Est.", v: String(new Date().getFullYear() - 8) },
-      { k: "Listings", v: `${Math.max(titles.length, 3)}+` },
-      { k: "Based in", v: profile.address?.split(",").slice(-1)[0]?.trim() || "Lagos" },
-    ];
+      listings.length ? { k: "Listings", v: String(listings.length) } : null,
+      city ? { k: "Based in", v: city } : null,
+    ].filter((f): f is { k: string; v: string } => f !== null);
     return (
       <section className="t6-hero t6-hero-about">
         <div className="t6-container t6-about-hero">

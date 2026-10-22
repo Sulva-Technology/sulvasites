@@ -129,3 +129,19 @@ test("signup body carries details and a valid colour; build gets theme colours",
   assert.ok(fromWords.themeColors, "brand colour words used when there is no logo");
   assert.equal(finishTrialBuild(build, { kind: "empty" }, null).themeColors, undefined);
 });
+
+test("gaps name what the chosen design shows that the paste left out", async () => {
+  const { detailsGaps } = await import("../src/lib/signup/ownerDetails.ts");
+  const full = parseDetails(pasted).details;
+  const t12 = detailsGaps(full, "t12");
+  assert.ok(t12.includes("past work or listings"), "Forge has a Projects page");
+  assert.ok(t12.includes("more services (3 or more)"));
+  assert.ok(!t12.includes("customer reviews"));
+  assert.ok(!t12.includes("a tagline"));
+  assert.ok(detailsGaps(full, "t8").includes("reasons to choose you"));
+  assert.ok(!detailsGaps(full, "t8").includes("your team"), "team given");
+  const empty = parseDetails('{"sulva":1,"businessName":"X","tagline":"y"}').details;
+  assert.ok(detailsGaps(empty, "t8").includes("your team"), "Vital has a doctors page");
+  assert.ok(!detailsGaps(empty, "t1").includes("your team"), "Meridian has no team page");
+  assert.ok(detailsGaps(empty, "t1").includes("a phone number or email"));
+});

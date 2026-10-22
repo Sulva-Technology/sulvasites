@@ -13,9 +13,9 @@ const FALLBACK = [
 export default function T2FAQ({ section, sectionIndex }: { section: FAQSection; sectionIndex?: number }) {
   const { set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "The Q&A";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    question: it.question || FALLBACK[i % FALLBACK.length].question,
-    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    question: it.question || "",
+    answer: it.answer || "",
   }));
 
   return (
@@ -32,11 +32,11 @@ export default function T2FAQ({ section, sectionIndex }: { section: FAQSection; 
             <div key={idx} className="t2-qa-item t2-reveal">
               <div className="t2-qa-q">
                 <b aria-hidden="true">Q.</b>
-                <EditableText as="h3" value={it.question} placeholder="Question" onCommit={(next) => setItem("items", items, idx, { question: next })} />
+                <EditableText as="h3" value={it.question} placeholder={FALLBACK[idx % FALLBACK.length].question} onCommit={(next) => setItem("items", items, idx, { question: next })} />
               </div>
               <div className="t2-qa-a">
                 <b aria-hidden="true">A.</b>
-                <EditableText as="p" value={it.answer} placeholder="Answer" multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
+                <EditableText as="p" value={it.answer} placeholder={FALLBACK[idx % FALLBACK.length].answer} multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
               </div>
             </div>
           ))}
