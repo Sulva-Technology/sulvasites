@@ -21,10 +21,10 @@ export default function T4UseCases({ section, sectionIndex }: { section: UseCase
   const [active, setActive] = useState(0);
   const title = section.title || "Made for everyone involved";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
   const idx = Math.min(active, items.length - 1);
   const current = items[idx];
@@ -64,7 +64,7 @@ export default function T4UseCases({ section, sectionIndex }: { section: UseCase
                   as="h3"
                   className="t4-h3"
                   value={it.title}
-                  placeholder="Use case"
+                  placeholder={FALLBACK[i % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, i, { title: next })}
                 />
               </button>
@@ -81,7 +81,7 @@ export default function T4UseCases({ section, sectionIndex }: { section: UseCase
                 as="p"
                 className="t4-muted"
                 value={current.description}
-                placeholder="Description"
+                placeholder={FALLBACK[idx % FALLBACK.length].description}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { description: next })}
               />

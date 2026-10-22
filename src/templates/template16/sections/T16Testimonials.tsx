@@ -3,9 +3,9 @@
 import EditableText from "@/components/inline-editor/EditableText";
 import type { TestimonialsSection } from "@/lib/pageSchema";
 import { initials, useSectionEditor } from "@/templates/shared/edit";
-import { IconQuote, IconStar } from "../icons";
+import { IconQuote } from "../icons";
 
-/** Member stories on rounded cards: five stars, an italic quote, initials avatar with name and role. Swipes on phones. */
+/** Member stories on rounded cards: an italic quote, initials avatar with name and role. Swipes on phones. */
 export default function T16Testimonials({ section, sectionIndex }: { section: TestimonialsSection; sectionIndex?: number }) {
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   if (!enabled && !section.items?.some((t) => t.quote?.trim())) return null;
@@ -30,11 +30,6 @@ export default function T16Testimonials({ section, sectionIndex }: { section: Te
             <figure key={idx} className="t16-story t16-card t16-reveal">
               <span className="t16-story-mark" aria-hidden="true">
                 <IconQuote />
-              </span>
-              <span className="t16-stars" aria-label="5 out of 5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <IconStar key={i} />
-                ))}
               </span>
               <EditableText
                 as="blockquote"

@@ -63,7 +63,7 @@ export default function T9Hero({
   // Visitors get sensible fallbacks; the editor shows the real (possibly empty) fields with hints.
   const headline = section.headline || (enabled ? "" : profile.business_name);
   const subtext = section.subtext || (enabled ? "" : profile.tagline || "");
-  const ctaText = section.ctaText || (enabled ? "" : "Start free trial");
+  const ctaText = section.ctaText || (enabled ? "" : "Join today");
   const city = cityOf(profile.address);
 
   const title = (cls: string, as: "h1" | "h2" = "h1") => (

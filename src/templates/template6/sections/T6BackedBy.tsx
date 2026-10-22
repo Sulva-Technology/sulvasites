@@ -13,8 +13,8 @@ function isImageUrl(url: string | null | undefined): url is string {
 /** Developer / partner strip on white. */
 export default function T6BackedBy({ section, sectionIndex }: { section: BackedBySection; sectionIndex?: number }) {
   const { set, setItem } = useSectionEditor(section, sectionIndex);
-  const title = section.title || "Trusted by leading developers and partners";
-  const logos = section.logos?.length ? section.logos : FALLBACK.map((name) => ({ name, url: null }));
+  const title = section.title || "Our partners";
+  const logos = section.logos?.length ? section.logos : FALLBACK.map(() => ({ name: "", url: null }));
 
   return (
     <section className="t6-partners t6-white">

@@ -18,10 +18,10 @@ export default function T1UseCases({ section, sectionIndex }: { section: UseCase
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Case studies";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
 
   return (
@@ -61,12 +61,12 @@ export default function T1UseCases({ section, sectionIndex }: { section: UseCase
                 </div>
                 <div className="t1-case-body">
                   <span className="t1-over">Case study {pad2(idx + 1)}</span>
-                  <EditableText as="h3" className="t1-h3" value={it.title} placeholder="Title" onCommit={(next) => setItem("items", items, idx, { title: next })} />
+                  <EditableText as="h3" className="t1-h3" value={it.title} placeholder={FALLBACK[idx % FALLBACK.length].title} onCommit={(next) => setItem("items", items, idx, { title: next })} />
                   <EditableText
                     as="p"
                     className="t1-muted"
                     value={it.description}
-                    placeholder="Summary"
+                    placeholder={FALLBACK[idx % FALLBACK.length].description}
                     multiline
                     onCommit={(next) => setItem("items", items, idx, { description: next })}
                   />

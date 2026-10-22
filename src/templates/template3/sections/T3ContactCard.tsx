@@ -117,7 +117,7 @@ export default function T3ContactCard({
           ) : (
             <div className="t3-reveal">
               <p className="t3-lead">
-                Prefer a conversation? Reach out directly — replies usually within one business day.
+                Prefer a conversation? Reach out directly.
               </p>
             </div>
           )}

@@ -11,9 +11,9 @@ export default function T4Testimonials({ section, sectionIndex }: { section: Tes
   const { set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Loved by the people who use it";
   const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Happy customer",
-    role: t.role || "Customer",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
 
@@ -32,9 +32,9 @@ export default function T4Testimonials({ section, sectionIndex }: { section: Tes
                   {initials(t.name)}
                 </span>
                 <span>
-                  <EditableText as="div" value={t.name} placeholder="Name" style={{ fontWeight: 700 }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
+                  <EditableText as="div" value={t.name} placeholder="Happy customer" style={{ fontWeight: 700 }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
                   <div className="t4-muted" style={{ fontSize: 13.5 }}>
-                    <EditableText as="span" value={t.role} placeholder="Role" onCommit={(next) => setItem("items", items, idx, { role: next })} />
+                    <EditableText as="span" value={t.role} placeholder="Customer" onCommit={(next) => setItem("items", items, idx, { role: next })} />
                     {t.company ? ` · ${t.company}` : null}
                   </div>
                 </span>
@@ -42,7 +42,7 @@ export default function T4Testimonials({ section, sectionIndex }: { section: Tes
               <EditableText
                 as="blockquote"
                 value={t.quote}
-                placeholder="Quote"
+                placeholder={FALLBACK_QUOTE}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { quote: next })}
               />

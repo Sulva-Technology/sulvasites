@@ -11,8 +11,8 @@ export default function T5Team({ section, sectionIndex }: { section: TeamSection
   const subtitle = section.subtitle || "";
   const members = (section.members?.length ? section.members : [{ name: "", role: "", bio: "" }]).map((m) => ({
     ...m,
-    name: m.name || "Artist name",
-    role: m.role || "Makeup artist",
+    name: m.name || "",
+    role: m.role || "",
     bio: m.bio || "",
   }));
 
@@ -37,8 +37,8 @@ export default function T5Team({ section, sectionIndex }: { section: TeamSection
                   <span aria-hidden="true">{initials(m.name)}</span>
                 )}
               </div>
-              <EditableText as="h3" className="t5-h3" value={m.name} placeholder="Name" onCommit={(next) => setItem("members", members, idx, { name: next })} />
-              <EditableText as="span" className="t5-role" value={m.role} placeholder="Role" onCommit={(next) => setItem("members", members, idx, { role: next })} />
+              <EditableText as="h3" className="t5-h3" value={m.name} placeholder="Artist name" onCommit={(next) => setItem("members", members, idx, { name: next })} />
+              <EditableText as="span" className="t5-role" value={m.role} placeholder="Makeup artist" onCommit={(next) => setItem("members", members, idx, { role: next })} />
               {m.bio || enabled ? (
                 <EditableText as="p" className="t5-muted" value={m.bio} placeholder="Short bio" multiline onCommit={(next) => setItem("members", members, idx, { bio: next })} />
               ) : null}

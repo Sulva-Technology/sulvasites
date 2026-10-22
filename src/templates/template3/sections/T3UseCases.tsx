@@ -23,10 +23,10 @@ export default function T3UseCases({
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Selected work";
   const description = section.description || "";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
     ...it,
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    description: it.description || FALLBACK[i % FALLBACK.length].description,
+    title: it.title || "",
+    description: it.description || "",
   }));
 
   return (
@@ -68,13 +68,13 @@ export default function T3UseCases({
                 <EditableText
                   as="h3"
                   value={it.title}
-                  placeholder="Project title"
+                  placeholder={FALLBACK[idx % FALLBACK.length].title}
                   onCommit={(next) => setItem("items", items, idx, { title: next })}
                 />
                 <EditableText
                   as="p"
                   value={it.description}
-                  placeholder="Project description"
+                  placeholder={FALLBACK[idx % FALLBACK.length].description}
                   multiline
                   onCommit={(next) => setItem("items", items, idx, { description: next })}
                 />

@@ -14,7 +14,7 @@ export default function T8BackedBy({ section, sectionIndex }: { section: BackedB
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const real = (section.logos ?? []).filter((l) => l.name?.trim() || isImageUrl(l.url));
   if (!enabled && real.length === 0) return null;
-  const title = section.title || "Accredited & registered with";
+  const title = section.title || "Our partners";
   const logos = enabled
     ? section.logos?.length
       ? section.logos

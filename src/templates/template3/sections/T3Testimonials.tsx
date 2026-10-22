@@ -23,9 +23,9 @@ export default function T3Testimonials({
   const { set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "Kind words";
   const items: Item[] = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Client name",
-    role: t.role || "Client",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
   const [featured, ...rest] = items;
@@ -39,7 +39,7 @@ export default function T3Testimonials({
         <EditableText
           as="span"
           value={t.name}
-          placeholder="Name"
+          placeholder="Client name"
           style={{ fontWeight: 700, display: "block" }}
           onCommit={(next) => setItem("items", items, idx, { name: next })}
         />
@@ -47,7 +47,7 @@ export default function T3Testimonials({
           <EditableText
             as="span"
             value={t.role}
-            placeholder="Role"
+            placeholder="Client"
             onCommit={(next) => setItem("items", items, idx, { role: next })}
           />
           {t.company ? (
@@ -101,7 +101,7 @@ export default function T3Testimonials({
                 <EditableText
                   as="p"
                   value={t.quote}
-                  placeholder="Quote"
+                  placeholder={FALLBACK_QUOTE}
                   multiline
                   onCommit={(next) => setItem("items", items, i + 1, { quote: next })}
                 />

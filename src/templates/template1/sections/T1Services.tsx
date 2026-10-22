@@ -16,9 +16,9 @@ const FALLBACK = [
 export default function T1Services({ section, sectionIndex }: { section: ServicesSection; sectionIndex?: number }) {
   const { baseUrl } = useT1();
   const { setItem } = useSectionEditor(section, sectionIndex);
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    title: it.title || "",
+    desc: it.desc || "",
   }));
 
   return (
@@ -31,7 +31,7 @@ export default function T1Services({ section, sectionIndex }: { section: Service
               Services built around <em>your goals</em>
             </h2>
           </div>
-          <p className="t1-lead">Each engagement is scoped to your situation, with clear deliverables and senior people involved throughout.</p>
+          <p className="t1-lead">Here is how we can help. Get in touch to talk through what you need.</p>
         </div>
 
         <div className="t1-services t1-reveal">
@@ -45,12 +45,12 @@ export default function T1Services({ section, sectionIndex }: { section: Service
                   </span>
                   <span className="t1-mono t1-muted">{pad2(idx + 1)}</span>
                 </div>
-                <EditableText as="h3" className="t1-h3" value={s.title} placeholder="Service" onCommit={(next) => setItem("items", items, idx, { title: next })} />
+                <EditableText as="h3" className="t1-h3" value={s.title} placeholder={FALLBACK[idx % FALLBACK.length].title} onCommit={(next) => setItem("items", items, idx, { title: next })} />
                 <EditableText
                   as="p"
                   className="t1-muted"
                   value={s.desc}
-                  placeholder="Description"
+                  placeholder={FALLBACK[idx % FALLBACK.length].desc}
                   multiline
                   onCommit={(next) => setItem("items", items, idx, { desc: next })}
                 />

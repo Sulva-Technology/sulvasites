@@ -1,4 +1,4 @@
-// Signup wizard answers → validated input, AI brief, or personalised sample content. Pure: relative imports only.
+// Signup wizard answers → validated input, the AI brief, and the last touches on the built trial site. Pure: relative imports only.
 import type { PageData } from "../pageSchema.ts";
 import type { SiteProfile } from "../ai/siteBuilder.ts";
 import { emptyBrief, type Brief } from "../ai/brief.ts";
@@ -81,37 +81,18 @@ export type TrialBuild = {
   themeColors?: Record<string, string>;
 };
 
-export type SampleLike = {
-  profile: { business_name: string };
-  pages: { home: PageData; about: PageData; contact: PageData };
-};
-
-const enc = (s: string) => JSON.stringify(s).slice(1, -1);
-
-/** Template sample content with the sample business name swapped for the owner's, used when AI is unavailable. */
-export function personalizeSample(templateKey: string, sample: SampleLike, a: SignupAnswers, email: string): TrialBuild {
-  const from = sample.profile.business_name;
-  const json = JSON.stringify(sample.pages);
-  const pages = JSON.parse(from ? json.split(enc(from)).join(enc(a.businessName)) : json) as TrialBuild["pages"];
-  return {
-    templateKey,
-    profile: {
-      business_name: a.businessName,
-      tagline: a.whatTheyDo,
-      description: `${a.whatTheyDo} in ${a.city}.`,
-      address: a.city,
-      phone: a.whatsapp,
-      email,
-      whatsapp: a.whatsapp,
-      socials: { instagram: null, facebook: null, twitter: null, tiktok: null },
-    },
-    pages,
-    extraPages: [],
-  };
+/** "Mon-Fri 9am-6pm, Sat 10am-4pm" → one row per line, as the templates' hours panels show them. */
+export function hoursLines(hours: string): string {
+  return hours
+    .split(/\r?\n|;|,(?=\s*[A-Za-z])/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .join("\n");
 }
 
 /**
- * Last touches on any trial build (AI or sample): the owner's real reviews, team, FAQs and partners
+ * Last touches on any trial build: the owner's real reviews, team, FAQs and partners
  * go into the pages, their tagline and contacts into the profile, and logo colours become the theme.
  */
 export function finishTrialBuild(build: TrialBuild, details: ParsedDetails, color: ColorChoice | null): TrialBuild {
@@ -140,6 +121,7 @@ export function finishTrialBuild(build: TrialBuild, details: ParsedDetails, colo
           facebook: c.facebook || p.socials.facebook,
           twitter: c.x || p.socials.twitter,
           tiktok: c.tiktok || p.socials.tiktok,
+          ...(d.openingHours ? { hours: hoursLines(d.openingHours) } : {}),
         },
       },
     };

@@ -292,6 +292,8 @@ export function completeDraft(job: PageJob, draft: PageDraft, brief: Brief, temp
   job.sections.forEach((type, i) => {
     const slot = draft.slots[i];
     if (slot) sections.push(slot);
+    else if (type === "gallery") sections.push({ type: "gallery", title: galleryTitle(job), images: [] });
+    else if (type === "contact_card") sections.push({ type: "contact_card", showForm: true, mapLink: "" });
     else if (isModelSection(type)) {
       fallbackTypes.push(type);
       sections.push(fallbackSection(type, job, brief, templateKey));

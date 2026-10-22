@@ -28,7 +28,7 @@ export default function T1ContactCard({ section }: { section: ContactCardSection
               Book a <em>consultation</em>
             </h2>
           </div>
-          <p className="t1-lead">Tell us about your organisation and what you&apos;d like to achieve. We respond within one business day.</p>
+          <p className="t1-lead">Tell us about your organisation and what you&apos;d like to achieve.</p>
         </div>
 
         <div className="t1-contact t1-reveal">

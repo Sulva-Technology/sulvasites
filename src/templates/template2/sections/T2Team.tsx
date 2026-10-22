@@ -11,8 +11,8 @@ export default function T2Team({ section, sectionIndex }: { section: TeamSection
   const subtitle = section.subtitle || "";
   const members = (section.members?.length ? section.members : [{ name: "", role: "", bio: "" }]).map((m) => ({
     ...m,
-    name: m.name || "Contributor",
-    role: m.role || "Role",
+    name: m.name || "",
+    role: m.role || "",
     bio: m.bio || "",
   }));
 
@@ -40,7 +40,7 @@ export default function T2Team({ section, sectionIndex }: { section: TeamSection
                 )}
               </div>
               <div>
-                <EditableText as="h3" className="t2-h3" value={m.name} placeholder="Name" style={{ fontSize: "1.45rem" }} onCommit={(next) => setItem("members", members, idx, { name: next })} />
+                <EditableText as="h3" className="t2-h3" value={m.name} placeholder="Contributor" style={{ fontSize: "1.45rem" }} onCommit={(next) => setItem("members", members, idx, { name: next })} />
                 <EditableText as="span" className="t2-meta" value={m.role} placeholder="Role" onCommit={(next) => setItem("members", members, idx, { role: next })} />
                 {m.bio || enabled ? (
                   <EditableText as="p" className="t2-muted" value={m.bio} placeholder="Short bio" multiline onCommit={(next) => setItem("members", members, idx, { bio: next })} />

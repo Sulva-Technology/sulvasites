@@ -38,7 +38,7 @@ export default function T2Hero({
   const { set } = useSectionEditor(section, sectionIndex);
   const headline = section.headline || "Ideas, made visible";
   const subtext =
-    section.subtext || "An independent studio telling stories through design, image and words — for brands with something to say.";
+    section.subtext || profile.tagline || "";
   const ctaText = section.ctaText || "Work with us";
   const mono = initials(profile.business_name);
   const year = new Date().getFullYear();

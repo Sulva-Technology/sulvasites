@@ -25,9 +25,9 @@ export default function T3FAQ({
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
   const title = section.title || "Questions, answered";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    question: it.question || FALLBACK[i % FALLBACK.length].question,
-    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    question: it.question || "",
+    answer: it.answer || "",
   }));
 
   return (
@@ -59,7 +59,7 @@ export default function T3FAQ({
                   <EditableText
                     as="h3"
                     value={it.question}
-                    placeholder="Question"
+                    placeholder={FALLBACK[idx % FALLBACK.length].question}
                     onCommit={(next) => setItem("items", items, idx, { question: next })}
                   />
                   <span className="t3-plus" aria-hidden="true" />
@@ -69,7 +69,7 @@ export default function T3FAQ({
                     <EditableText
                       as="p"
                       value={it.answer}
-                      placeholder="Answer"
+                      placeholder={FALLBACK[idx % FALLBACK.length].answer}
                       multiline
                       onCommit={(next) => setItem("items", items, idx, { answer: next })}
                     />

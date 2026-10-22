@@ -17,9 +17,9 @@ export default function T1FAQ({ section, sectionIndex }: { section: FAQSection; 
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
   const title = section.title || "Frequently asked questions";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    question: it.question || FALLBACK[i % FALLBACK.length].question,
-    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    question: it.question || "",
+    answer: it.answer || "",
   }));
 
   return (
@@ -38,14 +38,14 @@ export default function T1FAQ({ section, sectionIndex }: { section: FAQSection; 
               <div key={idx} className="t1-faq-item" data-open={isOpen}>
                 <button type="button" className="t1-faq-q" aria-expanded={isOpen} onClick={() => !enabled && setOpen(isOpen ? null : idx)}>
                   <span className="t1-faq-num">{pad2(idx + 1)}</span>
-                  <EditableText as="h3" value={it.question} placeholder="Question" onCommit={(next) => setItem("items", items, idx, { question: next })} />
+                  <EditableText as="h3" value={it.question} placeholder={FALLBACK[idx % FALLBACK.length].question} onCommit={(next) => setItem("items", items, idx, { question: next })} />
                   <span className="t1-faq-icon" aria-hidden="true">
                     <IconPlus />
                   </span>
                 </button>
                 <div className="t1-faq-a">
                   <div>
-                    <EditableText as="p" value={it.answer} placeholder="Answer" multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
+                    <EditableText as="p" value={it.answer} placeholder={FALLBACK[idx % FALLBACK.length].answer} multiline onCommit={(next) => setItem("items", items, idx, { answer: next })} />
                   </div>
                 </div>
               </div>

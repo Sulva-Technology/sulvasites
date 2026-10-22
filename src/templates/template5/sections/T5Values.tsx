@@ -13,9 +13,9 @@ const FALLBACK = [
 /** Values as "the experience": three circled steps. */
 export default function T5Values({ section, sectionIndex }: { section: ValuesSection; sectionIndex?: number }) {
   const { setItem } = useSectionEditor(section, sectionIndex);
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    title: it.title || FALLBACK[i % FALLBACK.length].title,
-    desc: it.desc || FALLBACK[i % FALLBACK.length].desc,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    title: it.title || "",
+    desc: it.desc || "",
   }));
 
   return (
@@ -31,12 +31,12 @@ export default function T5Values({ section, sectionIndex }: { section: ValuesSec
           {items.map((v, idx) => (
             <div key={idx} className="t5-step t5-reveal">
               <span className="t5-step-num">{toRoman(idx + 1)}</span>
-              <EditableText as="h3" className="t5-h3" value={v.title} placeholder="Title" onCommit={(next) => setItem("items", items, idx, { title: next })} />
+              <EditableText as="h3" className="t5-h3" value={v.title} placeholder={FALLBACK[idx % FALLBACK.length].title} onCommit={(next) => setItem("items", items, idx, { title: next })} />
               <EditableText
                 as="p"
                 className="t5-muted"
                 value={v.desc}
-                placeholder="Description"
+                placeholder={FALLBACK[idx % FALLBACK.length].desc}
                 multiline
                 onCommit={(next) => setItem("items", items, idx, { desc: next })}
               />

@@ -35,7 +35,7 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
             <h2 className="t5-title">
               Book your <em style={{ color: "inherit" }}>appointment</em>
             </h2>
-            <p className="t5-lead">Send a request and we&apos;ll confirm your time within a few hours.</p>
+            <p className="t5-lead">Send a request and we&apos;ll confirm your time.</p>
             <div className="t5-contact-list">
               {profile.whatsapp ? (
                 <a className="t5-contact-item" href={buildWhatsAppLink(profile.whatsapp)} target="_blank" rel="noreferrer">
@@ -131,7 +131,7 @@ export default function T5ContactCard({ section }: { section: ContactCardSection
               <button type="submit" disabled={inbox.sending} className="t5-btn t5-btn-rose">
                 Request booking
               </button>
-              <p className="t5-fineprint">Your appointment is confirmed once we reply. A booking fee may apply.</p>
+              <p className="t5-fineprint">Your appointment is confirmed once we reply.</p>
               <InboxStatus state={inbox.state} />
             </form>
           ) : null}

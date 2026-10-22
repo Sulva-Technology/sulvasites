@@ -8,7 +8,7 @@ import { useSectionEditor } from "@/templates/shared/edit";
 import { IconChevron } from "../icons";
 
 const FALLBACK = [
-  { question: "How do I book a viewing?", answer: "Use the form on our contact page or call us — we'll confirm a time within one business day." },
+  { question: "How do I book a viewing?", answer: "Use the form on our contact page or call us and we'll confirm a time." },
   { question: "Do you verify property documents?", answer: "Yes. Title and approvals are checked before listing, and copies are shared with serious buyers." },
 ];
 
@@ -17,9 +17,9 @@ export default function T6FAQ({ section, sectionIndex }: { section: FAQSection; 
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const [open, setOpen] = useState<number | null>(0);
   const title = section.title || "Frequently asked questions";
-  const items = (section.items?.length ? section.items : FALLBACK).map((it, i) => ({
-    question: it.question || FALLBACK[i % FALLBACK.length].question,
-    answer: it.answer || FALLBACK[i % FALLBACK.length].answer,
+  const items = (section.items?.length ? section.items : FALLBACK.map(() => ({}) as Partial<(typeof section.items)[number]>)).map((it) => ({
+    question: it.question || "",
+    answer: it.answer || "",
   }));
 
   return (
@@ -46,7 +46,7 @@ export default function T6FAQ({ section, sectionIndex }: { section: FAQSection; 
                   <EditableText
                     as="h3"
                     value={it.question}
-                    placeholder="Question"
+                    placeholder={FALLBACK[idx % FALLBACK.length].question}
                     onCommit={(next) => setItem("items", items, idx, { question: next })}
                   />
                   <span className="t6-chev" aria-hidden="true">
@@ -58,7 +58,7 @@ export default function T6FAQ({ section, sectionIndex }: { section: FAQSection; 
                     <EditableText
                       as="p"
                       value={it.answer}
-                      placeholder="Answer"
+                      placeholder={FALLBACK[idx % FALLBACK.length].answer}
                       multiline
                       onCommit={(next) => setItem("items", items, idx, { answer: next })}
                     />

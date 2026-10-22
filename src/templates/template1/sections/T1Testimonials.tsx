@@ -16,9 +16,9 @@ export default function T1Testimonials({ section, sectionIndex }: { section: Tes
   const [active, setActive] = useState(0);
   const title = section.title || "What our clients say";
   const items = (section.items?.length ? section.items : [{ name: "", role: "", quote: "" }]).map((t) => ({
-    name: t.name || "Client name",
-    role: t.role || "Managing Director",
-    quote: t.quote || FALLBACK_QUOTE,
+    name: t.name || "",
+    role: t.role || "",
+    quote: t.quote || "",
     company: t.company || "",
   }));
   const go = (d: number) => setActive((v) => (v + d + items.length) % items.length);
@@ -44,15 +44,15 @@ export default function T1Testimonials({ section, sectionIndex }: { section: Tes
         <div className="t1-quote-card t1-reveal" aria-live="polite">
           {items.map((t, idx) => (
             <figure key={idx} data-active={idx === active}>
-              <EditableText as="blockquote" value={t.quote} placeholder="Quote" multiline onCommit={(next) => setItem("items", items, idx, { quote: next })} />
+              <EditableText as="blockquote" value={t.quote} placeholder={FALLBACK_QUOTE} multiline onCommit={(next) => setItem("items", items, idx, { quote: next })} />
               <figcaption className="t1-person">
                 <span className="t1-avatar" aria-hidden="true">
                   {initials(t.name)}
                 </span>
                 <span>
-                  <EditableText as="div" value={t.name} placeholder="Name" style={{ fontWeight: 600 }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
+                  <EditableText as="div" value={t.name} placeholder="Client name" style={{ fontWeight: 600 }} onCommit={(next) => setItem("items", items, idx, { name: next })} />
                   <div className="t1-muted" style={{ fontSize: 14 }}>
-                    <EditableText as="span" value={t.role} placeholder="Role" onCommit={(next) => setItem("items", items, idx, { role: next })} />
+                    <EditableText as="span" value={t.role} placeholder="Managing Director" onCommit={(next) => setItem("items", items, idx, { role: next })} />
                     {t.company ? `, ${t.company}` : null}
                   </div>
                 </span>

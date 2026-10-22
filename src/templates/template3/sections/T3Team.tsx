@@ -24,10 +24,10 @@ export default function T3Team({
   const { enabled, set, setItem } = useSectionEditor(section, sectionIndex);
   const title = section.title || "The people";
   const subtitle = section.subtitle || "";
-  const members = (section.members?.length ? section.members : FALLBACK).map((m) => ({
+  const members = (section.members?.length ? section.members : FALLBACK.map(() => ({}) as Partial<(typeof section.members)[number]>)).map((m) => ({
     ...m,
-    name: m.name || "Team member",
-    role: m.role || "Role",
+    name: m.name || "",
+    role: m.role || "",
     bio: m.bio || "",
   }));
 
@@ -72,7 +72,7 @@ export default function T3Team({
               <EditableText
                 as="h3"
                 value={m.name}
-                placeholder="Name"
+                placeholder="Team member"
                 onCommit={(next) => setItem("members", members, idx, { name: next })}
               />
               <EditableText

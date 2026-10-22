@@ -254,6 +254,27 @@ export function detailsSummary(d: OwnerDetails): string[] {
   ].filter(Boolean) as string[];
 }
 
+/**
+ * What the chosen design shows that the paste left out, in plain words, most important first.
+ * Each gap is a section that would otherwise get simple generic copy or stay hidden.
+ */
+export function detailsGaps(d: OwnerDetails, templateKey: string): string[] {
+  const sections = new Set(getPagePresets(templateKey).flatMap((p) => p.sections));
+  const c = d.contact;
+  return [
+    !d.tagline && "a tagline",
+    d.services.length < 3 && (d.services.length ? "more services (3 or more)" : "your services and prices"),
+    !d.whyChooseUs.length && "reasons to choose you",
+    !d.story && "your story",
+    sections.has("use_cases") && !d.projects.length && "past work or listings",
+    sections.has("team") && !d.team.length && "your team",
+    !d.testimonials.length && "customer reviews",
+    d.faqs.length < 3 && "common questions (FAQs)",
+    !d.openingHours && "opening hours",
+    !c.phone && !c.whatsapp && !c.email && "a phone number or email",
+  ].filter(Boolean) as string[];
+}
+
 // ---------- into the brief ----------
 
 /** Everything the writer may use as facts, as plain text (it is delimited as owner data in prompts). */
