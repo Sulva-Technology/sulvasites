@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { isTemplateKey } from "@/lib/ai/templateChoice";
-import { buildSite } from "@/lib/ai/siteBuilder";
+import { aiChat } from "@/lib/ai/llm.server";
 import { sendLifecycleEmail } from "@/lib/billing/email.server";
 import { businessKey, isDisposableEmail, normalizeEmail } from "@/lib/billing/identity";
 import { canStartSite, evaluateTrialSignup } from "@/lib/billing/signupGuard";
@@ -13,11 +13,11 @@ import { listOwnedSites } from "@/lib/billing/subscriptions.server";
 import { TRIAL_DAYS } from "@/lib/marketing/pricing";
 import { clientIp } from "@/lib/shop/requestIp";
 import { shopRateLimit } from "@/lib/shop/rateLimit";
-import { briefFromAnswers, finishTrialBuild, parseSignupBody, personalizeSample, type TrialBuild } from "@/lib/signup/fallbackSite";
+import { briefFromAnswers, finishTrialBuild, parseSignupBody } from "@/lib/signup/fallbackSite";
 import { insertTrialSite, persistTrialSite } from "@/lib/signup/persistTrialSite.server";
+import { buildTrialSite } from "@/lib/signup/trialBuild";
 import { supabaseService } from "@/lib/supabase/admin.server";
 import { requireUser } from "@/lib/supabase/requireUser.server";
-import { sampleSite } from "@/templates/sampleSite";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,16 +27,6 @@ const DEVICE_COOKIE = "sv_dev";
 const AI_BUDGET_MS = 40_000;
 
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
-
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("timeout")), ms);
-    p.then(
-      (v) => { clearTimeout(t); resolve(v); },
-      (e) => { clearTimeout(t); reject(e); },
-    );
-  });
-}
 
 export async function POST(req: Request) {
   const ip = clientIp(req);
@@ -133,16 +123,15 @@ export async function POST(req: Request) {
     return json({ error: "Signup is not available right now." }, 503);
   }
 
-  let build: TrialBuild;
-  let usedAi = true;
-  try {
-    const result = await withTimeout(buildSite({ state: briefFromAnswers(answers, auth.email, details), templateOverride: templateKey }), AI_BUDGET_MS);
-    build = { templateKey, profile: result.profile, pages: result.pages, extraPages: result.extraPages };
-  } catch (err) {
-    usedAi = false;
-    console.warn("[signup] AI build failed, using sample content", err instanceof Error ? err.message : "error");
-    build = personalizeSample(templateKey, sampleSite(templateKey), answers, auth.email);
-  }
+  // Pages start from the owner's own answers and pasted details; the AI improves what it finishes within
+  // the budget. Never the template's demo content, which would show another business's reviews and numbers.
+  const brief = briefFromAnswers(answers, auth.email, details);
+  const offline: typeof aiChat = async () => { throw new Error("ai_unavailable"); };
+  const { usedAi, ...build } = await buildTrialSite({ brief, templateKey, details, chat: aiChat, budgetMs: AI_BUDGET_MS }).catch((err) => {
+    console.warn("[signup] AI build failed, using the owner's details only", err instanceof Error ? err.message : "error");
+    return buildTrialSite({ brief, templateKey, details, chat: offline, budgetMs: 0 });
+  });
+  if (!usedAi) console.warn("[signup] AI unavailable; site built from the owner's details only", { site_id: siteId });
   const warnings = await persistTrialSite(db, siteId, finishTrialBuild(build, details, color));
 
   if (start.trial) await sendLifecycleEmail(db, siteId, "welcome");

@@ -16,7 +16,7 @@ import {
 } from "./brief.ts";
 import { GroqError, extractJson } from "./groq.server.ts";
 import { aiChat } from "./llm.server.ts";
-import { completeDraft, fallbackSeo, parsePageOutput } from "./pageContent.ts";
+import { completeDraft, fallbackSeo, parsePageOutput, type PageDraft } from "./pageContent.ts";
 import { getPageJobs, type PageJob } from "./pagePlans.ts";
 import {
   buildPagePrompt,
@@ -41,7 +41,12 @@ import { isTemplateKey, resolveTemplateChoice, type TemplateChoice } from "./tem
 export const MAX_REPAIR_ROUNDS = 2;
 
 export type { ChatFn };
-export type BuilderDeps = { chat?: ChatFn; onProgress?: (stage: string) => void };
+export type BuilderDeps = {
+  chat?: ChatFn;
+  onProgress?: (stage: string) => void;
+  /** Content for any section the model leaves empty (e.g. the owner's pasted details); generic copy otherwise. */
+  fallbackDraft?: (job: PageJob) => PageDraft;
+};
 
 export type SitePlan = {
   brief: Brief;
@@ -199,10 +204,16 @@ export async function writePage(plan: SitePlan, key: string, deps: BuilderDeps =
   const chat = deps.chat ?? aiChat;
   const job = getPageJobs(plan.templateKey).find((j) => j.key === key);
   if (!job) throw new Error(`Unknown page '${key}' for this template.`);
-  return generatePage(job, plan, chat, avoid);
+  return generatePage(job, plan, chat, avoid, deps.fallbackDraft);
 }
 
-async function generatePage(job: PageJob, plan: SitePlan, chat: ChatFn, avoid: string[]): Promise<PageResult> {
+async function generatePage(
+  job: PageJob,
+  plan: SitePlan,
+  chat: ChatFn,
+  avoid: string[],
+  fallbackDraft?: BuilderDeps["fallbackDraft"],
+): Promise<PageResult> {
   const { brief, templateKey } = plan;
   const base: Prompt = buildPagePrompt({ brief, templateKey, job, avoid });
   const defaults = { ctaText: fitSentence(getIndustry(templateKey).ctas[0] ?? "Get in touch", B.heroCta) };
@@ -244,11 +255,12 @@ async function generatePage(job: PageJob, plan: SitePlan, chat: ChatFn, avoid: s
     }
   }
 
-  const draft = best?.draft ?? {
-    seo: fallbackSeo(job, brief),
-    slots: job.sections.map(() => null),
-    errors: [],
-  };
+  const fb = fallbackDraft?.(job);
+  const draft = best
+    ? fb
+      ? { ...best.draft, slots: best.draft.slots.map((s, i) => s ?? fb.slots[i] ?? null) }
+      : best.draft
+    : (fb ?? { seo: fallbackSeo(job, brief), slots: job.sections.map(() => null), errors: [] });
   const { data, fallbackTypes } = completeDraft(job, draft, brief, templateKey);
   return { key: job.key, data, repairRounds, fallbackTypes, aiFailed };
 }
